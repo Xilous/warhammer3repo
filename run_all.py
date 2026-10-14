@@ -55,7 +55,8 @@ def stage_page():
     except Exception as e: print('node check skipped/failed:',e)
 
 def stage_offline():
-    py('scripts/page/make_offline.py','ranged_doomstack_research.html','Ranged_Doomstack_Research.html')
+    # NOTE: Windows is case-insensitive, so the offline file must not share the artifact's name
+    py('scripts/page/make_offline.py','ranged_doomstack_research.html','Ranged_Doomstack_Research_offline.html')
 
 STAGES={'wiki':stage_wiki,'twwstats':stage_twwstats,'game':stage_game,'page':stage_page,'offline':stage_offline}
 if __name__=='__main__':

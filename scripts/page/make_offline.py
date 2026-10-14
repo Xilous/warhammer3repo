@@ -1,7 +1,8 @@
 """Turn the published-artifact HTML (no document skeleton, Google Fonts link) into a self-contained offline file."""
 import re,os,sys
 src=sys.argv[1] if len(sys.argv)>1 else 'ranged_doomstack_research.html'
-dst=sys.argv[2] if len(sys.argv)>2 else 'Ranged_Doomstack_Research.html'
+dst=sys.argv[2] if len(sys.argv)>2 else 'Ranged_Doomstack_Research_offline.html'
+if os.path.abspath(src).lower()==os.path.abspath(dst).lower(): raise SystemExit('source and destination are the same file (case-insensitive filesystem)')
 h=open(src,encoding='utf-8').read()
 h=re.sub(r'<link[^>]*fonts\.googleapis[^>]*>\s*','',h); h=re.sub(r'<link[^>]*fonts\.gstatic[^>]*>\s*','',h)
 if not h.lstrip().lower().startswith('<!doctype'):

@@ -42,7 +42,8 @@ python run_all.py wiki       # category scan -> unit pages -> mechanic pages -> 
 python run_all.py twwstats   # all units + abilities from twwstats for the chosen dataset id
 python run_all.py game       # schema, loc, DB tables, buff layer, settlement tiers from the installed game
 python run_all.py page       # model_units.json, mechanics.json -> ranged_doomstack_research.html (+ node self-test)
-python run_all.py offline    # Ranged_Doomstack_Research.html with a full document skeleton and no external links
+python run_all.py offline    # Ranged_Doomstack_Research_offline.html: full document skeleton, no external links
+                             # (a different name on purpose: Windows is case-insensitive and would clobber the artifact file)
 ```
 
 Then publish `ranged_doomstack_research.html` as a Claude artifact (it is written *without* a document skeleton on
