@@ -1,0 +1,1009 @@
+'''Legendary Lord character traits''' are [[character traits]] which apply specifically to [[Legendary Lords]]. These traits are innate on the character and thus don't have to be earned through gameplay, unlike regular traits.
+
+Another type of legendary lord trait is gained by defeating a specific legendary lord in battle. For those types of traits, see [[Legendary Lord defeat traits]].
+
+''For the legendary lord traits in Total War: Warhammer II (both spawn traits and defeat/victory traits), please see [https://totalwarwarhammer.fandom.com/wiki/Legendary_Lord_character_traits?oldid=112162 this old version of the page].''
+
+==List of innate traits==
+When legendary lords are spawned on the campaign map, they are bestowed with unique traits which are exclusive to them. Nobody else can obtain them and they cannot be lost either. The only way to get a legendary lord spawn trait is to own the relevant legendary lord.
+
+Although the tables below compile the many traits alphabetically by race and by lord, you may sort by any header of your choosing. 
+
+==={{Beastmen race}}===
+{| class="sortable fandom-table wikitable" width="100%"
+! width="14%" |'''Trait'''
+! width="15%" |'''Legendary lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+![[File:Trait beastmen.png]] One-Eye
+![[File:Bst ch khazrak 0 porthole.png|82px]]<br>[[Khazrak the One-Eye]]
+|
+* [[File:Subterfuge.png]] Reduced Bestial Rage penalties and detection chance when in Hidden Encampment stance
+* [[File:Attribute guerrilla deploy.png]] Attribute: Vanguard deployment for Bestigors units ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Attribute guerrilla deploy.png]] Attribute: Vanguard deployment for Razorgor Chariots units ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Modifier icon poison.png]] Enables poison attacks for all Ungor units ([[File:Icon Army.png|15px]]Lord's army)
+|''"With a roar it pointed, and a pack of nightmare dog-beasts turned their feral attention towards me."''
+|-
+![[File:Trait beastmen.png]] Crowfather
+![[File:Bst ch malagor 0 porthole.png|82px]]<br>[[Malagor the Dark Omen]]
+|
+* [[File:Beastpaths.png]] Movement range: +50% when using the Beast-Paths ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Replenishment.png]] Enemy casualty replenishment rate: -100% (enemy armies in local province)
+* [[File:Morale.png]] Enemy leadership: -8 (enemy armies in local province)
+* [[File:Attribute causes fear.png]] Attribute: Causes Fear for Harpies units ([[File:Icon Army.png|15px]]Lord's army)
+|''"Into the mud with them, break their skulls and eat their hearts!"''
+|-
+![[File:Trait beastmen.png]] Shadowgave
+![[File:Bst ch morghur 0 porthole.png|82px]]<br>[[Morghur the Shadowgave]]
+|
+*[[File:Corruption chaos.png]] Raiding stance is upgraded to "Despoiler raiding stance" which spreads corruption and attrition
+*[[File:Wh dlc05 lord passive aura of transmutation.png|24px]] Passive ability: "[[Aura of Vile Transmutation]]"
+*[[File:Attrition.png]] Immune to Athel Loren attrition ([[File:Icon Army.png|15px]]Lord's army)
+*[[File:Wound time.png|24x24px]] Morghur will always remain wounded for no more than 1 turn
+*[[File:Corruption chaos.png]] Chaos Undivided corruption: +5
+*[[File:Resistance magic.png]] Spell resistance: 20% ([[File:Icon Army.png|15px]]Lord's army)
+|''"Morghur returns. Morghur spreads Gods' corruption. Many die but all fall to Ruin. ALL!"''
+|-
+![[File:Trait beastmen.png]] Slaughterhorn
+![[File:Bst taurox 0 porthole.png|82px]]<br>[[Taurox the Brass Bull]]
+|
+* [[File:Campaign movement.png]] Raiding stance is upgraded to "Juggernaut raiding stance" which increases campaign movement range but reduces raiding income
+* [[File:Attrition.png]] Taurox leaves "River of Blood" effects in regions after winning battles (stacks up to 3 times)
+* [[File:Weapon damage.png]] Weapon strength: +10% for Minotaur units ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Wh2 dlc17 lord abilities bloodbeast.png|24px]] Ability: "[[Bloodbeast]]"
+|''The Bloodbeast marches to war with his towering Minotaurs in tow, the land left left scarred and bleeding in his stampeding wake.''
+|-
+|}
+
+==={{Bretonnia race}}===
+{| class="wikitable" width="100%"
+! width="15%" |Trait
+! width="20%" |Lord it belongs to
+! width="45%" |Effect
+!'''Description'''
+|-
+![[File:Trait bretonnia.png]] The Puissant Virtue
+![[Louen Leoncoeur]]
+|
+*[[File:Chivalry positive.png]] Chivalry: +4 per turn
+*[[File:Chivalry positive.png]] Louen starts with all Knightly Vows unlocked
+*[[File:Wh main lord passive the blessing of the lady.png]] Passive ability: "[[The Blessing of the Lady]]"
+*[[File:Morale.png]] Leadership: +12 when fighting against Warriors of Chaos, Daemons of Chaos, Undead and Greenskins (Lord's army)
+*[[File:Melee.png]] Melee attack: +8 when fighting against Warriors of Chaos, Daemons of Chaos, Undead and Greenskins (Lord's army)
+|''"Chaste, honourable, and untainted by notions of self-aggrandisement, King Louen is the most virtuous of all the Lady's champions."''
+|-
+!Virtue of Discipline
+![[Alberic de Bordeleaux]]
+|Chivalry: +10
+Melee defence: +10 for [[Knights of the Realm]] units (Lord's army)
+|''"No matter the odds, this Knight takes to the field utterly undaunted by the numberless hordes of his enemies."''
+|-
+!Champion of the People
+![[Repanse de Lyonesse]]
+|Chivalry: +10
+Physical resistance: +10% for all Peasant units
+
+Leadership: +5 for all Peasant units
+
+Ability: "[[Halo of Maidenly Wrath]]"
+|''"To the smallfolk of Bretonnia, Repanse is their champion - a beacon of hope in what would otherwise be lives of hopeless, downtrodden drudgery."''
+|-
+!Supreme Aura of the Lady
+![[Fay Enchantress]]
+|Chivalry: +10
+Passive ability: "[[The Blessing of the Lady]]"
+
+Attribute: Causes Fear
+|''"A figure of awe and inspiration, hers is the will of the Goddess."''
+|-
+|}
+
+=== {{Daemons of Chaos race}} ===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="14%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!Undivided
+![[The Daemon Prince]]
+|
+* [[File:Daemonic gift.png]] Customisable via Daemonic Gifts: Equippable gifts are granted through servitude to the Chaos Gods
+* [[File:Undivided points.png]] Access to gifts of Chaos Undivided: These gifts are not directly influenced by any of the Chaos Gods to allow you to represent Chaos and all its glory
+* [[File:Khorne points.png]] Access to gifts of Khorne: These gifts push your prowess in battle to take on any challenger foolish enough to meet you in combat
+* [[File:Nurgle points.png]] Access to gifts of Nurgle: These gifts allow you to spread pestilence, suffering and decay to all those who would seek to cause you harm
+* [[File:Slaanesh points.png]] Access to gifts of Slaanesh: These gifts enable you to become an agile hunter able to chase down any prey that chooses to turn its back on you
+* [[File:Tzeentch points.png]] Access to gifts of Tzeentch: These gifts grant you the level of knowledge in the Winds of Magic required to change the tides of battle
+|''"The Dark Gods empower me, so vengeance will be mine."''
+|}
+
+==={{Dark Elves race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" |Lord it belongs to
+! width="45%" |Effect
+!Description
+|-
+! Beastlord
+![[Rakarth]]
+|
+*Ability: "[[Beaslord's Gaze]]"
+*Ability: "[[Whiplash!|Whiplash]]"
+*[[Melee defence]]: +8 for monstrous units (Lord's army)
+*[[Recruitment duration]]: -1 turn for all monstrous units (minimum 1) (Lord's army)
+|''The greatest of all Beastlords has no equal in his craft, commanding the wild and feral with almost supernatural aptitude.''
+|-
+!Dark Manipulator
+![[Morathi]]
+|[[Dark Elves rites|Sacrifice to Hekarti]]: -50% cost and -5 cooldown
+|''"I would be so grateful for your cooperation in this, my lord. I do so hate to be... disappointed."''
+|-
+!Greatest Bride of Khaine
+![[Crone Hellebron]]
+|Weapon strength: +10 for [[Har Ganeth Executioners]], [[Sisters of Slaughter]] and [[Witch Elves]] (Lord's Army)
+|''There is no-one more devoted to murder than Crone Hellebron, greatest of all Khaine's brides.''
+|-
+!Krakenlord
+![[Lokhir Fellheart]]
+|
+*Attribute: [[Causes Fear]] for Corsairs units ([[File:Icon Army.png|frameless]] Lord's army)
+*Immunity to High Seas, Reef and Storm [[attrition]] ([[File:Icon Army.png|frameless]] Lord's army)
+
+*Upkeep: -50% for [[Black Ark Corsairs]] units (Lord's army)
+|''The greatest corsair since the time of his illustrious grandfather, Lokhir is doing the name of Fellheart proud in every sense.''
+|-
+!Scion of the Dark Crag
+![[Malus Darkblade]]
+|
+* Recruitment cost: -20% for [[Cold One Dread Knights]], [[Cold One Knights]] and [[Cold One Chariots]] units (Lord's army)
+*Chance of intercepting an army using [[Underway]], [[beast-paths]] or [[Worldroots]]: +10%
+*Upkeep: -50% for [[Cold One Dread Knights]], [[Cold One Knights]] and [[Cold One Chariots]] units (Lord's army)
+|''Hag Graef's greatest tyrant is legendary in Naggaroth; and exceptional warrior and feared leader whose hatred can drive him to overcome any opposition.''
+|-
+!Witch King of Naggaroth
+![[Malekith]]
+|Upkeep: -50% for [[Black Guard of Naggarond]], [[Dreadspears]], [[Bleakswords]] and [[Darkshards]] units (Lord's army)
+|''The Witch King long ago sought to take Ulthuan's crown, but the Flames of Asuryan left him twisted with hatred and horribly scarred.''
+|-
+|}
+
+==={{Dwarfs race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" |Legendary Lord
+! width="45%" |Effect
+!Description
+|-
+!True King of the Eight Peaks
+![[Belegar Ironhammer]]
+|Attribute: Siege Attacker
+Attribute: Vanguard Deployment during Underway battles (all armies factionwide)
+Leadership: +10 when fighting against Greenskins and Skaven (Lord's army)
+|"The Throne of the Eight Peaks is mine, by right!"
+|-
+!The White Dwarf
+![[Grombrindal - The White Dwarf]]
+|Leadership: +10 (Lord's army)
+Reinforcement range: +50% (Lord's army)
+|"You and your followers will die - that is my oath as my kin, Grimnir, is witness!"
+|-
+! The Old Ways Are Best
+![[Thorek Ironbrow]]
+|Amour-piercing damage +3 (Lord's army)
+Armour +10 (Lord's army)
+
+Reload time reduction +15% for [[Bolt Throwers]], [[Grudge Throwers]], and [[Quarrellers]] units (Lord's army)
+|"Thorek does not abide new technology, using ancient technologies to lend his council and strong arm to the cause of the old Dwarf Empire"
+|-
+! High King
+![[Thorgrim Grudgebearer]]
+|Leadership aura size: +75%
+Physical resistance +15% for [[Hammerers]] units (lord's army)
+
+Passive ability: [[Guardian]] for Hammerers units (lord's army)
+|"This is my edict as High King! Khazukan Kazakit-ha!"
+|-
+! Slayer King
+![[Ungrim Ironfist]]
+|Upkeep: -25% for Slayer units (Lord's army)
+
+Melee attack: +10 for Slayer units (Lord's army)
+
+Passive ability: "[[Journey's End]]" for Slayer units (Lord's army)
+| "Bring me victory, bring me death!"
+|-
+|}
+
+==={{Grand Cathay race}}===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="15%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!Supreme Matriarch
+![[Miao Ying]]
+|
+* [[File:Military spending.png]] Upkeep: -50% for missile infantry units (Lord's army)
+* [[File:Cathay yin.png]] Harmony: +3 Yin
+|''"I bring the storm winds!"''
+|-
+!Lord of the Jade-Sworn
+![[Zhao Ming]]
+|
+* [[File:Item ability.png]] Magic item drop chance: +100%
+* [[File:Military spending.png]] Upkeep: -25% for melee units (Lord's army)
+* [[File:Cathay yang.png]] Harmony: +3 Yang
+|''"Alchemy holds the true power!"''
+|-
+!The Jade Administrator
+![[Yuan Bo]]
+|
+* [[File:Magic_campaign.png]] Winds of Magic power reserve capacity: +25
+* [[File:Military spending.png]] Upkeep: -30% for Onyx Crowmen, Celestial Lion, Great Moon Bird, Jade Lion and Jet Lion units (Lord's army)
+|''Executor and Executioner, Yuan Bo wears many hats, his twin stewardship of the Jade and Celestial Courts granting him authority only matched by the Emperor and Empress themselves.''
+|}
+
+==={{Greenskins race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="10%" |Lord it belongs to
+! width="10%" |Requirement
+! width="20%" |Effect
+! width="20%" |Description
+|-
+!Warlord
+![[Grimgor Ironhide]]
+|
+|Leadership: +12 for Black Orc units (Lord's army)
+Armour: +10 for Black Orc units (Lord's army)
+
+Income from post-battle loot: +30%
+
+Ability: "[[You're Next!]]"
+
+Army ability: "[[Grimgor's Waaagh!]]" (replaces: "[[Waaagh!]]")
+| "Everyfing I see is mine."
+|-
+!Warlord of Karak Eight Peaks
+![[Skarsnik]]
+|
+|Enables lightning strike battles when reinforcements are present
+
+Charge bonus: +14 for [[Night Goblin Squig Hoppers]] units (Lord's army)
+
+Army ability: "[[Skarsnik's Waaagh!]]" (replaces: "[[Waaagh!]]")
+|"The Peaks belong to me, I dare yoo to try and take 'em from me, stunty."
+|-
+!Da Great Green Prophet
+![[Wurrzag Da Great Green Prophet]]
+|
+|Physical resistance: 20% for Savage Orc units (Lord's army)
+Upkeep: -50% for Savage Orc units (Lord's army)
+
+Recruitment cost: -50% for Savage Orc units (Lord's army)
+
+Army ability: "[[Wurrzag's Waaagh!]]" (replaces: "[[Waaagh!]]")
+|"Da Godz speak ta me. Listen, and I'll tell ya."
+|-
+!Da Great 'Un
+![[Grom the Paunch]]
+|
+|Leadership: +10 when fighting against Elves (Lord's army)
+
+Physical resistance: +10% for Goblin units (Lord's army)
+
+Upkeep: -50% for Chariot and Pump Wagon units
+
+Army ability: "[[Grom's Waaagh!]]" (replaces: "[[Waaagh!]]"
+|Maintaining a chariot that can support Grom's immense weight pushes Goblin engineering skills to their limits.
+|-
+!Starving Gobbo
+![[Grom the Paunch]]
+|
+|Hit points: +5%
+|Grom is hungry! He needs to sample some recipes to begin expanding his portly waistline.
+|-
+!Binge Eater
+![[Grom the Paunch]]
+|Cooked 4 recipes
+||Hit points: +8%
+
+Hero capacity: +1 for Goblin Big Bosses
+|Having had his fill of appetizers, Grom is well on his way towards sampling the world's many delicacies.
+|-
+!Heavyweight Warboss
+![[Grom the Paunch]]
+|Cooked 8 recipes
+|Hit points: +10%
+
+Leadership: +5 for Goblin units (Lord's army)
+
+Hero capacity: +1 for Goblin Big Bosses 
+| Grom's banqueting bonanzas have bestowed him with great width and power, the ladz regard him with increasing awe.
+|-
+!Great Gourmet Boss
+![[Grom the Paunch]]
+|Cooked 12 recipes
+|Hit points: +12%
+
+Leadership: +8 for Goblin units (Lord's army)
+
+Hero capacity: +2 for Goblin Big Bosses
+|Grom's legendary feasts have given him a great gut to go with his great power; surely no one can stop him now!
+|-
+!King Grom
+![[Grom the Paunch]]
+|Cooked all recipes
+|Hit points: +12%
+
+Leadership: +8 for Goblin units (Lord's army)
+
+Hero capacity: +2 for Goblin Big Bosses
+
+Attribute: Perfect Vigour
+|Grom has conquered the culinary world, his great size and notoriety now giving him the impetus to conquer the Warden's gaudy realm and lands beyond!
+|-
+!Slaughterer
+![[Azhag the Slaughterer]]
+|
+|Spell: "[[Aspect of the Dread Knight]]"
+Spell: "[[Spirit Leech]]"
+
+Leadership aura size: +75%
+
+Character's aura leadership effect: +8
+
+Army ability: "[[Azhag's Waaagh!]]" (replaces: "[[Waaagh!]]")
+|"Wyverns is good fer one thing, eatin', smashin', smellin' and flyin'."
+|-
+|}
+
+==={{High Elves race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="10%" |Lord it belongs to
+! width="10%" | Requirement
+! width="45%" |Effect
+! width="45%" |Description
+|-
+! Great Warrior
+![[Tyrion]]
+|
+|Upkeep: -50% for [[Spearmen]], [[Archers]] and [[Silver Helms]] units (Lord's army)
+
+Recruit rank: +3 for [[Lothern Sea Guard]] units (Lord's army)
+| "Rally to my banner, and we shall bathe the plains with the blood of our enemies!"
+|-
+!Pre-Eminent Mage
+![[Teclis]]
+|
+| Winds of Magic power reserve: +30
+Bound spell: "[[Fireball]]"
+|This body may be frail, but never doubt the strength of the mind, or the heart within it.
+|-
+!The Radiant
+![[Alarielle the Radiant]]
+|
+|Missle damage: +15% for [[Sisters of Avelorn]] and [[Handmaiden of the Everqueen|Handmaiden]] units (Lord's Army)
+|As Everqueen of all Asur, Alarielle is leader of Avelorn and Ulthuan's spiritual head.
+|-
+!Raven Lord
+![[Alith Anar]]
+|
+|Upkeep: -50% for [[Shadow-walkers]] units (Lord's army)
+Ambush success chance: +25% (Lord's army)
+| Where Alith Anar stalks, so come the ravens to feast on the carrion in the Shadow King's wake.
+|-
+!Warden of Tor Yvresse
+![[Eltharion]]
+|
+|Immune to Barren Wasteland [[attrition]] (Lord's army)
+[[Leadership]]: +8 for Spear Infantry and Ranger units (Lord's army)
+Melee Defence: +8 for Spear Infantry and Ranger units (Lord's army)
+
+Attribute: Causes [[Fear]] when fighting against [[Greenskins]] (Lord's army)
+|"Pointy-ead" is legendary among the Greenskins, who both fear and respect his martial prowess
+|-
+!Dragonkin
+![[Imrik]]
+|
+|Campaign movement range: +15%
+Draconic Resilience: Immune to Mountain and Desert attrition (Lord's army)
+
+Upkeep: -25% for [[Dragons]] and [[Dragon Princes]] (Lord's army)
+|Imrik is the last of the line of Caledor the Dragontamer, and shares his lineage's martial excellence and affinity for Dragonkind.
+|-
+!Essence of the Eclipse
+![[Imrik]]
+|Defeated [[Lamoureux the Frozen Breath]]
+|Melee attack: +12
+Weapon strength: +20%
+|Just as it empowered Lamoureux, the hidden light of the natural moon brightens Imrik's martial prowess.
+|-
+!Celestial Strength
+![[Imrik]]
+|Defeated [[Ymwrath the Eternal]]
+|Hit points: +10%
+Passive ability: Regeneration
+|Originating from plains of existence known only to Star Dragons, stellar energies have saturated Imrik's lifeforce.
+|-
+|}
+
+==={{Khorne race}}===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="15%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!The Exiled One
+![[Skarbrand the Exiled]]
+|
+* [[File:Campaign movement.png]] Campaign movement range: +35% after winning a battle
+* [[File:Treasury.png]] Recruitment cost: -35% (when in enemy or razed territory)
+|''"I will rip the bones from your body and leave your skin to rot!"''
+|}
+
+==={{Kislev race}}===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="15%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!Ice Queen
+![[Tzarina Katarin]]
+|
+*[[File:Campaign untainted.png|24px]] Corruption: -6 (local province)
+*[[File:Military spending.png]] Upkeep: -50% for Ice Guard units (Lord's army)
+* Miscast base chance: -50%
+|''"Kislev is the people, and the people are Kislev!"''
+|-
+!Supreme Patriarch
+![[Kostaltyn]]
+|
+* [[File:Wound time.png]] Wound recovery time: -2 
+* [[File:Wh main unit passive frenzy.png|24px]] Passive ability: "Frenzy" (Lord's army)
+|''"If you love the Bear you will happily die rather than be taken!"''
+|-
+!Red Tzar
+![[Boris Ursus]]
+|
+* [[File:Military spending.png]] Upkeep: -50% for War Bear Riders units (Lord's army)
+* [[File:Morale.png]] Leadership: +7 when fighting against the [[Warriors of Chaos]], [[Daemons of Chaos]] and [[Norsca]] (Lord's army)
+* [[File:Melee.png]] Melee attack: +9  when fighting against the [[Warriors of Chaos]], [[Daemons of Chaos]] and [[Norsca]] (Lord's army)
+|''"Ursun called to me, and even in the coldest of sleeps, I answered!"''
+|}
+
+==={{Lizardmen race}}===
+{| class="wikitable" width="80%"
+! width="15%" | Trait
+! width="20%" | Lord it belongs to
+! width="45%" | Effect
+!Description
+|-
+![[File:Trait lizardmen.png]] Protector of Itza
+![[File:Lzd lord gor rok 0 porthole.png|82px]]<br>[[Gor-Rok]]
+| 
+*[[File:Mass.png]] Unit mass: +15% ([[File:Icon Army.png|15px]]Lord's army)
+*[[File:Resistance missile.png]] Missile resistance: 10% ([[File:Icon Army.png|15px]]Lord's army)
+|''Gor-Rok has sworn to protect his spawning-home, the Lizardmen's sacred First City of Itza, from any and all comers.''
+|-
+![[File:Trait lizardmen.png]] Last Defender
+! [[File:Lzd lord kroq gar 0 porthole.png|82px]]<br>[[Kroq-Gar]]
+| 
+*[[File:Military spending.png]] Upkeep: -15% ([[File:Icon Army.png|15px]]Lord's army)
+*[[File:Icon effects ambush.png]] Ambush success chance: +25% ([[File:Icon Army.png|15px]]Lord's army)
+*[[File:Experience.png]] Unit experience gain: +25% for Saurus Warriors and Cold One Rider units ([[File:Icon Army.png|15px]]Lord's army)
+|''As the last remaining warrior of the now ruined temple-city of Xhotl, for Kroq-Gar the battle is not yet over.''
+|-
+![[File:Trait lizardmen.png]] Venerated 
+![[File:Lzd lord mazdamundi 0 porthole.png|82px]]<br>[[Lord Mazdamundi]]
+|
+* [[File:Magic character.png]] Targeting range: +50% for spell
+* [[File:Magic campaign.png]] Winds of Magic power reserve capacity: +15
+* [[File:Experience.png]] Unit experience gain per turn: +50 ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Military spending.png]] Upkeep: -50% for Temple Guards units ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Magic character.png]] Miscast base chance: -50%
+|''Oldest and most powerful of the living Mage-Priests, Mazdamundi is a figure of awe even amongst his own kind.''
+|-
+![[File:Trait lizardmen.png]] He That Hunts Unseen
+![[File:Lzd oxyotl 0 porthole.png|82px]]<br>[[Oxyotl]]
+|
+*[[File:Diplomacy trespass.png]] Immune to diplomatic penalties from trespassing ([[File:Icon Army.png|15px]]Lord's army)
+*[[File:Subterfuge.png]] Has access to Masterful Ambush stance, requiring less movement range to adapt and with a reduced detection chance ([[File:Icon Army.png|20x20px]]Lord's army)
+*[[File:Armour piercing.png]] Armour-piercing missile damage: +50% for all Skink infantry units ([[File:Icon Army.png|15px]]Lord's army)
+*[[File:Experience.png]] Experience gain for units: +100% when fighting against the Forces of Chaos ([[File:Icon Army.png|15px]]Lord's army)
+|''Already an accomplished hunter when Chaos came to the world, Oxyotl mounted countless bold ambushes with his spawn-kin against the oncoming hordes.''
+|-
+! [[File:Trait lizardmen.png]] First Spawn
+! [[File:Lzd nakai 0 porthole.png|82px]]<br>[[Nakai the Wanderer]]
+|
+* [[File:Treasury.png]] Recruitment cost: -15% for Kroxigor and Sacred Kroxigor units ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Defence.png]] Melee defence: +5 for Kroxigor and Sacred Kroxigor units ([[File:Icon Army.png|15px]]Lord's army)
+|''Revered as the living embodiment of the jungle, Nakai is an ancient Kroxigor compelled to defend Lustria wherever and whenever it is threatened.''
+|-
+![[File:Trait lizardmen.png]] Chosen of the Serpent-God
+![[File:Lzd tehenhauin 0 porthole.png|82px]]<br>[[Tehenhauin]]
+|
+* [[File:Corruption.png]] Corruption: -3 (local province)
+* [[File:Morale.png]] Leadership: +10 when fighting against Skaven ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Resistance physical.png]] Physical resistance: 10% for Skink units ([[File:Icon Army.png|15px]]Lord's army)
+|''At times of great import, a single Red Crested Skink emerges from the deep jungle, claiming the mantle of the once and future Prophet of Sotek.''
+|-
+![[File:Trait lizardmen.png]] The Eye in the Heavens
+![[File:Lzd tiktaqto 0 porthole.png|82px]]<br>[[Tiktaq'to]]
+|
+* [[File:Military spending.png]] Upkeep: -50% for Terradon Riders, Ripperdactyl Riders and Coatl units ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Melee.png]] Melee attack: +10 when in foreign territory ([[File:Icon Army.png|15px]]Lord's army)
+|''The greatest Terradon rider ever to serve the Lizardmen, Tiktaq'to's daring stunts earned him the title "Master of Skies".''
+|-
+|}
+
+==={{Norsca race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" |Lord it belongs to
+! width="45%" |Effect
+!Description
+|-
+![[File:Trait norsca.png]] Born Warrior 
+![[File:Nor cha wulfrik 0 porthole.png|82px]]<br>[[Wulfrik the Wanderer]]
+|
+* [[File:Military.png]] Reinforcement range: +30%  ([[File:Icon Army.png|15px]]Lord's army)
+* [[File:Attribute causes fear.png]] Attribute: Can Cause Fear ([[File:Icon Army.png|15px]]Lord's army)
+|''Born to slaughter in their Ruinous names, Wulfrik bears the Mark of the Dark Gods upon his flesh.''
+|-
+!Monstrous Ruler
+![[Throgg]]
+|Attribute: Siege Attacker
+Public order: +1 (local province)
+
+All units in Throgg's army are immune to all attrition
+
+Chaos corruption: +2 (local province)
+|Atypical of his savage, stupid kind, Throgg is possessed of a grim, malevolent cunning that raises him far above his peers.
+|-
+|}
+
+==={{Nurgle race}}===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="15%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!Plagueweaver
+![[Ku'gath Plaguefather]]
+|
+*[[File:Infections bundle.png]] Infection cost: -50% (Lord's army)
+* [[File:Corruption nurgle.png|24px]] Nurgle corruption: +2 (local province)
+*[[File:Plague.png]] Chance of plague spreading: +15% (Lord's army)
+|''"All hordes, congeal; festering comes!"''
+|}
+
+==={{Ogre Kingdoms race}}===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="15%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!Overtyrant
+![[Greasus Goldtooth]]
+|
+*[[File:Income.png]] Income from raiding: +50% (Lord's army)
+*[[File:Military spending.png]] Upkeep: -50% for Ironguts units (Lord's army)
+*[[File:Income.png]] Income from sacking and looting settlements: +50% (Lord's army)
+|''"Today the orcs, tomorrow the world. Let them all tremble!..."''
+|-
+!Gore-Harvester
+![[Skrag the Slaughterer]]
+|
+*[[File:Replenishment.png]] Casualty replenishment rate: +8% for Gorgers units (Lord's army)
+*[[File:Military spending.png]] Upkeep: -50% for Gorgers units (Lord's army)
+|''"It's all 'ere, in ma pot. Just scamper over and jump in!"''
+|}
+
+==={{Skaven race}}===
+{| class="wikitable" width="80%"
+! width="15%" | Trait
+! width="20%" |Lord it belongs to 
+! width="45%" |Effect
+!Description
+|-
+!Gnawdell's Right-Claw
+![[Queek Headtaker]]
+|Upkeep: -50% for [[Stormvermin]] and [[Clanrats]] units (Lord's army)
+Army ability number of uses: +2 for "[[The Menace Below]]"
+|As Right-Claw to Warlord Gnawdell, Queek Headtaker has risen high within Clan Mors - a credit to the terrible violence he's unleashed along the way.
+|-
+! Hates Dwarfs & Greenskins
+![[Queek Headtaker]]
+|Melee attack: +10 when fighting against Dwarfs and Greenskin Tribes
+Weapon strength: +10% when fighting against Dwarfs and Greenskin Tribes
+|"Ack, Queek smells hated Dwarf and Green-things here! Queek will slaughter all! Queek claims first-scavenge rights!"
+|-
+!Plaguelord
+![[Lord Skrolk]]
+|Upkeep: -50% for [[Plague Monks]], [[Plague Monk Censer Bearers]], [[Plagueclaw Catapults]] and [[Plague Priest]] units (Lord's army)
+Skaven corruption: +3 (local province)
+|Rather than weakening with age, Lord Skrolk is possessed with a diabolic vitality that belies the years and the heaped diseases he carries.
+|-
+!Grand Chieftain
+![[Tretch Craventail]]
+|Melee attack: +13 during Ambushes (Lord's army)
+
+Melee attack: +13 after retreating when attacked (Lord's army)
+
+Attribute: Vanguard Deployment (all units in army)
+|An audacious surprise attack on his predecessor has led to a new title for Tretch and an army to do his bidding.
+|-
+!Right-Fang of Lord Morskittar 
+![[Ikit Claw]]
+|[[Upkeep]]: -50% for all [[Warplock Jezzails]], [[Warpfire Throwers]] and [[Ratling Guns]] units (Lord's army)
+Recruit [[rank]]: +2 for all Skaven Weapons Team units
+|Rising to this position was inevitable, for no other Warlock Engineer is as influential as the infamous, devastating Ikit Claw!
+|-
+!Grand Nightlord's Agitator
+!'''[[Deathmaster Snikch]]'''
+|Ambush success chance: +25% (Lord's army)
+Melee attack: +8 for embedded Heroes (Lord's army)
+
+Ability: "[[Concealment Bombs]]"
+|Regardless of the mark, Snikch always finds a way to get closer. Regardless of the Nightlord's motives, the Deathmaster always  sees his master's will done.
+|-
+|}
+
+==={{Slaanesh race}}===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="15%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!Seductive 
+![[N'Kari]]
+|
+*[[File:Experience.png]] Experience gain: +50% each time a new faction is fought in battle
+* [[File:Icon income chaos.png]] Seduce Units cost: -25%
+*[[File:Morale.png]] Enemy leadership: -4 (local region)
+|''"I yearn to taste their delicious agony."''
+|}
+
+==={{The Empire race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" |Lord it belongs to
+! width="45%" |Effect 
+!Description
+|-
+!Emperor 
+![[Karl Franz]]
+|Leadership: +8 (Lord's army)
+|"Our names will be remembered in our people's songs until the end of time!"
+|-
+!Grand Theogonist 
+![[Volkmar the Grim]]
+|Public order +4 (local province)
+Physical resistance +10% for [[Flagellants]], [[Empire Knights]], and [[Free Company Militia]] (lord's army)
+
+Melee defence +8 for  [[Flagellants]], [[Empire Knights]], and [[Free Company Militia]] (lord's army)
+|"By the comet, that is my decree!"
+|-
+!Transmuter
+![[Balthasar Gelt]]
+|Winds of Magic cost: -20% for Lore of Metal
+Missile damage: +10% for artillery units (Lord's army)
+
+Hero recruit rank: +2 for [[Battle Wizard]]s (factionwide)
+|"The Wind of Chamon will rise and blast any who get in my way!" 
+|-
+!Captain of Scouts
+![[Markus Wulfhart]]
+|Ambush defence chance: +50% (Lord's Army)
+
+Ambush success chance: +50% (Lord's Army)
+
+Upkeep: -50% for Archers and Huntsmen units (Lord's Army)
+|Markus Wulfheart's advanced tracking and slaying skills have earned him both a reputation and the recognition of Karl Franz himself.
+|-
+|}
+
+==={{Tomb Kings race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="10%" |Lord it belongs to
+! width="10%" |Requirement 
+! width="20%" |Effect
+! width="20%" | Description
+|-
+!Great King of Nehekara
+![[Settra the Imperishable]]
+|
+|Leadership aura size: +100%
+Casualty replenishment rate: +10% for Tomb Guard and Skeleton Chariot units (Lord's army)
+|Settra is a brutal warlord and powerful sorcerer combined to deadly effect; ageless, deathless, venomous, and almost entirely without peer.
+|-
+!The Imperishable
+![[Settra the Imperishable]]
+|
+|
+|Kneel before the might of Settra the Imperishable...
+|-
+!The Imperishable (Khemrikhara) 
+![[Settra the Imperishable]]
+|Faction has a treasury of 50,000 
+| Income from raiding: +10% (Lord's army)
+Income from all buildings: +5% (local province)
+|Kneel before the might of Settra the Imperishable, Khemrikhara, Lord of the Earth, He Who Holds The Sceptre...
+|-
+!The Imperishable (High King of Nehekhara)
+![[Settra the Imperishable]]
+|Faction has a treasury of 100,000
+|Income from raiding: +20% (Lord's army)
+Income from all buildings: +10% (local province)
+| Kneel before the might of Settra the Imperishable, Khemrikhara, Lord of the Earth, He Who Holds The Sceptre, High King of Nehekhara, Ruler of the Four Horizons, Mighty Lion of the Infinite Desert...
+|-
+!The Imperishable (The King of Kings)
+![[Settra the Imperishable]]
+|Faction has a treasury of 200,000
+|Income from raiding: +30% (Lord's army)
+Income from all buildings: +15% (local province)
+| Kneel before the might of Settra the Imperishable, Khemrikhara, Lord of the Earth, He Who Holds The Sceptre, High King of Nehekhara, Ruler of the Four Horizons, Mighty Lion of the Infinite Desert, The King of Kings, Great Hawk of the Heavens, Majestic Emperor of the Shifting Sands and Eternal Soveriegn of Khemri's Legions. 
+|-
+!Grand Hierophant 
+![[Grand Hierophant Khatep]]
+|
+|Hero capacity: +2 for [[Liche Priest]]s
+Hero recruit rank: +3 for Liche Priests
+|The oldest and wisest of the Liche Priests is the head of the Mortuary Cult's hieratic council.
+|-
+!Beloved of Asaph
+![[High Queen Khalida]]
+|
+| Enables poison attacks (Lord's army)
+Attrition: -50% casualties suffered from all attrition (Lord's army)
+
+Untainted: +3 (local province)
+|As the embodiment of the Asp Goddess in full fury, a wave of pure terror rolls over those who look upon her.
+|-
+!The Liche King
+![[Arkhan the Black]]
+|
+|Melee attack: +5 for embedded Heroes (Lord's army)
+Melee defence: +5 for embedded Heroes (Lord's army)
+|The monarch of the Undead, the liege of the Unliving.
+|-
+|}
+
+==={{Tzeentch race}}===
+{| class="sortable fandom-table wikitable" width="80%"
+! width="15%" |'''Trait'''
+! width="20%" |'''Legendary Lord'''
+! width="45%" |'''Effects'''
+!'''Description'''
+|-
+!Oracle
+![[Kairos Fateweaver]]
+|
+* [[File:Magic character.png]] Can unlock unique items that can be used to customise Kairos' spell selection
+*[[File:Agent.png]] Enemy Hero action success: -50%
+*[[File:Icon effects ambush.png]]Ambush defence chance: +50% (Lord's army)
+|''"The now is trivial to us - we know the day we perish is not this day."''
+|}
+
+==={{Vampire Coast race}}===
+Note: [[Luthor Harkon]] has special cycling character traits which can change at random, due to him being insane. For a full list please see our [[Luthor Harkon]] article.
+
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" | Lord it belongs to 
+! width="45%" |Effect
+!Description
+|-
+!Arch Grand Commodore
+![[Luthor Harkon]]
+|Magic resistance: 25% for all units (Lord's army)
+Leadership: +8 when fighting against Lizardmen
+
+Vampiric corruption: +3 (local province)
+|Luthor Harkon has made many great cold-blooded enemies in his time, but his Undead army fear - and feel - nothing.
+|-
+!Lord of Dread
+![[Count Noctilus]]
+|Upkeep: -20% for [[Necrofex Colossus]] units (Lord's army)
+Weapon strength: +15% for large units (Lord's army)
+|Count Noctilus abandoned Sylvania to become the captain of the Dreadfleet and the master of the Galleon's Graveyard; he is the foremost bringer of death upon the high seas.
+|-
+! Queen of Tides 
+![[Aranessa Saltspite]]
+|Character's leadership aura effect: +12
+Weapon strength: +20% for all Sartosan units (Lord's army)
+
+Melee attack: +8 for all Sartosan units (Lord's army)
+|Aranessa Saltspite is the most feared pirate in all of Sartosa, but none fear her more than the Norscan curs she hunts.
+|-
+!Siren of the Storm
+![[Cylostra Direfin]]
+|Physical resistance: +5% for all units (Lord's army)
+Enables magical attacks (Lord's army)
+|Cylostra is a vengeful spirit intent on performing for the Phoenix King, willing to sink all of Ulthuan to achieve her undying goal.
+|-
+|}
+
+==={{Vampire Counts race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" |Lord it belongs to
+! width="45%" |Effect
+!Description
+|-
+!Count
+![[Mannfred von Carstein]]
+|Winds of Magic power reserve: +30
+Leadership: +10 when fighting against Men (Lord's army)
+|"My people will feast on your bones."
+|-
+!Summon Creatures of the Night
+![[Mannfred von Carstein]]
+|Melee attack: +10 for [[Dire Wolves (Vampire Counts)|Dire Wolves]] and [[Fell Bats (Vampire Counts)|Fell Bats]] units (Lord's army)
+|Only the direst of all Undead creatures will come to this summons.
+|-
+!Dark Acolyte
+![[Mannfred von Carstein]]
+|Cooldown: -10% to "[[Invocation of Nehek]]"
+| Some Vampires have an affinity for Necromantic magic beyond their peers.
+|-
+!Student of the Black Arts
+![[Mannfred von Carstein]]
+| Ability: "Master of the Black Arts"
+|A student of the forbidden mysteries, yet not limited to a mortal span, so plenty of time to learn.
+|-
+!Neophyte
+![[Helman Ghorst]]
+|All units in Helman Ghorst's army receive poison attacks (Lord's army)
+| The student thrives on heretical knowledge; dark foundations lead to darker, binding deliverance.
+|-
+!Consuming Thirst
+![[Vlad von Carstein]]
+|Attribute: Siege Attacker
+Undying Love: +15 to Melee Attack and Melee Defence when Vlad and Isabella are reinforcing each other
+
+All units in Vlad von Carstein's army receive Vanguard Deployment (Lord's army)
+|"Surrender and serve me in life, or die and slave for me in death."
+|-
+! Dark Retinue
+![[Isabella von Carstein]]
+|Undying Love: +15 to Melee Attack and Melee Defence when Vlad and Isabella are reinforcing each other
+Melee attack: +10 for embedded [[Vampire]] Heroes (Lord's army)
+
+Melee defence: +10 for embedded Vampire Heroes (Lord's army)
+|The Undead whole is always stronger than the sum of its parts.
+|-
+!Wanderer
+![[Heinrich Kemmler]]
+|All units in Heinrich Kemmler's army are immune to non-Vampire Count territory attrition
+{{effects description wh2_dlc17_effect_magic__reduce_wom_cost_vampires_percentage|-20}}
+{{Effects description wh main effect battle magic lore of vampires cooldown rate|-20}}
+Ability: "[[Lord of Undeath]]"
+|"You and your masters are desiccated relics of a dead age."
+|-
+|}
+
+==={{Warriors of Chaos race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" |Lord it belongs to
+! width="45%" |Effect
+!Description
+|-
+![[File:Trait chaos.png]] Vessel
+![[Archaon the Everchosen]]
+|
+*[[File:Weapon damage.png]] Units gain +3 weapon and missile strength per rank achieved
+*[[File:Corruption chaos.png]] All Authority: +1 ([[File:Icon Army.png|22px]]Lord's army)
+*[[File:Resistance ward save.png]] Ward Save: +5% for all units ([[File:Icon Army.png|22px]]Lord's army)
+| ''"I will be the axis upon which the wheel of change turns, and the world will drown in the light of unborn stars."''
+|-
+![[File:Trait slaanesh.png]] Prince of Damnation
+![[Azazel]]
+|
+*[[File:Wh3 dlc20 lord passive domineering aura.png|24x24px]] Passive ability “Domineering Aura”
+*[[File:Military spending Chaos.png]] Seduce Units cost: -20% for Empire, Bretonnia, Kislev, and Cathay units
+*[[File:Military spending Chaos.png]] Seduce Units budget: +25%
+|''From a warm, silvery voice comes whispers telling the foe of pleasures that could be theirs, if only they submit to the waiting arms of Slaanesh.''
+|-
+![[File:Trait daemons.png]] Prince of Nightmares
+![[Be'lakor]]
+|
+*[[File:Corruption chaos.png]] All Authority: +2 ([[File:Icon Army.png|22px]]Lord's army)
+*[[File:Wh3 main lord abilities shadow shroud.png|24px]] Ability: "[[Shadow Shroud]]"
+|''"One by one, I will kill the Gods and harvest their strength."''
+|-
+![[File:Trait nurgle.png]] Dark Apothecary 
+![[Festus the Leechlord]]
+|
+*[[File:Plague.png]] Plague duration: +3 turns (local armies)
+*[[File:Health character.png]] Battle healing cap: +25% ([[File:Icon Army.png|22px]]Lord's Army)
+|''Working tirelessly to propagate disease, famine and decay, the Leechlord honours his unholy pact with the Lord of Pestilence.''
+|-
+![[File:Trait chaos.png]] Mountain God
+![[Kholek Suneater]]
+|
+*[[File:Souls.png]] Souls cost: -25% for "Carnage Incarnate" Gift of Chaos
+*[[File:Military spending.png]] Upkeep: -25% for Dragon Ogres and Dragon Ogre Shaggoths units ([[File:Icon Army.png|22px]]Lord's army)
+*[[File:Resistance missile.png]] Missile resistance: 10% for Chaos Monstrous infantry and Monster units ([[File:Icon Army.png|22px]]Lord's army
+|''"The whole world will burn before I rest again."''
+|-
+![[File:Trait chaos.png]] Supreme Vanity
+![[Sigvald the Magnificent]]
+|
+*[[File:Experience.png|24px]] Character experience gain: +10%
+*[[File:Corruption slaanesh.png|24px]] Slaanesh corruption: +4 (local province)
+*[[File:Battle speed.png|24px]] Speed: +15% for Marauders of Slaanesh, Chaos Warriors of Slaanesh and Chosen of Slaanesh units ([[File:Icon Army.png|22px]]Lord's army)
+|''"Surely such sedition should sour and succumb to Sigvald!"''
+|-
+![[File:Trait khorne.png]] The Gorequeen
+![[Valkia the Bloody]]
+|
+*[[File:Wh3 dlc20 lord passive the gaze of khorne.png|24x24px]] Passive ability: "[[The Gaze of Khorne]]"
+* [[File:Campaign movement.png]] Campaign movement range: +35% after enemy retreats from battle
+|''Born a warrior, lived as a queen, and died as a legend. Valkia now spills blood without need of sleep, respite or sustenance.''
+|-
+![[File:Trait tzeentch.png]] Parasite
+![[Vilitch the Curseling]]
+|
+*[[File:Experience.png|24x24px]] Steal +15% of the experience earned by other Lords
+*[[File:Wh3 dlc20 lord passive the twisted twin.png|24x24px]] Passive ability: "[[The Twisted Twin]]"
+* [[File:Teleport.png]] Teleport stance usage cost: -25% Winds of Magic ([[File:Icon Army.png|22x22px]]Lord’s Army)
+|''Vilitch leeches strength from everything around him just as easily as he leeches the very willpower from his drooling brother.''
+|-
+|}
+
+==={{Wood Elves race}}===
+{| class="wikitable" width="80%"
+! width="15%" |Trait
+! width="20%" |Lord it belongs to
+! width="45%" |Effect
+!Description
+|-
+!Briarmaven of Woe
+![[Drycha]]
+|Public order: -5 (local enemy province)
+
+Weapon strength: +10% for Dryad units (Lord's army)
+
+Melee attack: +5 for Dryad units (Lord's army)
+
+Ability: [[Roused to Wrath]]
+|"Long ago, Drycha held court on the tainted ground where Morghur's blood was spilt amongst the roots of the once-glorious Tree of Woe."
+|-
+!Eldest of Ancients
+![[Durthu]]
+|All units in Durthu's army are immune to attrition (Lord's army)
+Upkeep: -30% for forest spirit units (Lord's army)
+
+Charge bonus: +10 for [[Dryads]], [[Tree Kin]] and Treemen units
+|"The forest does not forgive; the forest does not forget. You will all feed its roots in the end, one way or another..."
+|-
+!King in the Woods
+![[Orion]]
+|Weapon strength: +20% for [[Wild Riders]] units (Lord's army)
+Charge bonus: +8 for Wild Riders units (Lord's army)
+|"Do you understand? You are more than you were - more than just flesh and blood; you are everything that defines us."
+|-
+!Dusk & Dawn
+![[Sisters of Twilight]]
+|Upkeep: -10% for missile units (Lord's army)
+
+Melee attack: +10 for flying units (Lord's army)
+
+Charge bonus: +15% for flying units (Lord's army)
+|"Some say Naestra and Arahan are the lightest and darkest aspects of Ariel's spirit made manifest, her mercy and passion split from her soul."
+|-
+|}
+
+[[Category:Legendary Lords]]

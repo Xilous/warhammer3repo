@@ -1,0 +1,360 @@
+<title>Ranged Doomstack Research</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working field manual. A reading column for the model and verdicts, full-width instrument panels for the ledger. */
+:root{
+  --bg:#f3efe6; --fg:#1d1b17; --muted:#6b655a; --line:#d8d0c0; --panel:#fbf9f4; --panel2:#ebe5d8;
+  --accent:#8a2f1e; --accent-ink:#ffffff; --good:#2d6a3e; --warn:#9a6a12; --bad:#8a2f1e;
+  --display:"Barlow Condensed","Arial Narrow",Impact,sans-serif; --body:"IBM Plex Sans",system-ui,Helvetica,Arial,sans-serif; --mono:"IBM Plex Mono",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#17160f;--fg:#ece6d8;--muted:#a39b8a;--line:#3a3628;--panel:#211f16;--panel2:#2b2820;--accent:#e0704f;--accent-ink:#17160f;--good:#7fc48f;--warn:#e2b64a;--bad:#e0704f;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#17160f;--fg:#ece6d8;--muted:#a39b8a;--line:#3a3628;--panel:#211f16;--panel2:#2b2820;--accent:#e0704f;--accent-ink:#17160f;--good:#7fc48f;--warn:#e2b64a;--bad:#e0704f;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5;padding-block:28px 60px;padding-inline:clamp(16px,4vw,48px)}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;letter-spacing:.01em;margin:0}
+h1{font-size:clamp(40px,7vw,72px);line-height:.95;text-transform:uppercase}
+h2{font-size:28px;text-transform:uppercase;margin-block:44px 12px;border-top:2px solid var(--fg);padding-top:10px}
+h3{font-size:21px;margin-block:20px 6px}
+h4{font-size:17px;margin-block:14px 4px;color:var(--muted)}
+p{margin:0 0 12px;max-width:70ch}
+ul,ol{padding-left:20px;max-width:72ch}li{margin-bottom:6px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.lede{font-size:18px;max-width:64ch;margin-top:14px}
+code,.mono{font-family:var(--mono);font-size:13px}
+.formula{font-family:var(--mono);font-size:13px;background:var(--panel);border:1px solid var(--line);padding:10px 12px;margin:8px 0 14px;overflow-x:auto;max-width:100%;white-space:pre}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-top:18px}
+.card{background:var(--panel);border:1px solid var(--line);padding:16px 18px;min-width:0}
+.card .k{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card .v{font-family:var(--display);font-size:28px;line-height:1.05;margin:4px 0 8px}
+.card p{font-size:14px;margin:0}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px 18px;background:var(--panel);border:1px solid var(--line);padding:14px 16px;margin:14px 0}
+.ctrls label{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);min-width:0}
+.ctrls .chk{flex-direction:row;align-items:center;gap:8px}
+.ctrls .w{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}
+.ctrls .w output{font-family:var(--mono);font-size:12px;color:var(--fg);min-width:28px;text-align:right}
+select,input[type=search],input[type=number]{font:14px var(--body);color:var(--fg);background:var(--bg);border:1px solid var(--line);padding:6px 8px;min-width:0;width:100%}
+input[type=range]{width:100%;accent-color:var(--accent)}
+button{font:600 13px var(--body);color:var(--accent-ink);background:var(--accent);border:0;padding:8px 12px;cursor:pointer}
+button.ghost{background:transparent;color:var(--fg);border:1px solid var(--line)}
+select:focus,input:focus,button:focus,th:focus,tr:focus{outline:2px solid var(--accent);outline-offset:1px}
+.count{font-family:var(--mono);font-size:12px;color:var(--muted);margin:0 0 8px}
+.wrap{overflow-x:auto;border:1px solid var(--line);background:var(--panel)}
+table{border-collapse:collapse;width:100%;min-width:1500px;font-size:13px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap;vertical-align:top}
+th.l,td.l{text-align:left}
+th{position:sticky;top:env(safe-area-inset-top,0px);background:var(--panel);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);cursor:pointer;user-select:none;border-bottom:2px solid var(--fg);z-index:1}
+th[aria-sort="descending"]::after{content:" ▼";color:var(--accent)}th[aria-sort="ascending"]::after{content:" ▲";color:var(--accent)}
+td.name{font-weight:600;cursor:pointer}
+td.name small{font-weight:400;color:var(--muted);display:block;font-size:11px}
+tr.sp td.name{color:var(--muted)}
+.tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.05em;padding:1px 5px;border:1px solid var(--line);margin-right:3px;color:var(--muted)}
+.tag.fly{border-color:var(--accent);color:var(--accent)}
+tr.detail td{white-space:normal;background:var(--bg);padding:12px 14px 16px}
+.sheet{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px 22px;font-size:13px}
+.sheet div{min-width:0}
+.sheet b{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:block;margin:6px 0 2px}
+.sheet dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:1px 10px}
+.sheet dt{color:var(--muted)}.sheet dd{margin:0;font-variant-numeric:tabular-nums}
+.bar{height:6px;background:var(--line);min-width:70px;position:relative;margin-top:5px}.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.score{font-family:var(--display);font-size:18px}
+.note{font-size:13px;color:var(--muted);max-width:72ch}
+details{border:1px solid var(--line);background:var(--panel);padding:10px 14px;margin:8px 0;max-width:100%}
+summary{cursor:pointer;font-weight:600}
+details ul{font-size:13px}
+.mechrace h3{margin-top:16px}
+.ll{font-size:13px}
+.pill{display:inline-block;padding:1px 7px;border-radius:2px;background:var(--panel2);font-family:var(--mono);font-size:11px;margin-right:4px}
+.src a{color:var(--accent)}
+@media (max-width:600px){h2{font-size:24px}.card .v{font-size:24px}}
+</style>
+
+<p class="eyebrow">Total War: Warhammer III · Patch 9.0 game tables via twwstats.com · mechanics from the Total War: Warhammer fandom wiki · compiled 13 Oct 2026</p>
+<h1>Ranged Doomstack Research</h1>
+<p class="lede">A stat-only evaluation of every recruitable ranged unit in the game for armies that field a single unit type at a time, ranged, ground or flying. No community opinion is used anywhere on this page. Every number is read from the Patch 9.0 unit, projectile, explosion and entity tables, and every verdict is computed from the formulas in the Model section, which you can re-weight live.</p>
+
+<div class="grid" id="verdict"></div>
+
+<h2>What is in the data</h2>
+<p>For each unit the page holds the full stat line: recruitment cost, upkeep, build time, in-game tier, models or vehicles per unit (Ultra size), hit points per entity and per unit, armour, shield block chance, leadership, run and fly speed, mass, entity radius, melee attack and defence, charge bonus, melee weapon damage split, accuracy and reload skill, resistances (missile, physical, magic, fire, ward), ammunition in shots, and the primary projectile: base and armour-piercing damage, bonus versus infantry and large, effective range, base reload time, projectiles per shot, shots per volley, burst size and delay, calibration distance and area (the game's accuracy model), spread, marksmanship, maximum elevation (whether it fires over friendly lines), collision radius, magical and ignition flags, penetration depth and size cap, and the explosion record: detonation radius, detonation damage, armour-piercing detonation damage and force. Bombs and activated shots that live on abilities (Gyrobomber bombs, Sky-junk bombs, Spear of Grungni) are listed on the unit's sheet as well.</p>
+<p class="note">Unit counts use Ultra unit size. Weapon teams fire one weapon per two models. Artillery fires per engine, cavalry per mount, flying machines per vehicle. Regiments of Renown, Grudge Settlers, Elector Count troops, Blessed spawnings, Amethyst units, Tamurkhan's chieftain units and summons are kept in the ledger but marked special and excluded from rankings by default, because you cannot field nineteen of them.</p>
+
+<h2>The model</h2>
+<p>The ranking is a weighted sum of six normalised scores. Each score is derived from the stats with the formulas below, against a target profile you can change. Weights default to a spam army's priorities and can be moved with the sliders in the ledger controls.</p>
+<h3>1. Damage per hit versus armour</h3>
+<div class="formula">armour roll u ~ Uniform(0.5, 1.0)        reduction = min(1, armour × u / 100)
+expected multiplier on base damage  m(A) = 1 − E[reduction]
+   A ≤ 100:  m = 1 − 0.75·A/100           A > 100:  computed numerically (reduction saturates at 100%)
+per-hit damage = base × m(A) + AP (+ bonus vs large or infantry, split in the weapon's base/AP ratio)
+shields: small-arms shots from the front are blocked with probability block%; artillery and explosions ignore shields; Shieldbreaker contact sets block to 0</div>
+<p>This is the game's armour rule as stated on the wiki's Damage page: armour reduces base damage by a random fraction between half and the full armour value, capped at 100, and never touches armour-piercing damage.</p>
+<h3>2. Hits per projectile</h3>
+<div class="formula">direct and arcing shots vs a formation: hits = 1 + min(penetration, 3) when the penetration size cap allows the target size
+explosion vs a formation: extra models hit = min(models in target, 16, density × π × radius²)   density = 0.35 models/m²; blast damage on a formation is scaled by 0.6 for edge models
+overlap: blast hits from one volley are capped at the formation size; the whole volley is capped at the formation's HP pool (models × HP), so the surplus is overkill
+explosion vs a single entity: 1 extra hit at explosion damage
+single-entity targets: hit chance = min(1, (target radius / scatter radius)²)
+   scatter radius = (calibration area / 2) × (engagement range / calibration distance) × (1 − accuracy skill/100)
+   engagement range = min(effective range, 150 m), or 70% of range for artillery</div>
+<p>Calibration distance and area are the actual accuracy records: at the calibration distance, shots land inside a circle of the given diameter. Scatter grows linearly beyond it. Big single targets are easy; a lord on foot inside a blob is not, so blob targets assume every projectile hits something.</p>
+<h3>3. Rate and sustain</h3>
+<div class="formula">effective reload = base reload × (1 − reload skill/100)
+projectiles per volley = projectiles per shot × shots per volley × burst size
+unit damage per second (DPS) = firing entities × projectiles per volley × hits × per-hit damage × hit chance ÷ effective reload
+volleys = ammunition ÷ shots per volley        time on trigger = volleys × effective reload
+battle damage = DPS × time on trigger          volleys before contact = (range ÷ closing speed) ÷ effective reload</div>
+<h3>4. Durability, standoff, campaign</h3>
+<div class="formula">effective HP vs missiles = HP ÷ (1 − missile res) ÷ (1 − ward) × (1 + block/200)
+effective HP vs melee   = HP ÷ (0.35 + 0.65 × m(own armour)) ÷ (1 − physical res) ÷ (1 − ward)   (assumes attackers with 35% AP share)
+standoff = range × (fires over friends ? 1.0 : 0.85) × (fire whilst moving ? 1.15 : 1) × (flying ? 1.2 : 1)
+flyer answer = can the weapon shoot a flying target: lobbed artillery 0, flat artillery 0.3, small arms 1, then × hit chance vs a large flyer
+cost = DPS per 100 upkeep, with a penalty for build time above 1 turn and for unit caps</div>
+<h3>5. Composite</h3>
+<p>Each score is rescaled to 0–100 by rank within the shown set, then combined with the weights. The default weights are: damage versus the chosen target 30, battle damage 15, durability 15, standoff 15, flyer answer 10, cost efficiency 15. Change the target profile or the weights and the ledger re-ranks instantly.</p>
+<h3>Assumptions the data cannot settle</h3>
+<ul>
+  <li>Reload skill is applied as a flat percentage reduction of reload time. The tables store it as an integer; the game's exact curve is not published.</li>
+  <li>Bonus versus large or infantry is split between base and AP in the weapon's own ratio. The game adds it as flat damage; the split affects only armoured targets.</li>
+  <li>Formation density of 0.35 models per square metre, a 16-model cap per blast and a 0.6 edge factor are estimates for explosion coverage on a formation two to four ranks deep; blast hits per volley are capped at the formation size and a volley cannot deal more than the formation's HP pool. Single targets take full blast damage once.</li>
+  <li>Ability bombs (Gyrobombers, Sky-junk, gyrocopter grenades) are listed on the sheet but not added to DPS, because their use count and recharge make them a per-battle burst, which is shown separately as "ability burst".</li>
+  <li>Permanent campaign buffs are a separate layer, off by default. "Campaign ceiling" applies every technology in the race's tree, the generic lord whose army skills help the unit most (all ranks taken), and fixed-plateau mechanics (Forbidden Workshop, Scrap, Forge and adventure upgrades). "Ceiling + legendary lord" lets a legendary lord compete with the generic lords on skills, lord trait and faction-only techs, and picks whoever scores highest for the unit. Faction-specific mechanics (Forbidden Workshop, Malakai's adventure rewards, Imperial Supply) count for a generic lord, because a generic lord can serve in that faction, but for a legendary lord only his own faction's mechanics count. Rank 7 veteran perks are excluded unless ticked, because the unit has to earn them. Buildings, landmarks, items, hero skills, rites and temporary bundles are not applied. Each unit's sheet lists exactly what was applied and the other lord options.</li>
+  <li>Buff arithmetic follows the game's effect types: "missile strength" multiplies base and AP damage separately, "reload time reduction" adds to reload skill, ammunition, range and speed are percentages, armour, leadership, resistances and bonus-vs are flat adds. Unit experience itself is not applied.</li>
+  <li>Reload times below 5 seconds (throwing weapons and continuous-fire weapons stored as 0) are clamped to 5 seconds, the shortest practical firing cycle once animation time is counted.</li>
+</ul>
+
+<h2>Ledger</h2>
+<div class="ctrls">
+  <label>Search<input type="search" id="q" placeholder="unit, race, building"></label>
+  <label>Race<select id="race"><option value="">All</option></select></label>
+  <label>Target profile<select id="target">
+    <option value="light">Light infantry blob (armour 20, 120 models)</option>
+    <option value="elite">Armoured elite infantry (armour 100, 55% shields, 60 models)</option>
+    <option value="monster">Large monster (armour 90, 8000 HP, single)</option>
+    <option value="cav">Heavy cavalry (armour 100, 60 models, large)</option>
+    <option value="flyer">Flying monstrous cavalry (armour 70, 16 models, large, airborne)</option>
+    <option value="all">All five profiles (scores averaged)</option>
+  </select></label>
+  <label>Permanent buffs<select id="layer">
+    <option value="raw">Raw tables (no campaign buffs)</option>
+    <option value="ceil">Campaign ceiling: all techs + best generic lord + mechanics</option>
+    <option value="ll">Ceiling + best legendary lord</option>
+  </select></label>
+  <label class="chk"><input type="checkbox" id="r7"> Include Rank 7 veteran perks</label>
+  <label>Closing speed of the enemy (m/s)<input type="number" id="speed" value="4" min="1" max="12" step="0.5"></label>
+  <label class="chk"><input type="checkbox" id="fly"> Flying units only</label>
+  <label class="chk"><input type="checkbox" id="sp"> Include special units (RoR, settlers, summons)</label>
+  <label class="chk"><input type="checkbox" id="caps" checked> Penalise capped factions</label>
+  <label>Sort by<select id="sort">
+    <option value="score">Composite score</option><option value="dps">DPS vs target</option><option value="battle">Battle damage vs target</option><option value="ehp">Durability</option><option value="standoff">Standoff</option><option value="flyans">Flyer answer</option><option value="eff">Cost efficiency</option><option value="upk">Upkeep</option><option value="n">Name</option>
+  </select></label>
+  <label class="w">Weight: damage vs target <output id="o_w1">30</output><input type="range" id="w1" min="0" max="60" value="30"></label>
+  <label class="w">Weight: battle damage <output id="o_w2">15</output><input type="range" id="w2" min="0" max="60" value="15"></label>
+  <label class="w">Weight: durability <output id="o_w3">15</output><input type="range" id="w3" min="0" max="60" value="15"></label>
+  <label class="w">Weight: standoff <output id="o_w4">15</output><input type="range" id="w4" min="0" max="60" value="15"></label>
+  <label class="w">Weight: flyer answer <output id="o_w5">10</output><input type="range" id="w5" min="0" max="60" value="10"></label>
+  <label class="w">Weight: cost efficiency <output id="o_w6">15</output><input type="range" id="w6" min="0" max="60" value="15"></label>
+</div>
+<p class="count" id="count"></p>
+<div class="wrap"><table id="t">
+<thead><tr>
+<th class="l" data-k="n">Unit</th><th class="l" data-k="r">Race</th><th data-k="score">Score</th><th data-k="tier" title="Unit grade from the main unit table (0–5)">Unit grade</th><th data-k="stier" title="Settlement level the recruitment building needs (from the building tables)">Settlement tier</th><th data-k="cost">Cost</th><th data-k="upk">Upkeep</th><th data-k="turns">Turns</th><th data-k="fire">Shooters</th><th data-k="hp">HP</th><th data-k="arm">Armour</th><th data-k="shield">Block</th><th data-k="ld">Ld</th><th data-k="spd">Speed</th><th data-k="range">Range</th><th data-k="reloadEff">Reload</th><th data-k="volleys">Volleys</th><th data-k="perhit">Dmg/hit vs tgt</th><th data-k="dps">DPS vs tgt</th><th data-k="battle">Battle dmg</th><th data-k="vbc">Volleys before contact</th><th data-k="ehpm">EHP vs missiles</th><th data-k="eff">DPS/100 upk</th><th class="l">Buffs applied</th><th class="l">Traits</th>
+</tr></thead><tbody id="tb"></tbody></table></div>
+<p class="note" style="margin-top:10px">Click a unit for its full stat sheet, projectile record, explosion record, ability shots and faction notes. Column headers sort.</p>
+
+<h2>Faction mechanics that touch ranged units</h2>
+<p>Wiki-derived notes on campaign mechanics, grouped by race, kept for context. The ledger's buff layer does not use this text; it reads the technology, skill, trait, effect-bundle and unit-set tables straight from the installed game, so each unit's sheet is the authoritative list of what applies.</p>
+<div id="mech"></div>
+
+<h2>Sources and provenance</h2>
+<p class="src note">Unit, projectile, explosion, entity and ability tables: the twwstats.com GraphQL service, dataset "Patch 9.0.0" (2746 units), queried 13 October 2026. Mechanics, technologies, lord traits, buildings and patch histories: <a href="https://totalwarwarhammer.fandom.com/wiki/Total_War:_Warhammer_III">totalwarwarhammer.fandom.com</a>, fetched the same day through the wiki API. The armour and shield rules are taken from the wiki's Damage and Shielded pages. Unit Strategy sections on the wiki were deliberately not used. Permanent buffs: read on 14 October 2026 from the installed game's own database and English text packs (db.pack, data.pack, local_en.pack, Update 9.0 line) through the technology_nodes, technology_effects_junction, character_skill_node_sets, character_skill_level_to_effects_junctions, faction_starting_general_effects, effect_bundles_to_effects_junctions, effect_bonus_value_ids_unit_sets, unit_set_to_unit_junctions and unit purchasable-effect tables, with the RPFM community schema for table layouts.</p>
+
+<script>
+const U=__DATA__;
+const MECH=__MECH__;
+const BUFFS=(function(raw){ const S=raw.S, K={t:'tech',m:'mech',s:'skill',r:'trait'}; const dec=a=>a.map(x=>({src:S[x[0]],kind:K[x[1]]||x[1],id:S[x[2]],v:x[3],txt:S[x[4]],cond:x[5]?'rank7':'',fac:S[x[6]]||''})); const lords=g=>{ const o={}; for(const [names,items] of g){ const it=dec(items); for(const n of names) o[n]=it; } return o; }; const out={}; for(const k in raw.U){ const b=raw.U[k]; out[k]={tech:dec(b.t),mech:dec(b.m),gen:lords(b.g),ll:lords(b.l)}; } return out; })(__BUFFS__);
+const $=s=>document.querySelector(s);
+const WEIGHT={missile_damage_mod_mult:.5,missile_damage_ap_mod_mult:.5,range_mod:1,reload:1,ammo_mod:.5,missile_damage_mod_add:2,missile_damage_ap_mod_add:2,morale:.5,armour_mod:.5,unit_damage_resistance_missile_mod:.5,unit_damage_resistance_physical_mod:.5,unit_damage_resistance_all_mod:.5,mod_land_movement_battle:.25,upkeep_mod:-.5,cost_mod:-.25,damage_vs_large_entities:1,damage_vs_infantry:1};
+function lordScore(items,rank7){ let s=0; for(const it of items){ if(it.cond&&!rank7) continue; s+=(WEIGHT[it.id]||0)*it.v; } return s; }
+function bestLord(dict,rank7){ let best=null,bs=-1e9; for(const k in dict){ const s=lordScore(dict[k],rank7); if(s>bs){bs=s;best=k;} } return best; }
+function applyBuffs(u,layer,rank7){
+  if(layer==='raw'){ const v=Object.assign({},u); v.buffItems=[]; v.lord=null; v.sum={}; v.raw=u; return v; }
+  const b=BUFFS[u.k]; const v=Object.assign({},u); v.p=Object.assign({},u.p); v.raw=u; v.buffItems=[]; v.lord=null; v.sum={}; v.lordOptions=[];
+  if(!b) return v;
+  // generic lords may sit in any faction, so they get every faction mechanic; a legendary lord only gets mechanics owned by his own faction (or by no one)
+  const mechFor=k=>b.mech.filter(it=>!it.fac||(b.ll&&b.ll[k]? it.fac===k : true));
+  const dict=layer==='ll'? Object.assign({},b.gen,b.ll) : b.gen;
+  const opts=Object.keys(dict).map(k=>({k,s:lordScore(dict[k].concat(mechFor(k)),rank7),ll:!!(b.ll&&b.ll[k])})).sort((a,b)=>b.s-a.s);
+  const lord=opts.length? opts[0].k : null;
+  let items=[...b.tech,...(lord? mechFor(lord) : b.mech)]; if(lord) items=items.concat(dict[lord]);
+  v.lord=lord; v.lordOptions=opts;
+  v.buffItems=items.filter(it=>!it.cond||rank7);
+  const sum={}; for(const it of v.buffItems){ sum[it.id]=(sum[it.id]||0)+it.v; } v.sum=sum;
+  const g=id=>sum[id]||0;
+  v.p.dmg=u.p.dmg*(1+g('missile_damage_mod_mult')/100)+g('missile_damage_mod_add');
+  v.p.ap=u.p.ap*(1+g('missile_damage_ap_mod_mult')/100)+g('missile_damage_ap_mod_add');
+  v.p.range=Math.round(u.p.range*(1+g('range_mod')/100));
+  v.rskill=(u.rskill||0)+g('reload');
+  v.ammo=Math.round(u.ammo*(1+g('ammo_mod')/100));
+  v.arm=Math.round((u.arm+g('armour_mod'))*(1+g('armour_mod_mult')/100));
+  v.ld=u.ld+g('morale');
+  const spd=1+(g('mod_land_movement_battle')+g('movement_mod'))/100; v.run=Math.round(u.run*spd); v.fly=Math.round(u.fly*spd);
+  v.resMis=u.resMis+g('unit_damage_resistance_missile_mod'); v.resP=u.resP+g('unit_damage_resistance_physical_mod'); v.resM=u.resM+g('unit_damage_resistance_magic_mod'); v.resAll=u.resAll+g('unit_damage_resistance_all_mod'); v.resF=u.resF+g('unit_damage_resistance_flame_mod');
+  v.cost=Math.round(u.cost*(1+g('cost_mod')/100)); v.upk=Math.round(u.upk*Math.max(0,1+(g('upkeep_mod')+g('no_upkeep'))/100));
+  v.p.bvi=u.p.bvi+g('damage_vs_infantry'); v.p.bvl=u.p.bvl+g('damage_vs_large_entities');
+  v.p.exd=u.p.exd*(1+g('missile_explosion_damage_mod_mult')/100); v.p.exap=u.p.exap*(1+g('missile_explosion_damage_ap_mod_mult')/100); v.p.exr=u.p.exr*(1+g('missile_explosion_radius')/100);
+  v.shield=u.shield+g('missile_block_chance_mod');
+  v.ma=u.ma+g('melee_attack_mod'); v.md=u.md+g('melee_defence_mod'); v.cb=Math.round((u.cb+g('charge_add'))*(1+g('charge_bonus')/100));
+  v.barrier=(u.barrier||0)*(1+g('battle_barrier_health_mod')/100)+g('battle_barrier_health')*u.fire;
+  if(g('unit_is_magical')) v.p.magic=true;
+  if(g('unit_flaming_attack_mod')) v.p.ign=Math.max(1,u.p.ign||0);
+  return v;
+}
+function buffSummary(v){ const s=v.sum||{}; const o=[]; const f=(x,d)=>(x>0?'+':'')+(+x.toFixed(d||0));
+  const dm=(s.missile_damage_mod_mult||0), da=(s.missile_damage_ap_mod_mult||0); if(dm||da) o.push(dm===da?f(dm)+'% dmg':f(dm)+'%/'+f(da)+'% dmg');
+  if(s.missile_damage_mod_add||s.missile_damage_ap_mod_add) o.push(f(s.missile_damage_mod_add||0)+'/'+f(s.missile_damage_ap_mod_add||0)+' flat dmg');
+  if(s.range_mod) o.push(f(s.range_mod)+'% rng'); if(s.reload) o.push(f(s.reload)+' rld'); if(s.ammo_mod) o.push(f(s.ammo_mod)+'% ammo');
+  if(s.damage_vs_large_entities) o.push(f(s.damage_vs_large_entities)+' vs L'); if(s.damage_vs_infantry) o.push(f(s.damage_vs_infantry)+' vs inf');
+  if(s.armour_mod) o.push(f(s.armour_mod)+' arm'); if(s.unit_damage_resistance_missile_mod) o.push(f(s.unit_damage_resistance_missile_mod)+'% mis res'); if(s.unit_damage_resistance_physical_mod) o.push(f(s.unit_damage_resistance_physical_mod)+'% phys res'); if(s.unit_damage_resistance_all_mod) o.push(f(s.unit_damage_resistance_all_mod)+'% ward');
+  if(s.morale) o.push(f(s.morale)+' ld'); if(s.mod_land_movement_battle) o.push(f(s.mod_land_movement_battle)+'% spd'); if(s.upkeep_mod) o.push(f(s.upkeep_mod)+'% upk'); if(s.cost_mod) o.push(f(s.cost_mod)+'% cost');
+  if(s.missile_explosion_damage_mod_mult) o.push(f(s.missile_explosion_damage_mod_mult)+'% blast'); if(s.unit_is_magical) o.push('magical');
+  return o.join(' · ')+(v.lord?' <small>('+esc(v.lord)+')</small>':''); }
+function avgMetrics(ms){ const o={}; for(const k in ms[0]){ o[k]=ms.reduce((a,m)=>a+m[k],0)/ms.length; } return o; }
+const TARGETS={
+ light:{arm:20,block:0,models:120,hp:60,radius:0.5,large:false,fly:false,label:"light infantry blob"},
+ elite:{arm:100,block:55,models:60,hp:110,radius:0.5,large:false,fly:false,label:"armoured elite infantry"},
+ monster:{arm:90,block:0,models:1,hp:8000,radius:2.5,large:true,fly:false,label:"large monster"},
+ cav:{arm:100,block:0,models:60,hp:120,radius:1.0,large:true,fly:false,label:"heavy cavalry"},
+ flyer:{arm:70,block:0,models:16,hp:420,radius:1.5,large:true,fly:true,label:"flying monstrous cavalry"}
+};
+function armMult(A){ if(!A||A<=0) return 1; if(A<=100) return 1-0.75*A/100; let s=0,n=200; for(let i=0;i<n;i++){const u=0.5+0.5*(i+0.5)/n; s+=Math.min(1,A*u/100);} return 1-s/n; }
+function hitsPerProj(u,t){
+  const p=u.p; const small=!t.large;
+  if(t.models<=1) return 1;
+  const capOk=small? true : ["medium","large","very_large"].includes(p.pencap);
+  const pen=(p.pen>0 && capOk)? Math.min(p.pen,3):0;
+  return 1+pen;
+}
+const DENS=0.35, BLASTCAP=16, BLASTFALLOFF=0.6;
+function explHits(u,t){ const p=u.p; if(!p.exr||p.exr<=0) return 0; if(t.models<=1) return 1; return Math.min(t.models, BLASTCAP, DENS*Math.PI*p.exr*p.exr); }
+function saturate(rawHits,models){ if(models<=1) return 1; if(rawHits<=0) return 1; const eff=models*(1-Math.exp(-rawHits/models)); return eff/rawHits; }
+function hitChance(u,t){
+  if(t.models>1) return 1;
+  const p=u.p; if(!p.cald||!p.cala) return 0.9;
+  const art=u.mode==="lob"||u.mode==="flat-artillery";
+  const R=art? p.range*0.7 : Math.min(p.range,150);
+  const scatter=(p.cala/2)*(R/p.cald)*(1-Math.min(0.5,(u.acc||0)/100));
+  if(scatter<=t.radius) return 1;
+  return Math.min(1,Math.pow(t.radius/scatter,2));
+}
+function flyerFactor(u,t){ if(!t.fly) return 1; if(u.mode==="lob") return 0; if(u.mode==="flat-artillery") return 0.3; return 1; }
+function perHit(u,t){
+  const p=u.p; const m=armMult(t.arm);
+  let base=p.dmg, ap=p.ap; const bonus=t.large? p.bvl : (t.models>1? p.bvi:0);
+  if(bonus>0){ const tot=base+ap||1; base+=bonus*base/tot; ap+=bonus*ap/tot; }
+  let d=base*m+ap;
+  const smallArms=!(u.mode==="lob"||u.mode==="flat-artillery");
+  if(t.block>0 && smallArms && !/Shieldbreaker/i.test(p.contact)) d*=(1-t.block/100);
+  return d;
+}
+function explDmg(u,t){ const p=u.p; return (p.exd*armMult(t.arm)+p.exap)*(t.models>1?BLASTFALLOFF:1); }
+function metrics(u,t,speed){
+  const p=u.p; const reload=Math.max(5,(p.reload||10))*(1-Math.min(0.5,(u.rskill||0)/100));
+  const ppv=(p.pn||1)*(p.spv||1)*(p.burst||1);
+  const hc=hitChance(u,t)*flyerFactor(u,t);
+  const directHits=u.fire*ppv*hitsPerProj(u,t);
+  const blastRaw=u.fire*ppv*explHits(u,t);
+  const blastHits=t.models>1? Math.min(t.models,blastRaw) : blastRaw;
+  const rawVolley=directHits*perHit(u,t)+blastHits*explDmg(u,t);
+  const pool=t.models*t.hp;
+  const volleyDmg=Math.min(rawVolley,pool);
+  const sat=rawVolley>0? volleyDmg/rawVolley : 1;
+  const dps=volleyDmg*hc/reload;
+  const volleys=p.spv>1? u.ammo/p.spv : u.ammo;
+  const tot=volleys*reload;
+  const battle=dps*tot;
+  const vbc=(p.range/speed)/reload;
+  const ehpm=u.hp/(1-Math.min(0.9,u.resMis/100))/(1-Math.min(0.9,u.resAll/100))*(1+u.shield/200);
+  const ehpk=u.hp/(0.35+0.65*armMult(u.arm))/(1-Math.min(0.9,u.resP/100))/(1-Math.min(0.9,u.resAll/100));
+  const over=(p.maxel>=60)?1:0.85;
+  const standoff=p.range*over*(u.fwm?1.15:1)*(u.flying?1.2:1);
+  const flyans=(u.mode==="lob"?0:(u.mode==="flat-artillery"?0.3:1))*hitChance(u,TARGETS.flyer)*u.fire*ppv*(hitsPerProj(u,TARGETS.flyer)*perHit(u,TARGETS.flyer))/reload;
+  let eff=u.upk>0? dps/u.upk*100 : dps; if(u.turns>1) eff*=Math.pow(0.9,u.turns-1);
+  return {reloadEff:reload,ppv,perhit:perHit(u,t),dps,volleys,battle,vbc,ehpm,ehpk,standoff,flyans,eff,hc,sat};
+}
+function rankScaleF(rows,f){ const vals=rows.map(f); const sorted=[...vals].sort((a,b)=>a-b); const n=sorted.length; return vals.map(v=>{ let lo=0,hi=n; while(lo<hi){const mid=(lo+hi)>>1; if(sorted[mid]<v) lo=mid+1; else hi=mid;} return n>1? 100*lo/(n-1):100; }); }
+function rankScale(rows,key){ const nt=rows[0].ms.length; const acc=rows.map(()=>0); for(let j=0;j<nt;j++){ const s=rankScaleF(rows,r=>r.ms[j][key]); s.forEach((x,i)=>acc[i]+=x/nt); } return acc; }
+let sortKey="score",sortDir=-1;
+function val(r,k){ if(k in r.m) return r.m[k]; if(k==="score") return r.score; if(k==="spd") return Math.max(r.u.run,r.u.fly); if(k==="range") return r.u.p.range; if(k==="stier") return r.u.stier==null? 9 : r.u.stier; return r.u[k]; }
+function render(){
+  const q=$('#q').value.trim().toLowerCase(), race=$('#race').value, tkey=$('#target').value, speed=+$('#speed').value||4;
+  const tlist=tkey==='all'? Object.keys(TARGETS) : [tkey];
+  const t=tkey==='all'? {label:'all five profiles, averaged',all:true} : TARGETS[tkey];
+  const fly=$('#fly').checked, sp=$('#sp').checked, caps=$('#caps').checked, layer=$('#layer').value, rank7=$('#r7').checked;
+  const W=[1,2,3,4,5,6].map(i=>+$('#w'+i).value); [1,2,3,4,5,6].forEach(i=>$('#o_w'+i).textContent=$('#w'+i).value);
+  let rows=U.filter(u=>(sp||!u.ror)&&(!race||u.r===race)&&(!fly||u.flying)&&(!q||u.n.toLowerCase().includes(q)||u.r.toLowerCase().includes(q)||(u.blds||[]).join(" ").toLowerCase().includes(q))).map(raw=>{ const u=applyBuffs(raw,layer,rank7); const ms=tlist.map(k=>metrics(u,TARGETS[k],speed)); return {u,raw,ms,m:avgMetrics(ms)}; });
+  if(rows.length){
+    const s1=rankScale(rows,"dps"),s2=rankScale(rows,"battle"),s3=rankScale(rows,"ehpm"),s4=rankScale(rows,"standoff"),s5=rankScale(rows,"flyans"),s6=rankScale(rows,"eff");
+    const wsum=W.reduce((a,b)=>a+b,0)||1;
+    rows.forEach((r,i)=>{ let sc=(W[0]*s1[i]+W[1]*s2[i]+W[2]*s3[i]+W[3]*s4[i]+W[4]*s5[i]+W[5]*s6[i])/wsum; if(caps&&r.u.capnote&&/cap/i.test(r.u.capnote)&&!/No caps/.test(r.u.capnote)) sc*=0.8; r.score=sc; });
+  }
+  rows.sort((a,b)=>{const x=val(a,sortKey),y=val(b,sortKey); if(typeof x==="string") return sortDir*x.localeCompare(y); return sortDir*((x||0)-(y||0));});
+  const tb=$('#tb'); tb.innerHTML=''; const maxd=Math.max(1,...rows.map(r=>r.m.dps));
+  for(const r of rows){ const u=r.u,m=r.m;
+    const tr=document.createElement('tr'); tr.className=u.ror?'sp':''; tr.tabIndex=0;
+    const tags=[u.flying?'<span class="tag fly">fly</span>':'',u.fwm?'<span class="tag">moves</span>':'',u.unbreak?'<span class="tag">unbreak</span>':'',u.stalk?'<span class="tag">stalk</span>':'',u.norun?'<span class="tag">no run</span>':'',u.mode==="lob"?'<span class="tag">lobbed</span>':(u.mode==="flat-artillery"?'<span class="tag">flat arty</span>':(u.mode==="arc"?'<span class="tag">arcing</span>':'')),u.p.exr?'<span class="tag">blast '+u.p.exr+'m</span>':'',u.p.contact?'<span class="tag">'+esc(u.p.contact)+'</span>':'',u.ror?'<span class="tag">special</span>':''].join('');
+    tr.innerHTML=`<td class="name l">${esc(u.n)}<small>${esc(u.caste)}${u.btier?' · building T'+u.btier:''}</small><div class="bar"><i style="width:${Math.min(100,m.dps/maxd*100)}%"></i></div></td><td class="l">${esc(u.r)}</td><td class="score">${r.score.toFixed(0)}</td><td>${u.tier||''}</td><td title="${esc((u.sbld||[]).join(' · '))}">${u.stier||'—'}</td><td>${u.cost}</td><td>${u.upk}</td><td>${u.turns}</td><td>${u.fire}</td><td>${u.hp}</td><td>${u.arm}</td><td>${u.shield?u.shield+'%':''}</td><td>${u.ld}</td><td>${u.flying?u.fly+'✈':u.run}</td><td>${u.p.range}</td><td>${m.reloadEff.toFixed(1)}s</td><td>${m.volleys.toFixed(0)}</td><td>${m.perhit.toFixed(1)}</td><td><strong>${m.dps.toFixed(0)}</strong></td><td>${(m.battle/1000).toFixed(1)}k</td><td>${m.vbc.toFixed(1)}</td><td>${m.ehpm.toFixed(0)}</td><td>${m.eff.toFixed(0)}</td><td class="l buffs">${layer==='raw'?(BUFFS[u.k]?'<small>'+(BUFFS[u.k].tech.length+BUFFS[u.k].mech.length)+' tech/mech lines available</small>':''):(buffSummary(u)||'<small>none apply</small>')}</td><td class="l">${tags}</td>`;
+    tr.addEventListener('click',()=>toggle(tr,u,m,t,r)); tr.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(tr,u,m,t,r)}});
+    tb.appendChild(tr);
+  }
+  $('#count').textContent=rows.length+' units shown of '+U.length+' · target: '+t.label+' · closing speed '+speed+' m/s · buffs: '+(layer==='raw'?'none (raw tables)':(layer==='ceil'?'campaign ceiling with best generic lord':'campaign ceiling with best legendary lord'))+(rank7?' + Rank 7 perks':'');
+  document.querySelectorAll('th[data-k]').forEach(th=>th.setAttribute('aria-sort',th.dataset.k===sortKey?(sortDir<0?'descending':'ascending'):'none'));
+  verdict(rows);
+}
+function verdict(rows){
+  const v=$('#verdict'); v.innerHTML='';
+  if(!rows.length) return;
+  const by=(k,desc)=>[...rows].sort((a,b)=>desc*(val(b,k)-val(a,k)))[0];
+  const items=[["Highest composite score",by("score",1)],["Highest DPS vs target",by("dps",1)],["Most battle damage",by("battle",1)],["Best DPS per upkeep",by("eff",1)],["Best flying ranged",[...rows].filter(r=>r.u.flying).sort((a,b)=>b.score-a.score)[0]],["Toughest vs missiles",by("ehpm",1)]];
+  for(const [k,r] of items){ if(!r) continue; const u=r.u;
+    const d=document.createElement('div'); d.className='card'; d.innerHTML=`<div class="k">${k}</div><div class="v">${esc(u.n)} · ${esc(u.r)}</div><p>Score ${r.score.toFixed(0)} · ${u.cost} gold, ${u.upk} upkeep, tier ${u.tier||'?'} · DPS ${r.m.dps.toFixed(0)}, battle ${(r.m.battle/1000).toFixed(1)}k · HP ${u.hp}, armour ${u.arm}, range ${u.p.range}</p>`; v.appendChild(d); }
+}
+function toggle(tr,u,m,t,r){
+  const nx=tr.nextElementSibling; if(nx&&nx.classList.contains('detail')){nx.remove();return}
+  const p=u.p; const det=document.createElement('tr'); det.className='detail';
+  const ab=(u.ab||[]).map(a=>`<li><strong>${esc(a.name)}</strong>: ${a.uses} uses, recharge ${a.rt}s, ${a.pn} projectile(s) × ${a.dmg}/${a.ap} dmg${a.bvl?', +'+a.bvl+' vs large':''}${a.exr?`, blast ${a.exr}m for ${a.exd}/${a.exap}`:''}${a.num?`, ${a.num} bombs per use`:''}. Burst if all uses hit a formation: ${a.burst} dmg</li>`).join('');
+  const raw=u.raw||u; const b=BUFFS[u.k]; const chg=(a,c,d)=>Math.abs(a-c)>1e-9?`${+a.toFixed(d||0)} → <strong>${+c.toFixed(d||0)}</strong>`:String(+a.toFixed(d||0));
+  const group=items=>{ const by={}; for(const it of items){ (by[it.src]=by[it.src]||[]).push(it); } return Object.keys(by).map(s=>`<li><strong>${esc(s)}</strong>: ${by[s].map(it=>esc(it.txt.replace('%+n',(it.v>0?'+':'')+(+it.v.toFixed(1))).replace('%n',+it.v.toFixed(1)))+(it.cond?' <span class="tag">Rank 7</span>':'')).join('; ')}</li>`).join(''); };
+  let buffHtml='';
+  if(b){
+    const applied=u.buffItems||[];
+    const opts=(u.lordOptions||[]).map(o=>`${esc(o.k)}${o.ll?' <span class="tag">LL</span>':''} (${o.s.toFixed(0)})`).join(', ');
+    buffHtml=`<div><b>Permanent buffs ${applied.length?'applied':'available (layer is off)'}</b>`+
+      (applied.length?`<dl><dt>Range</dt><dd>${chg(raw.p.range,u.p.range)}</dd><dt>Base / AP damage</dt><dd>${chg(raw.p.dmg,u.p.dmg,1)} / ${chg(raw.p.ap,u.p.ap,1)}</dd><dt>Reload skill</dt><dd>${chg(raw.rskill||0,u.rskill||0)}</dd><dt>Ammunition</dt><dd>${chg(raw.ammo,u.ammo)}</dd><dt>Armour · leadership</dt><dd>${chg(raw.arm,u.arm)} · ${chg(raw.ld,u.ld)}</dd><dt>Resist missile/phys/magic/ward</dt><dd>${chg(raw.resMis,u.resMis)}% / ${chg(raw.resP,u.resP)}% / ${chg(raw.resM,u.resM)}% / ${chg(raw.resAll,u.resAll)}%</dd><dt>Cost · upkeep</dt><dd>${chg(raw.cost,u.cost)} · ${chg(raw.upk,u.upk)}</dd><dt>Lord chosen</dt><dd>${esc(u.lord||'none helps this unit')}</dd></dl>`:'')+
+      `<h4>Technologies (${b.tech.length})</h4><ul class="ll">${group(b.tech)||'<li>none touch this unit</li>'}</ul>`+
+      (b.mech.length?`<h4>Mechanics and unit upgrades</h4><ul class="ll">${group(b.mech)}</ul>`:'')+
+      (u.lord?`<h4>Army skills: ${esc(u.lord)}</h4><ul class="ll">${group(applied.filter(it=>it.kind==='skill'||it.kind==='trait'||(it.kind==='tech'&&/^Faction tech/.test(it.src))))}</ul>`:'')+
+      (opts?`<h4>Lord options (buff score)</h4><p class="note">${opts}</p>`:(Object.keys(b.gen).length||Object.keys(b.ll).length?`<p class="note">Lords with army skills for this unit: ${esc(Object.keys(Object.assign({},b.gen,b.ll)).join(', '))}</p>`:''))+
+      `</div>`;
+  }
+  det.innerHTML=`<td colspan="25"><div class="sheet">
+  <div><b>Identity</b><dl><dt>Key</dt><dd class="mono">${esc(u.k)}</dd><dt>Caste</dt><dd>${esc(u.caste)}</dd><dt>UI group</dt><dd class="mono">${esc(u.ui)}</dd><dt>Race</dt><dd>${esc(u.r)}</dd><dt>Factions</dt><dd>${esc((u.fac||[]).join(', '))||'—'}</dd><dt>Special</dt><dd>${esc((u.sp||[]).join(', '))||'no'}</dd>${u.override?`<dt>Data note</dt><dd>${esc(u.override)}</dd>`:''}</dl>
+  <b>Campaign</b><dl><dt>Cost</dt><dd>${u.cost} (MP ${u.mp})</dd><dt>Upkeep</dt><dd>${u.upk}</dd><dt>Build turns</dt><dd>${u.turns}</dd><dt>Unit grade (tables)</dt><dd>${u.tier||'?'}</dd><dt>Recruitment building (tables)</dt><dd>${esc((u.sbld||[]).join(' · '))||'none in the building tables (Regiment of Renown, summon or mechanic-recruited)'}</dd><dt>Settlement tier needed</dt><dd>${u.stier||'—'}</dd><dt>Building (wiki)</dt><dd>${esc((u.blds||[]).join(' / '))||'—'}${u.btier?' · tier '+u.btier:''}</dd><dt>Caps</dt><dd>${esc(u.capnote||'none noted')}</dd></dl></div>
+  <div><b>Body</b><dl><dt>Models</dt><dd>${u.men} (engines ${u.eng}, mounts ${u.mnt})</dd><dt>Shooters</dt><dd>${u.fire}</dd><dt>HP per shooter</dt><dd>${u.hpe}</dd><dt>HP per unit</dt><dd>${u.hp}${u.barrier?' + barrier '+u.barrier:''}</dd><dt>Armour</dt><dd>${u.arm}</dd><dt>Shield block</dt><dd>${u.shield}%</dd><dt>Leadership</dt><dd>${u.ld}</dd><dt>Melee attack / defence</dt><dd>${u.ma} / ${u.md}</dd><dt>Charge bonus</dt><dd>${u.cb}</dd><dt>Melee weapon</dt><dd>${u.mw.damage||0} base / ${u.mw.ap_damage||0} AP, interval ${u.mw.melee_attack_interval||'?'}s${u.mw.bonus_v_large?', +'+u.mw.bonus_v_large+' vs large':''}</dd><dt>Run / fly speed</dt><dd>${u.run} / ${u.fly}</dd><dt>Mass · radius · size</dt><dd>${u.mass} · ${u.eradius} · ${esc(u.esize)}</dd><dt>Resist missile/phys/magic/fire/ward</dt><dd>${u.resMis}% / ${u.resP}% / ${u.resM}% / ${u.resF}% / ${u.resAll}%</dd><dt>Accuracy · reload skill</dt><dd>${u.acc} · ${u.rskill}</dd><dt>Attributes</dt><dd>${esc((u.attrs||[]).join(', '))||'—'}</dd><dt>Abilities</dt><dd>${esc((u.abil||[]).join(', '))||'—'}</dd></dl></div>
+  <div><b>Primary projectile</b><dl><dt>Key · category</dt><dd class="mono">${esc(p.key)} · ${esc(p.cat)}</dd><dt>Base / AP damage</dt><dd>${p.dmg} / ${p.ap}</dd><dt>Bonus vs infantry / large</dt><dd>${p.bvi} / ${p.bvl}</dd><dt>Range</dt><dd>${p.range} m</dd><dt>Base reload · skill-adjusted</dt><dd>${p.reload}s · ${m.reloadEff.toFixed(1)}s</dd><dt>Projectiles × shots × burst</dt><dd>${p.pn} × ${p.spv} × ${p.burst}${p.bdelay?' (burst delay '+p.bdelay+'s)':''} = ${m.ppv} per volley</dd><dt>Ammunition</dt><dd>${u.ammo} shots = ${m.volleys.toFixed(0)} volleys, ${(m.volleys*m.reloadEff).toFixed(0)}s on trigger</dd><dt>Calibration distance / area</dt><dd>${p.cald} m / ${p.cala} m</dd><dt>Spread · marksmanship</dt><dd>${p.spread} · ${p.marks}</dd><dt>Max elevation</dt><dd>${p.maxel}° (${p.maxel>=60?'can fire over friendly units':'needs a clear line'})</dd><dt>Penetration</dt><dd>${esc(p.penkey)}: ${p.pen} entities up to ${esc(p.pencap)||'—'}</dd><dt>Collision radius · mass</dt><dd>${p.crad} · ${p.pmass}</dd><dt>Magical · ignition · buildings</dt><dd>${p.magic?'yes':'no'} · ${p.ign} · ${p.bld?'yes':'no'}</dd><dt>Contact effect</dt><dd>${esc(p.contact)||'—'}</dd>
+  <dt>Explosion</dt><dd>${p.exr?`radius ${p.exr} m, ${p.exd} base / ${p.exap} AP, force ${p.exf}${p.exmagic?', magical':''}`:'none'}</dd></dl>
+  <b>Against ${esc(t.label)}</b><dl><dt>Damage per hit</dt><dd>${m.perhit.toFixed(1)}</dd><dt>Hit chance (single targets)</dt><dd>${(m.hc*100).toFixed(0)}%</dd>${t.all?'':`<dt>Explosion coverage</dt><dd>${explHits(u,t).toFixed(1)} models per blast × ${explDmg(u,t).toFixed(1)} dmg</dd><dt>Overkill</dt><dd>${(m.sat*100).toFixed(0)}% of a volley's raw damage is usable against ${t.models} × ${t.hp} HP</dd>`}<dt>DPS</dt><dd>${m.dps.toFixed(1)}</dd><dt>Battle damage</dt><dd>${m.battle.toFixed(0)}</dd><dt>Volleys before contact</dt><dd>${m.vbc.toFixed(1)}</dd><dt>Effective HP vs missiles / melee</dt><dd>${m.ehpm.toFixed(0)} / ${m.ehpk.toFixed(0)}</dd><dt>Flyer answer index</dt><dd>${m.flyans.toFixed(1)}</dd>${t.all?`<dt>Per profile DPS</dt><dd>${Object.keys(TARGETS).map((k,j)=>k+' '+(r.ms[j].dps).toFixed(0)).join(' · ')}</dd>`:''}</dl>
+  ${ab?'<b>Ability shots and bombs</b><ul>'+ab+'</ul>':''}</div>${buffHtml}</div></td>`;
+  tr.after(det);
+}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+const races=[...new Set(U.map(d=>d.r))].sort(); for(const r of races){const o=document.createElement('option');o.value=r;o.textContent=r;$('#race').appendChild(o);}
+document.querySelectorAll('th[data-k]').forEach(th=>{th.tabIndex=0;const go=()=>{const k=th.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=(k==='n'||k==='r')?1:-1}render()};th.addEventListener('click',go);th.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}})});
+$('#sort').addEventListener('change',e=>{sortKey=e.target.value;sortDir=sortKey==='n'?1:-1;render()});
+['#q','#race','#target','#speed','#fly','#sp','#caps','#layer','#r7','#w1','#w2','#w3','#w4','#w5','#w6'].forEach(s=>$(s).addEventListener('input',render));
+(function mech(){ const el=$('#mech'); const by=MECH.byrace; const races=Object.keys(by).sort();
+  for(const r of races){ const d=document.createElement('details'); d.className='mechrace'; const ll=MECH.ll.filter(x=>x.race===r);
+    d.innerHTML=`<summary>${esc(r)}</summary>`+(ll.length?'<h4>Legendary lord traits</h4><ul class="ll">'+ll.map(x=>`<li><strong>${esc(x.lord)}</strong>: ${esc(x.text)}</li>`).join('')+'</ul>':'')+Object.keys(by[r]).map(pg=>`<h4>${esc(pg)}</h4><ul>${by[r][pg].map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`).join('');
+    el.appendChild(d); } })();
+try{const saved=localStorage.getItem('rdr-race');if(saved)$('#race').value=saved;}catch(e){}
+$('#race').addEventListener('change',()=>{try{localStorage.setItem('rdr-race',$('#race').value)}catch(e){}});
+render();
+</script>

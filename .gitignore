@@ -1,0 +1,14 @@
+# generated data (reproducible with run_all.py)
+tww/
+rpfm/
+scour/*
+!scour/cats.json
+!scour/buildings.json
+!scour/titles.json
+wiki/*
+!wiki/Legendary_Lord_character_traits.txt
+honga/
+*.log
+ranged_doomstack_research.html
+Ranged_Doomstack_Research.html
+__pycache__/

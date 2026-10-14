@@ -1,0 +1,1406 @@
+{
+"Amethyst Helstorm Rocket Battery": [
+"Artillery units",
+"The Empire artillery units"
+],
+"Blessed Field Trebuchets": [
+"Artillery units",
+"Bretonnia artillery units"
+],
+"Bolt Throwers": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Cannons": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Carronades": [
+"Artillery units",
+"Undead Legions artillery units",
+"Vampire Coast artillery units"
+],
+"Casket of Souls": [
+"Artillery units",
+"Tomb Kings artillery units",
+"Undead Legions artillery units"
+],
+"Deathshrieker Rocket Launcher": [
+"Artillery units",
+"Chaos Dwarfs artillery units"
+],
+"Dreadquake Mortar": [
+"Artillery units",
+"Chaos Dwarfs artillery units",
+"Nurgle artillery units"
+],
+"Eagle Claw Bolt Throwers": [
+"Artillery units",
+"High Elves artillery units"
+],
+"Field Trebuchets": [
+"Artillery units",
+"Bretonnia artillery units"
+],
+"Fire Rain Rocket Battery": [
+"Artillery units",
+"Grand Cathay artillery units"
+],
+"Flame Cannons": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Flame Cannons (Grudge Settlers)": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Gnoblar Scraplauncher": [
+"Artillery units",
+"Ogre Kingdoms artillery units"
+],
+"Gob-Lobbers (Grudge Throwers)": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Goblin Bolt Throwa": [
+"Artillery units",
+"Greenskins artillery units"
+],
+"Goblin Hewers": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Grand Cannons": [
+"Artillery units",
+"Grand Cathay artillery units"
+],
+"Great Cannons": [
+"Artillery units",
+"The Empire artillery units"
+],
+"Grudge Throwers": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Grudge Throwers (Grudge Settlers)": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Helblaster Volley Guns": [
+"Artillery units",
+"The Empire artillery units"
+],
+"Hellcannon": [
+"Artillery units",
+"Chaos Dwarfs artillery units",
+"Nurgle artillery units",
+"Warriors of Chaos artillery units"
+],
+"Helstorm Rocket Battery": [
+"Artillery units",
+"The Empire artillery units"
+],
+"Hobgoblin Bolt Thrower": [
+"Artillery units",
+"Chaos Dwarfs artillery units"
+],
+"Ikit's Zzzzap-Zzzzap! (Warp Lightning Cannons)": [
+"Artillery units",
+"Skaven artillery units"
+],
+"Ironblaster": [
+"Artillery units",
+"Ogre Kingdoms artillery units"
+],
+"Little Grom": [
+"Artillery units",
+"Kislev artillery units"
+],
+"Lothern Skycutters (Bolt Throwers)": [
+"Artillery units",
+"High Elves artillery units"
+],
+"Magma Cannon": [
+"Artillery units",
+"Chaos Dwarfs artillery units"
+],
+"Mortars (The Empire)": [
+"Artillery units",
+"The Empire artillery units"
+],
+"Mortars (Vampire Coast)": [
+"Artillery units",
+"Undead Legions artillery units",
+"Vampire Coast artillery units"
+],
+"Organ Guns": [
+"Artillery units",
+"Dwarfs artillery units"
+],
+"Plagueclaw Catapults": [
+"Artillery units",
+"Skaven artillery units"
+],
+"Queen Bess": [
+"Artillery units",
+"Undead Legions artillery units",
+"Vampire Coast artillery units"
+],
+"Reaper Bolt Throwers": [
+"Artillery units",
+"Dark Elves artillery units"
+],
+"Screaming Skull Catapults": [
+"Artillery units",
+"Tomb Kings artillery units",
+"Undead Legions artillery units"
+],
+"Snagla's Deff Throwa (Goblin Bolt Throwa)": [
+"Artillery units",
+"Greenskins artillery units"
+],
+"Sootson's Guns (Mortars)": [
+"Artillery units",
+"The Empire artillery units"
+],
+"The Ice-Forged Legion (Hellcannons)": [
+"Artillery units",
+"Chaos Dwarfs artillery units",
+"Norsca artillery units"
+],
+"The Soul of Damnation (Hellcannon)": [
+"Artillery units",
+"Chaos Dwarfs artillery units",
+"Warriors of Chaos artillery units"
+],
+"The Sunmaker (Helstorm Rocket Battery)": [
+"Artillery units",
+"The Empire artillery units"
+],
+"Virulent Batteries (Plagueclaw Catapults)": [
+"Artillery units",
+"Skaven artillery units"
+],
+"Warp Lightning Cannons": [
+"Artillery units",
+"Skaven artillery units"
+],
+"Warp-Doom Magma-Cannon": [
+"Artillery units",
+"Skaven artillery units"
+],
+"Centigors (Throwing Axes)": [
+"Beastmen missile cavalry units",
+"Missile cavalry units",
+"Nurgle missile cavalry units"
+],
+"Groghooves of Wolf's Run (Centigors - Throwing Axes)": [
+"Beastmen missile cavalry units",
+"Missile cavalry units"
+],
+"Ungor Raiders": [
+"Beastmen missile infantry units"
+],
+"Cygor": [
+"Beastmen missile monster units",
+"Missile monster units",
+"Nurgle missile monster units"
+],
+"The Eye of Morrslieb (Cygor)": [
+"Beastmen missile monster units",
+"Missile monster units"
+],
+"Mounted Yeomen Archers": [
+"Bretonnia missile cavalry units",
+"Missile cavalry units"
+],
+"Wardens of Montfort (Mounted Yeomen Archers)": [
+"Bretonnia missile cavalry units",
+"Missile cavalry units"
+],
+"Peasant Bowmen": [
+"Bretonnia missile infantry units",
+"Missile infantry units"
+],
+"Peasant Bowmen (Fire Arrows)": [
+"Bretonnia missile infantry units",
+"Missile infantry units"
+],
+"Peasant Bowmen (Pox Arrows)": [
+"Bretonnia missile infantry units",
+"Missile infantry units"
+],
+"The Daemon's Tongue – Dreadquake Mortar": [
+"Chaos Dwarfs artillery units",
+"Chaos Dwarfs war machine units",
+"War machine units"
+],
+"Hobgoblin Wolf Raiders (Bows)": [
+"Chaos Dwarfs missile cavalry units",
+"Missile cavalry units"
+],
+"Oglah Khan's Wolfboyz": [
+"Chaos Dwarfs missile cavalry units",
+"Missile cavalry units"
+],
+"Chaos Dwarf Blunderbusses": [
+"Chaos Dwarfs missile infantry units",
+"Missile infantry units",
+"Nurgle missile infantry units"
+],
+"Hobgoblin Archers": [
+"Chaos Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Infernal Guard (Fireglaives)": [
+"Chaos Dwarfs missile infantry units",
+"Missile infantry units",
+"Nurgle missile infantry units"
+],
+"The Granite Guard (Chaos Dwarf Blunderbusses)": [
+"Chaos Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Iron Daemon": [
+"Chaos Dwarfs war machine units",
+"War machine units"
+],
+"Iron Daemon – Dreadquake Mortar": [
+"Chaos Dwarfs war machine units",
+"War machine units"
+],
+"Skullcracker": [
+"Chaos Dwarfs war machine units",
+"War machine units"
+],
+"Skullcracker – Dreadquake Mortar": [
+"Chaos Dwarfs war machine units",
+"War machine units"
+],
+"Supply Train": [
+"Chaos Dwarfs war machine units",
+"War machine units"
+],
+"The Daemon's Tongue (Iron Daemon)": [
+"Chaos Dwarfs war machine units",
+"War machine units"
+],
+"Marauder Horsemen of Slaanesh": [
+"Daemons of Chaos missile cavalry units",
+"Missile cavalry units",
+"Slaanesh missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Plague Drones of Nurgle (Death's Heads)": [
+"Daemons of Chaos missile cavalry units"
+],
+"Riders of the Mighty Serpent (Marauder Horsemen)": [
+"Daemons of Chaos missile cavalry units",
+"Missile cavalry units",
+"Norsca missile cavalry units",
+"Slaanesh missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Burning Chariot of Tzeentch": [
+"Daemons of Chaos missile chariot units",
+"Missile chariot units",
+"Tzeentch missile chariot units"
+],
+"Blazing Squealers (Exalted Pink Horrors of Tzeentch)": [
+"Daemons of Chaos missile infantry units",
+"Missile infantry units",
+"Tzeentch missile infantry units",
+"Warriors of Chaos missile infantry units"
+],
+"Exalted Pink Horrors of Tzeentch": [
+"Daemons of Chaos missile infantry units",
+"Missile infantry units",
+"Tzeentch missile infantry units",
+"Warriors of Chaos missile infantry units"
+],
+"Pink Horrors of Tzeentch": [
+"Daemons of Chaos missile infantry units",
+"Missile infantry units",
+"Tzeentch missile infantry units",
+"Warriors of Chaos missile infantry units"
+],
+"The Sourguts (Pink Horrors of Tzeentch)": [
+"Daemons of Chaos missile infantry units",
+"Missile infantry units",
+"Tzeentch missile infantry units",
+"Warriors of Chaos missile infantry units"
+],
+"Exalted Flamer of Tzeentch": [
+"Daemons of Chaos missile monster units",
+"Missile monster units",
+"Tzeentch missile monster units"
+],
+"Noxbringer (Soul Grinder of Nurgle)": [
+"Daemons of Chaos missile monster units",
+"Missile monster units",
+"Nurgle missile monster units",
+"Warriors of Chaos missile monster units"
+],
+"Soul Grinder of Nurgle": [
+"Daemons of Chaos missile monster units",
+"Missile monster units",
+"Nurgle missile monster units",
+"Warriors of Chaos missile monster units"
+],
+"Soul Grinder of Tzeentch": [
+"Daemons of Chaos missile monster units",
+"Missile monster units",
+"Tzeentch missile monster units",
+"Warriors of Chaos missile monster units"
+],
+"Changebringers": [
+"Daemons of Chaos monstrous missile infantry units",
+"Monstrous missile infantry units",
+"Tzeentch monstrous missile infantry units",
+"Warriors of Chaos monstrous missile infantry units"
+],
+"Flamers of Tzeentch": [
+"Daemons of Chaos monstrous missile infantry units",
+"Monstrous missile infantry units",
+"Tzeentch monstrous missile infantry units",
+"Warriors of Chaos monstrous missile infantry units"
+],
+"Blood Shrine of Khorne": [
+"Daemons of Chaos war machine units",
+"Khorne war machine units",
+"War machine units"
+],
+"Hellforged Bellowers (Skullcannon)": [
+"Daemons of Chaos war machine units",
+"Khorne war machine units",
+"War machine units",
+"Warriors of Chaos war machine units"
+],
+"Skullcannon": [
+"Daemons of Chaos war machine units",
+"Khorne war machine units",
+"War machine units",
+"Warriors of Chaos war machine units"
+],
+"Dark Riders (Repeater Crossbows)": [
+"Dark Elves missile cavalry units",
+"Missile cavalry units"
+],
+"Raven Heralds (Dark Riders)": [
+"Dark Elves missile cavalry units",
+"Missile cavalry units"
+],
+"Cold One Chariots": [
+"Dark Elves missile chariot units",
+"Missile chariot units"
+],
+"Ravagers of Rakarth (Scourgerunner Chariots)": [
+"Dark Elves missile chariot units",
+"Missile chariot units"
+],
+"Scourgerunner Chariots": [
+"Dark Elves missile chariot units",
+"Missile chariot units"
+],
+"Black Ark Corsairs (Handbows)": [
+"Dark Elves missile infantry units",
+"Missile infantry units"
+],
+"Darkshards": [
+"Dark Elves missile infantry units",
+"Missile infantry units"
+],
+"Darkshards (Shields)": [
+"Dark Elves missile infantry units",
+"Missile infantry units"
+],
+"Shades": [
+"Dark Elves missile infantry units",
+"Missile infantry units"
+],
+"Shades (Dual Weapons)": [
+"Dark Elves missile infantry units",
+"Missile infantry units"
+],
+"Shades (Greatswords)": [
+"Dark Elves missile infantry units",
+"Missile infantry units"
+],
+"The Bolt-fiends (Darkshards – Shields)": [
+"Dark Elves missile infantry units",
+"Missile infantry units"
+],
+"Bloodwrack Medusa": [
+"Dark Elves missile monster units",
+"Missile monster units"
+],
+"The Siren of Red Ruin (Bloodwrack Medusa)": [
+"Dark Elves missile monster units",
+"Missile monster units"
+],
+"Bloodwrack Shrine": [
+"Dark Elves war machine units",
+"War machine units"
+],
+"Bugman's Rangers": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Irondrakes": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Irondrakes (Grudge Settlers)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Irondrakes (Trollhammer Torpedoes)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Long Drong's Slayer Pirates": [
+"Dwarfs missile infantry units",
+"Missile infantry units",
+"Ogre Kingdoms missile infantry units"
+],
+"Quarrellers": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Quarrellers (Great Weapons – Grudge Settlers)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Quarrellers (Great Weapons)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Rangers (Dwarfs)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Rangers (Great Weapons)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Slayer Pirates": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"The Grimdelvers (Thunderers)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"The Skolder Guard (Irondrakes)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Thunderers": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Thunderers (Grudge-Rakers)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Ulthar's Raiders (Rangers - Great Weapons)": [
+"Dwarfs missile infantry units",
+"Missile infantry units"
+],
+"Gyrobombers": [
+"Dwarfs war machine units",
+"War machine units"
+],
+"Gyrocopters": [
+"Dwarfs war machine units",
+"War machine units"
+],
+"Gyrocopters (Brimstone Guns)": [
+"Dwarfs war machine units",
+"War machine units"
+],
+"Gyrocopters (Trollhammers – Grudge Settlers)": [
+"Dwarfs war machine units",
+"War machine units"
+],
+"Skyhammer Squadron (Gyrobombers)": [
+"Dwarfs war machine units",
+"War machine units"
+],
+"The Spirit of Grungni": [
+"Dwarfs war machine units",
+"War machine units"
+],
+"Thunderbarge": [
+"Dwarfs war machine units",
+"War machine units"
+],
+"Bandits of the Silver Road (Peasant Archers)": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Celestial Dragon Crossbows": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Crane Gunners": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Iron Hail Gunners": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Jade Warrior Crossbows": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Jade Warrior Crossbows (Shields)": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Nan-Gau Grenadiers": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Peasant Archers": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"The Grace of Quai Yin (Celestial Dragon Crossbows)": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Tiger Warrior Stalkers": [
+"Grand Cathay missile infantry units",
+"Missile infantry units"
+],
+"Sky Lantern": [
+"Grand Cathay war machine units",
+"War machine units"
+],
+"Sky-junk": [
+"Grand Cathay war machine units",
+"War machine units"
+],
+"The Jade War Drum (Zhangu War Drum)": [
+"Grand Cathay war machine units",
+"War machine units"
+],
+"Wu Xing War Compass": [
+"Grand Cathay war machine units",
+"War machine units"
+],
+"Zhangu War Drum": [
+"Grand Cathay war machine units",
+"War machine units"
+],
+"Doom Diver Catapults": [
+"Greenskins artillery units"
+],
+"Goblin Rock Lobbers": [
+"Greenskins artillery units"
+],
+"Hammer of Gork (Goblin Rock Lobbers)": [
+"Greenskins artillery units"
+],
+"Deff Creepers (Forest Goblin Spider Rider Archers)": [
+"Greenskins missile cavalry units"
+],
+"Forest Goblin Spider Rider Archers": [
+"Greenskins missile cavalry units"
+],
+"Goblin Wolf Rider Archers": [
+"Greenskins missile cavalry units",
+"Missile cavalry units"
+],
+"Lava Spider Rider Archers": [
+"Greenskins missile cavalry units"
+],
+"Mogrubb's Mangy Marauders (Goblin Wolf Archers)": [
+"Greenskins missile cavalry units",
+"Missile cavalry units"
+],
+"Goblin Wolf Chariots": [
+"Greenskins missile chariot units"
+],
+"Teef Robbers (Goblin Wolf Chariots)": [
+"Greenskins missile chariot units"
+],
+"Da Rusty Arrers (Night Goblin Archers)": [
+"Greenskins missile infantry units"
+],
+"Goblin Archers": [
+"Greenskins missile infantry units",
+"Missile infantry units"
+],
+"Night Goblin Archers": [
+"Greenskins missile infantry units"
+],
+"Night Goblin Archers (Fanatics)": [
+"Greenskins missile infantry units"
+],
+"Orc Arrer Boyz": [
+"Greenskins missile infantry units",
+"Missile infantry units"
+],
+"Ruglud's Armoured Orcs": [
+"Greenskins missile infantry units",
+"Missile infantry units",
+"Ogre Kingdoms missile infantry units"
+],
+"Savage Orc Arrer Boyz": [
+"Greenskins missile infantry units",
+"Missile infantry units"
+],
+"Logey Bogey’s Spore ‘Splodaz (Snotling Pump Wagons)": [
+"Greenskins war machine units",
+"War machine units"
+],
+"Snotling Pump Wagons": [
+"Greenskins war machine units",
+"War machine units"
+],
+"Snotling Pump Wagons (Flappas)": [
+"Greenskins war machine units",
+"War machine units"
+],
+"Snotling Pump Wagons (Spiky Rollers)": [
+"Greenskins war machine units",
+"War machine units"
+],
+"Ellyrian Reaver Archers": [
+"High Elves missile cavalry units",
+"Missile cavalry units"
+],
+"Heralds of the Wind (Ellyrian Reavers – Bows)": [
+"High Elves missile cavalry units"
+],
+"Lothern Skycutters": [
+"High Elves missile chariot units",
+"Missile chariot units"
+],
+"Tiranoc Chariots": [
+"High Elves missile chariot units",
+"Missile chariot units"
+],
+"Archers (High Elves)": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Archers (Light Armour)": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Everqueen's Court Guards (Sisters of Avelorn)": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Gate Guard": [
+"High Elves missile infantry units"
+],
+"Lothern Sea Guard": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Lothern Sea Guard (Shields)": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Sentinels of Astaril": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Shadow Warriors": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Shadow-walkers": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Sisters of Avelorn": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Spire Guard of Tor Yvresse": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Talons of Tor Caleda (Archers – Light Armour)": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"The Grey (Shadow Warriors)": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"The Skyhawks": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"The Storm Riders (Lothern Sea Guard)": [
+"High Elves missile infantry units",
+"Missile infantry units"
+],
+"Chaos Chariots of Khorne": [
+"Khorne missile cavalry units"
+],
+"Marauder Horsemen of Khorne (Throwing Axes)": [
+"Khorne missile cavalry units",
+"Missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Horse Archers": [
+"Kislev missile cavalry units",
+"Missile cavalry units"
+],
+"Akshina Ambushers": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"Boydinov's Brawlers (Streltsi)": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"Ice Guard (Glaives)": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"Ice Guard (Swords)": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"Kossars": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"Kossars (Spears)": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"Streltsi": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"The Wolfhearts (Akshina Ambushers)": [
+"Kislev missile infantry units",
+"Missile infantry units"
+],
+"Blessed Terradon Riders": [
+"Lizardmen missile cavalry units",
+"Missile cavalry units"
+],
+"Blessed Terradon Riders (Fireleech Bolas)": [
+"Lizardmen missile cavalry units",
+"Missile cavalry units"
+],
+"Pahuax Sentinels (Terradon Riders)": [
+"Lizardmen missile cavalry units",
+"Missile cavalry units"
+],
+"Terradon Riders": [
+"Lizardmen missile cavalry units",
+"Missile cavalry units"
+],
+"Terradon Riders (Fireleech Bolas)": [
+"Lizardmen missile cavalry units",
+"Missile cavalry units"
+],
+"Blessed Chameleon Skinks": [
+"Lizardmen missile infantry units",
+"Missile infantry units"
+],
+"Blessed Skink Cohort (Javelins)": [
+"Lizardmen missile infantry units",
+"Missile infantry units"
+],
+"Blessed Skink Skirmishers": [
+"Lizardmen missile infantry units",
+"Missile infantry units"
+],
+"Chameleon Skinks": [
+"Lizardmen missile infantry units",
+"Missile infantry units"
+],
+"Skink Cohort (Javelins)": [
+"Lizardmen missile infantry units",
+"Missile infantry units"
+],
+"Skink Skirmishers": [
+"Lizardmen missile infantry units",
+"Missile infantry units"
+],
+"Ancient Salamander": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Ancient Stegadon": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Bastiladon (Solar Engine)": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Blessed Ancient Salamander": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Blessed Ancient Stegadon": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Blessed Bastiladon (Solar Engine)": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Blessed Stegadon": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Feral Troglodon": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Stegadon": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"The Pale Death (Feral Troglodon)": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"The Thunderous One (Ancient Stegadon)": [
+"Lizardmen missile monster units",
+"Missile monster units"
+],
+"Amethyst Outriders": [
+"Missile cavalry units",
+"The Empire missile cavalry units"
+],
+"Deck Droppers": [
+"Missile cavalry units",
+"Undead Legions missile cavalry units",
+"Vampire Coast missile cavalry units"
+],
+"Deck Droppers (Bombers)": [
+"Missile cavalry units",
+"Undead Legions missile cavalry units",
+"Vampire Coast missile cavalry units"
+],
+"Deck Droppers (Handgunners)": [
+"Missile cavalry units",
+"Undead Legions missile cavalry units",
+"Vampire Coast missile cavalry units"
+],
+"Marauder Horsemasters (Norsca)": [
+"Missile cavalry units",
+"Norsca missile cavalry units"
+],
+"Marauder Horsemasters (Warriors of Chaos)": [
+"Missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Marauder Horsemen (Norsca)": [
+"Missile cavalry units",
+"Norsca missile cavalry units"
+],
+"Marauder Horsemen (Throwing Axes) (Norsca)": [
+"Missile cavalry units",
+"Norsca missile cavalry units"
+],
+"Marauder Horsemen (Throwing Axes) (Warriors of Chaos)": [
+"Missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Marauder Horsemen (Warriors of Chaos)": [
+"Missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Marauder Horsemen of Nurgle (Throwing Axes)": [
+"Missile cavalry units",
+"Nurgle missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Marauder Horsemen of Tzeentch": [
+"Missile cavalry units",
+"Tzeentch missile cavalry units",
+"Warriors of Chaos missile cavalry units"
+],
+"Outriders": [
+"Missile cavalry units",
+"The Empire missile cavalry units"
+],
+"Outriders (Grenade Launchers)": [
+"Missile cavalry units",
+"The Empire missile cavalry units"
+],
+"Pistoliers": [
+"Missile cavalry units"
+],
+"Salt Lord Scuttlers (Deck Droppers – Bombers)": [
+"Missile cavalry units",
+"Undead Legions missile cavalry units",
+"Vampire Coast missile cavalry units"
+],
+"Skeleton Horse Archers": [
+"Missile cavalry units",
+"Tomb Kings missile cavalry units",
+"Undead Legions missile cavalry units"
+],
+"The Bordermen (Outriders – Grenade Launchers)": [
+"Missile cavalry units",
+"The Empire missile cavalry units"
+],
+"The Noble Sons Abroad (Pistoliers)": [
+"Missile cavalry units",
+"The Empire missile cavalry units"
+],
+"Skeleton Archer Chariots": [
+"Missile chariot units",
+"Tomb Kings missile chariot units",
+"Undead Legions missile chariot units"
+],
+"The Black Lions (War Wagons – Helblasters)": [
+"Missile chariot units",
+"The Empire missile chariot units"
+],
+"War Wagons": [
+"Missile chariot units",
+"The Empire missile chariot units"
+],
+"War Wagons (Mortars)": [
+"Missile chariot units",
+"The Empire missile chariot units"
+],
+"Amethyst Ironsides": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Archers (The Empire)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Blessed Legion of Phakth (Skeleton Archers)": [
+"Missile infantry units",
+"Tomb Kings missile infantry units",
+"Undead Legions missile infantry units"
+],
+"Boglars of the Mad Marshes (Gnoblars)": [
+"Missile infantry units",
+"Ogre Kingdoms missile infantry units"
+],
+"Crossbowmen": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Death Dealers (Ratling Guns)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Death Globe Bombardiers": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Deathjacks (Archers)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Deck Gunners": [
+"Missile infantry units",
+"Undead Legions missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"Devotees of Slaanesh (Crossbows)": [
+"Missile infantry units",
+"Slaanesh missile infantry units"
+],
+"Eye-Takers (Warplock Jezzails)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Free Company Militia": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Gnoblar Flingers": [
+"Missile infantry units",
+"Ogre Kingdoms missile infantry units"
+],
+"Gnoblar Trappers": [
+"Missile infantry units",
+"Ogre Kingdoms missile infantry units"
+],
+"Gunderman's Surefires (Handgunners)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Gutter Runner Slingers": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Gutter Runner Slingers (Poison)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Gutter Runners": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Gutter Runners (Poison)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Handgunners": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Hochland Long Rifles": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Huntsmen": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Marauder Hunters": [
+"Missile infantry units",
+"Norsca missile infantry units"
+],
+"Marauder Hunters (Javelins)": [
+"Missile infantry units",
+"Norsca missile infantry units"
+],
+"Natty Buboe's Sharpshooters (Warplock Jezzails)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Night Runners": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Night Runners (Slings)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Nuln Ironsides": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Poisoned Wind Globadiers": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Poisoned Wind Mortars": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Ratling Guns": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Sartosa Militia": [
+"Missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"Shadewraith Gunners (Deck Gunners)": [
+"Missile infantry units",
+"Undead Legions missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"Skavenslave Slingers": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Skeleton Archers": [
+"Missile infantry units",
+"Tomb Kings missile infantry units",
+"Undead Legions missile infantry units"
+],
+"Stir River Patrol (Crossbowmen)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Stirland's Revenge (Free Company Militia)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Sylvanian Crossbowmen": [
+"Missile infantry units",
+"Vampire Counts missile infantry units"
+],
+"Sylvanian Handgunners": [
+"Missile infantry units",
+"Vampire Counts missile infantry units"
+],
+"Teeth-Breakers (Ratling Guns)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"The Avalanche Mortars (Death Globe Mortars)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"The Black Spot (Zombie Pirate Gunnery Mob – Handgunners)": [
+"Missile infantry units",
+"Undead Legions missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"The Doombringers (Warpfire Throwers)": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"The Hergig Jaegerkorps (Hochland Long Rifles)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"The Silver Bullets (Handgunners)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"The White Wolves (Huntsmen)": [
+"Missile infantry units",
+"The Empire missile infantry units"
+],
+"Warpfire Throwers": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Warplock Jezzails": [
+"Missile infantry units",
+"Skaven missile infantry units"
+],
+"Zombie Pirate Gunnery Mob": [
+"Missile infantry units",
+"Undead Legions missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"Zombie Pirate Gunnery Mob (Bombers)": [
+"Missile infantry units",
+"Undead Legions missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"Zombie Pirate Gunnery Mob (Hand Cannons)": [
+"Missile infantry units",
+"Undead Legions missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"Zombie Pirate Gunnery Mob (Handgunners)": [
+"Missile infantry units",
+"Undead Legions missile infantry units",
+"Vampire Coast missile infantry units"
+],
+"Bone Giant": [
+"Missile monster units",
+"Tomb Kings missile monster units",
+"Undead Legions missile monster units"
+],
+"Gallows Giant (Necrofex Colossus)": [
+"Missile monster units",
+"Undead Legions missile monster units",
+"Vampire Coast missile monster units"
+],
+"Necrofex Colossus": [
+"Missile monster units",
+"Undead Legions missile monster units",
+"Vampire Coast missile monster units"
+],
+"Stonehorn (Harpoon Launcher)": [
+"Missile monster units",
+"Ogre Kingdoms missile monster units"
+],
+"Thundertusk": [
+"Missile monster units",
+"Ogre Kingdoms missile monster units"
+],
+"Chosen of the Gods (Ushabti – Great Bows)": [
+"Monstrous missile infantry units",
+"Tomb Kings monstrous missile infantry units",
+"Undead Legions monstrous missile infantry units"
+],
+"Leadbelchers": [
+"Monstrous missile infantry units",
+"Ogre Kingdoms monstrous missile infantry units"
+],
+"Maneaters (Ogre Pistols)": [
+"Monstrous missile infantry units",
+"Ogre Kingdoms monstrous missile infantry units",
+"Vampire Coast monstrous missile infantry units"
+],
+"Powder-Guts (Maneaters – Ogre Pistols)": [
+"Monstrous missile infantry units",
+"Ogre Kingdoms monstrous missile infantry units"
+],
+"Rotting Prometheans (Gunnery Mob)": [
+"Monstrous missile infantry units",
+"Undead Legions monstrous missile infantry units",
+"Vampire Coast monstrous missile infantry units"
+],
+"Scratterfire Team (Stormfiends – Ratling Cannons)": [
+"Monstrous missile infantry units",
+"Skaven monstrous missile infantry units"
+],
+"Stormfiends (Ratling Cannons)": [
+"Monstrous missile infantry units",
+"Skaven monstrous missile infantry units"
+],
+"Stormfiends (Warpfire Projectors)": [
+"Monstrous missile infantry units",
+"Skaven monstrous missile infantry units"
+],
+"Stormfiends (Windlaunchers)": [
+"Monstrous missile infantry units",
+"Skaven monstrous missile infantry units"
+],
+"The Lamprey's Revenge (Rotting Promethean Gunnery Mob)": [
+"Monstrous missile infantry units",
+"Undead Legions monstrous missile infantry units",
+"Vampire Coast monstrous missile infantry units"
+],
+"Ushabti (Great Bows)": [
+"Monstrous missile infantry units",
+"Tomb Kings monstrous missile infantry units",
+"Undead Legions monstrous missile infantry units"
+],
+"Blackhole Flayers (Doom-Flayers)": [
+"Skaven war machine units",
+"War machine units"
+],
+"Cauldron of a Thousand Poxes": [
+"Skaven war machine units",
+"War machine units"
+],
+"Doom-Flayers": [
+"Skaven war machine units",
+"War machine units"
+],
+"Doomwheel": [
+"Skaven war machine units",
+"War machine units"
+],
+"Dwarf-Thing Menace (Doom-Flayers)": [
+"Skaven war machine units",
+"War machine units"
+],
+"Warpfire's Wheel (Doomwheel)": [
+"Skaven war machine units",
+"War machine units"
+],
+"Wheelz of Dooom (Doomwheel)": [
+"Skaven war machine units",
+"War machine units"
+],
+"Salvaged Plunder": [
+"The Empire artillery units"
+],
+"Amethyst Land Ship": [
+"The Empire war machine units",
+"War machine units"
+],
+"Celestial Hurricanum": [
+"The Empire war machine units",
+"War machine units"
+],
+"Land Ship": [
+"The Empire war machine units",
+"War machine units"
+],
+"Luminark of Hysh": [
+"The Empire war machine units",
+"War machine units"
+],
+"Obsinite Gyrocopters": [
+"The Empire war machine units",
+"War machine units"
+],
+"Steam Tank": [
+"The Empire war machine units",
+"Tzeentch war machine units",
+"War machine units"
+],
+"Steam Tank (Volley Gun)": [
+"The Empire war machine units",
+"War machine units"
+],
+"Templehof Luminark (Luminark of Hysh)": [
+"The Empire war machine units",
+"War machine units"
+],
+"The Emperor's Wrath (Steam Tank)": [
+"The Empire war machine units",
+"War machine units"
+],
+"The Wonder of the Age (Land Ship)": [
+"The Empire war machine units",
+"War machine units"
+],
+"Black Coach": [
+"Undead Legions war machine units",
+"Vampire Counts war machine units",
+"War machine units"
+],
+"Corpse Cart": [
+"Undead Legions war machine units",
+"Vampire Counts war machine units",
+"War machine units"
+],
+"Corpse Cart (Balefire)": [
+"Undead Legions war machine units",
+"Vampire Counts war machine units",
+"War machine units"
+],
+"Corpse Cart (Unholy Lodestone)": [
+"Undead Legions war machine units",
+"Vampire Counts war machine units",
+"War machine units"
+],
+"Coven Throne": [
+"Undead Legions war machine units",
+"Vampire Counts war machine units",
+"War machine units"
+],
+"Mortis Engine": [
+"Undead Legions war machine units",
+"Vampire Counts war machine units",
+"War machine units"
+],
+"The Claw of Nagash (Mortis Engine)": [
+"Undead Legions war machine units",
+"Vampire Counts war machine units",
+"War machine units"
+],
+"Glade Riders": [
+"Wood Elves missile cavalry units"
+],
+"Glade Riders (Hagbane Tips)": [
+"Wood Elves missile cavalry units"
+],
+"Hawk Riders": [
+"Wood Elves missile cavalry units"
+],
+"Sisters of the Thorn": [
+"Wood Elves missile cavalry units"
+],
+"Deepwood Scouts": [
+"Wood Elves missile infantry units"
+],
+"Deepwood Scouts (Swiftshiver Shards)": [
+"Wood Elves missile infantry units"
+],
+"Glade Guard": [
+"Wood Elves missile infantry units"
+],
+"Glade Guard (Hagbane Tips)": [
+"Wood Elves missile infantry units"
+],
+"Glade Guard (Starfire Shafts)": [
+"Wood Elves missile infantry units"
+],
+"Hawk-Eyes of Drakira (Waywatchers)": [
+"Wood Elves missile infantry units"
+],
+"Waywatchers": [
+"Wood Elves missile infantry units"
+]
+}
