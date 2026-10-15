@@ -1,7 +1,7 @@
 # Stormfiends (Ratling Cannons) mono-unit campaign guide
 
 Total War: Warhammer III, Update 9.0 line. Every number below is read from the game's own database and English text
-packs, not from the wiki. Rebuild notes and scripts: `C:\Users\jaymi\tww3-ranged-doomstack`.
+packs, not from the wiki. Rebuild notes and scripts: `C:\Users\jaymi\Documents\warhammer3repo`.
 
 ## 1. What you are building
 
