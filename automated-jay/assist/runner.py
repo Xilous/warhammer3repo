@@ -28,6 +28,7 @@ from bot import config
 from bot.focus import InputAborted, idle_seconds, return_to_terminal
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
+from tools import timing
 from . import army_builder, build, skills, tech
 
 SETTLE_SECONDS = 4.0          # let turn-start camera moves and event popups appear first
@@ -208,38 +209,46 @@ class Runner:
                   + ("\nharmless? 'Ignore' in the assistant window" if can else ""), turn=turn)
         self.offer_ignore(can)
 
-    def do_pass(self, turn, pre: list[str]) -> None:
+    def do_pass(self, turn, pre: list[str], phases: dict | None = None) -> None:
         """One full pass (busy must be held). InputAborted propagates to the caller."""
         self.offer_ignore([])
-        done = self.automate(turn, pre)
+        done = self.automate(turn, pre, phases=phases)
         self.done_turn = turn
         if self.pending == turn:
             self.pending = None
         self.post("your turn", f"YOUR TURN {turn}", "\n".join(done), turn=turn)
 
-    def automate(self, turn: int | None, pre: list[str] | None = None) -> list[str]:
+    def automate(self, turn: int | None, pre: list[str] | None = None, phases: dict | None = None,
+                 label: str = "pass") -> list[str]:
         """All steps run inside one game_focus: the game is raised once for the whole pass and focus goes
-        back to the terminal (or this app) only when every step is done."""
+        back to the terminal (or this app) only when every step is done. Timed into runs/timing-*.jsonl."""
         from bot.focus import game_focus
-        if pre is None:                               # --once and the test harness: one popup check, no waiting
-            pre, need = self.check_popups()
-            if need:
-                return pre + ["skipped: waiting for you: " + ", ".join(d for _cid, d, _ig in need)]
-        self.post("automating", f"AUTOMATING turn {turn}", "", turn=turn)
-        try:
-            with game_focus():
-                return self._automate(turn, list(pre))
-        except RuntimeError as ex:
-            return list(pre) + [f"could not bring the game to the front: {ex}"]
+        with timing.trace(label, turn=turn):
+            for k, v in (phases or {}).items():
+                timing.phase(k, v)
+            if pre is None:                           # --once and the test harness: one popup check, no waiting
+                with timing.step("popups"):
+                    pre, need = self.check_popups()
+                    timing.set_result("; ".join(pre))
+                if need:
+                    return pre + ["skipped: waiting for you: " + ", ".join(d for _cid, d, _ig in need)]
+            self.post("automating", f"AUTOMATING turn {turn}", "", turn=turn)
+            try:
+                with game_focus():
+                    return self._automate(turn, list(pre))
+            except RuntimeError as ex:
+                return list(pre) + [f"could not bring the game to the front: {ex}"]
 
     def _automate(self, turn, done: list[str]) -> list[str]:
         try:
             for name, fn in STEPS:
-                try:
-                    result = fn(log=lambda m: None)
-                except Exception as ex:
-                    result = f"ERROR {ex}"
-                    traceback.print_exc()
+                with timing.step(name):
+                    try:
+                        result = fn(log=lambda m: None)
+                    except Exception as ex:
+                        result = f"ERROR {ex}"
+                        traceback.print_exc()
+                    timing.set_result(result)
                 done.append(f"{name}: {result}")
                 self.post("automating", f"AUTOMATING turn {turn}", "\n".join(done), turn=turn)
         except InputAborted as ex:

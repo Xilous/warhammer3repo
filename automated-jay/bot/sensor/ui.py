@@ -32,6 +32,24 @@ from .world import string_object
 BOOTSTRAP_MIN_INTERVAL = 30.0
 
 
+class _Stats:
+    """Tree-walk counters for tools/timing.py: walks started, nodes visited, ms spent inside walks."""
+    __slots__ = ("walks", "nodes", "ms")
+
+    def __init__(self) -> None:
+        self.walks = self.nodes = 0
+        self.ms = 0.0
+
+    def snapshot(self) -> tuple:
+        return self.walks, self.nodes, self.ms
+
+    def since(self, snap: tuple) -> dict:
+        return {"walks": self.walks - snap[0], "nodes": self.nodes - snap[1], "ms": self.ms - snap[2]}
+
+
+STATS = _Stats()
+
+
 def _anchors() -> dict:
     try:
         return json.loads(config.ANCHORS_FILE.read_text())
@@ -191,23 +209,30 @@ class UI:
     # ---------------------------------------------------------------- queries
     def walk(self, start: int | None = None, visible_only: bool = True, max_nodes: int = 200_000):
         """Depth-first over the tree, yielding (component ptr, path of ids). Nothing when there is no root."""
+        t = time.perf_counter()
         start = start or self.find_root()
         if not start:
             return
+        STATS.walks += 1
         stack = [(start, ())]
         n = 0
-        while stack and n < max_nodes:
-            c, path = stack.pop()
-            n += 1
-            try:
-                if visible_only and self.pm.read_bytes(c + 0x353, 1)[0] == 0:
+        try:
+            while stack and n < max_nodes:
+                c, path = stack.pop()
+                n += 1
+                try:
+                    if visible_only and self.pm.read_bytes(c + 0x353, 1)[0] == 0:
+                        continue
+                    cid = self.id(c) or "?"
+                    STATS.ms += (time.perf_counter() - t) * 1000
+                    yield c, path + (cid,)
+                    t = time.perf_counter()
+                    for ch in reversed(self.children(c)):
+                        stack.append((ch, path + (cid,)))
+                except pymem.exception.MemoryReadError:
                     continue
-                cid = self.id(c) or "?"
-                yield c, path + (cid,)
-                for ch in reversed(self.children(c)):
-                    stack.append((ch, path + (cid,)))
-            except pymem.exception.MemoryReadError:
-                continue
+        finally:
+            STATS.nodes += n
 
     def find(self, *path: str, visible_only: bool = True) -> list[Comp]:
         """Components whose id is path[-1] and whose ancestors contain path[:-1] in order."""
@@ -222,3 +247,68 @@ class UI:
             if i == len(path) - 1:
                 out.append(self.comp(c))
         return out
+
+    # ---------------------------------------------------------------- scoped lookups (first version)
+    def root_children(self) -> list[tuple[int, str]]:
+        """(ptr, id) of the visible children of the root."""
+        r = self.find_root()
+        if not r:
+            return []
+        out = []
+        for c in self.children(r):
+            try:
+                if self.pm.read_bytes(c + 0x353, 1)[0]:
+                    out.append((c, self.id(c) or "?"))
+            except Exception:
+                continue
+        return out
+
+    def first(self, cid: str, under: str | int | None = None, start: int | None = None) -> int | None:
+        """The first visible component with id `cid` (depth-first), or None. `under`: an id that must be among its
+        ancestors, or a component pointer to search below. `start`: where the walk starts (default the root)."""
+        if isinstance(under, int):
+            start, under = under, None
+        for c, ids in self.walk(start):
+            if ids[-1] == cid and (under is None or under in ids[:-1]):
+                return c
+        return None
+
+    def effective_visible(self, c: int) -> bool:
+        """Its own visible byte and every ancestor's up to the root, and still attached to its parent."""
+        try:
+            r = self.find_root()
+            seen = 0
+            while c and seen < 64:
+                if self.pm.read_bytes(c + 0x353, 1)[0] == 0:
+                    return False
+                p = self.parent(c)
+                if not p:
+                    return c == r
+                if c not in self.children(p):
+                    return False
+                c = p
+                seen += 1
+            return False
+        except Exception:
+            return False
+
+    def text(self, c: int) -> str | None:
+        """The text a text component shows: wide string object at [[C + 0x2F0] + 0x138] (vtable, u32 length +8,
+        wchar* +0x10; short strings inline from +8 with 0x80|length in the byte at +0x17)."""
+        try:
+            st = self.q(c + 0x2F0)
+            o = self.q(st + 0x138) if st else 0
+            if not o:
+                return None
+            raw = self.pm.read_bytes(o + 8, 16)
+            flag = raw[15]
+            if flag >> 4 == 8:
+                n = flag & 0x0F
+                return raw[:2 * n].decode("utf-16-le", "replace")
+            n = struct.unpack_from("<I", raw, 0)[0]
+            p = struct.unpack_from("<Q", raw, 8)[0]
+            if not 0 <= n < 4096 or not p:
+                return None
+            return self.pm.read_bytes(p, 2 * n).decode("utf-16-le", "replace") if n else ""
+        except Exception:
+            return None

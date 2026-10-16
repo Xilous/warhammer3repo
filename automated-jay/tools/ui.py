@@ -20,6 +20,7 @@ Several commands can be chained with ' + ', e.g.  click 960 540 + wait 2 + shot 
 """
 from __future__ import annotations
 import contextlib
+import functools
 import sys
 import time
 
@@ -31,10 +32,31 @@ from PIL import Image
 
 from bot import config
 from bot.focus import InputAborted, game_focus, require_game_front   # noqa: F401  (InputAborted re-exported)
+from tools import timing
 
 pydirectinput.PAUSE = 0.03
 
 
+def _timed(kind: str):
+    """Record the primitive into the active timing trace (tools/timing.py): kind, ms, where."""
+    def deco(fn):
+        @functools.wraps(fn)
+        def wrapper(*a, **kw):
+            if not timing.active():
+                return fn(*a, **kw)
+            t = time.perf_counter()
+            k = "rclick" if kw.get("right") or (len(a) > 2 and a[2] is True and kind == "click") else kind
+            with timing.quiet():
+                try:
+                    return fn(*a, **kw)
+                finally:
+                    timing.input_event(k, (time.perf_counter() - t) * 1000,
+                                       at=[int(v) for v in a[:2]] if len(a) >= 2 and kind != "key" else a[:1])
+        return wrapper
+    return deco
+
+
+@_timed("click")
 def click_at(x: int, y: int, right: bool = False) -> None:
     """The game ignores pydirectinput/SendInput button events but accepts legacy mouse_event
     after a SetCursorPos (verified 2026-10-16). Raises InputAborted when the game is not in front."""
@@ -58,6 +80,7 @@ def move_to(x: int, y: int) -> None:
     win32api.SetCursorPos((int(x), int(y)))
 
 
+@_timed("dclick")
 def double_click(x: int, y: int) -> None:
     move_to(x, y)
     time.sleep(0.2)
@@ -71,6 +94,7 @@ def double_click(x: int, y: int) -> None:
         time.sleep(0.07)
 
 
+@_timed("drag")
 def drag(x0: int, y0: int, x1: int, y1: int, steps: int = 25) -> None:
     """Left-drag from (x0, y0) to (x1, y1); the button is released even if the drag is interrupted."""
     move_to(x0, y0)
@@ -88,6 +112,7 @@ def drag(x0: int, y0: int, x1: int, y1: int, steps: int = 25) -> None:
     time.sleep(0.5)
 
 
+@_timed("wheel")
 def wheel(x: int, y: int, notches: int, pause: float = 0.12) -> None:
     """Mouse wheel over (x, y): positive notches scroll up / left."""
     move_to(x, y)
@@ -98,6 +123,7 @@ def wheel(x: int, y: int, notches: int, pause: float = 0.12) -> None:
         time.sleep(pause)
 
 
+@_timed("key")
 def press(key: str) -> None:
     require_game_front()
     pydirectinput.press(key)
@@ -114,6 +140,7 @@ def held(key: str):
         pydirectinput.keyUp(key)
 
 
+@_timed("hold")
 def hold_key(key: str, seconds: float) -> None:
     with held(key):
         time.sleep(seconds)
