@@ -1,0 +1,27 @@
+{
+  "_doc": [
+    "Settlement build-out priority for Clan Skryre, as given by the player on 2026-10-16.",
+    "Slot 1 is always the main building, upgraded to the settlement's maximum (capital tier 5, minor tier 3).",
+    "Port settlements always hold the port chain in slot 2; it cannot be removed and is upgraded to the maximum.",
+    "Remaining slots are filled top to bottom from 'priority'. Every chain goes to the highest level the settlement allows.",
+    "If slots run out, lower entries are dropped. Leftover slots stay empty.",
+    "A chain set to null for a settlement type is not buildable there and is skipped.",
+    "per_province: at most that many of the chain per province. Capital is considered first, then minor settlements."
+  ],
+  "main_chain": {
+    "capital": "wh2_main_skv_settlement_major",
+    "minor": "wh2_main_skv_settlement_minor"
+  },
+  "port_chain": "wh2_main_skv_port",
+  "priority": [
+    {"name": "Warpstone Reactor",         "chain": {"capital": "wh2_main_skv_energy", "minor": null}},
+    {"name": "Breeding Pit",              "chain": "wh2_main_skv_farm"},
+    {"name": "Scrap Heap",                "chain": "wh2_main_skv_industry"},
+    {"name": "Temple of the Horned Rat",  "chain": "wh2_main_skv_order"},
+    {"name": "Landmarks",                 "landmarks": true},
+    {"name": "Clan Armoury",              "chain": "wh2_main_skv_clanrats", "per_province": 1},
+    {"name": "Equipment Warpforge",       "chain": "wh3_dlc29_skv_stormfiends", "per_province": 1},
+    {"name": "Chained Sentry Beasts",     "chain": {"capital": "wh2_main_skv_defence_major", "minor": "wh2_main_skv_defence_minor"}},
+    {"name": "Spy Nests",                 "chain": "wh2_main_foreign_slot_discovery_skv"}
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "_doc": [
+    "How and when the assistant acts. Decisions by the player, 2026-10-16.",
+    "Nothing here is an alert: anything automatable is simply done at the start of every player turn.",
+    "When every automation for the turn is finished, a small always-on-top widget switches to 'your turn' (player's choice over a sound)."
+  ],
+  "trigger": "turn_start",
+  "never_during_battle": true,
+  "tech": {
+    "order": "beeline then cheapest",
+    "beeline_source": "../tww/skv_beeline.json (targets, in order)",
+    "after_beeline": "cheapest remaining tech first"
+  },
+  "buildings": {
+    "list": "settlements.json",
+    "never_build_in_provinces_adjacent_to_enemy_at_war": true,
+    "_rule": "A province that borders any province of a faction the player is at war with gets no construction or upgrades at all.",
+    "gold_reserve": 0,
+    "off_list_buildings": "ask"
+  },
+  "skills": {
+    "orders": "skills.json",
+    "other_characters": "leave alone"
+  },
+  "army_builder": {
+    "enabled_armies": [
+      {
+        "cqi": 2492,
+        "name": "army 2"
+      }
+    ],
+    "_doc": [
+      "Off for every army until the player toggles a specific army on.",
+      "A toggled-on army must match the template: units not in it are disbanded immediately,",
+      "missing units are recruited, and the army is moved to the province that can recruit them.",
+      "Before Stormfiends (Ratling Cannons) can be recruited, their slots stay empty.",
+      "Heroes are separate characters on the map: a recruited Warlock Engineer spawns outside the town that recruited it and must be moved into the lord's army. A free Warlock Engineer counts as available for an army that lacks one (player note, 2026-10-16)."
+    ],
+    "template": {
+      "lord": [
+        "wh2_dlc12_skv_ikit_claw",
+        "wh3_dlc29_skv_verminlord_warpseer"
+      ],
+      "heroes": {
+        "wh2_main_skv_warlock_engineer": 1
+      },
+      "units": {
+        "wh2_main_skv_inf_stormvermin_1": 6,
+        "wh3_dlc29_skv_mon_stormfiend_ratling_cannons": 12
+      }
+    },
+    "disband_off_template": true,
+    "move_army_to_recruit": true
+  },
+  "done_indicator": "widget",
+  "widget": {
+    "states": [
+      "automating",
+      "your turn",
+      "paused"
+    ],
+    "shows": "what was done this turn"
+  }
+}

@@ -1,0 +1,4 @@
+{
+ "_doc": "Root-level panels the assistant treats as part of the normal HUD (added with the app's 'Ignore' button). Remove an id to make it block the turn-start pass again.",
+ "ignore": []
+}

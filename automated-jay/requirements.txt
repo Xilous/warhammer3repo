@@ -1,0 +1,10 @@
+pymem>=1.14
+pydirectinput>=1.0.4
+mss>=10
+pywin32>=311
+numpy>=2
+pillow>=12
+opencv-python>=4.10
+# research tools only (tools/re_bindings.py, tools/extract_icons.py)
+pefile
+zstandard

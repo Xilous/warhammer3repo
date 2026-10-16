@@ -1,0 +1,571 @@
+# automated-jay
+
+A turn-start assistant for Total War: Warhammer III (Clan Skryre). It runs next to the game as a separate program,
+reads game memory, and acts only through ordinary mouse and keyboard input. Nothing is installed into the game.
+
+## Quickstart
+
+### What you need
+
+- **Windows** 10 or 11 and **Total War: WARHAMMER III** (tested on patch 9.0.4 with Clan Skryre).
+- The game in **borderless windowed** mode (not exclusive fullscreen) at **1920x1080**, UI scale **100%**
+  (`bot/config.py`). Clicks and screen templates assume exactly this.
+- **Python 3.14** from python.org. Once, in this folder, install the packages:
+
+  ```
+  py -3.14 -m pip install -r requirements.txt
+  ```
+
+- The parent repo's data folders `../tww/` and `../re/` (see "External dependencies" below). They are already
+  there in this checkout.
+
+### Start and stop
+
+Double-click **`run_assistant.bat`**. Start it before or after the game: it finds the game by itself and
+re-attaches when the game is restarted. Three things appear:
+
+- a **console** with the log (if the assistant stops with an error, it stays open so you can read why);
+- the **assistant window**, titled "automated-jay";
+- a small **overlay** in the top-left corner of the game with the current status.
+
+To stop, close the assistant window.
+
+`run_assistant_once.bat` does a single pass right now, without the window, after asking you to confirm. It makes
+the same checks as **Run now** (your turn, 3 s idle, no open decision). While the assistant is running, use **Run now** instead.
+
+### What happens each turn
+
+1. The assistant sees the turn counter go up. It waits until it really is your turn (End Turn button shown and
+   enabled, no AI-turn panel; in sequential multiplayer, once the others are done), lets the turn start settle
+   for 4 s, and then waits until you have left the mouse and keyboard alone for **3 s**.
+2. **Popups.** Event notices are closed. Anything that needs a decision is **always left to you**: diplomacy
+   offers, battles, dilemmas, confirmation boxes, the game menu, and any panel it does not recognise. The overlay
+   says **DECISION NEEDED** and nothing is clicked. Once you close the popup, the pass starts (it checks every 2 s).
+3. **The pass**, in this order. Each step is independent: one that fails is reported and the next still runs.
+   1. **Tech**: if research is idle, start the next tech on the bee-line, after that the cheapest remaining one.
+   2. **Skills**: spend skill points on Ikit Claw, Verminlord Warpseers and Warlock Engineers in your order.
+      Other characters are left alone.
+   3. **Buildings**: upgrades and constructions from your settlement priority list. Provinces where an enemy
+      you are at war with holds a region, or that border one, are skipped.
+   4. **Army**: only armies you ticked in the window. Each is made to match the doomstack template: extra units
+      are disbanded once the army stands where its missing units can be recruited locally, missing units are
+      recruited from the local pool (never the global one), the army is moved toward the nearest such province,
+      and free Warlock Engineers are walked in. It spends the gold the buildings left.
+4. The overlay turns green: **YOUR TURN N**, with one line per step. The window's "This turn" box shows the same.
+
+The game is brought to the front only while the pass clicks. Afterwards, focus goes back to the window you were
+using. **If you switch away from the game during a pass, the pass stops at once (INTERRUPTED)**; press Run now to
+redo it. The assistant never ends a turn and never fights a battle.
+
+Overlay colours: grey WAITING, amber AUTOMATING, green YOUR TURN, pink PAUSED and DECISION NEEDED, red ERROR and
+INTERRUPTED. Clicking the overlay toggles pause, except while automating (then clicks go through to the game).
+
+### The assistant window
+
+| Part | What it does |
+|---|---|
+| Status line | the same headline as the overlay |
+| **Run now** | one full pass for the current turn, right away. It still checks that it is your turn and waits for 3 s without input. Use it after INTERRUPTED, SKIPPED or ERROR, after loading a save, or for a turn you paused through. |
+| **Pause / Resume** | while paused, turn starts are skipped (the overlay says so). Resuming does not redo a skipped turn; Run now does. |
+| Turn and treasury | read from memory every 4 s |
+| **Ignore &lt;id&gt;** | shown when a pass is held by a panel the assistant does not recognise. If that panel is harmless, click it: the id goes into `strategy/popup_ignore.json` and never holds a pass again. Delete the id from that file to undo. Diplomacy offers, battles, dilemmas, message boxes and the game menu never get this button. |
+| This turn | what each step did in the last pass |
+| **Armies** (tick boxes) | every field army and how it differs from the template. Tick an army to let the army step manage it; unticked armies are never touched. The ticks are saved in `strategy/automation.json`. Also lists heroes on their own and which provinces can recruit the template units now. |
+| Provinces where nothing is built | the provinces the building step skips, and why |
+
+The window only reads memory. It never sends input to the game.
+
+### Your strategy files
+
+Plain JSON, read fresh at every pass: edits apply from the next pass without a restart.
+
+| File | What it holds |
+|---|---|
+| `strategy/settlements.json` | building priority list (main building, port, then the rest in order) |
+| `strategy/skills.json` | skill order per character type |
+| `strategy/automation.json` | how the assistant acts, the doomstack template (units and heroes), the ticked armies |
+| `strategy/popup_ignore.json` | panels you marked harmless with Ignore |
+| `../tww/skv_beeline.json` | tech bee-line targets in click order (made by `../scripts/game/skv_beeline.py`, explained in `../GUIDE_Skryre_Tech_Beeline.md`) |
+
+### Logs
+
+| Where | What |
+|---|---|
+| the console | one line per status change, and the full error when something fails |
+| `runs/assistant-YYYYMMDD.jsonl` | one line per pass: `{"t", "turn", "steps"}`, the steps being what each one did |
+| `runs/state.json` | the current status: `{"state", "headline", "detail", "turn", "time"}` |
+
+### Troubleshooting
+
+| You see | What to do |
+|---|---|
+| WAITING "the game is not running" or "no campaign loaded" | Nothing. It attaches by itself when the game starts or restarts (also after a crash) and acts from the first new turn once a campaign is loaded. |
+| YOUR TURN "campaign changed; acts from next turn" after loading a save, or "assistant started mid-turn" | Normal: a load is never treated as a turn start. Press **Run now** if you want this turn done too. |
+| DECISION NEEDED that does not go away | Answer or close that popup in the game. If it is a harmless panel, press **Ignore &lt;id&gt;** in the window. |
+| INTERRUPTED, SKIPPED or ERROR | Go back to the game, close anything half-open, press **Run now**. It redoes the whole pass for this turn. |
+| WAITING "waiting for you to stop clicking" | Leave mouse and keyboard alone for 3 s. |
+| Nothing happens at a new turn | Check that it does not say PAUSED and that the game is borderless windowed at 1920x1080. The status line says what it is waiting for. |
+| The console says a module is missing, or that Python 3.14 was not found | Install Python 3.14, then run `py -3.14 -m pip install -r requirements.txt` in this folder. |
+
+More situations, and how each was tested, are under "Day-to-day robustness" below.
+
+Do **not** run anything in `legacy/`. `legacy/run.py` is the old bot that ends turns (see `legacy/README.md`).
+
+---
+
+## Overview
+
+The player makes the decisions. The assistant applies rules the player already follows every campaign:
+settlement build-out order, tech order, skill orders and the doomstack template. Anything else is left to the
+player.
+
+## Status
+
+| Feature | State |
+|---|---|
+| Settlement build planner (`assist/buildplan.py`, `strategy/settlements.json`) | Done and tested; fed live by `bot/sensor/world.py`. |
+| Tech auto-progress (`assist/tech.py`) | Working: research state from memory; when idle, clicks the next beeline target (then cheapest remaining) in the technology panel by UI-tree id and confirms in memory that research started. Tested live 2026-10-16. |
+| Turn-start runner (`assist/runner.py`) | Working: detects the new turn from memory, waits until it is really the player's turn and the player is idle, runs every step, the overlay shows AUTOMATING / YOUR TURN. Click the overlay to pause. Survives game restarts, the main menu and save loads; stops at once if the player alt-tabs away (see "Day-to-day robustness"). |
+| Skill auto-spend (`assist/skills.py`, `strategy/skills.json`) | Working: cycles every character, spends points in the player's order via the skill search box. Live spend verified on Ikit. |
+| Building automation (`assist/build.py`) | Working: state from memory, provinces next to an enemy at war are skipped, upgrades and constructions done through the province panel and verified in memory. |
+| Army builder (`assist/army_builder.py`, `assist/army.py`, `assist/recruit.py`, `assist/heroes.py`) | Built: per-army tick in the window. For a ticked army: disband off-template units, recruit missing units from the local pool, recruit a Warlock Engineer, move toward the closest province that can recruit what is missing, walk free heroes in (see "Army builder"). Walking heroes in was verified live. |
+| Assistant window and overlay (`assist/app.py`) | Working: status, Run now, Pause, last turn's log, armies with template gap, free heroes, blocked provinces, Ignore buttons. |
+| Launchers (`run_assistant.bat`, `run_assistant_once.bat`) | Start the assistant, or one pass, from a double-click. |
+
+`bot/` is the sensor and focus layer and `tools/ui.py` sends all input. The original turn-ending bot (`run.py`,
+`bot/loop.py`, `bot/brain/`, `bot/hands/`) is in `legacy/` and must not be run.
+
+## Principles
+
+- **Player-visible information only.** `bot/schema.py` is the allowlist for the memory sensor. A field is added
+  only if you can say where on screen a human would read it.
+- **Deterministic rules.** The player's strategy lives in `strategy/*.json` and `../tww/skv_beeline.json`; the
+  steps in `assist/` apply it. When something needs a decision, the pass stops and leaves it to the player.
+- **Ordinary input.** `tools/ui.py` sends real keyboard and mouse events and refuses (`InputAborted`) unless the
+  game window is in the foreground (`bot/focus.py`).
+- **Battles and turn ends are the human's.** The assistant works the campaign map at the start of a turn only.
+
+## Layout
+
+```
+run_assistant.bat      start the assistant (double-click)
+run_assistant_once.bat one pass right now, no window (asks first)
+assist/runner.py       turn-start loop: new turn -> your turn? idle? popups? -> tech, skills, buildings, army
+assist/app.py          the assistant window and the overlay (colours in assist/widget.py)
+assist/popups.py       turn-start popups: closes event notices, holds the pass for decisions
+assist/tech.py         tech step
+assist/skills.py       skill step
+assist/build.py        building step (plan: assist/buildplan.py, icon matching: assist/slots.py)
+assist/army_builder.py army step (template compare: army.py, recruitable units: recruit.py, heroes: heroes.py)
+assist/gamedata.py     static game data from ../tww/db and ../tww/loc_en.json
+assist/templates/      screen templates and building icons
+bot/config.py          fixed game config (window title, resolution, RE offsets, paths)
+bot/focus.py           focus discipline, the input mutex, InputAborted, idle time
+bot/schema.py          State: what the memory sensor returns
+bot/sensor/memscan.py  region walk, byte scan, static-pointer scan (pymem + VirtualQueryEx)
+bot/sensor/cvtable.py  expected campaign_variables float[1068] used as the memory anchor
+bot/sensor/memory.py   MemorySensor: static pointer -> campaign model -> fields; re-attaches to a restarted game
+bot/sensor/world.py    factions, regions, provinces, buildings, armies, characters from memory
+bot/sensor/ui.py       the game's UI tree from memory
+bot/sensor/camera.py   camera and map-to-screen projection
+tools/ui.py            every click, key, move and wheel (checks the game is in front first)
+tools/turn_driver.py   test harness that plays whole turns on a test save (not part of the assistant)
+tools/probe.py         find the campaign model and a static pointer to it; writes anchors.json
+tools/watch.py         snapshot/diff/find around the model to locate field offsets
+tools/extract_icons.py building icons from the game packs into assist/templates/buildings
+tools/...              other research helpers (re_*.py, trace.py, track.py, uidump.py, hover.py, clicktest.py, bg.py)
+strategy/              the player's rules (JSON)
+anchors.json           build-specific anchors (static pointer offset, field offsets)
+runs/                  logs, status file, memory snapshots (gitignored)
+tests/                 rule checks for the build planner
+legacy/                the old turn-ending bot and unused drafts: do not run
+```
+
+## External dependencies
+
+Run everything from this folder with `python -X utf8` (the launchers do). Besides the packages in
+`requirements.txt` (`pefile` and `zstandard` are only for the research tools), the assistant reads files from the
+parent repo. The paths are fixed relative to this folder:
+
+| File | Used by | Made by (from the repo root, see `../README.md`) |
+|---|---|---|
+| `../tww/db/*.json` | `assist/gamedata.py`, `recruit.py`, `skills.py`, `tech.py`, `bot/sensor/world.py` | `python run_all.py game` dumps the default tables from the installed game's packs. Four the assistant needs are not in the default set; dump them once with `python -X utf8 scripts/game/dumpdb.py building_chain_set_items_tables building_effects_junction_tables region_to_province_junctions_tables campaign_variables_tables` |
+| `../tww/loc_en.json` | in-game names (`assist/gamedata.py`, the window) | `python run_all.py game` (`scripts/game/extract_loc.py`) |
+| `../tww/skv_beeline.json` | tech step | `python scripts/game/skv_beeline.py` (needs `character_skill_node_links_tables` and `technology_required_technology_junctions_tables` dumped) |
+| `../re/cv_globals.json` (with `../tww/db/campaign_variables_tables.json`) | memory anchor (`bot/sensor/cvtable.py`) | a reverse-engineering output (`scripts/re/cv_consumers.py`) |
+
+The pack reader has the Steam install path hard-coded (`scripts/game/packread.py`, `GAME=`). After a game patch,
+re-dump the tables and check `anchors.json` and the offsets in this README: they are build-specific.
+
+End Turn hotkeys, for the test harness: Shift+Enter ends the turn and skips warnings; plain Enter stops at warnings
+such as "Lord not moved" and only pans the camera to them. The assistant itself never ends a turn.
+
+## Known fields (9.0 build)
+
+| Field | Path from campaign model | Verified |
+|---|---|---|
+| turn | not found | `+0x715c` read 1, 2, 3 then stuck on turn 4; `+0x719c` read turn+1 for four turns, unconfirmed |
+| treasury | `+0x7f0 -> +0x20 -> +0x270` | 9000, 10901, 12802 matched the top bar |
+| income | `+0x7f0 -> +0x20 -> +0x27c` | 1901 matched the top bar |
+
+`tools/trace.py <value>` finds pointer paths like these by walking out from the model.
+
+## How the memory anchor works
+
+The campaign model holds a `float[1068]` copy of the `campaign_variables` table at `+0x5be8`
+(from `re/NOTES.md`). `tools/probe.py` scans the heap for the first 48 default values, then
+scans the exe's data section for an 8-byte pointer to the object that holds them. On the 9.0
+build that pointer is `Warhammer3.exe+0x4480d88`, the same global the autoresolver notes
+call `_DAT_144480d88`. `MemorySensor` re-reads it on every read (it is 0 at the main menu, and a
+loaded save gets a new model object). Only when the pointer is non-zero but does not lead to a model (a
+patch moved it) does it fall back to the heap scan: at most every 30 s per process (backing off to 5 min),
+one scan at a time, and a candidate is only taken when the exe holds a static pointer to it and its turn
+fields read sanely, so the DB and engine copies of the same array are never picked. The pointer it finds
+is saved to `anchors.json`. A scan takes about 40 s on a late-game save.
+
+## Finding a field offset (turn, treasury)
+
+With a campaign loaded:
+
+```
+python -X utf8 -m tools.watch find 12345        # the treasury shown on screen
+python -X utf8 -m tools.watch snap A
+# end a turn in-game
+python -X utf8 -m tools.watch snap B
+python -X utf8 -m tools.watch diff A B --eq 8   # the new turn number shown on screen
+```
+
+Put confirmed offsets in `anchors.json` under `"fields"`. The window scanned is
+`model-0x1000 .. model+0x20000`; a field that lives behind a pointer (likely the treasury,
+which belongs to the faction object) needs a pointer hop added to `MemorySensor`.
+
+## Legacy
+
+`legacy/` holds the original proof of concept (`run.py`, `bot/loop.py`, `bot/brain/`, `bot/hands/`), which ended
+turns by itself, and drafts the assistant replaced. Nothing imports it and it must not be run; see
+`legacy/README.md`.
+
+## Settlement build planner
+
+`strategy/settlements.json` is the player's priority list. `assist/buildplan.py` applies it per province:
+
+- Slot 1 is the main building, upgraded to the maximum: tier 5 in a capital, tier 3 in a minor settlement.
+  Skavenblight uses its own main-building chain with 12 slots at tier 5.
+- Port settlements keep the port in slot 2 and upgrade it as far as the main building allows.
+- The rest of the slots are filled top to bottom from the list, each chain to the highest level the
+  settlement allows. Lower entries are dropped when slots run out.
+- Clan Armoury and Equipment Warpforge are one per province. The capital gets first claim, and an
+  existing one elsewhere in the province is kept.
+- Nothing is planned above the current main-building tier. Buildings that are not on the list are only
+  offered for replacement, never demolished silently.
+
+Facts taken from the game data rather than assumed:
+
+| Rule | Source |
+|---|---|
+| Slots per main-building level: major 1, 2, 3, 5, 7; minor 1, 2, 3; Skavenblight 2, 4, 6, 9, 12 | building effects |
+| Warpstone Reactor chain is not allowed in minor settlements | secondary-slot chain sets |
+| Chained Sentry Beasts has a minor-settlement counterpart, Fortified Entries | garrison chain sets |
+| Spy Nests is tier 4, so minor settlements stop at Deep Burrows | building levels |
+| Equipment Warpforge needs tier 5, so it can only go in a capital | building levels |
+
+Unverified: whether the port occupies one of the slots the main building unlocks. The planner assumes
+it does (`PORT_TAKES_A_SLOT`).
+
+```
+python -X utf8 -m assist.buildplan        # demo on example provinces
+python -X utf8 tests/test_buildplan.py    # rule checks
+```
+
+## Running the assistant
+
+```
+run_assistant.bat                        # the same as the next line, from a double-click
+python -X utf8 -m assist.runner          # window + overlay + loop; acts at every new turn
+python -X utf8 -m assist.runner --once   # run the automations once now (no turn or idle check)
+python -X utf8 -m assist.tech status     # research idle or running (screen only)
+```
+
+The current status is also in `runs/state.json` (`state`, `headline`, `detail`, `turn`, `time`), replaced
+atomically on every change. The overlay lets clicks through while the assistant is automating (it sits over
+the game) and never takes focus; click it at other times to pause or resume. Only one of the project's
+processes sends input at a time: `bot/focus.py: game_focus` holds a system-wide mutex.
+
+## Day-to-day robustness (tested live 2026-10-16, 9.0.4)
+
+The assistant can be started before the game, kept running across game restarts, and left alone while the
+player loads saves or plays with friends.
+
+| Situation | What the assistant does |
+|---|---|
+| Game closed, or started before the game | Window says WAITING "the game is not running"; it looks for the game every 2 s and attaches by itself. |
+| Main menu, or a different save loaded | WAITING "no campaign loaded". Once a campaign appears: "campaign changed; acts from next turn". A loaded save is never treated as a turn start. |
+| Game crashed or restarted while the assistant runs | It notices the process exit within a second, re-attaches to the new process, and works from the next turn. |
+| Turn counter moved but it is not the player's turn yet (AI turns, or another player's turn in sequential multiplayer) | The pass starts only when the End Turn button is shown and enabled (`[component + 0x2F0] + 0x18` is its state name, "inactive" while waiting) and no `ai_turns` panel is up. |
+| Player is using mouse or keyboard at turn start | WAITING "waiting for you to stop clicking" until 3 s without input (`GetLastInputInfo`). |
+| Player alt-tabs away during a pass | Every click, key, move and wheel first checks that the game is the foreground window and that the window under the cursor is the game; otherwise `InputAborted` stops the pass at once. The overlay says INTERRUPTED, focus stays where the player put it, held keys and mouse buttons are released. |
+| A popup needs the player | DECISION NEEDED with the panel's id. The check repeats every 2 s without blocking anything: Pause skips the turn, Run now tries again. An unknown panel gets an "Ignore <id>" button in the window: one click adds it to `strategy/popup_ignore.json` and it never blocks again. |
+| The UI tree or the popup check cannot be read | The step reports the failure ("game UI not found in memory; nothing clicked", "SKIPPED turn N: the popup check failed"). There are no fixed-coordinate fallbacks in the turn-start steps. |
+
+How to recover:
+
+- **INTERRUPTED** or **SKIPPED**: go back to the game, close anything half-open if you like, and press
+  **Run now** in the assistant window. It redoes the whole pass for the current turn.
+- **DECISION NEEDED** for a panel that is harmless: press **Ignore <id>**. To undo, remove the id from
+  `strategy/popup_ignore.json`. Diplomacy offers, battles, dilemmas, message boxes and the game menu are
+  always left to you and cannot be ignored.
+- **Paused** by accident: click the overlay or Resume; the skipped turn can be done with Run now.
+- **Nothing happens at a new turn**: check that the window does not say PAUSED, and that the game is in
+  borderless windowed mode at 1920x1080. The window's status line says why it is waiting.
+- **Stopping**: close the window or press Ctrl+C in the terminal. If a test harness was started from a
+  shell wrapper, look for leftover `assist.runner` / `tools.turn_driver` Python processes
+  (`Get-CimInstance Win32_Process`) and end them; killing only the wrapper can leave the Python child running.
+
+## Input and focus (verified on 9.0.4)
+
+- The game ignores window messages (PostMessage) for both keys and mouse, even with faked activation.
+  It only accepts real input while it is the foreground window.
+- It also ignores pydirectinput/SendInput mouse BUTTON events, but accepts `SetCursorPos` + legacy
+  `mouse_event` (`tools/ui.py: click_at`). Keyboard via pydirectinput works.
+- Typed text drops characters and capitals at automation speed (`type_text` slows it down; still flaky).
+- Window capture (PrintWindow with PW_RENDERFULLCONTENT) works with the game in the background, so all
+  screen reading happens without focus. `bot/focus.py` raises the game only around input and always
+  returns focus to the user's terminal, verified with retries.
+- All input goes through `tools/ui.py` (`click_at`, `move_to`, `double_click`, `drag`, `wheel`, `press`,
+  `held`, `hold_key`, `type_text`). Each one raises `bot.focus.InputAborted` (a BaseException, so a step's
+  `except Exception` cannot swallow it) when the game is not in front. A topmost window over the game can take
+  a click even while the game has the focus, so button and wheel events also check `WindowFromPoint`. The
+  assistant's own overlay is click-through while automating, so it never trips this check.
+
+## Game UI facts used
+
+| Thing | Where / how |
+|---|---|
+| End turn | Shift+Enter skips warnings ("Lord not moved"); plain Enter stops at them |
+| Technology panel | `button_technology` on the end-turn ring (hotkey 8); its `alert_icon` child is visible while research is idle |
+| Tech research queue | one chain at a time; clicking a tech (also a queued one) re-targets the chain to it; clicking the tech being researched cancels research and the chain; Shift-click does not append. Some locked techs ignore the click (Plans Within Plans and everything behind it, while Record Effective Recipes is unresearched) |
+| Diplomacy | hotkey 7 |
+| Lords & Heroes list | top-right bar button at (1772, 22); clicking a rank badge opens that character's skills |
+| Skill panel | "Skill Points: N" top right; tree is NOT laid out by DB tier, positions need calibrating per character type |
+| Turn counter | memory: model+0x6cb0 -> +0x10 (cross-check model+0x719c = turn + 1) |
+
+## Reading the campaign from memory (`bot/sensor/world.py`)
+
+The game ships its Lua scripting interface in the exe as binding tables of {method name, C function}.
+Decompiling the C functions (Ghidra, `tools/re_bindings.py`, `tools/re_tables.py`) gives the exact field
+offsets, so the assistant reads the same data the game's own scripts use, from outside the process:
+
+| Object | Field | Offset |
+|---|---|---|
+| faction | regions | count u32 +0xF3C, array +0xF40 (entry -> region) |
+| faction | relationships | [+0xDB8]: count +4, base +8, stride 0x78; other faction +0x28; at war when int [[e+0x30]+0x20] == 0 |
+| faction | name | [[+0xD88]+8] string |
+| region | key | [+0x80] DB record, +0x10 char* |
+| region | owner | [[+0x120]+0x10] |
+| region | neighbours | count u32 +0x8C, array +0x90 |
+| region | province | [[+0x3A8]+0x10]; province regions list at +0x78 (entries -> region), capital +0x90, adjacent provinces +0x104/+0x108 |
+| region | slots | [+0x148]+0x10: count +4, array +8 |
+| slot | building / construction | [+0x190]: building +0x20, construction +0x10; active byte +0x1D8 |
+| building | level | [+0x30] level record: key string +8, level index +0x1F0 |
+
+The player's faction is found by following candidate paths from the campaign model (`anchors.json:
+faction_paths`) and accepting the one whose name is `player_faction_key`.
+
+The no-build rule: a province is blocked when a faction the player is at war with holds a region in it,
+or when it shares a border with a province where such a faction holds a region.
+
+## Building UI mechanics (`assist/build.py`)
+
+- Province panel: arrows beside the title cycle the player's provinces. Settlements are columns
+  (memory province region order, reversed); the right column is confirmed by matching a finished
+  building's icon before clicking.
+- Construct: click an empty slot, a strip of category cards appears above it; hovering a category
+  opens a panel of chain columns by tier; the parchment card with the target chain's icon is clicked.
+- Upgrade: click the building; its chain stacks above the slot; the parchment card above the current
+  level is the next level.
+- Every action is confirmed in memory (slot shows construction) before the next one.
+
+```
+python -X utf8 -m assist.build plan      # memory only: blocked provinces and the next builds
+python -X utf8 -m assist.build run       # do it
+```
+
+## Camera and map positions (`bot/sensor/camera.py`)
+
+| Thing | Where |
+|---|---|
+| character map position | float x, y at character +0x60; grid u16 x, y at +0x68 |
+| camera block | `[Warhammer3.exe + 0x48610A0] + 0x3710` |
+| camera eye | block +0x00: float3 (x, height, y) |
+| camera forward | block -0x60: float3 (plane normal) |
+| projection scales | m00 at block +0x0C, m11 at block +0xA0 (m11 / m00 = 16:9) |
+
+`Camera.project(x, y, h)` turns a map position into a screen pixel. It was checked against characters on
+screen and against hover tooltips. A garrisoned lord's army is targeted by its banner above the settlement
+(height about 2.6 over the lord's position). The camera is moved with WASD, closed-loop on these values.
+
+## Moving a hero into an army (`assist/heroes.py`)
+
+Select the hero (click its projected position), right-click the lord's army banner, then click the action in
+the "Hero Actions" panel. For your own army that panel offers the hero's embed action, labelled with the
+buff the army gets (Warlock Engineer: "Increase Mobility"). A hero out of reach gets a move order and
+joins later. Verified once on 9.0.4 with a lord garrisoned in a settlement.
+
+## Lords & Heroes list as navigation (verified 9.0.4)
+
+- Double-clicking a row selects that character and centres the camera on it at a fixed zoom and angle
+  (eye height 11.5, pitch -0.76), whatever the zoom was before. A single click selects without moving the
+  camera. Right-clicking a row does nothing.
+- Embedded heroes are listed indented under their lord. Rows are about 79 px apart starting at y 354.
+- The vertical bar on the right of each row is the movement left this turn: a bronze frame that is
+  always drawn, with an orange fill rising from the bottom. Rows are found by the frame (so characters
+  who have moved are not missed) and `list_rows()` returns the fill as a 0..1 movement fraction.
+- Rows are identified by double-clicking each top-level row and matching the camera centre to character
+  positions in memory. Long lists are scrolled with the mouse wheel over the list (not tested yet: the
+  test campaign has two rows).
+- Hero step: double-click the lord's row, single-click the hero's row, right-click the lord's banner,
+  click the Hero Actions card. WASD panning is the fallback when a name is not in the list.
+
+## Recruitment awareness (`assist/recruit.py`)
+
+Which provinces can recruit each template unit right now, from game data plus live memory:
+
+- Units are gated by buildings only; no game table locks these units behind a technology.
+  Stormvermin (Swords & Shields) need a Clan Armoury, Stormfiends (Ratling Cannons) an Equipment Warpforge.
+- Warlock Engineers are recruitable in a province with a Construction Cavern chain building (or Galbaraz's
+  oathgold landmark). That chain is not on the settlement priority list.
+- Only finished buildings count; one under construction or being upgraded does not.
+- Recruitment draws on buildings anywhere in the province the army stands in.
+
+The army step and the window use this, so the builder never plans around a building that does not exist.
+
+## Other memory facts found on the endgame save (9.0.4)
+
+| Thing | Where |
+|---|---|
+| treasury | int at player faction +0xD58 (the old model-relative path did not survive a different save) |
+| unspent skill points | u32 at [character +0x3F0] +0x240 |
+| renamed characters | name entry holds inline UTF-16 text (vtable in the exe, length +0x10, text +0x18) |
+
+The skill step reads points from memory, checks the badge digit against a "0" template (the badge glow
+pulses, so colour counts are unreliable), and confirms each click by the points going down in memory.
+In the search, a locked node turns red but an available node only gets a brighter border, so the searched
+node is found as the largest changed patch.
+
+## The game's UI tree (`bot/sensor/ui.py`)
+
+Every on-screen element is a UI component in memory (layout from the UIComponent Lua bindings):
+
+| Field | Offset |
+|---|---|
+| child count / child array | +0x1CC / +0x1D0 |
+| id string | +0x2A0 (string object; short ids are stored inline) |
+| parent | +0x2E8 (0 at the root) |
+| x, y in screen pixels | +0x2C0, +0x2C4 |
+| width, height | [+0x2F0] +0x11C, +0x120 |
+| visible | +0x353 |
+
+The root (id "root") is found once and a static pointer to it is cached in `anchors.json` (`ui_root_ptr`).
+Walking all ~1,900 visible components takes about 0.06 s. Useful ids:
+
+- `character_row_<character id>` rows in Lords & Heroes, with `skill_button` (the rank badge).
+  Character id = u32 at character +0x110.
+- `character_details_panel_skills` (skills panel); each skill node's id is its character_skill_key, with
+  child `card` and `icon_check`. The tick shows once any rank is taken, so it only means "maxed" for
+  one-rank skills. Two `list_clip` components exist (skills tree, Lords & Heroes list): scope lookups.
+- `3d_ui_parent` holds map labels: `label_<character id>` (character flags) and
+  `label_settlement:<region key>` (settlement nameplates), positioned in screen pixels.
+- `technology_panel`: see the technology section below.
+- `button_menu`, `button_load`, `button_end_turn`, `button_technology`, `popup_message_box` with
+  `button_tick` / `button_cancel`.
+
+The skill step now opens each character's skills from its list row and clicks nodes by id: about 7 s
+per point, down from about 90 s per character, and it follows the order exactly.
+
+## Army builder (`assist/army_builder.py`)
+
+Runs at turn start for armies ticked in the window, after the building step: building upgrades (in provinces
+not next to an enemy at war) take precedence over refilling armies, so the builder recruits with what is left. Per army:
+
+1. Disband units not in the template, but only once the army stands in a province that can recruit its
+   missing units locally (player rule: a stripped lord on the march gets attacked). Contiguous cards: click
+   the first, Shift-click the last. Scattered cards: Ctrl-click. Heroes one at a time, because the game leaves
+   embedded heroes out of a group disband. The clicked cards are checked in memory (unit card +0x1B8 is 2
+   when selected; Shift-range members are not flagged), and what was disbanded is verified in memory.
+2. If the army stands in an eligible province, queue the missing units from the **local** recruitment pool
+   only (`local1/<unit>_recruitable`), never the global pool, which costs far more. Each click is confirmed by
+   the treasury going down; when it stops going down, local capacity or gold has run out and the rest waits
+   for later turns. The local pool is a horizontal list that scrolls: a card past the `list_clip` window
+   still reads as visible but its centre can be off screen (the click lands on the map), so each card is
+   first wheeled into view inside its `list_clip` (one notch = about 82 px). A Warlock Engineer is recruited from that province (settlement > `button_agents` >
+   engineer tab > first candidate > confirm) when the army has none and none is free.
+3. Otherwise order the army to the closest eligible province: fewest region hops over the land adjacency
+   graph, ties broken by straight-line distance, preferring provinces that cover more of the missing units.
+   Re-evaluated every turn, so a province that becomes eligible mid-march takes over if it is closer.
+   The order is a right-click on the settlement's nameplate component after panning the camera to it.
+4. Walk free Warlock Engineers into the army: double-click the hero's row, pan until the lord's flag
+   component (`label_<lord id>`) is on screen, right-click it, take the Hero Actions card.
+
+## Turn-start popups (`assist/popups.py`)
+
+Any visible child of the UI root that is not part of the normal HUD is a popup. Event notices are closed;
+anything needing a decision (AI diplomacy, battles, dilemmas, confirmation boxes, unknown popups) holds the
+pass and the overlay says what is waiting, by panel id. Unknown panels can be ignored from the window (see
+"Day-to-day robustness"). Escape is never pressed blindly: with nothing selected it opens the game menu.
+
+`tools/turn_driver.py` is a test harness that plays whole turns on a test save (cancels AI offers,
+autoresolves battles). It is not part of the assistant. With `--external` it tests the real app: start
+`python -X utf8 -m assist.runner` first; the driver only ends turns and answers the runner's DECISION NEEDED
+popups (read from `runs/state.json`), then checks each turn's log line and that focus came back.
+
+## Memory scans and the game's RAM use
+
+The game commits about 18 GB on a loaded late-game save but keeps only about 6.6 GB of it in RAM. Reading
+a committed page that is not in RAM makes Windows give it real memory, so a scan that reads every page
+pulls the whole commit into RAM. That is what pushed the game to 20 GB on 2026-10-17. It was not a game leak:
+opening panels and sitting idle caused no growth. `memscan.read_region` now asks Windows which pages are
+resident (QueryWorkingSetEx) and reads only those. A full scan then leaves the game's RAM flat and runs about
+3 times faster. Live game data is always resident, so nothing is missed.
+
+## Technology (memory + UI tree, 9.0.4)
+
+`T` = [player faction +0xFD8] is the faction's technology manager:
+
+| Thing | Where |
+|---|---|
+| tech being researched | entry at [T+0x28]; research is running iff non-null and u32 [E+8] == 2 (0 when idle) |
+| last clicked research target | entry at [T+0x30]; set by every click, even one the game ignores (so it can be non-null while idle); 0 after research is cancelled; equals the end of the chain after a successful click |
+| researched techs | cap u32 T+0x38, count u32 T+0x3C, array [T+0x40] of entries |
+| every tech | sets: count u32 T+0xC, array [T+0x10] -> A; rows: count u32 A+4, array [A+8], stride 0x10; row R: count u32 R+4, entries [R+8], stride 0x80 |
+| entry E | key = string object at [[E]+0x50]+8; state u32 E+8: 0 researched, 2 researching, 3 available, 4 locked; byte E+0x78 is 0; E+0x10 / E+0x20 look like link lists (count = number of parent / child links), not decoded |
+
+The queued chain itself was not found: re-targeting it changes only T+0x28/T+0x30, nothing else in T (first
+0x1000 bytes), the faction (0x3000 bytes) or the entries. The open panel shows it instead (below).
+
+Panel components:
+
+- `technology_panel`, closed with `button_ok` (bottom centre). The panel fades in: clicks right after it
+  appears are not trusted, so the step waits 1 s.
+- Tree: `technology_list` / `list_clip` / `list_box` / `tech_template` / `tree_parent` / `slot_parent` /
+  `<technology key>` (the node id is the technology key, e.g. `wh3_dlc29_tech_skv_9_1_2`), child
+  `technology_entry` with `icon_check` (researched), `dy_time` (hourglass + turns: available or queued, so a
+  locked node with `dy_time` visible is in the queued chain) and `researching_icon`.
+- The tree (2703 px) is wider than `list_clip` (x 36..1882). All 56 nodes are in the tree and read as visible,
+  including those past the clip at off-screen x (same trap as the recruitment list). The scrollbar is
+  `technology_list` / `hslider` / `handle`; dragging it moves the nodes' rectangles, so positions are re-read
+  after a drag. The panel remembers its scroll position between openings.
+
+The step reads the state from memory and sends no input while research is running (a click on the tech being
+researched would cancel it). When idle it opens the panel, clicks the first target in click order, waits up
+to 2.5 s for [T+0x28] to show research, and moves on to the next target when the game ignored the click.
+
+```
+python -X utf8 -m assist.tech status   # memory only: what is researched, the target, the next click
+python -X utf8 -m assist.tech run      # queue research if idle
+```
+
+## Recruitment queue (memory, 9.0.4)
+
+From the force's `recruitment_item_count` / `recruitment_items` bindings: count u32 at force +0x6EC, item array
+at +0x6F0; entry -> item X; unit key = string object at [X+0x90]+0x3E0. Queued units count as present when
+comparing an army with the template (both template units take 2 turns to recruit).

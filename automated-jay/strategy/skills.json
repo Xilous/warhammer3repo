@@ -1,0 +1,259 @@
+{
+  "_doc": [
+    "Skill orders given by the player on 2026-10-16. Each skill is taken to its max rank before the next.",
+    "After the list: spend remaining points on the rest of the tree 'as fits', never relying on active abilities.",
+    "Prerequisites are satisfied by the list itself: row unlocks count points spent in the row (verified against node links)."
+  ],
+  "after_list": {
+    "policy": "remaining_passives_first",
+    "abilities_last": true,
+    "_note": "Active abilities are never used in battle, so ability skills only get points once nothing else is left."
+  },
+  "characters": {
+    "ikit_claw": {
+      "agent_subtype": "wh2_dlc12_skv_ikit_claw",
+      "node_set": "wh2_dlc12_skill_node_set_ikit_claw",
+      "order": [
+        {
+          "skill": "Route Marcher",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_00",
+          "ranks": 1
+        },
+        {
+          "skill": "Inspiring Presence",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_00",
+          "ranks": 1
+        },
+        {
+          "skill": "Blastmaster",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_03",
+          "ranks": 3
+        },
+        {
+          "skill": "Respected & Feared",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_04",
+          "ranks": 3
+        },
+        {
+          "skill": "Rally!",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_07",
+          "ranks": 1
+        },
+        {
+          "skill": "Warp-Smart",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_10",
+          "ranks": 1
+        },
+        {
+          "skill": "Whip-Smart",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_08",
+          "ranks": 1
+        },
+        {
+          "skill": "Ancient Cunning",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_02",
+          "ranks": 3
+        },
+        {
+          "skill": "Bonded Service",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_03",
+          "ranks": 3
+        },
+        {
+          "skill": "Draftmaster",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_06",
+          "ranks": 1
+        },
+        {
+          "skill": "Quartermaster",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_08",
+          "ranks": 3
+        },
+        {
+          "skill": "Lightning Strike",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_07",
+          "ranks": 3
+        },
+        {
+          "skill": "Renowned & Feared",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_11",
+          "ranks": 1
+        },
+        {
+          "skill": "Wary",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_09",
+          "ranks": 3
+        },
+        {
+          "skill": "\"Miiine All Miiine!\"",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_campaign_chain_10",
+          "ranks": 3
+        }
+      ],
+      "mounts": {
+        "take": [
+          "wh2_dlc12_skill_node_skv_ikit_claw_mount_1"
+        ],
+        "skip": [
+          "wh2_dlc12_skill_node_skv_ikit_claw_mount_2"
+        ],
+        "_note": "Doom-Flayer (unlocks at rank 6): taken as soon as it unlocks. Doomwheel: skipped."
+      }
+    },
+    "warlock_engineer": {
+      "agent_subtype": "wh2_main_skv_warlock_engineer",
+      "node_set": "wh2_main_skill_node_set_skv_warlock_engineer",
+      "order": [
+        {
+          "skill": "Standardised Firing Drill",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_01",
+          "ranks": 1
+        },
+        {
+          "skill": "Arms Dealer",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_02",
+          "ranks": 3
+        },
+        {
+          "skill": "Triangulation",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_05",
+          "ranks": 3
+        },
+        {
+          "skill": "Ballistics Calibration",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_06",
+          "ranks": 1
+        },
+        {
+          "skill": "Sapper",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_10",
+          "ranks": 3
+        },
+        {
+          "skill": "Ballistics Instructor",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_09",
+          "ranks": 1
+        },
+        {
+          "skill": "Overseer",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_07",
+          "ranks": 3
+        },
+        {
+          "skill": "Extra Powder",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_self_11",
+          "ranks": 1
+        },
+        {
+          "skill": "Boost Income",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_campaign_02",
+          "ranks": 3
+        },
+        {
+          "skill": "Increase Mobility",
+          "node": "wh2_main_skill_node_skv_warlock_engineer_campaign_01",
+          "ranks": 3
+        }
+      ],
+      "mounts": {
+        "take": [],
+        "skip": []
+      }
+    },
+    "verminlord_warpseer": {
+      "agent_subtype": "wh3_dlc29_skv_verminlord_warpseer",
+      "node_set": "wh3_dlc29_skill_node_set_skv_verminlord_warpseer",
+      "order": [
+        {
+          "skill": "Route Marcher",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_00",
+          "ranks": 1
+        },
+        {
+          "skill": "Inspiring Presence",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_00",
+          "ranks": 1
+        },
+        {
+          "skill": "Blastmaster",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_03",
+          "ranks": 3
+        },
+        {
+          "skill": "Respected & Feared",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_04",
+          "ranks": 3
+        },
+        {
+          "skill": "Rally!",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_07",
+          "ranks": 1
+        },
+        {
+          "skill": "Warp-Smart",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_10",
+          "ranks": 1
+        },
+        {
+          "skill": "Whip-Smart",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_08",
+          "ranks": 1
+        },
+        {
+          "skill": "Lord of Black Lightning",
+          "node": "wh3_dlc29_skill_node_skv_verminlord_warpseer_unique_0",
+          "ranks": 1
+        },
+        {
+          "skill": "Inscrutable Genius",
+          "node": "wh3_dlc29_skill_node_skv_verminlord_warpseer_unique_4",
+          "ranks": 1
+        },
+        {
+          "skill": "Ancient Cunning",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_02",
+          "ranks": 3
+        },
+        {
+          "skill": "Bonded Service",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_03",
+          "ranks": 3
+        },
+        {
+          "skill": "Draftmaster",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_06",
+          "ranks": 1
+        },
+        {
+          "skill": "Quartermaster",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_08",
+          "ranks": 3
+        },
+        {
+          "skill": "Lightning Strike",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_07",
+          "ranks": 3
+        },
+        {
+          "skill": "Renowned & Feared",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_11",
+          "ranks": 1
+        },
+        {
+          "skill": "Wary",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_09",
+          "ranks": 3
+        },
+        {
+          "skill": "\"Miiine All Miiine!\"",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_campaign_chain_10",
+          "ranks": 3
+        }
+      ],
+      "mounts": {
+        "take": [],
+        "skip": []
+      }
+    }
+  }
+}

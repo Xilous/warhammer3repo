@@ -1,0 +1,91 @@
+{
+  "fields": {
+    "treasury": [
+      2032,
+      32,
+      624
+    ],
+    "income": [
+      2032,
+      32,
+      636
+    ],
+    "turn": [
+      27824,
+      16
+    ],
+    "turn_plus_one": 29084
+  },
+  "build_note": "9.0; offsets from re/NOTES.md",
+  "candidates": [
+    {
+      "label": "model",
+      "object": "0x4a2330fc",
+      "array": "0x4a238ce4",
+      "match": 1068,
+      "static_exact": [],
+      "static_near": []
+    },
+    {
+      "label": "engine",
+      "object": "0x4a220010",
+      "array": "0x4a238ce4",
+      "match": 1068,
+      "static_exact": [],
+      "static_near": []
+    },
+    {
+      "label": "model",
+      "object": "0x7bd84150",
+      "array": "0x7bd89d38",
+      "match": 1065,
+      "static_exact": [
+        "0x4480d88"
+      ],
+      "static_near": []
+    },
+    {
+      "label": "engine",
+      "object": "0x7bd71064",
+      "array": "0x7bd89d38",
+      "match": 1065,
+      "static_exact": [],
+      "static_near": []
+    }
+  ],
+  "model_static_ptr_offset": 71830920,
+  "model_last_heap": 2077770064,
+  "fields_note": "9.0.4. treasury/income: model+0x7f0 -> +0x20 -> faction economy object, +0x270 treasury, +0x27c income. turn: model+0x6cb0 -> +0x10 (survived turn values 4,5 in one campaign and 2 in a new one). turn_plus_one: model+0x719c read turn+1 in both campaigns; used as a cross-check.",
+  "faction_paths": [
+    [
+      544,
+      2040
+    ],
+    [
+      752,
+      1976
+    ],
+    [
+      23472,
+      456
+    ],
+    [
+      28496,
+      392
+    ],
+    [
+      28624,
+      1576
+    ],
+    [
+      28440,
+      0
+    ],
+    [
+      29232,
+      0
+    ]
+  ],
+  "player_faction_key": "wh2_main_skv_clan_skryre",
+  "ui_root_ptr": 71830856
+}
