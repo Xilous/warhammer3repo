@@ -26,7 +26,7 @@ from bot import config
 from bot.focus import game_focus, game_hwnd, input_lock
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
-from tools.ui import click_at, held, press as press_key
+from tools.ui import click, held, press as press_key
 
 PREFERRED = ["button_autoresolve", "button_cancel", "button_dismiss", "button_close", "button_accept",
              "button_ok", "button_tick", "button_continue", "button_resume"]
@@ -41,7 +41,7 @@ def press(ui: UI, comp: int, guard=None, wait: float = 1.2) -> bool:
         if guard is not None and not guard():
             return False
         with game_focus():
-            click_at(*ui.comp(comp).center)
+            click(ui, comp)
             time.sleep(wait)
     return True
 

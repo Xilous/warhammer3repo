@@ -57,6 +57,7 @@ _u32 = struct.Struct("<I").unpack_from
 _u64 = struct.Struct("<Q").unpack_from
 _xy = struct.Struct("<2f").unpack_from
 ID_CACHE_MAX = 200_000
+PLAIN_STATES = {"active", "default", "unselected", "available", "NewState", "normal"}
 
 _k32 = ctypes.WinDLL("kernel32", use_last_error=True)
 _RPM = _k32.ReadProcessMemory
@@ -129,7 +130,7 @@ class UI:
         self._ptrs: dict[tuple, tuple[int, int, int]] = {}  # cached() key -> (ptr, id object, parent)
         self._cache_root = 0
         self._rb_pm = self._rb = None
-        self._hover: dict[tuple[int, int], frozenset] = {}   # (component, state array) -> hover state objects
+        self._hover: dict[tuple[int, int], dict] = {}        # (component, state array) -> {state object: name}
 
     @property
     def pm(self):
@@ -243,23 +244,40 @@ class UI:
                 continue
         return out
 
-    def hover_states(self, c: int) -> frozenset:
-        """The component's state objects whose name says hover (empty when it has none). Cached per state array."""
-        try:
-            raw = self.raw(c)
-        except Exception:
-            return frozenset()
+    def _state_map(self, c: int, raw: bytes) -> dict[int, str]:
+        """{state object: name}, cached per (component, state array)."""
         k = (c, _u64(raw, O_STA)[0])
-        hs = self._hover.get(k)
-        if hs is None:
+        m = self._hover.get(k)
+        if m is None:
             try:
-                hs = frozenset(p for p, name in self.states(c) if "hover" in name)
+                m = dict(self.states(c))
             except Exception:
-                hs = frozenset()
+                m = {}
             if len(self._hover) > 20_000:
                 self._hover.clear()
-            self._hover[k] = hs
-        return hs
+            self._hover[k] = m
+        return m
+
+    def hover_states(self, c: int) -> frozenset:
+        """The state objects the component switches to when the cursor arrives over it, from its CURRENT state:
+        "<state>_hover" ("selected" -> "selected_hover", "complete" -> "complete_hover"), else "hover" from a plain
+        state (active, default, unselected, available). Empty when its current state has no hover form (a locked
+        tech node stays "locked"; an inactive button stays "inactive"): then nothing on screen tells, and the
+        input primitives wait a fixed HOVER_MAX_FRAMES instead. Already hovered: that state."""
+        try:
+            raw = self.raw(c)
+            m = self._state_map(c, raw)
+            cur = m.get(_u64(raw, O_ST)[0])
+        except Exception:
+            return frozenset()
+        if not m or cur is None:
+            return frozenset()
+        if "hover" in cur:
+            return frozenset(p for p, n in m.items() if n == cur)
+        want = {cur + "_hover"}
+        if cur in PLAIN_STATES:
+            want.add("hover")
+        return frozenset(p for p, n in m.items() if n in want)
 
     def hover_probe(self, c: int, at: tuple[int, int] | None = None, depth: int = 4) -> tuple[int, frozenset] | None:
         """(component, its hover states) that tells when the game has registered the cursor over c: c itself when it
@@ -281,9 +299,12 @@ class UI:
                 continue
             kc = self._comp_raw(k, raw, "")
             if kc.x <= at[0] <= kc.x + kc.w and kc.y <= at[1] <= kc.y + kc.h:
-                hs = self.hover_states(k)
-                if hs:
-                    return k, hs
+                if self._state_map(k, raw):
+                    hs = self.hover_states(k)
+                    if hs:
+                        return k, hs
+                    if any("hover" in n for n in self._state_map(k, raw).values()):
+                        return None          # the component that would show hover cannot from its current state
             if d < depth:
                 stack.extend((g, d + 1) for g in reversed(self._kids(raw)))
         return None

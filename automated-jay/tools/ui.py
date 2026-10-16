@@ -208,8 +208,16 @@ def click(ui, target, right: bool = False):
     Returns the Comp clicked."""
     ptr = getattr(target, "ptr", target)
     k = ui.comp(ptr)
+    if not _on_screen(k.center):             # a panel still sliding in from off screen: wait until it is still
+        k = wait.stable_rect(ui, ptr, n=2, timeout=2.0, what=f"{k.id} still (was off screen)")
+        if not _on_screen(k.center):
+            raise RuntimeError(f"{k.id} is off screen at {k.center}")
     click_at(*k.center, right=right, target=ptr)
     return k
+
+
+def _on_screen(p) -> bool:
+    return 0 <= p[0] < config.RESOLUTION[0] and 0 <= p[1] < config.RESOLUTION[1]
 
 
 def move_to(x: int, y: int) -> None:
