@@ -31,7 +31,11 @@ from tools.ui import click_at, double_click, grab, hold_key, move_to, wheel
 
 FLAG_H = 2.6                 # army banner height above the lord's position (world units)
 HERO_H = 0.7
-SAFE = (260, 140, 1660, 800)  # screen area clear of the HUD where map clicks are safe
+# screen area clear of the HUD where map clicks are safe: the minimap and the Lords & Heroes list start at x ~1636,
+# the selected character's info panel ends at x ~285, the unit panel starts at y ~830 (1920x1080, UI scale 1).
+# 2026-10-16: with the old right edge (1660) a Verminlord's flag label at x 1617..1667 passed, and the right-click
+# landed on the minimap frame.
+SAFE = (300, 140, 1600, 800)
 HERO_ACTIONS_BOX_1280 = (575, 581, 760, 606)
 HERO_ACTION_FIRST_CARD = (982, 978)
 
@@ -214,9 +218,8 @@ def pan_until_visible(w: World, ui, x: float, y: float, comp_id: str, tries: int
         for c, ids in ui.walk():
             if ids[-1] == comp_id:
                 k = ui.comp(c)
-                cx, cy = k.center
-                if SAFE[0] <= cx <= SAFE[2] and SAFE[1] <= cy <= SAFE[3]:
-                    return k
+                if SAFE[0] <= k.x and k.x + k.w <= SAFE[2] and SAFE[1] <= k.y and k.y + k.h <= SAFE[3]:
+                    return k                  # the whole label, not just its centre, clear of the HUD
         return None
     for _ in range(tries):
         k = visible()
@@ -241,12 +244,12 @@ def hero_actions_open() -> bool:
 
 def hero_movement(w: World, C: int) -> float | None:
     """Movement left this turn, 0..1, for a character that is NOT leading a force (a free hero).
-    Decompiled action_points_remaining_percent (9.0.4): when [C+0x3B0] -> force is unset the game uses the
-    character's own action points: i32 C+0x3C = left, i32 C+0x30 = this turn's maximum. A hero recruited this
-    turn has 0 left."""
+    Decompiled action_points_remaining_percent (9.0.4) = remaining (vtable +0x40) / per-turn maximum (vtable +0x48).
+    When [C+0x3B0] -> force is unset both come from the character itself: i32 C+0x30 = left, i32 C+0x3C = this
+    turn's maximum. Verified live: a hero recruited this turn reads (0, 0, 3584000, 3584000) at C+0x30."""
     try:
         import struct
-        mx, _, _, left = struct.unpack("<4i", w.pm.read_bytes(C + 0x30, 16))
+        left, _, _, mx = struct.unpack("<4i", w.pm.read_bytes(C + 0x30, 16))
         return max(0.0, min(1.0, left / mx)) if mx > 0 else None
     except Exception:
         return None

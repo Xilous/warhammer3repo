@@ -18,9 +18,12 @@ import numpy as np
 from .. import config
 from .memory import MemorySensor
 
-# Camera block candidates: (static pointer in the exe, offset from its target to the eye).
-# 0xBC5F08 survived a save reload; 0x48610A0 did not, so it is only a fallback.
-BLOCKS = [(0xBC5F08, 0x3010), (0x48610A0, 0x3710)]
+# Camera block candidates: (static pointer in the exe, offset from its target to the eye), tried in order.
+# 0x4095490 (+0xA00) found 2026-10-16 by a resident-memory scan for the block layout: it holds the camera while it
+# is idle too. 0xBC5F08's block (and 0x4480D00 +0x1420) only read as a camera while the camera moves: after
+# recruiting a lord or hero, or an Escape, they held garbage until the next pan ("camera block not found").
+# 0x48610A0 did not survive a save reload, so it is only a last fallback.
+BLOCKS = [(0x4095490, 0xA00), (0xBC5F08, 0x3010), (0x48610A0, 0x3710)]
 M00, M11 = 0.8222039, 1.4616958          # projection scales at 1920x1080 (fixed FOV; zoom does not change them)
 GROUND_H = 0.7          # typical terrain height near the coast; flags sit higher
 

@@ -34,7 +34,9 @@
       "A toggled-on army must match the template: units not in it are disbanded immediately,",
       "missing units are recruited, and the army is moved to the province that can recruit them.",
       "Before Stormfiends (Ratling Cannons) can be recruited, their slots stay empty.",
-      "Heroes are separate characters on the map: a recruited Warlock Engineer spawns outside the town that recruited it and must be moved into the lord's army. A free Warlock Engineer counts as available for an army that lacks one (player note, 2026-10-16)."
+      "Heroes are separate characters on the map: a recruited Warlock Engineer spawns outside the town that recruited it and must be moved into the lord's army. A free Warlock Engineer counts as available for an army that lacks one (player note, 2026-10-16).",
+      "The army only goes to a province for actual units; the engineer never decides where it goes. If it has no engineer and none is free, one is recruited as soon as the faction cap allows (the cap rises +2 per Verminlord Warpseer with Inscrutable Genius), at the settlement nearest the army that can recruit one, and it walks to wherever the army is (player decision, 2026-10-16).",
+      "Heroes are never disbanded automatically: an extra hero is reported for the player to remove."
     ],
     "template": {
       "lord": [

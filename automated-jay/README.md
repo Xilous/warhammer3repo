@@ -497,8 +497,12 @@ not next to an enemy at war) take precedence over refilling armies, so the build
    the treasury going down; when it stops going down, local capacity or gold has run out and the rest waits
    for later turns. The local pool is a horizontal list that scrolls: a card past the `list_clip` window
    still reads as visible but its centre can be off screen (the click lands on the map), so each card is
-   first wheeled into view inside its `list_clip` (one notch = about 82 px). A Warlock Engineer is recruited from that province (settlement > `button_agents` >
-   engineer tab > first candidate > confirm) when the army has none and none is free.
+   first wheeled into view inside its `list_clip` (one notch = about 82 px). A Warlock Engineer never decides where the army goes (player rule): when the army has none and
+   none is free or already walking to it, one is recruited as soon as the faction-wide cap allows, at the
+   settlement nearest the army that can recruit one (settlement > `button_agents` > engineer tab > first
+   candidate > confirm), and it walks to wherever the army is, re-ordered every turn until it joins. The cap
+   rises +2 per Verminlord Warpseer with Inscrutable Genius; while it is full the widget says so. Heroes are
+   never disbanded automatically.
 3. Otherwise order the army to the closest eligible province: fewest region hops over the land adjacency
    graph, ties broken by straight-line distance, preferring provinces that cover more of the missing units.
    Re-evaluated every turn, so a province that becomes eligible mid-march takes over if it is closer.

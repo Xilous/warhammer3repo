@@ -595,12 +595,20 @@ def walk_engineer(w: World, F: int, hero, army, log) -> str:
     if lord is None:
         return f"lord of {army.general_name} not found"
     p0 = character_pos(w.pm, hero.ptr)
-    mx, _, _, ap0 = struct.unpack("<4i", w.pm.read_bytes(hero.ptr + 0x30, 16))
+    ap0, _, _, mx = struct.unpack("<4i", w.pm.read_bytes(hero.ptr + 0x30, 16))    # left, ..., per-turn max
     msg = move_into_army(hero, lord, log)
     if "on the way" not in msg:
         return msg
-    p1 = character_pos(w.pm, hero.ptr)
-    ap1 = struct.unpack("<i", w.pm.read_bytes(hero.ptr + 0x3C, 4))[0]
+    p1, end = character_pos(w.pm, hero.ptr), time.monotonic() + 10
+    while time.monotonic() < end:                 # the hero is still walking: wait until he stops
+        time.sleep(0.8)
+        p = character_pos(w.pm, hero.ptr)
+        if p == p1:
+            break
+        p1 = p
+    if any(c.ptr == hero.ptr and c.embedded_force for c in characters(w, F)):
+        return f"{name} joined {army.general_name}'s army"    # the embed lands when the walk ends
+    ap1 = struct.unpack("<i", w.pm.read_bytes(hero.ptr + 0x30, 4))[0]
     lx, ly = character_pos(w.pm, army.general_ptr)
     used = (ap0 - ap1) / mx if mx > 0 else 0
     moved = math.hypot(p1[0] - p0[0], p1[1] - p0[1])
@@ -653,6 +661,8 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log):
     if d.heroes_missing.get(ENGINEER, 0) > len(mine):
         msg, recruited = get_engineer(ui, w, F, army)
         out.append(msg)
+        if recruited is not None:
+            claim(w, recruited, army.cqi)          # at once: it is this army's even if a later step fails
     army = next((a for a in armies(w, F) if a.cqi == army.cqi), army)
     if army.queued:
         out.append(f"{len(army.queued)} units in recruitment")
@@ -687,9 +697,12 @@ def run(log=print) -> str:
     mine = assign_engineers(w, F, acting)
     with game_focus():
         for a in acting:
-            lines, new = build_one(ui, w, F, a, mine.get(a.cqi, []), log)
+            try:
+                lines, _new = build_one(ui, w, F, a, mine.get(a.cqi, []), log)
+            except Exception as ex:                   # one army's failure must not skip the others
+                import traceback
+                traceback.print_exc()
+                lines = [f"{a.general_name}: ERROR {ex}"]
             out += lines
-            if new is not None:
-                claim(w, new, a.cqi)
         park()
     return "; ".join(out)
