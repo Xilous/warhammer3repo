@@ -227,6 +227,17 @@ def move_to(x: int, y: int) -> None:
     win32api.SetCursorPos((int(x), int(y)))
 
 
+@_timed("move")
+def move_path(points, frames: int = HOVER_MAX_FRAMES) -> None:
+    """Jump the cursor through waypoints, `frames` rendered frames at each so the game registers it there (hover
+    chains: a popup that stays open while the cursor is over its parent or itself). No interpolated moves: the game
+    samples the cursor once per frame, so in-between positions only add time (and time in gaps between panels)."""
+    for x, y in points:
+        require_game_front()
+        win32api.SetCursorPos((int(x), int(y)))
+        _frames(frames)
+
+
 @_timed("dclick")
 def double_click(x: int, y: int, target=None) -> None:
     """Two clicks DC_GAP_FRAMES apart, after the hover registered (as click_at)."""

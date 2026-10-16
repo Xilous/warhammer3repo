@@ -84,9 +84,14 @@ def pan_to(w: World, x: float, y: float, tries: int = 12) -> bool:
     return _on_screen(cam.project(x, y))
 
 
-def _double_click(x: int, y: int) -> None:
-    double_click(x, y)
-    time.sleep(2.2)
+def _double_click(x: int, y: int, target=None) -> None:
+    """Double-click a Lords & Heroes row: selects the character and pans the camera to it. The pan is eased and takes
+    about 1.9 s (measured 2026-10-16; a minimap click is no faster): this returns once the camera is still on screen
+    (tools/wait.py camera_settled), or after 0.3 s when the camera never started moving (already there)."""
+    from bot.sensor.memory import MemorySensor
+    from tools import wait
+    double_click(x, y, target=target)
+    wait.camera_settled(MemorySensor(), moving_first=0.3, timeout=4.0, must=False, what="camera still after the double-click")
 
 
 def open_lords_list() -> bool:

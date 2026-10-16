@@ -64,9 +64,8 @@ def _scroll_into_view(ui: UI, row: int) -> bool:
         clip, k = ui.comp(clip_c), ui.comp(row)
         if wait._inside(k, clip):
             return True
-        before = k.y
         wheel(*clip.center, 1 if k.y < clip.y else -1)
-        wait.value_changes(lambda: ui.comp(row).y, before, timeout=1.0, what="save list scrolled")
+        wait.stable(lambda: ui.comp(row).y, n=3, eps=0.5, timeout=2.0, what="save list scrolled and still", ui=ui)
     return False
 
 
@@ -108,14 +107,16 @@ def _live(ui: UI, ptr: int) -> bool:
 def pick_save(ui: UI, save: str) -> int:
     """The row of `save`: in the selected playthrough's list, else selecting each playthrough in turn (the save list
     is filled a moment after a playthrough is selected)."""
-    row = wait.wait_until(lambda: _find_row(ui, save), 2, f"{save!r} listed", must=False)
+    _rows_settled(ui)
+    row = _find_row(ui, save)
     if row is None:
         lst = ui.first("list_box", under="playthrough_list")
         pts = [p for p in (ui.children(lst) if lst else []) if (ui.id(p) or "").startswith("playthrough")]
         for p in pts:
             _click(ui, p)
             wait.wait_until(lambda: (ui.state(p) or "").startswith("selected"), 2, "playthrough selected")
-            row = wait.wait_until(lambda: _find_row(ui, save), 3, f"{save!r} listed", must=False)
+            _rows_settled(ui)
+            row = _find_row(ui, save)
             if row is not None:
                 break
     if row is None:
@@ -130,13 +131,31 @@ def _row_text(ui: UI, row: int, cid: str) -> str:
     return (ui.text(c) or "") if c else ""
 
 
-def _select_row(ui: UI, row: int, save: str) -> None:
-    """Click the save's row until the game shows it selected (a list click is verified, never assumed)."""
+def _rows_settled(ui: UI, ms: float = 300) -> list[tuple[int, str]]:
+    """The save rows once the list has stopped changing: it is filled after the panel opens and can be rebuilt once
+    more (its row components are then re-used for other saves)."""
+    st = {"v": None, "t": 0.0}
+
+    def probe():
+        v = tuple(_rows(ui))
+        now = time.perf_counter()
+        if v != st["v"]:
+            st["v"], st["t"] = v, now
+            return None
+        return list(v) if v and (now - st["t"]) * 1000 >= ms else None
+    return wait.wait_until(probe, 10, f"save list unchanged for {ms:.0f} ms")
+
+
+def _select_row(ui: UI, save: str) -> int:
+    """Click the save's row until the game shows it (and only it) selected; returns the row."""
     for _ in range(3):
+        row = pick_save(ui, save)
         _click(ui, row)
-        if wait.wait_until(lambda: (ui.state(row) or "").startswith("selected"), 1.0, f"{save!r} row selected",
-                           must=False):
-            return
+        ok = wait.wait_until(lambda: (ui.state(row) or "").startswith("selected"), 1.0, f"{save!r} row selected",
+                             must=False)
+        sel = [n for r, n in _rows_settled(ui) if (ui.state(r) or "").startswith("selected")]
+        if ok and sel == [save]:
+            return row
     raise RuntimeError(f"the row of {save!r} could not be selected")
 
 
@@ -146,12 +165,8 @@ def load(save: str, m: MemorySensor, ui: UI) -> float:
     t0 = time.perf_counter()
     with game_focus():
         open_load_panel(ui)
-        row = pick_save(ui, save)
+        row = _select_row(ui, save)
         turn = _row_text(ui, row, "turn")
-        _select_row(ui, row, save)
-        sel = [r for r, _n in _rows(ui) if (ui.state(r) or "").startswith("selected")]
-        if sel != [row]:
-            raise RuntimeError(f"expected only {save!r} selected, the list shows {len(sel)} selected rows")
         btn = wait.appears(ui, "button_confirm_load", under="load_game_panel")
         wait.wait_until(lambda: not (ui.state(btn.ptr) or "").startswith(("inactive", "disabled")), 2,
                         "Load button enabled")

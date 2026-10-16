@@ -33,7 +33,7 @@ from .buildplan import Building, Province, Settlement, plan_province, strategy
 from .slots import icon_chains, match_cell
 from bot.focus import game_focus
 from bot.sensor.world import World, snapshot, region_provinces
-from tools.ui import click_at, grab, move_to
+from tools.ui import click_at, grab, move_path, move_to
 
 PROVINCES_BUTTON = (1810, 22)
 FIRST_OWN_PROVINCE_ROW = (1695, 357)
@@ -261,16 +261,13 @@ def open_province(o: OwnedSettlement, others: list | None = None) -> bool:
 
 
 def _climb(x: int, y_from: int, y_to: int, x_to: int | None = None) -> None:
-    """Move the cursor up from the slot to a popup above it without leaving the popup chain."""
-    for y in range(y_from, y_to, -6):
-        move_to(x, y)
-        time.sleep(0.02)
+    """Move the cursor up from the slot to a popup above it without leaving the popup chain: straight up at the
+    slot's x, then across inside the popup. Jumps, not 6 px steps (2026-10-16: the game samples the cursor once per
+    frame; each waypoint is held tools.ui.HOVER_MAX_FRAMES frames)."""
+    pts = [(x, y_from), (x, y_to)]
     if x_to is not None:
-        step = 6 if x_to > x else -6
-        for xx in range(x, x_to, step):
-            move_to(xx, y_to)
-            time.sleep(0.01)
-        move_to(x_to, y_to)
+        pts.append((x_to, y_to))
+    move_path(pts)
 
 
 def do_construct(o: OwnedSettlement, slot_index: int, chain: str) -> bool:
