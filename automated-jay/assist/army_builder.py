@@ -65,10 +65,8 @@ def region_name(k: str) -> str:
 # ------------------------------------------------------------------ small UI helpers
 
 def first(ui: UI, cid: str, under: str | None = None):
-    for c, ids in ui.walk():
-        if ids[-1] == cid and (under is None or under in ids[:-1]):
-            return c
-    return None
+    """First visible component with this id (optionally below a component with id `under`): UI.first."""
+    return ui.first(cid, under=under)
 
 
 def clear(ui: UI) -> None:

@@ -10,12 +10,12 @@ the id goes into strategy/popup_ignore.json and never blocks a pass again.
 """
 from __future__ import annotations
 import json
-import time
 
 from bot import config
 from bot.focus import game_focus
 from bot.sensor.ui import UI
-from tools.ui import click_at
+from tools import wait
+from tools.ui import click
 
 IGNORE_FILE = config.ROOT / "strategy" / "popup_ignore.json"
 
@@ -38,6 +38,9 @@ DECISION_HINTS = {
     "esc_menu": "the game menu",
 }
 CLOSE_BUTTONS = ("button_accept", "button_tick", "button_close", "button_ok", "button_dismiss")
+MAX_NOTICES = 24              # notices closed per check at most (they stack at turn start)
+CLOSE_TIMEOUT = 2.0           # s: a clicked notice must be gone (or show the next stacked notice) by then
+NEXT_NOTICE_MS = 150          # after the last notice closed: no root panel appearing for this long = none is coming
 
 
 def ignored() -> set[str]:
@@ -60,28 +63,17 @@ def add_ignored(cid: str) -> None:
 
 def scan(ui: UI | None = None) -> list[tuple[int, str]]:
     ui = ui or UI()
-    root = ui.find_root()
-    if root is None:
+    if ui.find_root() is None:
         raise RuntimeError("game UI not found in memory")
     skip = NORMAL | ignored()
-    out = []
-    for c in ui.children(root):
-        try:
-            if ui.pm.read_bytes(c + 0x353, 1)[0] == 0:
-                continue
-        except Exception:
-            continue
-        cid = ui.id(c) or "?"
-        if cid not in skip and not cid.startswith("tooltip"):        # hover tooltips are never popups
-            out.append((c, cid))
-    return out
+    return [(c, cid) for c, cid in ui.root_children()
+            if cid not in skip and not cid.startswith("tooltip")]          # hover tooltips are never popups
 
 
 def needs_choice(ui: UI, c: int) -> bool:
     """An 'events' popup can be a plain notice or a choice (dilemma). Choices have dilemma layouts or
     choice buttons: those are always left to the player."""
-    for _b, ids in ui.walk(c):
-        n = ids[-1]
+    for _b, n, _r in ui.nodes(c):
         if "dilemma" in n or n == "choice_button" or "ChoiceDetailRecord" in n:
             return True
     return False
@@ -102,34 +94,56 @@ def is_event(cid: str) -> bool:
     return "event" in cid and not any(k in cid for k in DECISION_HINTS)
 
 
-def dismiss_events(ui: UI | None = None) -> list[str]:
-    """Close event notices (they can stack: keep closing until none is left). Returns the ids closed."""
-    ui = ui or UI()
-    closed = []
-    for _ in range(12):
-        n = len(closed)
-        closed += _dismiss_once(ui)
-        if len(closed) == n:
-            break
-    return closed
+def _close_button(ui: UI, c: int) -> int | None:
+    for b, n, _r in ui.nodes(c):
+        if n in CLOSE_BUTTONS:
+            return b
+    return None
 
 
-def _dismiss_once(ui: UI) -> list[str]:
-    closed = []
+def _closable(ui: UI) -> list[tuple[int, str, int]]:
+    out = []
     for c, cid in scan(ui):
         if not is_event(cid) or needs_choice(ui, c):
             continue
-        btn = None
-        for b, ids in ui.walk(c):
-            if ids[-1] in CLOSE_BUTTONS:
-                btn = b
+        btn = _close_button(ui, c)
+        if btn is not None:
+            out.append((c, cid, btn))
+    return out
+
+
+def _shows(ui: UI, c: int) -> tuple:
+    """The texts a notice shows: the same panel can be re-used for the next stacked notice."""
+    return tuple(t for b, _n, _r in ui.nodes(c) if (t := ui.text(b)))
+
+
+def dismiss_events(ui: UI | None = None) -> list[str]:
+    """Close event notices, one at a time (they can stack), all inside one game_focus. Each click is followed by a
+    wait until that notice is gone or shows the next stacked one; after the last, a short wait that no further panel
+    is sliding in. Returns the ids closed. A notice that does not close raises WaitTimeout (the pass is skipped)."""
+    ui = ui or UI()
+    closed: list[str] = []
+    focus = None
+    try:
+        for _ in range(MAX_NOTICES):
+            todo = _closable(ui)
+            if not todo and closed:
+                wait.root_children_stable(ui, ms=NEXT_NOTICE_MS, timeout=3, must=False)
+                todo = _closable(ui)
+            if not todo:
                 break
-        if btn is None:
-            continue
-        with game_focus():
-            click_at(*ui.comp(btn).center)
-            time.sleep(0.8)
-        closed.append(cid)
+            if focus is None:
+                focus = game_focus()
+                focus.__enter__()
+            c, cid, btn = todo[0]
+            before = _shows(ui, c)
+            click(ui, btn)
+            wait.wait_until(lambda: not ui.effective_visible(btn) or _shows(ui, c) != before, CLOSE_TIMEOUT,
+                            f"{cid} notice closed")
+            closed.append(cid)
+    finally:
+        if focus is not None:
+            focus.__exit__(None, None, None)
     return closed
 
 

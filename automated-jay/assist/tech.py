@@ -40,7 +40,8 @@ from PIL import Image
 
 from . import gamedata as gd
 from bot.focus import game_focus
-from tools.ui import click_at, drag, grab, move_to, press
+from tools import wait
+from tools.ui import click, click_at, drag, grab, move_to, press
 
 FACTION = "wh2_main_skv_clan_skryre"
 NODE_SET = "skv_mil"
@@ -295,39 +296,43 @@ def candidates(entries: dict[str, TechEntry]) -> list[str]:
 
 PANEL_ID = "technology_panel"
 PANEL_PARK = (960, 160)          # inside the panel, above the tree: no tooltip over a node
-OPEN_SETTLE = 1.0                # the panel fades in; clicks during the fade are not trusted
+OPEN_TIMEOUT = 2.0               # s: the panel appears ~10 ms after the click; its 56 nodes are built ~20 ms later
+REGISTER_TIMEOUT = 0.5           # s: a click the game took changes [T+0x30] (or starts research) within a few frames
+RESEARCH_TIMEOUT = 0.5           # s: after a registered click, research starts at once unless the game ignored it
+# There is no fixed settle after the panel opens: nodes report hover as soon as they are built, and every click is
+# checked in memory ([T+0x30] is written by every click the game registers): a click that is not registered is
+# sent again, one that is registered but does not start research is a target the game will not queue.
 
 
 def _first(ui, cid: str, under: str | None = None):
-    for c, ids in ui.walk():
-        if ids[-1] == cid and (under is None or under in ids[:-1]):
-            return c
-    return None
+    """First visible component with this id (optionally below a component with id `under`): UI.first."""
+    return ui.first(cid, under=under)
 
 
 def _panel_open(ui) -> bool:
-    return _first(ui, PANEL_ID) is not None
+    return ui.root_child(PANEL_ID) is not None
 
 
-def _open_panel(ui) -> bool:
-    if _panel_open(ui):
-        return True
-    b = _first(ui, "button_technology")
-    if b is None:
-        return False
-    click_at(*ui.comp(b).center)
-    for _ in range(12):
-        time.sleep(0.25)
-        if _first(ui, "slot_parent", under=PANEL_ID) is not None:
-            move_to(*PANEL_PARK)
-            time.sleep(OPEN_SETTLE)
-            return True
-    return False
+def _open_panel(ui) -> int | None:
+    """Open the technology panel (if needed); returns the tree's slot_parent once its nodes are built, or None."""
+    if not _panel_open(ui):
+        b = ui.cached("button_technology", under="hud_campaign")
+        if b is None:
+            return None
+        click(ui, b)
+        if wait.appears(ui, PANEL_ID, timeout=OPEN_TIMEOUT, must=False) is None:
+            return None
+    sp = wait.appears(ui, "slot_parent", under=PANEL_ID, timeout=OPEN_TIMEOUT, must=False)
+    if sp is None:
+        return None
+    built = wait.stable(lambda: len(ui.children(sp.ptr)), n=3, eps=0, timeout=OPEN_TIMEOUT, must=False,
+                        what="technology nodes built", ui=ui)
+    return sp.ptr if built else None
 
 
-def queued_in_ui(ui, entries: dict[str, TechEntry]) -> list[str]:
+def queued_in_ui(ui, entries: dict[str, TechEntry], slot: int | None = None) -> list[str]:
     """Locked techs the open panel shows as queued (dy_time visible on a locked node)."""
-    slot = _first(ui, "slot_parent", under=PANEL_ID)
+    slot = slot or ui.first("slot_parent", under=PANEL_ID)
     if slot is None:
         return []
     out = []
@@ -335,7 +340,7 @@ def queued_in_ui(ui, entries: dict[str, TechEntry]) -> list[str]:
         key = ui.id(n)
         if key not in entries or entries[key].state != STATE_LOCKED:
             continue
-        if any(ids[-1] == "dy_time" for _c, ids in ui.walk(n)):
+        if ui.first("dy_time", start=n) is not None:
             out.append(key)
     return out
 
@@ -343,22 +348,20 @@ def queued_in_ui(ui, entries: dict[str, TechEntry]) -> list[str]:
 def _close_panel(ui) -> bool:
     if not _panel_open(ui):
         return True
-    b = _first(ui, "button_ok", under=PANEL_ID)
+    b = ui.first("button_ok", under=PANEL_ID)
     if b is not None:
-        click_at(*ui.comp(b).center)
-        for _ in range(8):
-            time.sleep(0.25)
-            if not _panel_open(ui):
-                return True
+        click(ui, b)
+        if wait.wait_until(lambda: not _panel_open(ui), 1.0, "technology panel closed", must=False):
+            return True
     if _panel_open(ui):                  # Escape is safe here: a panel is open, so it closes that panel
         press("esc")
-        time.sleep(0.6)
-    from . import popups
-    if "esc_menu" in [cid for _, cid in popups.scan(ui)]:
-        r = _first(ui, "button_resume")
+        wait.wait_until(lambda: not _panel_open(ui) or ui.root_child("esc_menu"), 1.0,
+                        "technology panel closed by Escape", must=False)
+    if ui.root_child("esc_menu"):
+        r = ui.first("button_resume", under="esc_menu")
         if r is not None:
-            click_at(*ui.comp(r).center)
-            time.sleep(0.6)
+            click(ui, r)
+            wait.wait_until(lambda: ui.root_child("esc_menu") is None, 1.0, "game menu closed", must=False)
     return not _panel_open(ui)
 
 
@@ -367,34 +370,40 @@ def _inside(k, clip) -> bool:
             and clip.y + 4 <= k.y and k.y + k.h <= clip.y + clip.h - 4)
 
 
-def _node_on_screen(ui, key: str):
-    """The node's rectangle once it sits inside the tree's clip window (dragging the scrollbar if needed),
-    or None."""
+def _node_on_screen(ui, key: str, slot: int):
+    """The node's rectangle once it sits inside the tree's clip window (dragging the scrollbar if needed), or None.
+    Nodes past the clip still read visible, at off-screen x: the clip decides."""
+    panel = ui.root_child(PANEL_ID)
+    clip_c = ui.first("list_clip", under="technology_list", start=panel)
     for _ in range(3):
-        node = _first(ui, key, under="slot_parent")
-        clip_c = _first(ui, "list_clip", under="technology_list")
+        node = ui.child(slot, key, visible_only=True)
         if node is None or clip_c is None:
             return None
         k, clip = ui.comp(node), ui.comp(clip_c)
         if _inside(k, clip):
             return k
-        h = _first(ui, "handle", under="hslider")
+        h = ui.first("handle", under="hslider", start=panel)
         if h is None:
             return None
         hx, hy = ui.comp(h).center
-        drag(hx, hy, 5 if k.x < clip.x else 1915, hy)
+        drag(hx, hy, 5 if k.x < clip.x else 1915, hy, target=h)
         move_to(*PANEL_PARK)
-        time.sleep(0.3)
+        wait.stable_rect(ui, node, n=2, timeout=1.0, must=False, what=f"{key} still after the scroll")
     return None
 
 
-def _wait_research(w, T: int, seconds: float = 2.5) -> str | None:
-    end = time.time() + seconds
-    while True:
-        cur = researching(w, T)
-        if cur or time.time() > end:
-            return cur
-        time.sleep(0.25)
+def _click_node(ui, w, T: int, k) -> str:
+    """Click a node and read the outcome from memory: "started" (research running), "ignored" (the game took the
+    click, [T+0x30] moved, but will not research it) or "lost" (no sign the click was taken)."""
+    before = w.q(T + 0x30)
+    click(ui, k.ptr)
+    move_to(*PANEL_PARK)
+    took = wait.wait_until(lambda: researching(w, T) or w.q(T + 0x30) != before, REGISTER_TIMEOUT,
+                           "research click registered ([T+0x30] or research)", must=False)
+    if not took:
+        return "lost"
+    return "started" if wait.wait_until(lambda: researching(w, T), RESEARCH_TIMEOUT, "research started",
+                                        must=False) else "ignored"
 
 
 MAX_CLICKS = 4                   # targets tried per run before giving up (each is verified in memory)
@@ -429,26 +438,34 @@ def run(log=print) -> str:
     result = None
     closed = True
     with game_focus():
-        if not _open_panel(ui):
-            return "could not open the technology panel"
+        slot = _open_panel(ui)
+        if slot is None:
+            closed = _close_panel(ui)
+            return "could not open the technology panel" + ("" if closed else " (WARNING: it may still be open)")
         try:
             for key in todo[:MAX_CLICKS]:
                 if researching(w, T):            # started late by an earlier click: never click again
                     break
-                k = _node_on_screen(ui, key)
+                k = _node_on_screen(ui, key, slot)
                 if k is None:
                     tried.append(f"{_name(key, ns)}: node not on screen")
                     continue
-                click_at(*k.center)
-                move_to(*PANEL_PARK)
-                if _wait_research(w, T):
+                outcome = _click_node(ui, w, T, k)
+                if outcome == "lost" and not researching(w, T):
+                    outcome = _click_node(ui, w, T, k)      # not taken at all (no [T+0x30] write): once more
+                if outcome == "started":
                     break
-                tried.append(f"{_name(key, ns)}: click ignored")
+                tried.append(f"{_name(key, ns)}: click " + ("ignored" if outcome == "ignored" else "not taken"))
             cur = researching(w, T)
             if cur:
                 target = research_target(w, T) or cur
-                time.sleep(0.5)
-                chain = queued_in_ui(ui, tech_entries(w, T))
+                chain = []
+                if target != cur:                # the panel marks the queued chain (dy_time on locked nodes)
+                    tnode = ui.child(slot, target, visible_only=True)
+                    if tnode is not None:
+                        wait.wait_until(lambda: ui.first("dy_time", start=tnode), 0.5, "queued chain shown",
+                                        must=False)
+                    chain = queued_in_ui(ui, tech_entries(w, T), slot)
                 via = "" if target == cur else f" (path to {_name(target, ns)}, {len(chain)} locked techs queued)"
                 result = f"queued {_name(cur, ns)}{via}"
                 if tried:

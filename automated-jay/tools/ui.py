@@ -32,9 +32,100 @@ from PIL import Image
 
 from bot import config
 from bot.focus import InputAborted, game_focus, require_game_front   # noqa: F401  (InputAborted re-exported)
-from tools import timing
+from tools import timing, wait
 
-pydirectinput.PAUSE = 0.03
+pydirectinput.PAUSE = 0          # no sleeps inside pydirectinput: every gap below is explicit and measured
+
+# The only fixed delays left in the input path, in rendered frames (tools/wait.py next_frame; the game samples
+# input once per frame, about 150 frames/s here). Each is the measured minimum plus one frame of margin
+# (tools/inputcal.py, 2026-10-16, 9.0.4, borderless 1920x1080):
+HOVER_MAX_FRAMES = 2     # cursor arrival -> hover registered: 0.5-1.5 frames (130 trials, max 12 ms). A click whose
+                         # button goes down before the hover registered is lost: 10/30 at once, 22/30 after half a
+                         # frame, 220/220 once the target's state object had switched to a hover state. With a known
+                         # target the click waits for exactly that; without one (or a target without hover states)
+                         # it waits this long.
+HOVER_WAIT_FRAMES = 40   # cap on waiting for a known target's hover state. Normally 0.5-1.5 frames; longer only right
+                         # after a panel opened (the esc menu ignored a blind click 2 frames after it appeared).
+HOVER_NUDGE_FRAMES = 4   # no hover after this long: nudge the cursor 1 px and back (see _await_hover)
+CLICK_HOLD_FRAMES = 1    # button down -> up: 0 frames worked 100/100 once hover had registered
+DC_HOLD_FRAMES = 1       # double-click: down -> up for each click; 0 worked 10/10
+DC_GAP_FRAMES = 1        # double-click: first up -> second down; 0 worked 10/10
+KEY_HOLD_FRAMES = 2      # key down -> up: 1 frame 60/60 and 1.5 frames 100/100; half a frame 13/20, 0 frames 0/20
+WHEEL_GAP_FRAMES = 2     # between wheel notches: notches in the same frame count once (3 sent, 1 scrolled); 1 frame
+                         # apart 20/20 (60 notches), 2 frames 30/30
+DRAG_STEP_FRAMES = 2     # button down -> jump -> button up: 0 frames 12/24, 1 frame 24/24 (tech scrollbar); +1 margin
+DRAG_STEPS = 1           # one jump: the game needs no intermediate cursor positions for a scrollbar drag
+
+
+STALL_TIMEOUT = 10.0     # s: the game can stop rendering for seconds (after a load: 11.8 s measured); input sent
+                         # during a stall lands in one frame and is lost, so the frame waits ride it out
+
+
+def _frames(n: int) -> None:
+    """Wait n rendered frames (through a stall of up to STALL_TIMEOUT); without a readable UI, n * FRAME_S."""
+    if n <= 0:
+        return
+    try:
+        wait.next_frame(n, timeout=STALL_TIMEOUT)
+    except wait.WaitTimeout:
+        time.sleep(n * wait.FRAME_S)
+
+
+def _await_hover(probe, at=None, target=None) -> bool:
+    """Until the game has registered the cursor over the target: the probe component's state object is one of its
+    hover states. The game only re-checks hover when the mouse moves: a move it processed before a just-opened panel
+    took input is never re-evaluated (seen on the esc menu: no hover for 1.2 s with the cursor on the button). So
+    after HOVER_NUDGE_FRAMES without hover the cursor is nudged 1 px and back, as a hand would. At most
+    HOVER_WAIT_FRAMES frames (a timeout is recorded). Stops early, returning False, when the target no longer covers
+    the cursor (a panel sliding in). Without a probe: HOVER_MAX_FRAMES frames, True."""
+    if probe is None:
+        _frames(HOVER_MAX_FRAMES)
+        return True
+    ui = wait._ui()
+    p, hs = probe
+    t = time.perf_counter()
+    left = HOVER_WAIT_FRAMES
+    ok = False
+    try:
+        while left > 0 and not ok:
+            n = min(HOVER_NUDGE_FRAMES, left)
+            ok = wait.frames_until(lambda: ui.state_ptr(p) in hs, n)
+            left -= n
+            if ok or at is None:
+                continue
+            if target is not None and not _covers(ui, target, at):
+                timing.wait_event(f"hover on {ui.id(p)}: target moved", (time.perf_counter() - t) * 1000, False, 0)
+                return False
+            if left > 0:
+                require_game_front()
+                win32api.SetCursorPos((at[0] + 1, at[1]))
+                _frames(1)
+                win32api.SetCursorPos(at)
+                timing.input_event("nudge", 0.0, at=list(at))
+    except InputAborted:
+        raise
+    except Exception:                    # noqa: BLE001  (the target was torn down: nothing to wait for)
+        ok = False
+    if not ok:
+        timing.wait_event(f"hover on {ui.id(p)}", (time.perf_counter() - t) * 1000, False, 0)
+    return ok
+
+
+def _covers(ui, target, at) -> bool:
+    try:
+        k = ui.comp(getattr(target, "ptr", target))
+    except Exception:                    # noqa: BLE001
+        return True
+    return k.x <= at[0] <= k.x + k.w and k.y <= at[1] <= k.y + k.h
+
+
+def _probe(target, at) -> tuple[int, frozenset] | None:
+    if target is None:
+        return None
+    try:
+        return wait._ui().hover_probe(getattr(target, "ptr", target), at)
+    except Exception:                    # noqa: BLE001
+        return None
 
 
 def _timed(kind: str):
@@ -56,92 +147,152 @@ def _timed(kind: str):
     return deco
 
 
+def _hover_to(x: int, y: int, target=None) -> bool:
+    """Move the cursor to (x, y) and wait until the game has registered it there (see _await_hover)."""
+    require_game_front()
+    probe = _probe(target, (x, y))
+    if probe is not None and tuple(win32api.GetCursorPos()) == (x, y):
+        try:
+            if wait._ui().state_ptr(probe[0]) in probe[1]:
+                return True              # already there and hovered
+        except Exception:                # noqa: BLE001
+            pass
+    win32api.SetCursorPos((x, y))
+    return _await_hover(probe, (x, y), target)
+
+
+def _aim(x: int, y: int, target=None) -> tuple[int, int]:
+    """Hover (x, y); when the target slid away under the cursor (a panel animating in), wait until its rectangle is
+    still and aim again at the same point of it. Returns the point finally hovered."""
+    if target is None:
+        _hover_to(x, y)
+        return x, y
+    ui = wait._ui()
+    ptr = getattr(target, "ptr", target)
+    try:
+        k0 = ui.comp(ptr)
+        dx, dy = x - k0.x, y - k0.y
+    except Exception:                    # noqa: BLE001
+        _hover_to(x, y, target)
+        return x, y
+    for _ in range(3):
+        if _hover_to(x, y, target) or _covers(ui, ptr, (x, y)):
+            return x, y
+        k = wait.stable_rect(ui, ptr, n=2, timeout=2.0, must=False, what=f"{k0.id} still before the click")
+        if k is None:
+            break
+        x, y = int(k.x + dx), int(k.y + dy)
+    return x, y
+
+
 @_timed("click")
-def click_at(x: int, y: int, right: bool = False) -> None:
-    """The game ignores pydirectinput/SendInput button events but accepts legacy mouse_event
-    after a SetCursorPos (verified 2026-10-16). Raises InputAborted when the game is not in front."""
+def click_at(x: int, y: int, right: bool = False, target=None) -> None:
+    """Click at (x, y): move, wait until the game registered the cursor there (the target component's hover state
+    when `target` is given, else HOVER_MAX_FRAMES frames), button down, CLICK_HOLD_FRAMES, up. No delay after:
+    the caller waits for the click's effect (tools/wait.py).
+    The game ignores pydirectinput/SendInput button events but accepts legacy mouse_event after a SetCursorPos
+    (verified 2026-10-16). Raises InputAborted when the game is not in front."""
     down, up = ((win32con.MOUSEEVENTF_RIGHTDOWN, win32con.MOUSEEVENTF_RIGHTUP) if right
                 else (win32con.MOUSEEVENTF_LEFTDOWN, win32con.MOUSEEVENTF_LEFTUP))
-    require_game_front()
-    win32api.SetCursorPos((x, y))
-    time.sleep(0.2)
+    x, y = _aim(int(x), int(y), target)
     require_game_front(at=(x, y))            # again right before the button: the player may have just left
     win32api.mouse_event(down, 0, 0, 0, 0)
     try:
-        time.sleep(0.12)
+        _frames(CLICK_HOLD_FRAMES)
     finally:
         win32api.mouse_event(up, 0, 0, 0, 0)
-    time.sleep(0.1)
+
+
+def click(ui, target, right: bool = False):
+    """Click the centre of a component (pointer or Comp), waiting for its hover state before the button goes down.
+    Returns the Comp clicked."""
+    ptr = getattr(target, "ptr", target)
+    k = ui.comp(ptr)
+    click_at(*k.center, right=right, target=ptr)
+    return k
 
 
 def move_to(x: int, y: int) -> None:
-    """Move the cursor (hover, park). Raises InputAborted when the game is not in front."""
+    """Move the cursor (hover, park). No delay: a caller that needs the hover waits for it.
+    Raises InputAborted when the game is not in front."""
     require_game_front()
     win32api.SetCursorPos((int(x), int(y)))
 
 
 @_timed("dclick")
-def double_click(x: int, y: int) -> None:
-    move_to(x, y)
-    time.sleep(0.2)
+def double_click(x: int, y: int, target=None) -> None:
+    """Two clicks DC_GAP_FRAMES apart, after the hover registered (as click_at)."""
+    x, y = _aim(int(x), int(y), target)
     require_game_front(at=(x, y))
-    for _ in range(2):
+    for i in range(2):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
         try:
-            time.sleep(0.05)
+            _frames(DC_HOLD_FRAMES)
         finally:
             win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-        time.sleep(0.07)
+        if i == 0:
+            _frames(DC_GAP_FRAMES)
 
 
 @_timed("drag")
-def drag(x0: int, y0: int, x1: int, y1: int, steps: int = 25) -> None:
-    """Left-drag from (x0, y0) to (x1, y1); the button is released even if the drag is interrupted."""
-    move_to(x0, y0)
-    time.sleep(0.2)
+def drag(x0: int, y0: int, x1: int, y1: int, steps: int = DRAG_STEPS, target=None) -> None:
+    """Left-drag from (x0, y0) to (x1, y1) in `steps` moves one frame apart; the button is released even if the drag
+    is interrupted. No delay after release: the caller waits until what it scrolled is stable."""
+    x1, y1 = int(x1), int(y1)
+    x0, y0 = _aim(int(x0), int(y0), target)
     require_game_front(at=(x0, y0))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
     try:
-        time.sleep(0.12)
+        _frames(DRAG_STEP_FRAMES)
         for i in range(1, steps + 1):
             win32api.SetCursorPos((x0 + (x1 - x0) * i // steps, y0 + (y1 - y0) * i // steps))
-            time.sleep(0.015)
-        time.sleep(0.12)
+            _frames(DRAG_STEP_FRAMES)
     finally:
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-    time.sleep(0.5)
 
 
 @_timed("wheel")
-def wheel(x: int, y: int, notches: int, pause: float = 0.12) -> None:
-    """Mouse wheel over (x, y): positive notches scroll up / left."""
-    move_to(x, y)
-    time.sleep(0.05)
-    for _ in range(abs(notches)):
+def wheel(x: int, y: int, notches: int, pause: float | None = None) -> None:
+    """Mouse wheel over (x, y): positive notches scroll up / left. Notches go WHEEL_GAP_FRAMES apart (or `pause`
+    seconds, for callers not converted yet). No delay after: the caller waits for the list to move."""
+    x, y = int(x), int(y)
+    _hover_to(x, y)
+    for i in range(abs(notches)):
         require_game_front(at=(x, y))        # a wheel event goes to the window under the cursor
         win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 120 if notches > 0 else -120, 0)
-        time.sleep(pause)
+        if pause is not None:
+            time.sleep(pause)
+        elif i < abs(notches) - 1:
+            _frames(WHEEL_GAP_FRAMES)
 
 
 @_timed("key")
 def press(key: str) -> None:
+    """Key down, KEY_HOLD_FRAMES rendered frames, key up (the game samples keys once per frame)."""
     require_game_front()
-    pydirectinput.press(key)
+    pydirectinput.keyDown(key, _pause=False)
+    try:
+        _frames(KEY_HOLD_FRAMES)
+    finally:
+        pydirectinput.keyUp(key, _pause=False)
 
 
 @contextlib.contextmanager
 def held(key: str):
-    """Hold a key for the duration of the block; it is released even if the block raises."""
+    """Hold a key for the duration of the block (registered by the game before the block runs: KEY_HOLD_FRAMES);
+    it is released even if the block raises."""
     require_game_front()
-    pydirectinput.keyDown(key)
+    pydirectinput.keyDown(key, _pause=False)
     try:
+        _frames(KEY_HOLD_FRAMES)
         yield
     finally:
-        pydirectinput.keyUp(key)
+        pydirectinput.keyUp(key, _pause=False)
 
 
 @_timed("hold")
 def hold_key(key: str, seconds: float) -> None:
+    """Hold a key for a duration (WASD camera pans): a duration, not a delay."""
     with held(key):
         time.sleep(seconds)
 

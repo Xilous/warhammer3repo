@@ -135,8 +135,14 @@ def _force_foreground(h: int) -> None:
             user32.AttachThreadInput(fg_thread, cur, False)
 
 
+FOCUS_SETTLE_FRAMES = 2         # after the game came to the front: keys sent 0 frames after the switch were lost (0/15),
+                                # 1 frame after it worked 10/10, 2 frames 30/30; clicks worked at once (20/20)
+                                # (tools/inputcal.py focus and a key variant, 2026-10-16): 1 frame minimum + 1 margin
+
+
 def _raise(h: int) -> bool:
-    """Bring h to the front; returns True once it is the foreground window."""
+    """Bring h to the front; returns True once it is the foreground window. After each attempt the foreground is
+    polled every 2 ms (the switch usually lands at once) before the next, stronger, attempt."""
     for attempt in range(8):
         if win32gui.GetForegroundWindow() == h:
             return True
@@ -152,7 +158,11 @@ def _raise(h: int) -> bool:
                 _force_foreground(h)
             except Exception:
                 pass
-        time.sleep(0.15 + 0.1 * attempt)
+        end = time.perf_counter() + 0.15 + 0.1 * attempt
+        while time.perf_counter() < end:
+            if win32gui.GetForegroundWindow() == h:
+                return True
+            time.sleep(0.002)
     return win32gui.GetForegroundWindow() == h
 
 
@@ -180,6 +190,14 @@ def input_lock(timeout: float = INPUT_LOCK_TIMEOUT):
         h.Close()
 
 
+def _settle_after_raise() -> None:
+    try:
+        from tools import wait
+        wait.next_frame(FOCUS_SETTLE_FRAMES)
+    except Exception:                        # noqa: BLE001  (UI not readable: fall back to time)
+        time.sleep(0.02)
+
+
 @contextlib.contextmanager
 def game_focus():
     with input_lock():
@@ -205,7 +223,7 @@ def game_focus():
         try:
             if not _raise(g):
                 raise RuntimeError("could not bring the game to the front")
-            time.sleep(0.4)
+            _settle_after_raise()
             yield g
         finally:
             _tls.depth = 0

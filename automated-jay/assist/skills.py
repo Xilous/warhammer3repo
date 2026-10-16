@@ -358,11 +358,8 @@ def _points(w, ptr) -> int:
 
 
 def _first(ui, cid: str, under: str | None = None):
-    """First visible component with this id (optionally inside a component with id `under`)."""
-    for c, ids in ui.walk():
-        if ids[-1] == cid and (under is None or under in ids[:-1]):
-            return c
-    return None
+    """First visible component with this id (optionally below a component with id `under`): UI.first."""
+    return ui.first(cid, under=under)
 
 
 def _child(ui, c: int, cid: str):

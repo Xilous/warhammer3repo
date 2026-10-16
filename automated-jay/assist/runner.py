@@ -31,8 +31,16 @@ from bot.sensor.ui import UI
 from tools import timing
 from . import army_builder, build, skills, tech
 
-SETTLE_SECONDS = 4.0          # let turn-start camera moves and event popups appear first
-POLL_SECONDS = 2.0
+# Turn-start settle, by condition (was a fixed 4 s): the pass starts once the turn-start camera pan has finished (the
+# map point at the screen centre moves less than SETTLE_CAMERA_PX per frame for SETTLE_CAMERA_MS) AND no root panel
+# (event popup) has appeared or disappeared for SETTLE_PANELS_MS, with the game rendering. Popups that slide in later
+# are still caught: the popup check runs right before the pass, and every step waits on its own panels.
+SETTLE_CAMERA_PX = 0.1
+SETTLE_CAMERA_MS = 250
+SETTLE_PANELS_MS = 500
+SETTLE_TIMEOUT = 20.0         # s: never settled (the player keeps panning): go on, the idle check still applies
+POLL_SECONDS = 2.0            # loop period while nothing is about to happen
+POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
 IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alone this long before a pass
 LOST_AFTER = 2                # polls in a row without a campaign before the turn bookkeeping starts over
 STATE_FILE = config.RUNS_DIR / "state.json"
@@ -74,26 +82,58 @@ def read_state() -> dict:
 
 
 def players_turn(ui: UI) -> tuple[bool, str]:
-    """(True, "") when the player can act on the campaign map now, else (False, why)."""
-    root = ui.find_root()
-    if root is None:
+    """(True, "") when the player can act on the campaign map now, else (False, why). Root panels plus one cached
+    lookup: cheap enough to poll."""
+    if ui.find_root() is None:
         return False, "game UI not found"
-    top: dict[str, int] = {}
-    for c in ui.children(root):
-        top.setdefault(ui.id(c) or "?", c)
-    hud = top.get("hud_campaign")
-    if hud is None or not ui.visible(hud):
+    top = dict((cid, c) for c, cid in reversed(ui.root_children()))      # visible root panels, first wins
+    if "hud_campaign" not in top:
         return False, "campaign map not shown"
-    ai = top.get("ai_turns")
-    if ai is not None and ui.visible(ai):
+    if "ai_turns" in top:
         return False, "other factions are moving"
-    end = next((c for c, ids in ui.walk(hud) if ids[-1] == "button_end_turn"), None)
+    end = ui.cached("button_end_turn", under="hud_campaign")
     if end is None:
         return False, "End Turn button not shown"
     st = ui.state(end) or ""
     if st.startswith(("inactive", "disabled")):
         return False, f"End Turn button is {st}"
     return True, ""
+
+
+def settle(ui: UI, cancel=lambda: False, timeout: float = SETTLE_TIMEOUT) -> tuple[bool | None, float]:
+    """Wait until the turn start has settled: camera still and no root panel coming or going (see SETTLE_*).
+    Returns (True, seconds) when settled, (False, s) when cancelled, (None, s) on timeout."""
+    from bot.sensor.camera import read_camera
+    import numpy as np
+    t0 = time.monotonic()
+    cam_since = panels_since = t0
+    prev_cam = None
+    prev_panels = None
+    while time.monotonic() - t0 < timeout:
+        if cancel():
+            return False, time.monotonic() - t0
+        now = time.monotonic()
+        try:
+            cam = read_camera(ui.s)
+            if prev_cam is not None:
+                gx, gy = prev_cam.ground_at_center()
+                p = cam.project(gx, gy)
+                if p is None or float(np.hypot(p[0] - 960, p[1] - 540)) >= SETTLE_CAMERA_PX:
+                    cam_since = now
+            prev_cam = cam
+        except Exception:                    # noqa: BLE001  (camera block unreadable for a moment: not settled)
+            prev_cam, cam_since = None, now
+        panels = tuple(cid for _c, cid in ui.root_children())
+        if panels != prev_panels:
+            prev_panels, panels_since = panels, now
+        if (now - cam_since) * 1000 >= SETTLE_CAMERA_MS and (now - panels_since) * 1000 >= SETTLE_PANELS_MS:
+            return True, now - t0
+        try:
+            from tools import wait
+            wait.next_frame(1, ui, timeout=2.0)      # sample once per rendered frame
+        except Exception:                    # noqa: BLE001  (not rendering: not settled)
+            time.sleep(0.01)
+    return None, time.monotonic() - t0
 
 
 class Runner:
@@ -111,6 +151,9 @@ class Runner:
         self.no_campaign = 0
         self.campaign_lost = False            # no campaign was seen: the next one is a "campaign change"
         self.gate_since: float | None = None
+        self.my_turn = True                   # last players_turn() result seen by the loop (poll fast when False)
+        self.phases: dict[str, float] = {}    # pre-pass phase times for the timing log
+        self.turn_seen_at: float | None = None
         self._last_post = None
         config.RUNS_DIR.mkdir(exist_ok=True)
         self.log = open(config.RUNS_DIR / f"assistant-{datetime.now():%Y%m%d}.jsonl", "a", encoding="utf-8")
@@ -273,7 +316,7 @@ class Runner:
             except Exception as ex:          # keep watching: a failed read (game closing, loading) is not fatal
                 traceback.print_exc()
                 self.post("error", "ERROR", f"{ex}\nstill watching for the next turn")
-            self.stop.wait(POLL_SECONDS)
+            self.stop.wait(POLL_FAST if (self.pending is not None or not self.my_turn) else POLL_SECONDS)
 
     def _tick(self) -> None:
         s = self.mem.read()
@@ -303,12 +346,16 @@ class Runner:
         if s.turn == self.last_turn + 1:
             self.last_turn = s.turn
             self.gate_since = None
+            self.turn_seen_at = time.monotonic()
+            self.phases = {}
             if self.paused:
                 self.post("paused", f"PAUSED (turn {s.turn})", "skipped this turn's automations")
             elif self.done_turn != s.turn:                  # Run now may already have done it
                 self.pending = s.turn
         if self.pending is not None:
             self._try_pass(self.pending)
+        else:
+            self.my_turn = players_turn(self.ui)[0]
 
     def _try_pass(self, turn: int) -> None:
         """Start the pending pass once it is really the player's turn and the player is idle. Never blocks for
@@ -322,28 +369,40 @@ class Runner:
             self.post("paused", f"PAUSED (turn {turn})", "skipped this turn's automations")
             return
         ok, why = players_turn(self.ui)
+        self.my_turn = ok
         if not ok:
             self.gate_since = None
             self.post("waiting", f"WAITING (turn {turn})", f"{why}; acts when your turn starts", turn=turn)
             return
         if self.gate_since is None:
             self.gate_since = time.monotonic()
+            if self.turn_seen_at is not None:
+                self.phases["detect"] = self.gate_since - self.turn_seen_at
             self.post("waiting", f"WAITING (turn {turn})", "your turn started; letting it settle", turn=turn)
-            if self.stop.wait(SETTLE_SECONDS) or self.paused:
+            done, secs = settle(self.ui, cancel=lambda: self.stop.is_set() or self.paused)
+            self.phases["settle"] = secs
+            if done is False or self.stop.is_set() or self.paused:
                 return
+            if done is None:
+                print(f"[{datetime.now():%H:%M:%S}] turn start did not settle in {SETTLE_TIMEOUT:.0f} s "
+                      "(camera or panels kept changing); going on", flush=True)
             ok, why = players_turn(self.ui)
             if not ok:
                 self.gate_since = None
                 return
+        t_idle = time.monotonic()
         if not self.wait_idle(turn, cancel=lambda: self.paused):
             return
+        self.phases["idle"] = time.monotonic() - t_idle
         if not self.busy.acquire(blocking=False):
             return                                          # Run now is doing a pass right now
         try:
             if self.done_turn == turn or self.pending != turn:
                 return
             try:
+                t_pop = time.monotonic()
                 pre, need = self.check_popups()
+                self.phases["popups"] = time.monotonic() - t_pop
             except InputAborted:
                 raise
             except Exception as ex:
@@ -355,7 +414,7 @@ class Runner:
             if need:
                 self.post_decisions(turn, need)
                 return
-            self.do_pass(turn, pre)
+            self.do_pass(turn, pre, phases=dict(self.phases))
         except InputAborted as ex:
             self.pending = None
             self.post("error", f"INTERRUPTED (turn {turn})", f"interrupted: {ex}\nRun now redoes the pass", turn=turn)

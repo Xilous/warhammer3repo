@@ -417,10 +417,8 @@ def _ui():
 
 
 def _first(ui, cid: str, under: str | None = None):
-    for c, ids in ui.walk():
-        if ids[-1] == cid and (under is None or under in ids[:-1]):
-            return c
-    return None
+    """First visible component with this id (optionally below a component with id `under`): UI.first."""
+    return ui.first(cid, under=under)
 
 
 def ui_open_province(ui, province: str) -> bool:
