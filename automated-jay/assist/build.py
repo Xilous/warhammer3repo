@@ -2,45 +2,46 @@
 to every owned province that is not next to an enemy at war, at the start of the turn.
 
 State comes from memory (bot/sensor/world.py): owned regions, slots, buildings, construction in
-progress, wars, adjacency. Actions go through the province panel UI:
+progress, wars, adjacency. Actions go through the province panel, found in the game's UI tree
+(bot/sensor/ui.py); every wait is a condition on the UI tree or memory (tools/wait.py):
 
-  province panel  bottom-centre; arrows beside the title cycle the player's provinces.
-                  Settlements are columns (memory province region order, reversed), each with a
-                  grid of 74 px slot cards: slot i -> row i // per_row, col i % per_row.
-  construct       click an empty slot -> strip of category cards above it (Landmark, Basic Military,
-                  Advanced Military, Defence, Infrastructure). Hovering a category opens its panel:
-                  one column per chain, one row per required main tier; buildable cards are parchment.
-                  Click the parchment card whose icon is the target chain.
-  upgrade         click the building -> its chain stacked above the slot; the next level is the
-                  lowest parchment card above the slot. Click it.
-Every action is verified in memory (the slot shows construction in progress) before moving on.
+  province panel  Provinces tab (hud_campaign/bar_small_top/TabGroup/tab_regions) -> row row_entry_<province>
+                  -> settlement_panel with one column CcoCampaignSettlement<region key> per settlement and the
+                  slots CcoCampaignBuildingSlotregion_slot_<n> (n = u32 at memory slot + 0x8).
+  upgrade         click the slot -> building_construction_popup opens anchored on it (centred over the slot, its
+                  bottom on the slot's top) with the chain in construction_building_tree: one card per level, id =
+                  building level key, its square_building_button state "built" (taken), "normal" (can be built),
+                  "greyed" (not now: no click). Click the card of the next level.
+  construct       click an empty slot -> building_categories_popup (anchored the same way) with one card per
+                  category, CcoBuildingSetRecord<set key>. Hovering a category builds its construction_building_tree
+                  (chains CcoBuildingChainRecord<chain>, added over a few frames); click the target level's card.
+                  The category each chain was found in is remembered (runs/build_categories.json), so later
+                  constructions of that chain hover one category only.
+Every action is confirmed in memory (the slot shows construction in progress: [[slot + 0x190] + 0x10] != 0)
+before the next one.
 
     python -X utf8 -m assist.build plan          # what would be done (memory only, no input)
     python -X utf8 -m assist.build run           # do it
 """
 from __future__ import annotations
 import json
+import struct
 import sys
-import time
 from dataclasses import dataclass
-
-import numpy as np
-import win32api
-from PIL import Image
 
 from . import gamedata as gd
 from .buildplan import Building, Province, Settlement, plan_province, strategy
-from .slots import icon_chains, match_cell
+from bot import config
 from bot.focus import game_focus
 from bot.sensor.world import World, snapshot, region_provinces
-from tools.ui import click_at, grab, move_path, move_to
+from tools import wait
+from tools.ui import click, move_to, wheel
 
-PROVINCES_BUTTON = (1810, 22)
-FIRST_OWN_PROVINCE_ROW = (1695, 357)
-PANEL_NEXT = (1157, 772)
-HEADER_Y = 831
-SLOT_ROW0_Y, SLOT_PITCH = 891, 74
 PARK = (1700, 700)
+PANEL = "settlement_panel"
+CATEGORIES_FILE = config.RUNS_DIR / "build_categories.json"
+EFFECT_TIMEOUT_S = 1.0        # a click on a card / button that has not started construction by then never will
+                              # (measured 2026-10-16: the slot shows construction ~30 ms after the click)
 
 
 # ------------------------------------------------------------------ state -> planner model
@@ -100,16 +101,10 @@ def build_models(w: World, snap) -> tuple[dict[str, list[OwnedSettlement]], dict
     return out, snap.blocked_provinces
 
 
-def planned_actions(w: World | None = None):
-    """[(OwnedSettlement, Action)] in priority order, for unblocked provinces only."""
-    w = w or World()
-    snap = snapshot(w)
-    if snap is None:
-        raise RuntimeError("player faction not found in memory")
-    models, blocked = build_models(w, snap)
+def _actions(models, blocked: dict, override_blocked: bool = False):
     todo, skipped = [], []
     for p, owned in models.items():
-        if p in blocked:
+        if p in blocked and not override_blocked:
             skipped.append((p, blocked[p]))
             continue
         plans = plan_province(Province(p, [o.model for o in owned]))
@@ -120,203 +115,18 @@ def planned_actions(w: World | None = None):
             for a in sp.actions:
                 if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade"):
                     todo.append((o, a, busy))
+    return todo, skipped
+
+
+def planned_actions(w: World | None = None):
+    """[(OwnedSettlement, Action)] in priority order, for unblocked provinces only."""
+    w = w or World()
+    snap = snapshot(w)
+    if snap is None:
+        raise RuntimeError("player faction not found in memory")
+    models, blocked = build_models(w, snap)
+    todo, skipped = _actions(models, blocked)
     return todo, skipped, snap
-
-
-# ------------------------------------------------------------------ screen geometry
-
-def headers(img: Image.Image) -> list[tuple[int, int]]:
-    """x-ranges of the settlement name plates (green bars, row ~838) in the province panel."""
-    a = np.median(np.asarray(img.crop((300, 836, 1620, 841))).astype(int), axis=0)
-    g = (a[:, 1] > 85) & (a[:, 1] - a[:, 0] > 60)
-    segs, start = [], None
-    for x, v in enumerate(list(g) + [False]):
-        if v and start is None:
-            start = x
-        elif not v and start is not None:
-            segs.append([start, x])
-            start = None
-    merged: list[list[int]] = []
-    for sgm in segs:                                  # bridge gaps left by lettering
-        if merged and sgm[0] - merged[-1][1] < 20:
-            merged[-1][1] = sgm[1]
-        else:
-            merged.append(sgm)
-    return [(x0 + 300, x1 + 300) for x0, x1 in merged if x1 - x0 > 120]
-
-
-def slot_xy(img: Image.Image, column: int, index: int) -> tuple[int, int] | None:
-    hs = headers(img)
-    if column >= len(hs):
-        return None
-    x0, x1 = hs[column]
-    per_row = max(1, round((x1 - x0 - 48) / SLOT_PITCH))
-    first = x0 + 60
-    return first + (index % per_row) * SLOT_PITCH, SLOT_ROW0_Y + (index // per_row) * SLOT_PITCH
-
-
-def level_icon(level_key: str) -> str | None:
-    from .slots import ICONS
-    m = json.load(open(ICONS / "_level_to_icon.json"))
-    return m.get(level_key)
-
-
-def chain_icon(chain: str, index: int | None = None) -> str | None:
-    """Icon of a chain's level (default: its first non-ruin level)."""
-    ls = gd.chains().get(chain, [])
-    if index is not None:
-        ls = [l for l in ls if l.index == index] or ls
-    for l in ls:
-        if "ruin" in l.key:
-            continue
-        ic = level_icon(l.key)
-        if ic:
-            return ic
-    return None
-
-
-def parchment_cards(img: Image.Image, box) -> list[tuple[int, int]]:
-    """Centres of bright parchment cards (~60-74 px) inside box (x0, y0, x1, y1)."""
-    a = np.asarray(img.crop(box)).astype(int)
-    r, g, b = a[..., 0], a[..., 1], a[..., 2]
-    m = ((r > 150) & (g > 135) & (b > 100) & (r - b < 90) & (r - b > 15)).astype(np.uint8)
-    import cv2
-    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((11, 11), np.uint8))
-    n, lab, stats, cent = cv2.connectedComponentsWithStats(m, 8)
-    out = []
-    for i in range(1, n):
-        x, y, w, h, area = stats[i]
-        if 40 <= w <= 95 and 40 <= h <= 95 and area > 1200:
-            out.append((int(x + w / 2) + box[0], int(y + h / 2) + box[1]))
-    return out
-
-
-def strip_cards(img: Image.Image, sx: int, sy: int) -> list[tuple[int, int]]:
-    """Category cards in the strip that pops up above an empty slot (row centred ~76 px above it)."""
-    cy = sy - 76
-    a = np.asarray(img.crop((max(0, sx - 450), cy - 14, min(1920, sx + 450), cy + 14))).astype(int)
-    luma = (0.299 * a[..., 0] + 0.587 * a[..., 1] + 0.114 * a[..., 2]).mean(axis=0)
-    lit = luma > 40                       # the gaps between cards are near black
-    out, start = [], None
-    for x, v in enumerate(list(lit) + [False]):
-        if v and start is None:
-            start = x
-        elif not v and start is not None:
-            if 35 <= x - start <= 75 and luma[start:x].mean() > 110:
-                out.append((max(0, sx - 450) + (start + x) // 2, cy))
-            start = None
-    return out
-
-
-def identify_column(img: Image.Image, o: OwnedSettlement, others: list | None = None) -> bool:
-    """Does the panel show o's province with o in o's column? Checked against any of o's slots that
-    holds a finished building (a slot under construction shows a different picture). If none can be
-    checked, accept when no other owned province has the same number of columns."""
-    hs = headers(img)
-    if len(hs) != o.columns:
-        return False
-    checked = False
-    for i, st in enumerate(o.slot_states):
-        if not st.building or st.constructing:
-            continue
-        want = level_icon(st.building)
-        xy = slot_xy(img, o.column, i)
-        if not want or xy is None:
-            continue
-        checked = True
-        best = match_cell(img, xy[0], xy[1], top=1)
-        if best and best[0][1] == want:
-            return True
-    if not checked:
-        return not any(x.columns == o.columns and x.province != o.province for x in (others or []))
-    return False
-
-
-# ------------------------------------------------------------------ actions (game focused)
-
-def provinces_list_open(img: Image.Image) -> bool:
-    from .skills import _tmpl, similar
-    t = _tmpl("provinces_list_header")
-    return t is not None and similar(img.crop((1640, 258, 1910, 290)), t) > 0.8
-
-
-def open_province(o: OwnedSettlement, others: list | None = None) -> bool:
-    img = grab()
-    if not headers(img):
-        if not provinces_list_open(img):
-            click_at(*PROVINCES_BUTTON)
-            time.sleep(1.2)
-        click_at(*FIRST_OWN_PROVINCE_ROW)
-        time.sleep(2.0)
-        if not headers(grab()):
-            return False
-    for _ in range(12):
-        move_to(*PARK)
-        time.sleep(0.4)
-        if identify_column(grab(), o, others):
-            return True
-        click_at(*PANEL_NEXT)
-        time.sleep(2.2)
-    return False
-
-
-def _climb(x: int, y_from: int, y_to: int, x_to: int | None = None) -> None:
-    """Move the cursor up from the slot to a popup above it without leaving the popup chain: straight up at the
-    slot's x, then across inside the popup. Jumps, not 6 px steps (2026-10-16: the game samples the cursor once per
-    frame; each waypoint is held tools.ui.HOVER_MAX_FRAMES frames)."""
-    pts = [(x, y_from), (x, y_to)]
-    if x_to is not None:
-        pts.append((x_to, y_to))
-    move_path(pts)
-
-
-def do_construct(o: OwnedSettlement, slot_index: int, chain: str) -> bool:
-    img = grab()
-    xy = slot_xy(img, o.column, slot_index)
-    icon = chain_icon(chain)
-    if xy is None or icon is None:
-        return False
-    sx, sy = xy
-    click_at(sx, sy)
-    time.sleep(1.2)
-    strip = strip_cards(grab(), sx, sy)
-    for cx, cy in sorted(strip):
-        move_to(sx, sy)
-        time.sleep(0.3)
-        _climb(sx, sy - 10, cy, cx)
-        time.sleep(1.2)
-        panel = grab()
-        cards = parchment_cards(panel, (max(0, cx - 900), 60, min(1920, cx + 900), cy - 45))
-        for kx, ky in cards:
-            best = match_cell(panel, kx, ky, top=2)
-            if best and best[0][1] == icon and best[0][0] >= 0.35:
-                _climb(cx, cy, ky, kx)
-                time.sleep(0.3)
-                click_at(kx, ky)
-                time.sleep(1.5)
-                return True
-    move_to(*PARK)
-    return False
-
-
-def do_upgrade(o: OwnedSettlement, slot_index: int) -> bool:
-    img = grab()
-    xy = slot_xy(img, o.column, slot_index)
-    if xy is None:
-        return False
-    sx, sy = xy
-    click_at(sx, sy)
-    time.sleep(1.2)
-    cards = sorted(parchment_cards(grab(), (sx - 60, 60, sx + 60, sy - 45)), key=lambda c: -c[1])
-    if len(cards) < 2:                                # only the current level: no upgrade available yet
-        move_to(*PARK)
-        return False
-    kx, ky = cards[1]                                  # the card just above the current level
-    _climb(sx, sy - 10, ky, kx)
-    time.sleep(0.3)
-    click_at(kx, ky)
-    time.sleep(1.5)
-    return True
 
 
 def slot_index_for(o: OwnedSettlement, a) -> int | None:
@@ -338,161 +148,201 @@ def slot_index_for(o: OwnedSettlement, a) -> int | None:
     return sec[k] if 0 <= k < len(sec) else None
 
 
-def run_screen(log=print, override_blocked: bool = False) -> str:
-    """Older screen-matching version, kept as a fallback."""
-    w = World()
-    todo, skipped, snap = planned_actions(w)
-    if override_blocked:
-        # test-only: plan blocked provinces too
-        models, _ = build_models(w, snap)
-        todo = []
-        for p, owned in models.items():
-            for sp in plan_province(Province(p, [o.model for o in owned])):
-                o = next(x for x in owned if x.region == sp.settlement.name)
-                busy = any(s.constructing for s in o.slot_states)
-                todo += [(o, a, busy) for a in sp.actions if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade")]
-    done, problems = [], []
-    gold = w.s.read().treasury or 0
-    with game_focus():
-        for o, a, busy in todo:
-            if a.cost > gold:
-                problems.append(f"{o.region}: {a.item} needs {a.cost} gold")
-                continue
-            idx = slot_index_for(o, a)
-            if idx is None:
-                problems.append(f"{o.region}: no slot for {a.item}")
-                continue
-            if w.slots(o.region_obj)[idx].constructing:
-                continue                       # this slot is already being built or upgraded
-            if not open_province(o, [x for x, _, _ in todo]):
-                problems.append(f"{o.region}: could not find its province panel")
-                continue
-            if a.kind == "construct":
-                chain = next((t.chain for t in plan_targets(o) if t.item == a.item), None)
-                ok = chain is not None and do_construct(o, idx, chain)
-            else:
-                ok = do_upgrade(o, idx)
-            time.sleep(1.0)
-            after = w.slots(o.region_obj)
-            started = idx < len(after) and after[idx].constructing
-            if ok and started:
-                gold -= a.cost
-                done.append(f"{gd.place_name(o.region)}: {a.item} {a.detail}")
-                log(f"build: {done[-1]}")
-            else:
-                problems.append(f"{o.region}: {a.item} not started")
-        move_to(*PARK)
-    parts = []
-    if done:
-        parts.append("; ".join(done))
-    if skipped:
-        parts.append("blocked: " + ", ".join(gd.place_name(p) for p, _ in skipped))
-    if problems:
-        parts.append("problems: " + "; ".join(problems))
-    return " | ".join(parts) if parts else "nothing to build"
+# ------------------------------------------------------------------ memory, one slot at a time
+
+def slot_ptr(w: World, region_obj: int, idx: int) -> int:
+    """The memory slot object: [[region + 0x148] + 0x18] entry idx."""
+    L = w.q(region_obj + 0x148) + 0x10
+    return w.q(w.q(L + 8) + 8 * idx)
 
 
-# ------------------------------------------------------------------ UI-tree actions (default)
-#
-# Province panel components (9.0.4):
-#   Provinces list rows      row_entry_<province key>      (top-bar Provinces button at (1810, 22))
-#   settlement columns       CcoCampaignSettlement<region key>
-#   building slots           CcoCampaignBuildingSlotregion_slot_<n>   n = u32 at memory slot +0x8
-#   upgrade popup            construction_building_tree with level cards whose id is the building level key
-#   build menu (empty slot)  building_categories_popup / CcoBuildingSetRecord<set key>; hovering a set
-#                            shows construction_building_tree with level cards keyed the same way
-# The popups only stay open while the cursor travels over them, so moves go slot -> popup in one path.
-
-PROVINCES_BUTTON_XY = (1810, 22)
+def constructing(w: World, S: int) -> bool:
+    """Construction (or a repair, or an upgrade) in progress in this slot: [[S + 0x190] + 0x10] != 0."""
+    sb = w.q(S + 0x190)
+    return bool(sb) and bool(w.q(sb + 0x10))
 
 
-def _ui():
+def health(w: World, S: int) -> tuple[float, float] | None:
+    """(health, max health) of the building in this slot: f32 at building + 0x38 / + 0x3C, building = [[S + 0x190] +
+    0x20] (decompiled BUILDING_SCRIPT_INTERFACE.percent_health = 100 * hp / max, 9.0.4). None for an empty slot."""
+    sb = w.q(S + 0x190)
+    b = w.q(sb + 0x20) if sb else 0
+    if not b:
+        return None
+    hp, mx = struct.unpack("<2f", w.pm.read_bytes(b + 0x38, 8))
+    return hp, mx
+
+
+def damaged(w: World, S: int) -> bool:
+    """The building is damaged. An upgrade the game starts on it halts until it is repaired (tooltip "This unfinished
+    building is damaged and construction on it has halted", seen 2026-10-16), so it is never upgraded."""
+    h = health(w, S)
+    return h is not None and h[1] > 0 and h[0] < h[1] - 1e-3
+
+
+# ------------------------------------------------------------------ UI-tree actions (game focused)
+
+def _ui(w: World | None = None):
     from bot.sensor.ui import UI
-    ui = UI()
+    ui = UI(w.s if w is not None else None)
     ui.find_root()
     return ui
 
 
-def _first(ui, cid: str, under: str | None = None):
-    """First visible component with this id (optionally below a component with id `under`): UI.first."""
-    return ui.first(cid, under=under)
+def _scroll_into_clip(ui, item: int, what: str) -> bool:
+    """Wheel a list until the item lies inside its list_clip (items outside still read visible, off screen)."""
+    clip = ui.clip_of(item)
+    for _ in range(30):
+        if clip is None or ui.in_clip(item):
+            return True
+        cl, k = ui.comp(clip), ui.comp(item)
+        wheel(*cl.center, 1 if k.y < cl.y else -1)
+        wait.stable(lambda: ui.comp(item).y, n=2, timeout=1.0, what=f"{what} still", ui=ui, must=False)
+    return False
 
 
-def ui_open_province(ui, province: str) -> bool:
-    row = _first(ui, f"row_entry_{province}")
+def ui_open_province(ui, o: OwnedSettlement) -> bool:
+    """The province panel showing o's settlement column (CcoCampaignSettlement<region>: unique to its province, so a
+    panel still showing the previous province never passes)."""
+    col = f"CcoCampaignSettlement{o.region}"
+    if ui.first(col, under=PANEL) is not None:
+        return True
+    row = ui.first(f"row_entry_{o.province}")
     if row is None:
-        click_at(*PROVINCES_BUTTON_XY)
-        time.sleep(1.2)
-        row = _first(ui, f"row_entry_{province}")
+        tab = ui.cached("tab_regions", under="bar_small_top")
+        if tab is None:
+            return False
+        if not (ui.state(tab) or "").startswith("selected"):
+            click(ui, tab)
+        row = wait.wait_until(lambda: ui.first(f"row_entry_{o.province}"), 2.0, f"row_entry_{o.province} listed",
+                              must=False)
         if row is None:
             return False
-    click_at(*ui.comp(row).center)
-    time.sleep(1.8)
-    return _first(ui, "settlement_list") is not None
+    if not _scroll_into_clip(ui, row, "Provinces list"):
+        return False
+    click(ui, row)
+    return wait.appears(ui, col, under=PANEL, timeout=3.0, must=False) is not None
 
 
 def ui_slot(ui, w: World, o: OwnedSettlement, idx: int):
-    L = w.q(o.region_obj + 0x148) + 0x10
-    sid = w.u32(w.q(w.q(L + 8) + 8 * idx) + 8)
-    c = _first(ui, f"CcoCampaignBuildingSlotregion_slot_{sid}")
-    return ui.comp(c) if c else None
+    sid = w.u32(slot_ptr(w, o.region_obj, idx) + 8)
+    return wait.appears(ui, f"CcoCampaignBuildingSlotregion_slot_{sid}", under=PANEL, timeout=1.0, must=False)
 
 
-def ui_upgrade(ui, slot, level_key: str) -> bool:
-    sx, sy = slot.center
-    click_at(sx, sy)
-    time.sleep(1.0)
-    card = _first(ui, level_key, under="construction_building_tree")
+def _popup_for(ui, slot, cid: str, timeout: float = 2.0):
+    """The popup the game opened for this slot: centred over it, its bottom on the slot's top (a popup still open
+    for another slot never matches). -> its pointer."""
+    def anchored():
+        p = ui.first(cid, under=PANEL)
+        if p is None:
+            return None
+        k, s = ui.comp(p), ui.comp(slot.ptr)
+        return p if abs(k.x + k.w / 2 - (s.x + s.w / 2)) <= 3 and abs(k.y + k.h - s.y) <= 3 else None
+    return wait.wait_until(anchored, timeout, f"{cid} for {slot.id}", must=False)
+
+
+def _await_started(w: World, S: int, what: str) -> bool:
+    return bool(wait.wait_until(lambda: constructing(w, S), EFFECT_TIMEOUT_S, what, must=False))
+
+
+def ui_upgrade(ui, w: World, S: int, slot, level_key: str) -> bool:
+    click(ui, slot.ptr)
+    pop = _popup_for(ui, slot, "building_construction_popup")
+    card = wait.wait_until(lambda: ui.first(level_key, under=pop), 1.0, f"{level_key} card", must=False) if pop else None
     if card is None:
-        move_to(*PARK)
         return False
-    kx, ky = ui.comp(card).center
-    _climb(sx, sy - 10, ky, kx)
-    time.sleep(0.3)
-    click_at(kx, ky)
-    time.sleep(1.2)
-    return True
+    btn = ui.child(card, "square_building_button")
+    if btn is not None and (ui.state(btn) or "") == "greyed":
+        return False                              # the game would ignore the click
+    click(ui, card)
+    return _await_started(w, S, f"{level_key} under construction")
 
 
-def ui_construct(ui, slot, level_key: str) -> bool:
-    sx, sy = slot.center
-    click_at(sx, sy)
-    time.sleep(1.0)
-    cats = [c for c, ids in ui.walk() if ids[-1].startswith("CcoBuildingSetRecord") and "building_categories_popup" in ids]
+def _learned() -> dict[str, str]:
+    try:
+        return json.loads(CATEGORIES_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _learn(chains: list[str], category: str) -> None:
+    m = _learned()
+    if all(m.get(c) == category for c in chains):
+        return
+    m.update({c: category for c in chains})
+    try:
+        CATEGORIES_FILE.write_text(json.dumps(m, indent=1, sort_keys=True), encoding="utf-8")
+    except OSError:
+        pass
+
+
+def _tree_chains(ui) -> tuple:
+    """Components in the chain list of the construction_building_tree on screen (() when none is shown)."""
+    t = ui.first("construction_building_tree", under=PANEL)
+    cl = ui.first("chain_list", under=t) if t else None
+    return tuple(ui.children(cl)) if cl else ()
+
+
+def _category_tree(ui, before: tuple):
+    """Once the hovered category's construction_building_tree is built (its chain list differs from `before`, then
+    is unchanged for 3 frames: measured 2026-10-16, the game adds one chain per frame, 15-45 ms after the hover):
+    (chain list pointers, {chain: chain component})."""
+    chains = lambda: _tree_chains(ui)
+    got = wait.wait_until(lambda: (lambda c: c if c and c != before else None)(chains()), 1.0,
+                          "category tree rebuilt", must=False)
+    if got is None:
+        return None
+    kids = wait.stable(chains, n=3, timeout=1.0, what="category tree complete", must=False, ui=ui) or got
+    out = {}
+    for c in kids:
+        cid = ui.id(c) or ""
+        if cid.startswith("CcoBuildingChainRecord"):
+            out[cid[len("CcoBuildingChainRecord"):]] = c
+    return kids, out
+
+
+def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str) -> bool:
+    click(ui, slot.ptr)
+    pop = _popup_for(ui, slot, "building_categories_popup")
+    lst = ui.first("category_list", under=pop) if pop else None
+    if lst is None:
+        return False
+    cats = [c for c in ui.children(lst) if (ui.id(c) or "").startswith("CcoBuildingSetRecord")]
+    known = _learned().get(chain)
+    cats.sort(key=lambda c: ui.id(c) != known)
+    before = _tree_chains(ui)
     for cat in cats:
-        cx, cy = ui.comp(cat).center
-        move_to(sx, sy)
-        time.sleep(0.2)
-        _climb(sx, sy - 10, cy, cx)
-        time.sleep(1.0)
-        card = _first(ui, level_key, under="construction_building_tree")
+        move_to(*ui.comp(cat).center)
+        got = _category_tree(ui, before)
+        if got is None:
+            continue
+        before, chains = got
+        _learn(list(chains), ui.id(cat) or "")
+        if chain not in chains:
+            continue
+        card = ui.first(level_key, under=chains[chain])
         if card is None:
             continue
-        kx, ky = ui.comp(card).center
-        _climb(cx, cy, ky, kx)
-        time.sleep(0.3)
-        click_at(kx, ky)
-        time.sleep(1.2)
-        return True
-    move_to(*PARK)
+        btn = ui.child(card, "square_building_button")
+        if btn is not None and (ui.state(btn) or "") == "greyed":
+            return False
+        click(ui, card)
+        return _await_started(w, S, f"{level_key} under construction")
     return False
 
 
 def run(log=print, override_blocked: bool = False) -> str:
     w = World()
-    todo, skipped, snap = planned_actions(w)
-    if override_blocked:
-        models, _ = build_models(w, snap)
-        todo = []
-        for p, owned in models.items():
-            for sp in plan_province(Province(p, [o.model for o in owned])):
-                o = next(x for x in owned if x.region == sp.settlement.name)
-                busy = any(s.constructing for s in o.slot_states)
-                todo += [(o, a, busy) for a in sp.actions if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade")]
+    snap = snapshot(w)
+    if snap is None:
+        raise RuntimeError("player faction not found in memory")
+    models, blocked = build_models(w, snap)
+    todo, skipped = _actions(models, blocked)
+    if override_blocked:                          # test only: plan blocked provinces too
+        todo, _ = _actions(models, blocked, override_blocked=True)
     done, problems = [], []
     gold = w.s.read().treasury or 0
-    ui = _ui()
-    opened = None
+    ui = _ui(w)
     with game_focus():
         for o, a, busy in todo:
             if a.cost > gold:
@@ -502,21 +352,25 @@ def run(log=print, override_blocked: bool = False) -> str:
             if idx is None or not a.level_key:
                 problems.append(f"{o.region}: no slot for {a.item}")
                 continue
-            if w.slots(o.region_obj)[idx].constructing:
+            S = slot_ptr(w, o.region_obj, idx)
+            if constructing(w, S):
                 continue
-            if opened != o.province:
-                if not ui_open_province(ui, o.province):
-                    problems.append(f"{o.region}: could not open its province")
-                    continue
-                opened = o.province
+            if a.kind != "construct" and damaged(w, S):
+                problems.append(f"{o.region}: {a.item} not started")
+                continue
+            if not ui_open_province(ui, o):
+                problems.append(f"{o.region}: could not open its province")
+                continue
             slot = ui_slot(ui, w, o, idx)
             if slot is None:
                 problems.append(f"{o.region}: slot not on screen")
                 continue
-            ok = ui_construct(ui, slot, a.level_key) if a.kind == "construct" else ui_upgrade(ui, slot, a.level_key)
-            time.sleep(0.6)
-            after = w.slots(o.region_obj)
-            if ok and idx < len(after) and after[idx].constructing:
+            if a.kind == "construct":
+                chain = next((t.chain for t in plan_targets(o) if t.item == a.item), None)
+                ok = chain is not None and ui_construct(ui, w, S, slot, a.level_key, chain)
+            else:
+                ok = ui_upgrade(ui, w, S, slot, a.level_key)
+            if ok:
                 gold -= a.cost
                 done.append(f"{gd.place_name(o.region)}: {a.item} {a.detail}")
                 log(f"build: {done[-1]}")
@@ -534,7 +388,7 @@ def run(log=print, override_blocked: bool = False) -> str:
 
 
 def plan_targets(o: OwnedSettlement):
-    from .buildplan import final_layout, per_province_rules
+    from .buildplan import final_layout
     return final_layout(o.model, lambda c, s: True)
 
 
@@ -550,7 +404,11 @@ def main() -> int:
         if not todo:
             print("nothing to build in unblocked provinces")
     elif cmd == "run":
-        print(run(override_blocked="--override-blocked" in sys.argv))
+        from bot.focus import return_to_terminal
+        try:
+            print(run(override_blocked="--override-blocked" in sys.argv))
+        finally:
+            return_to_terminal()
     return 0
 
 

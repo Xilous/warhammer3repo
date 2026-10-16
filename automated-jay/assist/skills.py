@@ -2,63 +2,57 @@
 Engineers in the player's fixed order (strategy/skills.json), then "as fits" (passives first,
 active-ability skills last). Other characters are left alone.
 
-How it works on screen (verified on 9.0.4, 1920x1080, UI scale 1):
-  - Lords & Heroes list (top bar button) -> clicking a row's rank badge opens that character's skills.
-  - The arrows beside the name plate cycle through every character of the faction and wrap around.
-  - Character type = the subtitle under the name plate ("Legendary Lord", "Warlock Engineer", ...),
-    matched against templates in assist/templates/.
-  - "Skill Points: N" badge is gold when N > 0.
-  - Typing in "Search Skills" highlights the matching node in red; the difference between a capture
-    with an empty search and one with the name typed is the node to click.
-  - Clicking a node spends one point immediately (undo exists until the panel closes). Clicking a node
-    that is maxed or still locked changes nothing, which is how "maxed" is detected.
+Everything is read from memory and the game's UI tree (verified 2026-10-16, 9.0.4); nothing is searched for on
+screen, and every wait is a condition (tools/wait.py):
+
+  points     unspent skill points: u32 at [character + 0x3F0] + 0x240. A click counts when they go down.
+  open       Lords & Heroes list (hud_campaign/bar_small_top/TabGroup/tab_units, state "selected" while shown):
+             row character_row_<character id> (id = u32 at character + 0x110) -> its rank badge skill_button
+             opens character_details_panel on that character's skills (character_details_panel_skills).
+  switch     the open panel lists the characters of the Lords & Heroes list along the top
+             (char_select_list/.../CcoCampaignCharacter<id>/button_character_holder, state "selected" for the one
+             shown). Clicking one shows that character without closing the panel.
+  tree       the game builds a NEW skill tree (new components) for every character it shows, 130-210 ms after the
+             switch; until then the previous character's tree is on screen. The step waits until the tree rows
+             (list_box/chainN/chain) are new components, then reads the tree once.
+  node       a component whose id is the character_skill_key; its child "card" has the node's state: "available"
+             (a click spends a point), "maxed", "locked", "locked_rank" (a click changes nothing: skipped without
+             a click). Any other state is clicked and judged by the points, as before.
+  scroll     the tree is wider than its list_clip; the scrollbar thumb is hslider/handle. A node outside the clip
+             reads visible at its off-screen position: it is scrolled into view (thumb dragged to that end).
+  close      character_details_panel/.../button_ok.
 
     python -X utf8 -m assist.skills run
+    python -X utf8 -m assist.skills plan [ikit_claw|warlock_engineer|verminlord_warpseer]
 """
 from __future__ import annotations
 import json
-import re
 import sys
-import time
+from functools import lru_cache
 from pathlib import Path
 
 import numpy as np
-import win32api
-import win32con
 from PIL import Image
 
 from . import gamedata as gd
 from bot.focus import game_focus
-from tools.ui import click_at, drag, grab, move_to, type_text
+from tools import wait
+from tools.ui import click, drag, wheel
 
 HERE = Path(__file__).resolve().parent
 TEMPLATES = HERE / "templates"
 STRATEGY = HERE.parent / "strategy" / "skills.json"
 
-LORDS_BUTTON = (1772, 22)
-LORDS_HEADER = (1640, 258, 1910, 290)
-FIRST_ROW_BADGE = (1678, 381)
-NAME = (795, 12, 1125, 48)
-SUB = (850, 58, 1070, 86)
-BADGE = (1790, 92, 1834, 134)
-SKILLS_TAB = (840, 95, 1080, 125)
-NEXT_CHAR = (1200, 30)
-CLOSE = (960, 1050)
-SEARCH_BOX = (225, 1050)
-SEARCH_CLEAR = (377, 1050)
-TREE = (345, 225, 1905, 790)
-PARK = (960, 1075)
-THUMB_ROW, THUMB_X0, THUMB_X1 = 1002, 395, 1845
-
-# subtitle template -> character key in skills.json (name template required too where listed)
-TYPES = {
-    "ikit_claw": ("sub_legendary_lord", "name_ikit_claw"),
-    "warlock_engineer": ("sub_warlock_engineer", None),
-    "verminlord_warpseer": ("sub_verminlord_warpseer", None),
-}
+POINTS_OFF = 0x240        # unspent skill points: u32 at [character + 0x3F0] + 0x240 (verified 9.0.4)
+CHAR_ID_OFF = 0x110       # character id: u32 at character + 0x110 (character_row_<id>, CcoCampaignCharacter<id>)
+DETAILS = "character_details_panel"
+SKILLS_PANEL = "character_details_panel_skills"
+SKIP_STATES = frozenset({"maxed", "locked", "locked_rank"})   # card states a click does not change (2026-10-16)
+CLICK_EFFECT_S = 0.35     # a click that has not taken a point by then never will (the old fixed wait after a click)
+TREE_TIMEOUT_S = 1.5      # the new character's tree is normally built 130-210 ms after the switch
 
 
-# ------------------------------------------------------------------ image helpers
+# ------------------------------------------------------------------ screenshot helpers kept for assist/heroes.py
 
 def _tmpl(name: str) -> Image.Image | None:
     p = TEMPLATES / f"{name}.png"
@@ -74,174 +68,25 @@ def similar(a: Image.Image, b: Image.Image) -> float:
     return float((x * y).sum() / d) if d else 0.0
 
 
-BADGE_DIGIT = (1801, 100, 1823, 126)
-POINTS_OFF = 0x240        # unspent skill points: u32 at [character + 0x3F0] + 0x240 (verified 9.0.4)
-
-
-def has_points(img: Image.Image) -> bool:
-    """The badge glow pulses, so read the digit: anything that is not the '0' glyph means points."""
-    z = _tmpl("badge_digit_zero")
-    return z is None or similar(img.crop(BADGE_DIGIT), z) < 0.6
-
-
-def points_by_character() -> dict[int, int]:
-    """character pointer -> unspent skill points, for the character types this step handles."""
-    from bot.sensor.world import World, characters, find_player_faction
-    w = World()
-    F = find_player_faction(w)
-    subtypes = {c["agent_subtype"] for c in orders()["characters"].values()}
-    out = {}
-    for c in characters(w, F):
-        if c.subtype in subtypes:
-            out[c.ptr] = w.u32(w.q(c.ptr + 0x3F0) + POINTS_OFF)
-    return out
-
-
-def region_changed(a: Image.Image, b: Image.Image, box) -> int:
-    x = np.asarray(a.crop(box)).astype(int)
-    y = np.asarray(b.crop(box)).astype(int)
-    return int((np.abs(x - y).max(axis=2) > 50).sum())
-
-
-def highlight_box(base: Image.Image, hl: Image.Image):
-    """Bounding box of the node the search highlighted, or None.
-
-    The highlight looks different by node state: a locked (grey) node turns red, an available or taken
-    node (already drawn in its row colour) only gets a brighter border. Both show up as the largest
-    patch of changed pixels in the tree area between the two captures."""
-    import cv2
-    x = np.asarray(base.crop(TREE)).astype(int)
-    y = np.asarray(hl.crop(TREE)).astype(int)
-    m = (np.abs(x - y).max(axis=2) > 35).astype(np.uint8)
-    m = cv2.dilate(m, np.ones((9, 9), np.uint8))
-    n, lab, stats, _ = cv2.connectedComponentsWithStats(m, 8)
-    if n <= 1:
-        return None
-    i = 1 + int(np.argmax(stats[1:, cv2.CC_STAT_AREA]))
-    bx, by, bw, bh, area = stats[i]
-    if area < 600 or bw > 320 or bh > 110 or bw < 60:
-        return None                                   # nothing clear, or several nodes lit
-    return (int(bx) + TREE[0], int(by) + TREE[1], int(bx + bw) + TREE[0], int(by + bh) + TREE[1])
-
-
-def thumb_span(img: Image.Image):
-    row = np.asarray(img).astype(int)[THUMB_ROW, THUMB_X0:THUMB_X1]
-    xs = np.where((row[:, 1] > 120) & (row[:, 0] < 120) & (row[:, 1] - row[:, 0] > 40))[0]
-    return (int(xs.min()) + THUMB_X0, int(xs.max()) + THUMB_X0) if len(xs) >= 2 else None
-
-
-def search_term(name: str) -> str:
-    """Lowercase prefix of the skill name the search box can take (letters, digits, space, hyphen)."""
-    s = name.strip().strip('"').lower()
-    m = re.match(r"[a-z0-9 \-]+", s)
-    return (m.group(0) if m else s).strip()
-
-
-# ------------------------------------------------------------------ panel driving (game focused)
-
-def _park() -> None:
-    move_to(*PARK)
-    time.sleep(0.5)
-
-
-def _drag(x0: int, y0: int, x1: int) -> None:
-    drag(x0, y0, x1, y0)
-
-
-class SkillPanel:
-    def __init__(self) -> None:
-        self.side = "left"
-
-    def is_open(self, img: Image.Image | None = None) -> bool:
-        t = _tmpl("skills_tab")
-        return t is not None and similar((img or grab()).crop(SKILLS_TAB), t) > 0.8
-
-    def open(self) -> None:
-        img = grab()
-        if self.is_open(img):
-            return
-        hdr = _tmpl("lords_list_header")
-        if hdr is None or similar(img.crop(LORDS_HEADER), hdr) < 0.8:
-            click_at(*LORDS_BUTTON)
-            time.sleep(1.5)
-        click_at(*FIRST_ROW_BADGE)
-        time.sleep(2.0)
-        if not self.is_open():
-            raise RuntimeError("skill panel did not open")
-        self.side = "left"
-
-    def close(self) -> None:
-        click_at(*CLOSE)
-        time.sleep(1.0)
-
-    def next_character(self) -> None:
-        click_at(*NEXT_CHAR)
-        time.sleep(1.5)
-        self.side = "left"
-
-    def character_type(self, img: Image.Image) -> str | None:
-        for key, (sub, name) in TYPES.items():
-            ts = _tmpl(sub)
-            if ts is None or similar(img.crop(SUB), ts) < 0.9:
-                continue
-            if name:
-                tn = _tmpl(name)
-                if tn is None or similar(img.crop(NAME), tn) < 0.9:
-                    continue
-            return key
-        return None
-
-    def scroll(self, side: str) -> None:
-        if self.side == side:
-            return
-        span = thumb_span(grab())
-        if span:
-            _drag((span[0] + span[1]) // 2, THUMB_ROW + 1, 5 if side == "left" else 1915)
-        self.side = side
-
-    def locate(self, name: str):
-        term = search_term(name)
-        for side in (self.side, "right" if self.side == "left" else "left"):
-            self.scroll(side)
-            click_at(*SEARCH_CLEAR)
-            time.sleep(0.4)
-            _park()
-            base = grab()
-            click_at(*SEARCH_BOX)
-            time.sleep(0.3)
-            type_text(term)
-            time.sleep(0.9)
-            _park()
-            box = highlight_box(base, grab())
-            if box and box[2] < TREE[2] - 8 and box[0] > TREE[0] + 8:
-                return box
-        return None
-
-    def spend(self, name: str, ranks: int) -> int:
-        """Click the node up to `ranks` times while points remain; returns points spent.
-        A click counts only if some character's unspent points went down in memory."""
-        box = self.locate(name)
-        if box is None:
-            return 0
-        cx, cy = (box[0] + box[2]) // 2, (box[1] + box[3]) // 2
-        spent = 0
-        for _ in range(ranks):
-            if not has_points(grab()):
-                break
-            before = sum(points_by_character().values())
-            click_at(cx, cy)
-            time.sleep(0.4)
-            _park()
-            if sum(points_by_character().values()) >= before:
-                break
-            spent += 1
-        return spent
-
-
 # ------------------------------------------------------------------ orders
 
 def orders() -> dict:
     return json.load(open(STRATEGY, encoding="utf-8"))
+
+
+@lru_cache(maxsize=None)
+def _tables():
+    """The skill tables (about 19 MB of JSON): read once per process, they only change with a game patch."""
+    nodes = {r["key"]: r for r in gd._load("character_skill_nodes_tables")}
+    effects: dict[str, list[str]] = {}
+    maxlvl: dict[str, int] = {}
+    for r in gd._load("character_skill_level_to_effects_junctions_tables"):
+        effects.setdefault(r["character_skill_key"], []).append(r["effect_key"])
+        maxlvl[r["character_skill_key"]] = max(maxlvl.get(r["character_skill_key"], 0), int(r["level"]))
+    set_items: dict[str, list[str]] = {}
+    for r in gd._load("character_skill_node_set_items_tables"):
+        set_items.setdefault(r["set"], []).append(r["item"])
+    return nodes, effects, maxlvl, set_items
 
 
 def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
@@ -249,13 +94,7 @@ def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
     passive skills first, active-ability skills last."""
     o = orders()
     c = o["characters"][char_key]
-    nodes = {r["key"]: r for r in gd._load("character_skill_nodes_tables")}
-    skills = {r["key"]: r for r in gd._load("character_skills_tables")}
-    effects: dict[str, list[str]] = {}
-    maxlvl: dict[str, int] = {}
-    for r in gd._load("character_skill_level_to_effects_junctions_tables"):
-        effects.setdefault(r["character_skill_key"], []).append(r["effect_key"])
-        maxlvl[r["character_skill_key"]] = max(maxlvl.get(r["character_skill_key"], 0), int(r["level"]))
+    nodes, effects, maxlvl, set_items = _tables()
     loc = gd.loc()
 
     def name_of(node_key: str) -> str:
@@ -272,9 +111,8 @@ def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
         out.append((item["skill"], item["ranks"], nodes[item["node"]]["character_skill_key"]))
         listed.add(item["node"])
     skip = set(mounts.get("skip", [])) | set(mounts.get("take", [])) | listed
-    items = [r["item"] for r in gd._load("character_skill_node_set_items_tables") if r["set"] == c["node_set"]]
     rest = []
-    for n in items:
+    for n in set_items.get(c["node_set"], []):
         nd = nodes.get(n)
         if not nd or n in skip or nd["visible_in_ui"] is False:
             continue
@@ -289,55 +127,10 @@ def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
     return out
 
 
-# ------------------------------------------------------------------ the automation step
-
-def run_screen(log=print) -> str:
-    """Older screen-search version (search box + screenshot diff). Manual use only, never a fallback."""
-    done: list[str] = []
-    if not any(points_by_character().values()):
-        return "no unspent points"
-    with game_focus():
-        panel = SkillPanel()
-        panel.open()
-        try:
-            first_name = grab().crop(NAME)
-            for _ in range(60):                       # safety bound on the number of characters
-                img = grab()
-                key = panel.character_type(img)
-                if key and has_points(img):
-                    spent_here = []
-                    for name, ranks, _sk in attempt_list(key):
-                        if not has_points(grab()):
-                            break
-                        n = panel.spend(name, ranks)
-                        if n:
-                            spent_here.append(f"{name} x{n}")
-                    if spent_here:
-                        done.append(f"{key}: " + ", ".join(spent_here))
-                        log(f"skills: {key}: {', '.join(spent_here)}")
-                panel.next_character()
-                if similar(grab().crop(NAME), first_name) > 0.97:
-                    break
-        finally:
-            click_at(*SEARCH_CLEAR)
-            panel.close()
-    return "; ".join(done) if done else "no unspent points"
-
-
-# ------------------------------------------------------------------ UI-tree version (default)
-#
-# Every skill node in the skills panel is a UI component whose id is the character_skill_key; its child
-# "icon_check" is visible when the skill is maxed. The Lords & Heroes list rows are components
-# "character_row_<id>" (id = u32 at character + 0x110) with the rank badge as child "skill_button";
-# clicking it opens that character's skills. Positions come straight from the UI tree (bot/sensor/ui.py),
-# so nothing is searched for on screen.
-
-CHAR_ID_OFF = 0x110
-SKILLS_PANEL = "character_details_panel_skills"
-
+# ------------------------------------------------------------------ memory
 
 def _skill_targets():
-    """[(character ptr, char_key, character id, points)] for characters the orders cover that have points."""
+    """[(character ptr, char_key, character id, points, name)] for characters the orders cover that have points."""
     from bot.sensor.world import World, characters, find_player_faction
     w = World()
     F = find_player_faction(w)
@@ -357,51 +150,189 @@ def _points(w, ptr) -> int:
     return w.u32(w.q(ptr + 0x3F0) + POINTS_OFF)
 
 
-def _first(ui, cid: str, under: str | None = None):
-    """First visible component with this id (optionally below a component with id `under`): UI.first."""
-    return ui.first(cid, under=under)
+# ------------------------------------------------------------------ the panel (UI tree)
+
+_last_sig: tuple = ()      # the tree rows seen last: a reopened panel can show some of them for a moment
 
 
-def _child(ui, c: int, cid: str):
-    for ch in ui.children(c):
-        if ui.id(ch) == cid:
-            return ch
+def _tree_sig(ui) -> tuple:
+    """Pointers of the skill tree's rows (character_details_panel_skills/listview/list_clip/list_box/chainN/chain).
+    The game builds new ones for every character it shows; () while the panel is not shown."""
+    sk = ui.cached(SKILLS_PANEL, under=DETAILS)
+    lb = ui.cached("list_box", under=sk) if sk else None
+    if lb is None:
+        return ()
+    return tuple(ch for row in ui.children(lb) for ch in ui.children(row))
+
+
+def _selected(ui, char_id: int) -> bool:
+    """The open panel shows this character (its entry along the top is "selected")."""
+    e = ui.cached(f"CcoCampaignCharacter{char_id}", under=DETAILS)
+    h = ui.child(e, "button_character_holder") if e else None
+    return h is not None and (ui.state(h) or "").startswith("selected")
+
+
+def tree_rows(char_key: str) -> int:
+    """Rows of this character type's skill tree: one per indent level of its visible nodes (ikit 6, warlock 4,
+    verminlord 6 on 9.0.4, matching the panel)."""
+    nodes, _e, _m, set_items = _tables()
+    node_set = orders()["characters"][char_key]["node_set"]
+    return len({int(nodes[n]["indent"]) for n in set_items.get(node_set, [])
+                if n in nodes and nodes[n]["visible_in_ui"] is not False})
+
+
+def _await_tree(ui, char_id: int, before: tuple, rows: int) -> bool:
+    """Until the panel shows this character and its tree has all `rows` rows, every one a new component (none of
+    `before`, the rows seen last), then unchanged for 2 frames. Measured 2026-10-16: the game adds the new rows one
+    by one (or all at once) 15-140 ms after the switch; a panel reopened right after closing first shows a few rows
+    of the previous character's tree. When the game does not rebuild (it already showed this character), the
+    timeout lets it through."""
+    old = set(before)
+
+    def built():
+        if not _selected(ui, char_id):
+            return None
+        s = _tree_sig(ui)
+        return s if len(s) >= rows and not old.intersection(s) else None
+    got = wait.wait_until(built, TREE_TIMEOUT_S, f"skill tree built for character {char_id}", must=False)
+    if got is None:
+        return _selected(ui, char_id) and bool(_tree_sig(ui))
+    wait.stable(lambda: _tree_sig(ui), n=2, timeout=1.0, what="skill tree complete", must=False)
+    return True
+
+
+def _lords_row(ui, char_id: int):
+    """The character's row in the Lords & Heroes list, opening the list and scrolling the row into view."""
+    tab = ui.cached("tab_units", under="bar_small_top")
+    if tab is None:
+        return None
+    if not (ui.state(tab) or "").startswith("selected"):
+        click(ui, tab)
+    row = wait.wait_until(lambda: ui.first(f"character_row_{char_id}"), 2.0, f"character_row_{char_id} listed",
+                          must=False)
+    if row is None:
+        return None
+    clip = ui.clip_of(row)
+    for _ in range(30):
+        if clip is None or ui.in_clip(row):
+            return row
+        cl, k = ui.comp(clip), ui.comp(row)
+        wheel(*cl.center, 1 if k.y < cl.y else -1)
+        wait.stable(lambda: ui.comp(row).y, n=2, timeout=1.0, what="Lords & Heroes list still", ui=ui, must=False)
     return None
 
 
-def _open_for(ui, char_id: int) -> bool:
-    """Open the skills panel of the character with this id via its Lords & Heroes row."""
-    from .heroes import open_lords_list
-    open_lords_list()
-    row = _first(ui, f"character_row_{char_id}")
-    if row is None:
-        return False
-    badge = None
-    for c, ids in ui.walk(row):
-        if ids[-1] == "skill_button":
-            badge = c
-            break
+def _show(ui, char_id: int, rows: int) -> bool:
+    """Show this character's skills: switch the open panel to it, or open the panel from the Lords & Heroes list."""
+    if ui.root_child(DETAILS):
+        if _selected(ui, char_id):
+            return True
+        e = ui.first(f"CcoCampaignCharacter{char_id}", under=DETAILS)
+        h = ui.child(e, "button_character_holder") if e else None
+        if h is not None and ui.in_clip(h):
+            before = _tree_sig(ui)
+            click(ui, h)
+            return _await_tree(ui, char_id, before, rows)
+        _close(ui)                               # not in the panel's list: go through the Lords & Heroes list
+    row = _lords_row(ui, char_id)
+    badge = ui.first("skill_button", under=row) if row else None
     if badge is None:
         return False
-    click_at(*ui.comp(badge).center)
-    time.sleep(1.5)
-    return _first(ui, SKILLS_PANEL) is not None
+    before = _tree_sig(ui) or _last_sig
+    click(ui, badge)
+    if wait.appears(ui, SKILLS_PANEL, under=DETAILS, timeout=3.0, must=False) is None:
+        return False
+    return _await_tree(ui, char_id, before, rows)
 
 
-def _node_visible_rect(ui, node: int, clip):
-    k = ui.comp(node)
-    card = _child(ui, node, "card")
-    if card:
-        k = ui.comp(card)
-    inside = clip.x + 4 <= k.x and k.x + k.w <= clip.x + clip.w - 4
-    return k, inside
+def _close(ui) -> None:
+    global _last_sig
+    _last_sig = _tree_sig(ui) or _last_sig
+    ok = ui.first("button_ok", under=DETAILS)
+    if ok is None:
+        return
+    click(ui, ok)
+    wait.gone(ui, DETAILS, timeout=2.0)
 
 
-def _maxed(ui, node: int) -> bool:
-    card = _child(ui, node, "card") or node
-    chk = _child(ui, card, "icon_check")
-    return chk is not None and ui.pm.read_bytes(chk + 0x353, 1)[0] != 0
+class _Tree:
+    """The shown character's skill tree, read once: {skill key: node}, the clip window and the scrollbar thumb."""
 
+    def __init__(self, ui) -> None:
+        global _last_sig
+        self.ui = ui
+        _last_sig = _tree_sig(ui)
+        self.panel = ui.cached(SKILLS_PANEL, under=DETAILS)
+        self.index = ui.index(self.panel) if self.panel else {}
+        clips = self.index.get("list_clip", [])
+        self.clip = clips[0] if clips else None
+        hs = self.index.get("hslider", [])
+        self.handle = ui.child(hs[0], "handle") if hs else None
+
+    def card(self, sk: str) -> int | None:
+        node = (self.index.get(sk) or [None])[0]
+        if node is None:
+            return None
+        return self.ui.child(node, "card") or node
+
+    def maxed_tick(self, card: int) -> bool:
+        """The tick shows once any rank is taken, so it only proves "maxed" for one-rank skills."""
+        chk = self.ui.child(card, "icon_check")
+        return chk is not None and self.ui.visible(chk)
+
+    def inside(self, card: int) -> bool:
+        k, cl = self.ui.comp(card), self.ui.comp(self.clip)
+        return cl.x + 4 <= k.x and k.x + k.w <= cl.x + cl.w - 4
+
+    def scroll_to(self, card: int) -> bool:
+        """Drag the thumb to the end the card lies towards, until the card is inside the clip and still."""
+        if self.handle is None:
+            return False
+        ui = self.ui
+        k, cl, h = ui.comp(card), ui.comp(self.clip), ui.comp(self.handle)
+        hx, hy = h.center
+        drag(hx, hy, 5 if k.x < cl.x else 1915, hy, target=self.handle)
+        wait.stable_rect(ui, card, n=2, timeout=1.0, what=f"{ui.id(ui.parent(card))} still after the scroll",
+                         must=False)
+        return self.inside(card)
+
+
+def _spend(ui, w, ptr: int, plan) -> list[str]:
+    tree = _Tree(ui)
+    if tree.clip is None:
+        return []
+    out = []
+    for sname, ranks, sk in plan:
+        if _points(w, ptr) == 0:
+            break
+        card = tree.card(sk)
+        if card is None:
+            continue
+        if (ui.state(card) or "") in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card)):
+            continue
+        if not tree.inside(card) and not tree.scroll_to(card):
+            continue
+        n = 0
+        for _ in range(ranks):
+            before = _points(w, ptr)
+            if before == 0:
+                break
+            click(ui, card)
+            after = wait.value_changes(lambda: _points(w, ptr), before, timeout=CLICK_EFFECT_S, must=False,
+                                       what=f"skill point taken by {sk}")
+            if after is None or after >= before:
+                break
+            n += 1
+            if n < ranks:                        # the card shows "maxed" a frame later: no click on a full skill
+                wait.next_frame(1, ui)
+                if (ui.state(card) or "") in SKIP_STATES:
+                    break
+        if n:
+            out.append(f"{sname} x{n}")
+    return out
+
+
+# ------------------------------------------------------------------ the automation step
 
 def run(log=print) -> str:
     targets, w = _skill_targets()
@@ -411,56 +342,33 @@ def run(log=print) -> str:
     ui = UI(w.s)
     if ui.find_root() is None:
         return "game UI not found in memory; nothing clicked"
+    plans = {key: attempt_list(key) for key in {t[1] for t in targets}}      # all reading before any input
+    rows = {key: tree_rows(key) for key in plans}
     done = []
     with game_focus():
-        for ptr, key, char_id, pts, name in targets:
-            if not _open_for(ui, char_id):
-                done.append(f"{name}: could not open skills")
-                continue
-            panel = SkillPanel()
-            spent_here = []
-            for sname, ranks, sk in attempt_list(key):
-                if _points(w, ptr) == 0:
-                    break
-                node = _first(ui, sk, under=SKILLS_PANEL)
-                if node is None or (ranks == 1 and _maxed(ui, node)):
-                    continue                      # the tick shows once any rank is taken, so it only
-                                                  # proves "maxed" for one-rank skills
-                clip_c = _first(ui, "list_clip", under=SKILLS_PANEL)
-                if clip_c is None:
-                    break
-                clip = ui.comp(clip_c)
-                k, inside = _node_visible_rect(ui, node, clip)
-                if not inside:
-                    panel.side = None                         # force the drag
-                    panel.scroll("left" if k.x < clip.x else "right")
-                    time.sleep(0.4)
-                    k, inside = _node_visible_rect(ui, node, clip)
-                    if not inside:
-                        continue
-                n = 0
-                for _ in range(ranks):
-                    before = _points(w, ptr)
-                    if before == 0:
-                        break
-                    click_at(*k.center)
-                    time.sleep(0.35)
-                    if _points(w, ptr) >= before:
-                        break
-                    n += 1
-                if n:
-                    spent_here.append(f"{sname} x{n}")
-            panel.close()
-            if spent_here:
-                done.append(f"{name}: " + ", ".join(spent_here))
-                log(f"skills: {name}: {', '.join(spent_here)}")
+        try:
+            for ptr, key, char_id, pts, name in targets:
+                if not _show(ui, char_id, rows[key]):
+                    done.append(f"{name}: could not open skills")
+                    continue
+                spent_here = _spend(ui, w, ptr, plans[key])
+                if spent_here:
+                    done.append(f"{name}: " + ", ".join(spent_here))
+                    log(f"skills: {name}: {', '.join(spent_here)}")
+        finally:
+            if ui.root_child(DETAILS):
+                _close(ui)
     return "; ".join(done) if done else "no points could be spent"
 
 
 def main() -> int:
     cmd = sys.argv[1] if len(sys.argv) > 1 else "plan"
     if cmd == "run":
-        print(run())
+        from bot.focus import return_to_terminal
+        try:
+            print(run())
+        finally:
+            return_to_terminal()
     elif cmd == "plan":
         who = sys.argv[2] if len(sys.argv) > 2 else "ikit_claw"
         for i, (n, r, sk) in enumerate(attempt_list(who), 1):
