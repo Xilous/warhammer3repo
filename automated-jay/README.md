@@ -169,6 +169,10 @@ bot/sensor/world.py    factions, regions, provinces, buildings, armies, characte
 bot/sensor/ui.py       the game's UI tree from memory
 bot/sensor/camera.py   camera and map-to-screen projection
 tools/ui.py            every click, key, move and wheel (checks the game is in front first)
+tools/wait.py          waits on game state (UI tree / memory), never on the clock; next_frame()
+tools/timing.py        per-step / per-action timing to runs/timing-YYYYMMDD.jsonl (python -m tools.timing)
+tools/bench.py         benchmark: load a save through the menus, time one full pass (python -m tools.bench)
+tools/inputcal.py      measures how little delay the game needs to register clicks, keys, wheel, drags
 tools/turn_driver.py   test harness that plays whole turns on a test save (not part of the assistant)
 tools/probe.py         find the campaign model and a static pointer to it; writes anchors.json
 tools/watch.py         snapshot/diff/find around the model to locate field offsets
@@ -464,9 +468,13 @@ Every on-screen element is a UI component in memory (layout from the UIComponent
 | x, y in screen pixels | +0x2C0, +0x2C4 |
 | width, height | [+0x2F0] +0x11C, +0x120 |
 | visible | +0x353 |
+| state count / state array | +0x1D8 / +0x1E0 (state object, name at +0x18) |
+| current state object | +0x2F0: name at +0x18, width / height +0x11C / +0x120, text shown [+0x138] (wide string) |
+| frame stamp | +0x334 (u32 ms, written twice per rendered frame: `tools/wait.py next_frame`) |
 
 The root (id "root") is found once and a static pointer to it is cached in `anchors.json` (`ui_root_ptr`).
-Walking all ~1,900 visible components takes about 0.06 s. Useful ids:
+One read of +0x1C8..+0x358 covers every field a lookup needs: a full walk of ~1,000 visible components takes about
+12 ms, a root panel or a cached pointer about 0.1 ms (`UI.first`, `UI.cached`, `UI.root_children`). Useful ids:
 
 - `character_row_<character id>` rows in Lords & Heroes, with `skill_button` (the rank badge).
   Character id = u32 at character +0x110.
@@ -573,3 +581,30 @@ python -X utf8 -m assist.tech run      # queue research if idle
 From the force's `recruitment_item_count` / `recruitment_items` bindings: count u32 at force +0x6EC, item array
 at +0x6F0; entry -> item X; unit key = string object at [X+0x90]+0x3E0. Queued units count as present when
 comparing an army with the template (both template units take 2 turns to recruit).
+
+## Speed: waits on game state, measured input (2026-10-16, 9.0.4)
+
+Every wait is a condition on the UI tree or memory, polled every 2 ms (`tools/wait.py`: `appears`, `gone`, `stable`,
+`stable_rect`, `value_changes`, `camera_settled`, `root_children_stable`, `ui_live`), with a timeout that raises
+`WaitTimeout` naming what it waited for. The only fixed delays left are in `tools/ui.py`, in rendered frames, each the
+measured minimum plus one frame (`python -m tools.inputcal`):
+
+| Input | Rule | Measured |
+|---|---|---|
+| click | move, wait until the target shows its hover state, down, 1 frame, up | a click before hover registers is lost (10/30); after it 220/220 |
+| key | down, 2 frames, up | 0 frames 0/20, half a frame 13/20, 1 frame 60/60 |
+| wheel | notches 2 frames apart | notches in the same frame count once |
+| drag | down, 2 frames, one jump, 2 frames, up | 0 frames 12/24, 1 frame 24/24 |
+| double-click | 1 frame hold, 1 frame gap | 0 / 0 worked 10/10 |
+| after raising the game | 2 frames | keys 0 frames after the switch were lost (0/15), 1 frame 10/10 |
+
+The game renders about 155 frames/s; the UI stamp (+0x334) changes twice per frame. A just-opened panel can ignore
+the first cursor move: the click then nudges the cursor 1 px. Camera pans (Lords & Heroes double-click, minimap
+click) are eased and take about 1.9 s; `camera_settled` returns when the screen-centre point moves < 0.1 px/frame.
+After a save load the HUD exists about 12 s before the game renders again, and the loading screen comes back for
+about 4 s: `tools/bench.py` waits for all of it. The turn-start settle (`assist/runner.py settle`) is a condition:
+camera still for 250 ms and no root panel coming or going for 500 ms. The 3 s player-idle check is unchanged.
+
+Benchmark (`python -m tools.bench`, save "ENDGAME SKAVEN", turn 90, same results every step): 94.0 / 93.6 s before,
+55.5 / 55.1 s after the input, lookup, popup, runner and tech changes. What is left is fixed sleeps in the skills,
+buildings and army steps: `python -m tools.timing` lists them by file:line.
