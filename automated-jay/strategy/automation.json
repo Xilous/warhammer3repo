@@ -15,6 +15,8 @@
     "list": "settlements.json",
     "never_build_in_provinces_adjacent_to_enemy_at_war": true,
     "_rule": "A province that borders any province of a faction the player is at war with gets no construction or upgrades at all.",
+    "repair_damaged": true,
+    "_repair_rule": "Damaged buildings are repaired before any construction or upgrade, but the war block applies to repairs too: no repairs in a province that borders a faction we are at war with or is partly enemy-held (player decision, 2026-10-16).",
     "gold_reserve": 0,
     "off_list_buildings": "ask"
   },
