@@ -86,7 +86,10 @@
       0
     ]
   ],
-  "player_factions": ["wh2_main_skv_clan_skryre", "wh3_dlc29_skv_clan_scruten"],
+  "player_factions": [
+    "wh2_main_skv_clan_skryre",
+    "wh3_dlc29_skv_clan_scruten"
+  ],
   "player_factions_note": "the human faction among faction_paths that is one of these: Ikit Claw's Clan Skryre (main), Thanquol's Clan Scruten (backup, 2026-10-17)",
   "ui_root_ptr": 71830856
 }
