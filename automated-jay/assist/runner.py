@@ -243,7 +243,16 @@ class Runner:
         else:
             cmd = [sys.executable, "-X", "utf8", "-m", "assist.runner"] + sys.argv[1:]
         print(f"[{datetime.now():%H:%M:%S}] RESTART: starting a fresh copy", flush=True)
-        subprocess.Popen(cmd, cwd=str(config.ROOT), creationflags=subprocess.CREATE_NEW_CONSOLE)
+        import win32gui
+        from bot.focus import game_hwnd
+        env = dict(os.environ, AJ_RESTARTED="1")
+        if win32gui.GetForegroundWindow() == game_hwnd():
+            env["AJ_FOCUS_GAME"] = "1"                 # the new copy hands the front back to the game
+        si = subprocess.STARTUPINFO()                  # its console opens minimized and never takes the front
+        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        si.wShowWindow = 7                             # SW_SHOWMINNOACTIVE
+        subprocess.Popen(cmd, cwd=str(config.ROOT), creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=si,
+                         env=env)
         os._exit(0)
 
     def exit_now(self) -> None:
@@ -640,6 +649,14 @@ class Runner:
         model = s.extras.get("model")
         if self.last_turn is None:
             self.last_turn, self.model = s.turn, model
+            prev = read_state() if os.environ.get("AJ_RESTARTED") else {}
+            if prev.get("turn") == s.turn and prev.get("state") != "your turn" and not self.campaign_lost:
+                # restarted while this turn's pass was still to do (waiting / interrupted / error): do it now
+                self.pending = s.turn
+                self.turn_seen_at = time.monotonic()
+                self.rail(reset=True)
+                self.post("waiting", f"WAITING (turn {s.turn})", "restarted: finishing this turn's start", turn=s.turn)
+                return
             self.post("your turn", f"YOUR TURN {s.turn}", "campaign changed; acts from next turn" if self.campaign_lost
                       else "assistant started mid-turn; acts from next turn")
             return
@@ -664,7 +681,8 @@ class Runner:
             self._try_pass(self.pending)
         else:
             self.my_turn = players_turn(self.ui)[0]
-            if self.my_turn:
+            from bot.sensor import turn as turn_mem
+            if self.my_turn or turn_mem.players_turn(self.mem)[0] is True:
                 self._close_notices()
 
     def _clear_notices_first(self, have_busy: bool = False) -> bool:
@@ -808,7 +826,13 @@ def main() -> int:
     r = Runner(widget=app)
     holder["r"] = r
     threading.Thread(target=r.loop, daemon=True).start()
-    app.root.after(700, return_to_terminal)      # opening the window may have taken focus
+    if os.environ.get("AJ_FOCUS_GAME"):          # restarted from the widget while playing: the game keeps the front
+        def _game_front():
+            from bot.focus import _raise, game_hwnd
+            g = game_hwnd()
+            if g:
+                _raise(g)
+        app.root.after(900, _game_front)
     try:
         app.run()
     except KeyboardInterrupt:
