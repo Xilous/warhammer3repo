@@ -17,6 +17,7 @@ turn) as soon as it was started or even imported. It now refuses to start, and i
 | `bot/sensor/base.py` | unused `Sensor` protocol | - |
 | `assist/army_step.py` | first army step (walked free heroes into ticked armies, only reported the rest) | `assist/army_builder.py` |
 | `assist/widget.py` | stand-alone always-on-top status widget | `assist/app.py` (window + overlay); only `COLORS` stayed in `assist/widget.py` |
+| `assist/slots.py` | read building slots by matching screenshots against the game's building icons | the settlement panel's UI tree (`assist/build.py`, 2026-10-16) |
 
 If you ever need one of these again, copy it back to its old path and check its imports first. Never restore
 `run.py` on a campaign you care about: End Turn also triggers the game's autosave.
