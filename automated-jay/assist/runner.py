@@ -694,12 +694,23 @@ class Runner:
         if self.last_turn is None:
             self.last_turn, self.model = s.turn, model
             prev, self.prev_state = self.prev_state, {}
-            if prev.get("turn") == s.turn and prev.get("state") != "your turn" and not self.campaign_lost:
-                # restarted while this turn's pass was still to do (waiting / interrupted / error): do it now
+            from bot.sensor import turn as turn_mem
+            mine = turn_mem.players_turn(self.mem)[0]
+            # started while the other factions move: the counter already shows the player's coming turn
+            # (2026-10-17: restarted after "TURN 5 ENDED", the counter read 6, and turn 6's pass was skipped)
+            coming = mine is False
+            # restarted on the player's turn whose pass the old copy left to do: unfinished (waiting / interrupted /
+            # error), or never begun because the old copy ended the turn before and was stopped during the AI moves
+            unfinished = mine is True and (
+                (prev.get("turn") == s.turn and prev.get("state") != "your turn")
+                or (prev.get("turn") == s.turn - 1 and str(prev.get("headline", "")).startswith(f"TURN {s.turn - 1} ENDED")))
+            if (coming or unfinished) and not self.campaign_lost:
                 self.pending = s.turn
                 self.turn_seen_at = time.monotonic()
                 self.rail(reset=True)
-                self.post("waiting", f"WAITING (turn {s.turn})", "restarted: finishing this turn's start", turn=s.turn)
+                self.post("waiting", f"WAITING (turn {s.turn})",
+                          "acts when your turn starts" if coming else "restarted: finishing this turn's start",
+                          turn=s.turn)
                 return
             self.post("your turn", f"YOUR TURN {s.turn}", "campaign changed; acts from next turn" if self.campaign_lost
                       else "assistant started mid-turn; acts from next turn")
