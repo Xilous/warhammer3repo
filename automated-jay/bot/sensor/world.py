@@ -230,26 +230,49 @@ def find_player_faction(w: World) -> int | None:
         except Exception:
             pass
     want = a.get("player_factions") or [a.get("player_faction_key") or DEFAULT_FACTION]
+    found: list[tuple[int, str]] = []
     for path in a.get("faction_paths", []):
         try:
             p = model
             for off in path:
                 p = w.q(p + off)
             name = w.faction_name(p) if p else None
-            if name in want and is_human(w, p):
-                _found.clear()
-                _found[model] = (p, name)
-                if PLAYER["key"] != name:
-                    PLAYER["key"] = name
-                    try:
-                        from assist import gamedata
-                        gamedata.level_name.cache_clear()
-                    except Exception:
-                        pass
-                return p
+            if name in want and is_human(w, p) and all(p != q for q, _n in found):
+                found.append((p, name))
         except Exception:
             continue
-    return None
+    if not found:
+        return None
+    p, name = found[0] if len(found) == 1 else _local_of(w, found)
+    _found.clear()
+    _found[model] = (p, name)
+    if PLAYER["key"] != name:
+        PLAYER["key"] = name
+        try:
+            from assist import gamedata
+            gamedata.level_name.cache_clear()
+        except Exception:
+            pass
+    return p
+
+
+def _local_of(w: World, found: list[tuple[int, str]]) -> tuple[int, str]:
+    """More than one human faction the assistant plays (multiplayer, a friend on the other Skaven clan): the local one
+    is the faction whose treasury the HUD shows (resources_bar/.../dy_treasury; faction treasury = int at F + 0xD58).
+    Every human faction's is_human byte is 0 (1 = idle human, the is_idle_human binding), so it cannot tell them
+    apart. Falls back to the first candidate path."""
+    try:
+        from .ui import UI
+        ui = UI(w.s)
+        ui.find_root()
+        t = ui.first("dy_treasury", under="hud_campaign")
+        shown = int("".join(ch for ch in (ui.text(t) or "") if ch.isdigit() or ch == "-") or "x") if t else None
+        mine = [(p, n) for p, n in found if struct.unpack("<i", w.pm.read_bytes(p + 0xD58, 4))[0] == shown]
+        if len(mine) == 1:
+            return mine[0]
+    except Exception:
+        pass
+    return found[0]
 
 
 def player_faction_key(w: World) -> str | None:
