@@ -32,7 +32,7 @@ from bot.focus import InputAborted, idle_seconds, return_to_terminal
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
 from tools import timing
-from . import army_builder, build, skills, tech
+from . import army_builder, build, rites, skills, tech
 
 # Turn-start settle, by condition (was a fixed 4 s): the pass starts once the turn-start camera pan has finished (the
 # map point at the screen centre moves less than SETTLE_CAMERA_PX per frame for SETTLE_CAMERA_MS) AND no root panel
@@ -54,6 +54,7 @@ LOST_AFTER = 2                # polls in a row without a campaign before the tur
 STATE_FILE = Path(os.environ.get("LOCALAPPDATA") or config.RUNS_DIR) / "automated-jay" / "state.json"
 
 STEP_FNS = {
+    "rites": rites.run,                  # commandments + the Dominating Scheme: before any gold is spent (player rule)
     "tech": tech.run,
     "skills": skills.run,
     "buildings": build.run,              # player rule: building upgrades take precedence over refilling armies
@@ -62,7 +63,7 @@ STEP_FNS = {
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
-DEFAULT_SCHEDULE = {"turn_start": ["tech", "skills"], "end_turn": ["tech", "skills", "buildings", "army"]}
+DEFAULT_SCHEDULE = {"turn_start": ["rites", "tech", "skills"], "end_turn": ["rites", "tech", "skills", "buildings", "army"]}
 # tech and skills at both: a campaign's first turn has no turn start to act on (2026-10-17), and unspent skill points
 # make End Turn stop at the game's warning; with nothing to do they send no input
 AUTOMATION = config.STRATEGY_DIR / "automation.json"
@@ -478,6 +479,8 @@ class Runner:
         F = find_player_faction(w)
         if F is None:
             return ()
+        if name == "rites":
+            return rites.fingerprint(w, F)
         if name == "skills":                       # the faction's character list (bot/sensor/world.characters), points only
             out = []
             n, arr = w.u32(F + 0xF24), w.q(F + 0xF28)

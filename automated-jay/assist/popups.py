@@ -124,6 +124,13 @@ def dismiss_events(ui: UI | None = None) -> list[str]:
     is sliding in. Returns the ids closed. A notice that does not close raises WaitTimeout (the pass is skipped)."""
     ui = ui or UI()
     closed: list[str] = []
+    # the player's standing answer to one dilemma (assist/rites.py): the Dominating Scheme's Verminlord choice
+    from . import rites
+    ev = ui.root_child("events")
+    if ev and any(ids[-1].endswith(rites.VERMINLORD_DILEMMA + rites.WARPSEER_CHOICE) for _c, ids in ui.walk(ev)):
+        with game_focus():
+            if rites.answer_verminlord_dilemma(ui, timeout=0.5):
+                closed.append("Verminlord choice: Warpseer")
     focus = None
     try:
         for _ in range(MAX_NOTICES):

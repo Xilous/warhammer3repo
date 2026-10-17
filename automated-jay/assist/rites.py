@@ -1,0 +1,271 @@
+"""Rites and commandments (player build, 2026-10-17).
+
+Commandments: every complete province is permanently on Exploitative Planning, except that the Dominating Scheme
+needs Expansionist Planning first: on a fresh campaign (no complete province has a commandment yet) the first
+complete province gets Expansionist Planning, and keeps it until the rite has been cast once (its cooldown runs in
+memory); then it switches to Exploitative Planning like every other. After that there is always an Exploitative
+province, so the Expansionist phase never comes back.
+Rite: The Dominating Scheme is cast whenever it is off cooldown and affordable, before buildings and the army builder
+spend the gold (player rule). After Horned One's Approval the rite is its Verminlord version, and every cast opens a
+dilemma: it is answered with "A Verminlord Warpseer" (player rule; every other dilemma stays the player's).
+
+Memory (9.0.4, found 2026-10-17 from the game's own Lua bindings):
+  rites         ritual manager R = [faction + 0x1B58]; entries u32 R+0xBC, array R+0xC0, stride 0x28;
+                entry+0x08 = ritual record (key: string object [record+0x60]), entry+0x10 = cooldown left (turns)
+  commandments  the faction's provinces: array [faction + 0xF80] (pointers to pointers), count u32 faction+0xF7C;
+                FP+0xE0 = a region it owns; picked ("incoming") commandment: byte FP+0x458, record [FP+0x410];
+                active commandment: byte FP+0x4A8, record [FP+0x460]; key = string object at record+8.
+                A picked commandment becomes active later, so a pick is confirmed on the "picked" pair.
+UI:
+  rites         HUD button_rituals -> rituals_panel; card context_rituals_list/CcoCampaignRitual51<ritual key> with
+                action/button_perform (active when it can be cast), cost/dy_gold_cost, tx_frame/dy_unlock_requirements;
+                closed with button_ok. Casting asks nothing more.
+  dilemma       root "events": ...CcoCdirEventsDilemmaChoiceDetailRecordwh3_dlc29_ascendancy_summon_verminlord<N>/
+                choice_button, N = FIRST..FIFTH; THIRD is A Verminlord Warpseer. One click closes it.
+  commandments  select the province (its Provinces list row); the HUD's stack_incentives then shows its slot
+                (button_<commandment key>, or button_default when none). Hovering the slot opens the list (a hover
+                popup: the cursor must travel inside it); clicking a commandment picks it.
+"""
+from __future__ import annotations
+import re
+import time
+
+from bot.focus import game_focus
+from bot.sensor.ui import UI
+from bot.sensor.world import World, find_player_faction, region_provinces, string_object
+from tools import wait
+from tools.ui import click, move_path, move_to
+from . import gamedata as gd
+
+EXPLOITATIVE = "wh2_main_edict_skv_devious_planning"      # "Exploitative Planning"
+EXPANSIONIST = "wh2_main_edict_skv_expansionist_planning"
+RITE = "wh2_main_ritual_skv_ascendancy"                   # The Dominating Scheme
+RITE_VERMINLORD = "wh3_main_ritual_skv_ascendancy_verminlord"   # its version after Horned One's Approval
+VERMINLORD_DILEMMA = "wh3_dlc29_ascendancy_summon_verminlord"
+WARPSEER_CHOICE = "THIRD"                                  # "A Verminlord Warpseer"
+RITES = (RITE_VERMINLORD, RITE)
+
+
+# ------------------------------------------------------------------ memory
+def _q(w: World, a: int) -> int:
+    try:
+        return w.q(a)
+    except Exception:
+        return 0
+
+
+def rite_cooldowns(w: World, F: int) -> dict[str, int]:
+    """Cooldown left (turns) of every rite the faction has, by ritual key."""
+    out = {}
+    R = _q(w, F + 0x1B58)
+    if not R:
+        return out
+    n, arr = w.u32(R + 0xBC), _q(w, R + 0xC0)
+    for i in range(min(n, 400)):
+        e = arr + 0x28 * i
+        rec = _q(w, e + 8)
+        try:
+            key = string_object(w.pm, _q(w, rec + 0x60))
+            if key:
+                out[key] = w.u32(e + 0x10)
+        except Exception:
+            pass
+    return out
+
+
+def provinces(w: World, F: int) -> list[dict]:
+    """The faction's provinces: {province, complete, picked, active}. Complete = every region of the province (game
+    data) is the player's (memory)."""
+    prov, _ = region_provinces()
+    owned = {w.region_key(r) for r in w.faction_regions(F)}
+    regions_of: dict[str, list[str]] = {}
+    for r, p in prov.items():
+        regions_of.setdefault(p, []).append(r)
+
+    def key(flag_off: int, rec_off: int, FP: int):
+        try:
+            if w.pm.read_bytes(FP + flag_off, 1)[0]:
+                return string_object(w.pm, _q(w, FP + rec_off) + 8)
+        except Exception:
+            pass
+        return None
+    out = []
+    n, arr = w.u32(F + 0xF7C), _q(w, F + 0xF80)
+    for i in range(min(n, 400)):
+        FP = _q(w, _q(w, arr + 8 * i))
+        reg = _q(w, FP + 0xE0)
+        p = prov.get(w.region_key(reg)) if reg else None
+        if not p:
+            continue
+        out.append({"province": p, "complete": all(r in owned for r in regions_of.get(p, [])),
+                    "picked": key(0x458, 0x410, FP), "active": key(0x4A8, 0x460, FP)})
+    return out
+
+
+def wanted_commandments(provs: list[dict], cooldowns: dict[str, int]) -> dict[str, str]:
+    """Province -> the commandment it should have picked (the player's rules above)."""
+    complete = [p for p in provs if p["complete"]]
+    cast = any(cooldowns.get(k, 0) > 0 for k in RITES)
+    on_expansionist = [p for p in complete if EXPANSIONIST in (p["picked"], p["active"])]
+    fresh = not any(p["picked"] or p["active"] for p in complete)
+    want = {p["province"]: EXPLOITATIVE for p in complete}
+    if on_expansionist and not cast:
+        want[on_expansionist[0]["province"]] = EXPANSIONIST           # keep it until the first cast
+    elif fresh and complete and not cast:
+        want[complete[0]["province"]] = EXPANSIONIST                  # fresh campaign: the unlock comes first
+    return want
+
+
+def fingerprint(w: World, F: int) -> tuple:
+    """What this step changes (for the runner's verification run)."""
+    cd = rite_cooldowns(w, F)
+    return (w.s.read().treasury, tuple(cd.get(k, 0) for k in RITES),
+            tuple(sorted((p["province"], p["picked"] or "") for p in provinces(w, F))))
+
+
+# ------------------------------------------------------------------ commandments (UI)
+def _stack_button(ui: UI, name: str):
+    st = ui.first("stack_incentives")
+    return ui.first(name, under=st) if st else None
+
+
+def _on_screen(ui: UI, ptr) -> bool:
+    if not ptr:
+        return False
+    x, y = ui.comp(ptr).center
+    return 0 <= x < 1920 and 0 <= y < 1080
+
+
+def pick_commandment(ui: UI, w: World, F: int, province: str, key: str) -> str | None:
+    """Pick `key` for `province`; confirmed when memory shows it picked. None when done, else what went wrong."""
+    from .build import _scroll_into_clip
+    tab = ui.cached("tab_regions", under="bar_small_top")
+    if tab is not None and not (ui.state(tab) or "").startswith("selected"):
+        click(ui, tab)
+    row = wait.wait_until(lambda: ui.first(f"row_entry_{province}"), 2.0, f"row_entry_{province} listed", must=False)
+    if row is None or not _scroll_into_clip(ui, row, "Provinces list"):
+        return "province not in the Provinces list"
+    click(ui, row)                                      # selects the province: the HUD's commandment slot follows it
+    current = next((p["picked"] for p in provinces(w, F) if p["province"] == province), None)
+    slot_name = f"button_{current}" if current else "button_default"
+    slot = wait.wait_until(lambda: (lambda b: b if _on_screen(ui, b) else None)(_stack_button(ui, slot_name)), 3.0,
+                           f"{province}'s commandment slot", must=False)
+    if slot is None:
+        return "its commandment slot did not show"
+    sx, sy = ui.comp(slot).center
+    move_to(sx, sy)                                     # hovering the slot opens the list
+    target = wait.wait_until(lambda: (lambda b: b if _on_screen(ui, b) else None)(_stack_button(ui, f"button_{key}")),
+                             1.5, "commandment list open", must=False)
+    if target is None:
+        click(ui, slot)
+        target = wait.wait_until(lambda: (lambda b: b if _on_screen(ui, b) else None)(
+            _stack_button(ui, f"button_{key}")), 2.0, "commandment list open", must=False)
+    if target is None:
+        return "the commandment list did not open"
+    wait.stable_rect(ui, target, n=3, timeout=2.0, must=False, what="commandment list still")
+    tx, ty = ui.comp(target).center
+    move_path([(sx + (tx - sx) * f // 4, sy + (ty - sy) * f // 4) for f in (1, 2, 3)] + [(tx, ty)])
+    click(ui, target)
+    ok = wait.wait_until(lambda: any(p["province"] == province and p["picked"] == key for p in provinces(w, F)), 3.0,
+                         f"{key} picked for {province}", must=False)
+    return None if ok else "the pick did not register"
+
+
+# ------------------------------------------------------------------ rite (UI)
+def _rite_card(ui: UI, panel: int, key: str):
+    return next((c for c, ids in ui.walk(panel) if ids[-1] == f"CcoCampaignRitual51{key}"), None)
+
+
+def answer_verminlord_dilemma(ui: UI, timeout: float = 3.0) -> bool:
+    """The Verminlord version's dilemma -> A Verminlord Warpseer. True when it was answered (or never came)."""
+    def choice():
+        ev = ui.root_child("events")
+        if not ev:
+            return None
+        card = next((c for c, ids in ui.walk(ev) if ids[-1].endswith(VERMINLORD_DILEMMA + WARPSEER_CHOICE)), None)
+        return (ev, ui.first("choice_button", under=card)) if card else None
+    hit = wait.wait_until(choice, timeout, "Verminlord dilemma", must=False)
+    if not hit:
+        return False
+    ev, btn = hit
+    click(ui, btn)
+    return bool(wait.gone(ui, ev, timeout=3.0, must=False, what="Verminlord dilemma closed"))
+
+
+def cast_rite(ui: UI, w: World, F: int) -> str:
+    cd = rite_cooldowns(w, F)
+    have = [k for k in RITES if k in cd]
+    if not have:
+        return "the Dominating Scheme is not in your rites"
+    if any(cd[k] > 0 for k in have):
+        return f"Dominating Scheme on cooldown ({max(cd[k] for k in have)} turns)"
+    b = ui.cached("button_rituals", under="hud_campaign") or ui.first("button_rituals")
+    if b is None:
+        return "Rites button not found"
+    click(ui, b)
+    panel = wait.wait_until(lambda: ui.root_child("rituals_panel"), 3.0, "Rites panel", must=False)
+    if not panel:
+        return "the Rites panel did not open"
+    try:
+        card = wait.wait_until(lambda: next((c for k in RITES for c in [_rite_card(ui, panel, k)] if c), None), 2.0,
+                               "Dominating Scheme card", must=False)
+        if card is None:
+            return "the Dominating Scheme is not shown in the Rites panel"
+        key = next(k for k in RITES if _rite_card(ui, panel, k) == card)
+        cost_c = ui.first("dy_gold_cost", under=card)
+        cost = int(re.sub(r"\D", "", ui.text(cost_c) or "") or 0) if cost_c else 0
+        gold = w.s.read().treasury or 0
+        if cost and gold < cost:
+            return f"Dominating Scheme needs {cost} gold (have {gold})"
+        btn = ui.first("button_perform", under=card)
+        if btn is None or (ui.state(btn) or "") != "active":
+            req = ui.first("dy_unlock_requirements", under=card)
+            text = re.sub(r"\[\[[^\]]*\]\]", "", ui.text(req) or "").strip().replace("\n", " ") if req else ""
+            return f"Dominating Scheme cannot be cast: {text or 'requirements not met'}"
+        click(ui, btn)
+        if not wait.wait_until(lambda: rite_cooldowns(w, F).get(key, 0) > 0, 3.0, "rite cast (cooldown running)",
+                               must=False):
+            return "Perform Rite did not register"
+        spent = gold - (w.s.read().treasury or 0)
+        out = f"cast the Dominating Scheme ({spent} gold)"
+        if key == RITE_VERMINLORD:
+            out += "; Verminlord Warpseer chosen" if answer_verminlord_dilemma(ui) else "; no Verminlord choice came"
+        return out
+    finally:
+        ok = ui.root_child("rituals_panel")
+        if ok:
+            close = ui.first("button_ok", under=ok)
+            if close:
+                click(ui, close)
+                wait.gone(ui, ok, timeout=2.0, must=False, what="Rites panel closed")
+
+
+# ------------------------------------------------------------------ the step
+def run(log=print) -> str:
+    w = World()
+    F = find_player_faction(w)
+    if F is None:
+        return "player faction not found"
+    ui = UI(w.s)
+    ui.find_root()
+    out = []
+    with game_focus():
+        # 1. commandments (the rite's requirement comes first)
+        provs = provinces(w, F)
+        want = wanted_commandments(provs, rite_cooldowns(w, F))
+        picked = {p["province"]: p["picked"] for p in provs}
+        changed = False
+        for province, key in want.items():
+            if picked.get(province) == key:
+                continue
+            problem = pick_commandment(ui, w, F, province, key)
+            name = gd.loc().get(f"provincial_initiative_records_localised_name_{key}", key)
+            place = gd.loc().get(f"provinces_onscreen_{province}", province)
+            out.append(f"{place}: {name}" if problem is None else f"{place}: {name} not picked ({problem})")
+            changed = True
+        if changed:
+            from .army_builder import clear
+            clear(ui)
+        # 2. the rite, before buildings and the army builder spend the gold
+        out.append(cast_rite(ui, w, F))
+    return "; ".join(out)
