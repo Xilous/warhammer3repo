@@ -430,6 +430,11 @@ def recruitment_queue(w: World, MF: int) -> list[str]:
     return keys
 
 
+SCHEMER = "wh3_dlc29_skv_schemer_"     # Thanquol's Underlings: each is a one-unit force kept in limbo (force type
+                                      # CHAOTIC_PLAN_SCHEMERS) that only leaves it for a Masterplan's attack; the
+                                      # player's (Masterplans are the player's, 2026-10-17), never a field army here
+
+
 def armies(w: World, F: int, include_garrisons: bool = False) -> list[Army]:
     out = []
     n = w.u32(F + 0xF64)
@@ -455,7 +460,10 @@ def armies(w: World, F: int, include_garrisons: bool = False) -> list[Army]:
                 r = w.q(C + 0x448)
                 robj = w.q(r + 0x10) if r else 0
                 region = w.region_key(robj) if robj else None
-            out.append(Army(w.u32(MF + 8), character_subtype(w, C) if C else None,
+            sub = character_subtype(w, C) if C else None
+            if sub and sub.startswith(SCHEMER):
+                continue
+            out.append(Army(w.u32(MF + 8), sub,
                             character_name(w, C) if C else "(no general)", region, units, C, robj, garrison,
                             MF, recruitment_queue(w, MF), w.u32(C + 0x110) if C else 0))
         except Exception:

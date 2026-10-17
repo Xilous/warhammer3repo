@@ -173,7 +173,10 @@ def pick_commandment(ui: UI, w: World, F: int, province: str, key: str) -> str |
 
 # ------------------------------------------------------------------ rite (UI)
 def _rite_card(ui: UI, panel: int, key: str):
-    return next((c for c, ids in ui.walk(panel) if ids[-1] == f"CcoCampaignRitual51{key}"), None)
+    """The rite's card: CcoCampaignRitual<n><key>, n a per-faction number (51 for Clan Skryre, 107 for Clan Scruten,
+    2026-10-17)."""
+    pat = re.compile(r"CcoCampaignRitual\d+" + re.escape(key) + "$")
+    return next((c for c, ids in ui.walk(panel) if pat.match(ids[-1])), None)
 
 
 def answer_verminlord_dilemma(ui: UI, timeout: float = 3.0) -> str:
