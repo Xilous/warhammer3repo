@@ -696,8 +696,9 @@ class Runner:
             prev, self.prev_state = self.prev_state, {}
             from bot.sensor import turn as turn_mem
             mine = turn_mem.players_turn(self.mem)[0]
-            # started while the other factions move: the counter already shows the player's coming turn
-            # (2026-10-17: restarted after "TURN 5 ENDED", the counter read 6, and turn 6's pass was skipped)
+            # started while the other factions move: the player's next turn start is still to come, and its pass is
+            # pending (the counter still shows the turn just ended; the next turn change starts the pass). 2026-10-17:
+            # a copy restarted after "TURN 5 ENDED" took the turn it found for "mid-turn" and skipped turn 6's pass
             coming = mine is False
             # restarted on the player's turn whose pass the old copy left to do: unfinished (waiting / interrupted /
             # error), or never begun because the old copy ended the turn before and was stopped during the AI moves
