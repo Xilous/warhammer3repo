@@ -60,6 +60,10 @@ class RailPanel:
 
         self.info = tk.Label(self.body, text="", bg=BG, fg=MUTED, font=FONT, anchor="w")
         self.info.pack(fill="x", pady=(8, 0))
+        # at a glance: can any province recruit the whole army template? (assist/app.py template_status)
+        self.template = tk.Label(self.body, text="", bg=BG2, fg=MUTED, font=FONT, anchor="w", justify="left",
+                                 wraplength=WIDTH - 40, padx=8, pady=5)
+        self.template.pack(fill="x", pady=(6, 0))
         self.ignore_row = tk.Frame(self.body, bg=BG)
         self.ignore_row.pack(fill="x")
 
@@ -136,6 +140,13 @@ class RailPanel:
 
     def show_log(self, lines: list[str]) -> None:
         self.log.configure(text="\n".join(_nice(x) for x in lines[-12:]) or "nothing yet")
+        self.place()
+
+    def show_template(self, status) -> None:
+        if not status:
+            return
+        ok, text = status
+        self.template.configure(text=("✓ " if ok else "") + text, fg=GREEN if ok else ORANGE)
         self.place()
 
     def show_ignorable(self, ids: list[str]) -> None:

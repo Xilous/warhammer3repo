@@ -34,6 +34,27 @@ def _version() -> str:
         return ""
 
 
+def template_status(w, F, src) -> tuple[bool, str]:
+    """Is there at least one province that can recruit the whole army template? The army builder's own test
+    (assist/army_builder.eligible), so the widget and the builder never disagree. (ok, text)."""
+    from .army import load_automation, unit_name
+    from .army_builder import eligible
+    from .recruit import unit_buildings, building_name
+    units = list(load_automation()["army_builder"]["template"]["units"])
+    full = sorted(eligible(w, F, set(units)))
+    if full:
+        return True, "Can build the whole template: " + ", ".join(nice(p) for p in full)
+    lines = []
+    for u in units:
+        where = sorted({p for p, _r, _b in src.get(u, [])})
+        if where:
+            lines.append(f"{unit_name(u)}: {', '.join(nice(p) for p in where)}")
+        else:
+            need = sorted(unit_buildings().get(u, set()))
+            lines.append(f"{unit_name(u)}: nowhere yet" + (f" (needs {building_name(need[0])})" if need else ""))
+    return False, "No province can build the whole template yet" + chr(10) + chr(10).join(lines)
+
+
 def nice(text: str) -> str:
     """Replace game keys (regions, provinces, factions) with their in-game names."""
     import re
@@ -227,6 +248,7 @@ class App:
                 elif kind == "world":
                     self._show_world(*msg[1:])
                     self.panel.show_world(*msg[1:])
+                    self.panel.show_template(getattr(self, "template_status", None))
                 elif kind == "ignorable":
                     self._show_ignorable(msg[1])
                     self.panel.show_ignorable(msg[1])
@@ -285,7 +307,9 @@ class App:
             snap = snapshot(w)
             blocked = dict(snap.blocked_provinces) if snap else {}
             from .recruit import report, sources
-            self.recruit_lines = report(sources(w))
+            src = sources(w)
+            self.recruit_lines = report(src)
+            self.template_status = template_status(w, F, src)
             self.q.put(("world", st, rows, blocked, heroes))
         except Exception as ex:
             self.q.put(("world", None, [], {"error": str(ex)}, []))
