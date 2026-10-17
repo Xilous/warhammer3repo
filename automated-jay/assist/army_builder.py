@@ -39,7 +39,6 @@ import json
 import math
 import re
 import struct
-import time
 from collections import Counter, deque
 
 from bot import config
@@ -47,12 +46,13 @@ from bot.focus import game_focus
 from bot.sensor.camera import character_pos
 from bot.sensor.ui import UI
 from bot.sensor.world import World, armies, characters, find_player_faction, region_provinces, string_object
-from tools.ui import click_at, held, move_to as move_cursor, press, wheel
+from tools import wait
+from tools.ui import click, held, move_to as move_cursor, press, wheel
 from . import gamedata as gd
 from .army import delta, enabled_armies, load_automation, tick_for, unit_name
-from .heroes import _double_click, hero_movement, move_into_army, open_lords_list, pan_until_visible
+from .heroes import (bring_into_view, hero_movement, in_safe, jump_row, lords_row, map_label, move_into_army, park,
+                     province_row, row_selected, wait_until_stopped)
 
-PARK = (1700, 760)
 ENGINEER = "wh2_main_skv_warlock_engineer"
 CLAIMS = config.RUNS_DIR / "engineer_claims.json"     # engineer character id -> army cqi it walks to
 FULL = 20                                             # units per army, lord and heroes included
@@ -69,53 +69,69 @@ def first(ui: UI, cid: str, under: str | None = None):
     return ui.first(cid, under=under)
 
 
+BUSY = ("main_units_panel", "recruitment_docker", "settlement_panel", "character_panel")
+NOTCH_PX = 82                       # one wheel notch scrolls a recruitment pool by about this much
+RECRUIT_EFFECT_S = 0.5              # a recruit click that has not taken gold by then never will (cap or gold out)
+
+
+def _busy(ui: UI) -> tuple[str, ...]:
+    """Which of the panels Escape would close are open (one walk of the visible tree)."""
+    return tuple(sorted({i for _c, i, _r in ui.nodes(skip=("3d_ui_parent",)) if i in BUSY}))
+
+
+def _resume(ui: UI) -> None:
+    b = ui.first("button_resume", under="esc_menu")
+    if b:
+        click(ui, b)
+        wait.gone(ui, "esc_menu", timeout=2.0, must=False)
+
+
 def clear(ui: UI) -> None:
-    """Close the escape menu if open; otherwise press Escape once only when a panel or selection is open
-    (Escape with nothing selected opens the game menu)."""
-    from . import popups
-    open_ = [cid for _, cid in popups.scan(ui)]
-    if "esc_menu" in open_:
-        b = first(ui, "button_resume")
-        if b:
-            click_at(*ui.comp(b).center)
-            time.sleep(0.6)
+    """Close the escape menu if open; otherwise press Escape once, only when a panel or selection is open (Escape
+    with nothing selected opens the game menu), and wait until it took effect."""
+    if ui.root_child("esc_menu"):
+        _resume(ui)
         return
-    busy = first(ui, "main_units_panel") or first(ui, "recruitment_docker") or first(ui, "settlement_panel") \
-        or first(ui, "character_panel")
-    if busy:
-        press("esc")
-        time.sleep(0.4)
-        if "esc_menu" in [cid for _, cid in popups.scan(ui)]:
-            b = first(ui, "button_resume")
-            if b:
-                click_at(*ui.comp(b).center)
-                time.sleep(0.6)
+    busy = _busy(ui)
+    if not busy:
+        return
+    press("esc")
+    wait.wait_until(lambda: ui.root_child("esc_menu") or _busy(ui) != busy, 1.0, "Escape took effect", must=False)
+    if ui.root_child("esc_menu"):
+        _resume(ui)
 
 
-def park() -> None:
-    move_cursor(*PARK)
-    time.sleep(0.3)
+def _lord_card(ui: UI):
+    mup = ui.first("main_units_panel")
+    return ui.first("LandUnit 0", under=mup) if mup else None
 
 
-def select_army(ui: UI, general_id: int) -> bool:
-    """Select a lord's army by double-clicking his Lords & Heroes row (also centres the camera)."""
+def _shows_army(ui: UI, army) -> bool:
+    """The units panel shows this army: its lord's card (LandUnit 0) is named after the general."""
+    c = _lord_card(ui)
+    return c is not None and (card_unit_name(ui, c).splitlines() or [""])[0].strip() == army.general_name
+
+
+def select_army(ui: UI, army) -> bool:
+    """Select the army with a single click on its general's Lords & Heroes row (the camera does not move). True
+    once the units panel shows this army. Already shown: no input."""
+    if _shows_army(ui, army) and not set(_busy(ui)) - {"main_units_panel"}:
+        return True
     clear(ui)
-    open_lords_list()
-    row = first(ui, f"character_row_{general_id}")
+    row = lords_row(ui, army.general_id)
     if row is None:
         return False
-    _double_click(*ui.comp(row).center)
-    park()
-    return first(ui, "units", under="main_units_panel") is not None
+    click(ui, row)
+    if wait.wait_until(lambda: _shows_army(ui, army), 2.0, f"{army.general_name}'s army shown", must=False):
+        return True
+    return first(ui, "units", under="main_units_panel") is not None and row_selected(ui, row)
 
 
 def unit_cards(ui: UI) -> tuple[list, list]:
     """(troop cards in display order excluding the lord, hero cards) from the selected army's panel."""
     troops, heroes = [], []
-    for c, ids in ui.walk():
-        if "main_units_panel" not in ids:
-            continue
-        n = ids[-1]
+    mup = ui.first("main_units_panel")
+    for c, n, _r in (ui.nodes(mup) if mup else ()):
         if n.startswith("LandUnit ") and n != "LandUnit 0":
             troops.append((int(n.split()[1]), c))
         elif n.startswith("AgentUnit "):
@@ -149,23 +165,22 @@ def card_selected(ui: UI, card: int) -> bool:
 
 
 def confirm_dialog(ui: UI) -> bool:
-    t = first(ui, "button_tick", under="dialogue_box") or first(ui, "button_tick", under="popup_message_box")
+    t = wait.wait_until(lambda: first(ui, "button_tick", under="dialogue_box")
+                        or first(ui, "button_tick", under="popup_message_box"), 2.0, "confirmation box", must=False)
     if t is None:
         return False
-    click_at(*ui.comp(t).center)
-    time.sleep(1.2)
+    click(ui, t)
+    wait.gone(ui, t, timeout=2.0, must=False, what="confirmation box closed")
     return True
 
 
 def press_disband(ui: UI, over_card: int) -> bool:
     k = ui.comp(over_card)
     move_cursor(k.center[0], int(k.y) + 10)         # the unit button group appears above the card
-    time.sleep(0.6)
-    b = first(ui, "button_disband")
+    b = wait.appears(ui, "button_disband", timeout=1.5, must=False)
     if b is None:
         return False
-    click_at(*ui.comp(b).center)
-    time.sleep(1.0)
+    click(ui, b.ptr)
     return confirm_dialog(ui)
 
 
@@ -200,10 +215,16 @@ def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
     if any(len(ks) > 1 for ks in keys_named.values()):
         return ["disband skipped: two different units in this army share a name, so their cards cannot be told apart"]
     key_of = {n: next(iter(ks)) for n, ks in keys_named.items()}
-    troops, hero_cards = unit_cards(ui)
-    names = [card_unit_name(ui, c) for c in troops]
-    if len(troops) != len(troop_keys) or Counter(names) != Counter(unit_name(k) for k in troop_keys):
+    want_names = Counter(unit_name(k) for k in troop_keys)
+
+    def cards():
+        t, h = unit_cards(ui)
+        n = [card_unit_name(ui, c) for c in t]
+        return (t, h, n) if len(t) == len(troop_keys) and Counter(n) == want_names else None
+    got = wait.wait_until(cards, 1.0, "unit cards match the army in memory", must=False)
+    if got is None:
         return ["disband skipped: the unit cards do not match the army in memory"]
+    troops, hero_cards, names = got
     keep, targets = Counter(), []
     for i, n in enumerate(names):
         k = key_of[n]
@@ -215,16 +236,16 @@ def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
         return ["disband skipped: the cards to disband are not the off-template units in memory"]
     pick = [troops[i] for i in targets]
     contiguous = targets == list(range(targets[0], targets[-1] + 1))
-    click_at(*ui.comp(pick[0]).center)
-    time.sleep(0.3)
+    selection = lambda: [i for i, c in enumerate(troops) if card_selected(ui, c)]
+    click(ui, pick[0])
+    wait.wait_until(lambda: card_selected(ui, pick[0]), 0.5, "first card to disband selected", must=False)
     if len(pick) > 1:
         with held("shift" if contiguous else "ctrl"):
-            time.sleep(0.08)
             for c in ([pick[-1]] if contiguous else pick[1:]):
-                click_at(*ui.comp(c).center)
-                time.sleep(0.1)
-    time.sleep(0.4)
-    sel = [i for i, c in enumerate(troops) if card_selected(ui, c)]
+                click(ui, c)
+                wait.wait_until(lambda c=c: card_selected(ui, c), 0.5, "card to disband selected", must=False)
+    wait.wait_until(lambda: selection() == targets, 0.5, "selection = the cards to disband", must=False)
+    sel = selection()
     lord = first(ui, "LandUnit 0", under="main_units_panel")
     others = [c for c in hero_cards + ([lord] if lord else []) if card_selected(ui, c)]
     sel_keys = Counter(key_of.get(card_unit_name(ui, troops[i]), "?") for i in sel)
@@ -233,19 +254,14 @@ def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
         return [f"disband skipped: the selection did not match (selected troop cards {sel}, wanted {targets}"
                 + (", a lord or hero card was selected" if others else "") + ")"]
     before = Counter(u.key for u in army.units)
+    count = lambda: w.u32(army.force_ptr + 0x6C8 + 0xC)            # this force's unit count (bot/sensor/world.py)
+    n_before = count()
     if not press_disband(ui, pick[-1]):
         park()
         return ["disband skipped: the disband button or its confirmation did not appear"]
-    after = before
-    for _ in range(12):
-        time.sleep(0.4)
-        a2 = next((a for a in armies(w, F) if a.cqi == army.cqi), None)
-        after = Counter(u.key for u in a2.units) if a2 else Counter()
-        if after != before:
-            time.sleep(0.5)
-            a2 = next((a for a in armies(w, F) if a.cqi == army.cqi), None)
-            after = Counter(u.key for u in a2.units) if a2 else Counter()
-            break
+    wait.wait_until(lambda: count() <= n_before - len(pick), 5.0, "disbanded units gone in memory", must=False)
+    a2 = next((a for a in armies(w, F) if a.cqi == army.cqi), None)
+    after = Counter(u.key for u in a2.units) if a2 else Counter()
     gone, added = before - after, after - before
     park()
     if gone == expect and not added:
@@ -330,32 +346,37 @@ def closest_target(w: World, F: int, army, elig: dict[str, set[str]]):
 def scroll_into_view(ui: UI, card: int) -> bool:
     """Recruitment pools are horizontal lists that scroll: a card past the clip window still reads as
     visible, but its centre can be off screen (a click there lands on the map). Wheel the list until the
-    card sits inside its list_clip; each notch moves the cards about 82 px."""
-    clip, c = None, card
-    for _ in range(12):
-        c = ui.parent(c)
-        if not c:
-            break
-        if ui.id(c) == "list_clip":
-            clip = c
-            break
+    card sits inside its list_clip: the notches needed at about NOTCH_PX each, then until the cards are still."""
+    clip = ui.clip_of(card)
     if clip is None:
         return False
-    for _ in range(40):
+    for _ in range(8):
         cc, cl = ui.comp(card), ui.comp(clip)
         if cl.x <= cc.x and cc.x + cc.w <= cl.x + cl.w:
             return True
-        wheel(*cl.center, -1 if cc.x > cl.x else 1, pause=0.15)
+        if cc.x > cl.x:
+            n = -max(1, math.ceil((cc.x + cc.w - cl.x - cl.w) / NOTCH_PX))
+        else:
+            n = max(1, math.ceil((cl.x - cc.x) / NOTCH_PX))
+        wheel(*cl.center, n)
+        wait.stable(lambda: ui.comp(card).x, n=2, timeout=1.0, what="recruitment pool still after the scroll", ui=ui,
+                    must=False)
     return False
 
 
-def recruit_local(ui: UI, w: World, missing: dict[str, int], log) -> list[str]:
+def treasury(w: World, F: int) -> int:
+    return struct.unpack("<i", w.pm.read_bytes(F + 0xD58, 4))[0]
+
+
+def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log) -> list[str]:
     btn = first(ui, "button_recruitment")
     if btn is None:
         return ["recruitment button not found"]
-    click_at(*ui.comp(btn).center)
-    time.sleep(1.2)
-    park()
+    click(ui, btn)
+    pool = wait.appears(ui, "local1", under="recruitment_docker", timeout=2.0, must=False)
+    if pool is not None:              # the pool's cards are added over a frame or two
+        wait.stable(lambda: tuple(c for c, i, _r in ui.nodes(pool.ptr) if i.endswith("_recruitable")), n=2,
+                    timeout=1.0, what="local recruitment pool listed", ui=ui, must=False)
     out = []
     for unit, n in missing.items():
         done = 0
@@ -366,10 +387,10 @@ def recruit_local(ui: UI, w: World, missing: dict[str, int], log) -> list[str]:
             if not scroll_into_view(ui, card):
                 out.append(f"could not scroll {unit_name(unit)} into view")
                 break
-            before = w.s.read().treasury
-            click_at(*ui.comp(card).center)
-            time.sleep(0.5)
-            if (w.s.read().treasury or 0) >= (before or 0):
+            before = treasury(w, F)
+            click(ui, card)
+            if wait.value_changes(lambda: treasury(w, F), before, timeout=RECRUIT_EFFECT_S, cmp=lambda v, b: v < b,
+                                  must=False, what=f"gold paid for {unit}") is None:
                 break                          # not taken: local capacity full or not affordable
             done += 1
         if done:
@@ -377,6 +398,7 @@ def recruit_local(ui: UI, w: World, missing: dict[str, int], log) -> list[str]:
         if done < n:
             out.append(f"{n - done} {unit_name(unit)} left for later turns")
     clear(ui)
+    park()
     return out
 
 
@@ -385,11 +407,16 @@ def move_to(ui: UI, w: World, army, region: str) -> str:
     if region not in pos:
         return f"no position for {region}"
     x, y = pos[region]
-    lab = pan_until_visible(w, ui, x, y, f"label_settlement:{region}")
-    if lab is None:
+    label = f"label_settlement:{region}"
+    lab, jumped = bring_into_view(w, ui, x, y, label, jump=lambda: jump_row(ui, province_row(ui, province_of(region))))
+    if jumped:                       # the jump selected the settlement: select the army again (the camera stays put)
+        select_army(ui, army)
+        lab = map_label(ui, label)
+    if lab is None or not in_safe(lab):
         return f"could not bring {region} on screen"
-    click_at(*lab.center, right=True)
-    time.sleep(1.5)
+    p0 = character_pos(w.pm, army.general_ptr)
+    click(ui, lab.ptr, right=True)
+    wait.wait_until(lambda: character_pos(w.pm, army.general_ptr) != p0, 1.5, "army on the march", must=False)
     park()
     return "ordered to " + region_name(region)
 
@@ -438,6 +465,48 @@ def engineers_fielded(w: World, F: int) -> int:
     return n
 
 
+def on_screen_still(ui: UI, ptr: int, what: str, timeout: float = 2.0):
+    """A component of a panel that slides in (the Recruit Hero panel comes up from below the screen): wait until it
+    is fully on screen and its rectangle has been still for 3 frames. -> Comp or None."""
+    W, H = config.RESOLUTION
+
+    def on():
+        k = ui.comp(ptr)
+        return k.x >= 0 and k.y >= 0 and k.x + k.w <= W and k.y + k.h <= H
+    if wait.wait_until(on, timeout, f"{what} on screen", must=False) is None:
+        return None
+    return wait.stable_rect(ui, ptr, n=3, timeout=timeout, must=False, what=f"{what} still")
+
+
+def province_of(region: str) -> str | None:
+    return region_provinces()[0].get(region)
+
+
+def select_settlement(ui: UI, w: World, region: str, xy) -> bool:
+    """Select our settlement `region`. A province capital: one click on its Provinces row selects it (the province
+    panel opens on the capital) without moving the camera. Any other settlement: its map label is clicked, after
+    bringing it on screen (bring_into_view)."""
+    prov, cap = region_provinces()
+    col = f"CcoCampaignSettlement{region}"
+    if cap.get(region):
+        row = province_row(ui, prov.get(region))
+        if row is not None:
+            click(ui, row)
+            if wait.wait_until(lambda: ui.root_child("settlement_panel") and (lambda c: c and (ui.state(c) or "")
+                               .startswith("selected"))(ui.first(col, under="settlement_list")), 2.0,
+                               f"{region} selected", must=False):
+                return True
+            clear(ui)
+    label = f"label_settlement:{region}"
+    lab, _jumped = bring_into_view(w, ui, *xy, label, jump=lambda: jump_row(ui, province_row(ui, prov.get(region))))
+    if lab is None:
+        return False
+    click(ui, lab.ptr)
+    return wait.wait_until(lambda: ui.root_child("settlement_panel") and (lambda c: c and (ui.state(c) or "")
+                           .startswith("selected"))(ui.first(col, under="settlement_list")), 2.0,
+                           f"{region} selected", must=False) is not None
+
+
 def recruit_engineer(ui: UI, w: World, F: int, region: str):
     """Recruit a Warlock Engineer at the settlement of `region` through its Recruit Hero panel, which is the game's
     own answer to "can an engineer be recruited here": the engineer tab is inactive (with a "Building required"
@@ -448,21 +517,22 @@ def recruit_engineer(ui: UI, w: World, F: int, region: str):
     if region not in pos:
         return "not_here", f"no settlement of ours in {region_name(region)}", None
     clear(ui)
-    lab = pan_until_visible(w, ui, *pos[region], f"label_settlement:{region}")
-    if lab is None:
+    if not select_settlement(ui, w, region, pos[region]):
         return "failed", f"could not bring {region_name(region)} on screen", None
-    click_at(*lab.center)
-    time.sleep(1.2)
-    b = first(ui, "button_agents")
+    b = wait.appears(ui, "button_agents", under="button_group_settlement", timeout=2.0, must=False)
     if b is None:
         clear(ui)
         return "failed", f"hero recruitment button not found at {region_name(region)}", None
-    click_at(*ui.comp(b).center)
-    time.sleep(1.2)
-    tab = first(ui, "engineer", under="agent_parent")
+    click(ui, b.ptr)
+    tab = wait.appears(ui, "engineer", under="agent_parent", timeout=2.0, must=False)
     if tab is None:
         clear(ui)
         return "not_here", f"no Warlock Engineer tab at {region_name(region)}", None
+    tab = tab.ptr
+    if on_screen_still(ui, tab, "engineer tab") is None:
+        clear(ui)
+        return "failed", f"the Recruit Hero panel did not come up at {region_name(region)}", None
+    wait.stable(lambda: ui.state(tab), n=2, timeout=1.0, what="engineer tab state", ui=ui, must=False)
     if ui.state(tab) == "inactive":
         needs = first(ui, "icon_building_required", under="engineer")
         clear(ui)
@@ -471,20 +541,25 @@ def recruit_engineer(ui: UI, w: World, F: int, region: str):
             return "not_here", f"{region_name(region)} needs " + " or ".join(
                 x.strip() for x in text.splitlines()[1:] if x.strip()), None
         return "cap", "engineer tab inactive", None
-    click_at(*ui.comp(tab).center)
-    time.sleep(0.8)
-    cand = first(ui, "button_wh3", under="general_candidate_0_")
-    conf = first(ui, "button_confirm")
-    if cand is None or conf is None:
+    click(ui, tab)
+    got = wait.wait_until(lambda: (lambda a, b: (a, b) if a and b else None)(
+        first(ui, "button_wh3", under="general_candidate_0_"), first(ui, "button_confirm")), 2.0,
+        "Engineer candidate offered", must=False)
+    if got is None:
         clear(ui)
         return "cap", "no Engineer candidate offered", None
-    click_at(*ui.comp(cand).center)
-    time.sleep(0.5)
+    cand, conf = got
+    st0 = ui.state(conf)
+    click(ui, cand)
+    wait.wait_until(lambda: (ui.state(cand) or "").startswith("selected") or ui.state(conf) != st0, 0.5,
+                    "Engineer candidate taken", must=False)
+    wait.stable(lambda: ui.state(conf), n=2, timeout=1.0, what="Recruit button state", ui=ui, must=False)
     if ui.state(conf) == "inactive":
         clear(ui)
         return "cap", "Recruit button inactive", None
-    click_at(*ui.comp(conf).center)
-    time.sleep(1.5)
+    n0 = w.u32(F + 0xF24)
+    click(ui, conf)
+    wait.wait_until(lambda: w.u32(F + 0xF24) != n0, 3.0, "new character in memory", must=False)
     clear(ui)
     park()
     new = [c for c in characters(w, F) if c.subtype == ENGINEER and c.ptr not in before]
@@ -581,7 +656,7 @@ def claim(w: World, c, cqi: int) -> None:
     _save_claims(claims)
 
 
-def walk_engineer(w: World, F: int, hero, army, log) -> str:
+def walk_engineer(ui: UI, w: World, F: int, hero, army, log) -> str:
     """Send a free engineer into the army (every turn until it joins: the army may have moved)."""
     name = hero.name
     mv = hero_movement(w, hero.ptr)
@@ -592,18 +667,13 @@ def walk_engineer(w: World, F: int, hero, army, log) -> str:
     lord = next((c for c in characters(w, F) if c.ptr == army.general_ptr), None)
     if lord is None:
         return f"lord of {army.general_name} not found"
+    wait_until_stopped(w, lord.ptr)                # an army ordered to march this pass: its flag is still moving
     p0 = character_pos(w.pm, hero.ptr)
     ap0, _, _, mx = struct.unpack("<4i", w.pm.read_bytes(hero.ptr + 0x30, 16))    # left, ..., per-turn max
-    msg = move_into_army(hero, lord, log)
+    msg = move_into_army(hero, lord, log, ui=ui)
     if "on the way" not in msg:
         return msg
-    p1, end = character_pos(w.pm, hero.ptr), time.monotonic() + 10
-    while time.monotonic() < end:                 # the hero is still walking: wait until he stops
-        time.sleep(0.8)
-        p = character_pos(w.pm, hero.ptr)
-        if p == p1:
-            break
-        p1 = p
+    p1 = wait_until_stopped(w, hero.ptr)          # the hero is still walking: wait until he stops (or joins)
     if any(c.ptr == hero.ptr and c.embedded_force for c in characters(w, F)):
         return f"{name} joined {army.general_name}'s army"    # the embed lands when the walk ends
     ap1 = struct.unpack("<i", w.pm.read_bytes(hero.ptr + 0x30, 4))[0]
@@ -619,11 +689,11 @@ def walk_engineer(w: World, F: int, hero, army, log) -> str:
 
 def build_one(ui: UI, w: World, F: int, army, mine: list, log):
     """One ticked army. mine: the free engineers that count as its engineer. Returns (log lines, the engineer
-    recruited for it this turn or None)."""
+    recruited for it this turn or None). Everything is decided from memory first; the army is selected (a single
+    click on its Lords & Heroes row, no camera move) only when a disband, a recruitment or a move order follows, so an
+    army that matches the template costs no input at all."""
     name = army.general_name
     out, recruited = [], None
-    if not select_army(ui, army.general_id):
-        return [f"{name}: could not select the army"], None
     prov, _ = region_provinces()
     own = {w.region_key(r) for r in w.faction_regions(F)}
     here = prov.get(army.region or "") if army.region in own else None
@@ -635,6 +705,8 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log):
     # missing units locally, right before recruiting the replacements.
     if d0.disband:
         if not d0.missing or here in eligible(w, F, set(d0.missing)):
+            if not select_army(ui, army):
+                return [f"{name}: could not select the army"], None
             out += disband(ui, w, F, army, log)
             army = next((a for a in armies(w, F) if a.cqi == army.cqi), army)
         else:
@@ -644,15 +716,17 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log):
     if missing:
         elig = eligible(w, F, set(missing))
         if here in elig:
-            select_army(ui, army.general_id)
-            out += recruit_local(ui, w, {u: n for u, n in missing.items() if u in elig[here]}, log)
+            if not select_army(ui, army):
+                return [f"{name}: could not select the army"], None
+            out += recruit_local(ui, w, F, {u: n for u, n in missing.items() if u in elig[here]}, log)
         else:
             tgt = closest_target(w, F, army, elig)
             if tgt is None:
                 out.append("no free settlement in a province that can recruit the missing units")
             else:
                 region, province, hops = tgt
-                select_army(ui, army.general_id)
+                if not select_army(ui, army):
+                    return [f"{name}: could not select the army"], None
                 out.append(move_to(ui, w, army, region) + f" ({hops} regions away)")
     # Engineer (player rule 2026-10-16): never a reason to move the army or to pick a province. Recruited as soon
     # as the faction cap allows, at the settlement nearest the army that can recruit one, then walked to the army.
@@ -665,7 +739,7 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log):
     if army.queued:
         out.append(f"{len(army.queued)} units in recruitment")
     for c in mine + ([recruited] if recruited else []):
-        out.append(walk_engineer(w, F, c, army, log))
+        out.append(walk_engineer(ui, w, F, c, army, log))
     return ([f"{name}: {x}" for x in out] if out else [f"{name}: matches template"]), recruited
 
 
@@ -702,5 +776,4 @@ def run(log=print) -> str:
                 traceback.print_exc()
                 lines = [f"{a.general_name}: ERROR {ex}"]
             out += lines
-        park()
     return "; ".join(out)

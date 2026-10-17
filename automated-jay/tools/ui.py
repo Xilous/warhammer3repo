@@ -142,7 +142,7 @@ def _timed(kind: str):
                     return fn(*a, **kw)
                 finally:
                     timing.input_event(k, (time.perf_counter() - t) * 1000,
-                                       at=[int(v) for v in a[:2]] if len(a) >= 2 and kind != "key" else a[:1])
+                                       at=[int(v) for v in a[:2]] if len(a) >= 2 and kind not in ("key", "hold") else a[:1])
         return wrapper
     return deco
 

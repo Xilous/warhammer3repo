@@ -31,16 +31,12 @@ import sys
 from functools import lru_cache
 from pathlib import Path
 
-import numpy as np
-from PIL import Image
-
 from . import gamedata as gd
 from bot.focus import game_focus
 from tools import wait
 from tools.ui import click, drag, wheel
 
 HERE = Path(__file__).resolve().parent
-TEMPLATES = HERE / "templates"
 STRATEGY = HERE.parent / "strategy" / "skills.json"
 
 POINTS_OFF = 0x240        # unspent skill points: u32 at [character + 0x3F0] + 0x240 (verified 9.0.4)
@@ -50,22 +46,6 @@ SKILLS_PANEL = "character_details_panel_skills"
 SKIP_STATES = frozenset({"maxed", "locked", "locked_rank"})   # card states a click does not change (2026-10-16)
 CLICK_EFFECT_S = 0.35     # a click that has not taken a point by then never will (the old fixed wait after a click)
 TREE_TIMEOUT_S = 1.5      # the new character's tree is normally built 130-210 ms after the switch
-
-
-# ------------------------------------------------------------------ screenshot helpers kept for assist/heroes.py
-
-def _tmpl(name: str) -> Image.Image | None:
-    p = TEMPLATES / f"{name}.png"
-    return Image.open(p).convert("RGB") if p.exists() else None
-
-
-def similar(a: Image.Image, b: Image.Image) -> float:
-    x = np.asarray(a.convert("L"), dtype=float)
-    y = np.asarray(b.convert("L").resize(a.size), dtype=float)
-    x -= x.mean()
-    y -= y.mean()
-    d = np.sqrt((x * x).sum() * (y * y).sum())
-    return float((x * y).sum() / d) if d else 0.0
 
 
 # ------------------------------------------------------------------ orders
