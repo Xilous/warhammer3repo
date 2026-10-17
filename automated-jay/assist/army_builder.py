@@ -273,15 +273,16 @@ def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
 # ------------------------------------------------------------------ recruitment awareness
 
 def eligible(w: World, F: int, need: set[str]) -> dict[str, set[str]]:
-    """province -> the needed units it can recruit locally right now."""
+    """province -> the needed units it can recruit locally right now, for provinces that are FULLY eligible: they can
+    recruit every unit type of the army template (player rule 2026-10-17: a province that can only make some of
+    them, e.g. Stormvermin but no Stormfiends yet, is no recruiting province; with none, a ticked army stays put)."""
     from .recruit import sources
-    out: dict[str, set[str]] = {}
+    template = set(load_automation()["army_builder"]["template"]["units"])
+    can: dict[str, set[str]] = {}
     for unit, where in sources(w).items():
-        if unit not in need:
-            continue
         for p, _r, _b in where:
-            out.setdefault(p, set()).add(unit)
-    return out
+            can.setdefault(p, set()).add(unit)
+    return {p: units & need for p, units in can.items() if template <= units}
 
 
 def settlement_pos(w: World, F: int) -> dict[str, tuple[float, float]]:
@@ -722,7 +723,8 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
         else:
             tgt = closest_target(w, F, army, elig)
             if tgt is None:
-                out.append("no free settlement in a province that can recruit the missing units")
+                out.append("no province can recruit the whole template yet (it needs every unit's building); "
+                           "the army stays where it is")
             else:
                 region, province, hops = tgt
                 if not verify:                 # a verification run does not order the march again
