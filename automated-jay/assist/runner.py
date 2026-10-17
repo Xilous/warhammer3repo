@@ -416,8 +416,10 @@ class Runner:
         Returns what is still open (empty = the bare campaign map). Game in front."""
         from tools import wait
         from tools.ui import click, press
+        # units_panel = an army or character selected: Shift+Enter does not end the turn then (2026-10-17: the army
+        # builder left an army selected and End Turn failed twice; deselected, one Shift+Enter ended it)
         closable = ("character_details_panel", "settlement_panel", "technology_panel", "recruitment_docker",
-                    "units_recruitment")
+                    "units_recruitment", "units_panel")
         open_ = lambda: [cid for _c, cid in self.ui.root_children() if cid in closable]
         for _ in range(6):
             now = open_()
