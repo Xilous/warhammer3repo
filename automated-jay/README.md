@@ -36,7 +36,7 @@ the same checks as **Run now** (your turn, 3 s idle, no open decision). While th
 ### Using the exe (any Windows PC, no Python needed)
 
 1. Download `automated-jay.exe` from the repo's [Releases](https://github.com/Xilous/warhammer3repo/releases) and put it
-   in a folder of its own (e.g. `C:\Gamesutomated-jay\`).
+   in a folder of its own (e.g. `C:\Games\automated-jay\`).
 2. Double-click it. On first start it creates `strategy\` (your settings, ticks and skill/settlement orders),
    `anchors.json` and `runs\` (logs) next to itself; a newer exe keeps using them.
 3. `automated-jay.exe --selftest` checks the bundled game data and the connection to the game (memory reads only,
