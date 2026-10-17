@@ -1,24 +1,30 @@
-"""Building automation: apply the settlement priority list (strategy/settlements.json via buildplan)
-to every owned province that is not next to an enemy at war, at the start of the turn.
+"""Building automation: repair damaged buildings, then apply the settlement priority list (strategy/settlements.json
+via buildplan) to every owned province that is not next to an enemy at war, at the start of the turn.
 
-State comes from memory (bot/sensor/world.py): owned regions, slots, buildings, construction in
-progress, wars, adjacency. Actions go through the province panel, found in the game's UI tree
-(bot/sensor/ui.py); every wait is a condition on the UI tree or memory (tools/wait.py):
+State comes from memory (bot/sensor/world.py): owned regions, slots, buildings, construction in progress, building
+health, wars, adjacency. Actions go through the province panel, found in the game's UI tree (bot/sensor/ui.py); every
+wait is a condition on the UI tree or memory (tools/wait.py). Verified 2026-10-16, 9.0.4:
 
   province panel  Provinces tab (hud_campaign/bar_small_top/TabGroup/tab_regions) -> row row_entry_<province>
                   -> settlement_panel with one column CcoCampaignSettlement<region key> per settlement and the
-                  slots CcoCampaignBuildingSlotregion_slot_<n> (n = u32 at memory slot + 0x8).
-  upgrade         click the slot -> building_construction_popup opens anchored on it (centred over the slot, its
-                  bottom on the slot's top) with the chain in construction_building_tree: one card per level, id =
-                  building level key, its square_building_button state "built" (taken), "normal" (can be built),
-                  "greyed" (not now: no click). Click the card of the next level.
-  construct       click an empty slot -> building_categories_popup (anchored the same way) with one card per
-                  category, CcoBuildingSetRecord<set key>. Hovering a category builds its construction_building_tree
-                  (chains CcoBuildingChainRecord<chain>, added over a few frames); click the target level's card.
-                  The category each chain was found in is remembered (runs/build_categories.json), so later
-                  constructions of that chain hover one category only.
-Every action is confirmed in memory (the slot shows construction in progress: [[slot + 0x190] + 0x10] != 0)
-before the next one.
+                  slots CcoCampaignBuildingSlotregion_slot_<n> (n = u32 at memory slot + 0x8). The panel slides in
+                  from below the screen when it opens (~0.4 s).
+  slot popup      HOVERING a slot opens its popup, a child of the slot component, in 18-22 ms. Slots are never
+                  clicked: a click on a slot under construction cancels that construction (refunded).
+  upgrade         building_construction_popup/.../construction_building_tree: one card per level of the chain, id =
+                  building level key, its square_building_button state "built", "normal" (can be built) or "greyed"
+                  (not now: no click). The card states settle a frame or two after the popup appears.
+  construct       an empty slot's building_categories_popup has one card per category, CcoBuildingSetRecord<set>.
+                  Hovering a category builds its construction_building_tree (CcoBuildingChainRecord<chain>, one chain
+                  per frame); the category each chain was found in is remembered (runs/build_categories.json), so
+                  later constructions of that chain hover one category only.
+  repair          a damaged building's popup has options_list/button_repair (next to button_abandon: never clicked).
+                  Health: f32 building + 0x38 / max + 0x3C (building = [[slot + 0x190] + 0x20]). A repair costs gold
+                  at once (treasury int at faction + 0xD58) and takes a turn: it is a construction in the slot
+                  ([[slot + 0x190] + 0x10], u32 + 0x10 = 1; 3 for a construction or upgrade). An upgrade started on a
+                  damaged building halts until it is repaired; repairing it keeps the upgrade, which then continues.
+  clicks          a popup item is clicked only once the game shows the cursor over that item (its hover state).
+Every action is confirmed in memory (construction in the slot, or the treasury going down) before the next one.
 
     python -X utf8 -m assist.build plan          # what would be done (memory only, no input)
     python -X utf8 -m assist.build run           # do it
@@ -28,6 +34,7 @@ import json
 import struct
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
 from . import gamedata as gd
 from .buildplan import Building, Province, Settlement, plan_province, strategy
@@ -40,8 +47,10 @@ from tools.ui import click, move_to, wheel
 PARK = (1700, 700)
 PANEL = "settlement_panel"
 CATEGORIES_FILE = config.RUNS_DIR / "build_categories.json"
+AUTOMATION_FILE = Path(__file__).resolve().parents[1] / "strategy" / "automation.json"
 EFFECT_TIMEOUT_S = 1.0        # a click on a card / button that has not started construction by then never will
-                              # (measured 2026-10-16: the slot shows construction ~30 ms after the click)
+                              # (measured 2026-10-16: the slot shows construction 10-100 ms after the click)
+POPUP_TIMEOUT_S = 0.3         # hovering a slot opens its popup in 18-22 ms (measured 2026-10-16)
 
 
 # ------------------------------------------------------------------ state -> planner model
@@ -229,33 +238,110 @@ def ui_slot(ui, w: World, o: OwnedSettlement, idx: int):
     return wait.appears(ui, f"CcoCampaignBuildingSlotregion_slot_{sid}", under=PANEL, timeout=1.0, must=False)
 
 
-def _popup_for(ui, slot, cid: str, timeout: float = 2.0):
-    """The popup the game opened for this slot: centred over it, its bottom on the slot's top (a popup still open
-    for another slot never matches). -> its pointer."""
-    def anchored():
-        p = ui.first(cid, under=PANEL)
-        if p is None:
-            return None
-        k, s = ui.comp(p), ui.comp(slot.ptr)
-        return p if abs(k.x + k.w / 2 - (s.x + s.w / 2)) <= 3 and abs(k.y + k.h - s.y) <= 3 else None
-    return wait.wait_until(anchored, timeout, f"{cid} for {slot.id}", must=False)
+def _slot_popup(ui, slot, cid: str, timeout: float = POPUP_TIMEOUT_S):
+    """Hover the slot (never click it: a click on a slot under construction cancels that construction, refunded;
+    seen 2026-10-16) until the game opens its popup, a child of the slot component (18-22 ms measured). The settlement
+    panel slides in when it opens, so the slot must be still first. The game re-checks hover only when the mouse
+    moves: halfway through the timeout the cursor is nudged 1 px. -> the popup, or None (a slot whose construction
+    already has its repair queued opens none)."""
+    k = ui.comp(slot.ptr)
+    off = not (0 <= k.x + k.w / 2 < config.RESOLUTION[0] and 0 <= k.y + k.h / 2 < config.RESOLUTION[1])
+    k = wait.stable_rect(ui, slot.ptr, n=3 if off else 1, timeout=2.0, must=False, what=f"{slot.id} still")
+    if k is None:
+        return None
+    x, y = k.center
+    move_to(x, y)
+    probe = lambda: ui.child(slot.ptr, cid, visible_only=True)
+    p = wait.wait_until(probe, timeout / 2, f"{cid} on {slot.id}", must=False)
+    if p is None:
+        move_to(x + 1, y)
+        wait.next_frame(1, ui)
+        move_to(x, y)
+        p = wait.wait_until(probe, timeout / 2, f"{cid} on {slot.id} (nudged)", must=False)
+    return p
 
 
 def _await_started(w: World, S: int, what: str) -> bool:
     return bool(wait.wait_until(lambda: constructing(w, S), EFFECT_TIMEOUT_S, what, must=False))
 
 
+def _settled(ui, ptr: int, what: str):
+    """A popup item once the popup is laid out: its rectangle and state (and its square_building_button's state)
+    unchanged for 3 frames. Measured 2026-10-16: right after the popup appears the options buttons are still being
+    placed and a card can read "normal" for a frame before it turns "greyed". -> Comp, or None."""
+    btn = ui.child(ptr, "square_building_button")
+
+    def look():
+        k = ui.comp(ptr)
+        return (k.x, k.y, k.w, k.h, ui.state(ptr) or "", (ui.state(btn) or "") if btn else "")
+    got = wait.stable(look, n=3, timeout=1.0, what=f"{what} laid out", must=False, ui=ui)
+    return ui.comp(ptr) if got is not None else None
+
+
+def _press(ui, ptr: int, what: str, settled: bool = False) -> bool:
+    """Click a popup item only once the game shows the cursor over THAT item (its hover state), never on a guess:
+    in a building popup the Repair button sits next to Abandon (2026-10-16: a click aimed while the popup was still
+    being laid out landed on Abandon). False, without a click, when the hover does not register."""
+    k = ui.comp(ptr) if settled else _settled(ui, ptr, what)
+    if k is None or not ui.effective_visible(ptr):
+        return False
+    probe = ui.hover_probe(ptr)
+    if probe is None:
+        return False
+    x, y = k.center
+    hovered = lambda: ui.state_ptr(probe[0]) in probe[1]
+    move_to(x, y)
+    if not wait.wait_until(hovered, 0.15, f"hover on {what}", must=False):
+        move_to(x + 1, y)                         # the game re-checks hover only when the mouse moves
+        wait.next_frame(1, ui)
+        move_to(x, y)
+        if not wait.wait_until(hovered, 0.15, f"hover on {what} (nudged)", must=False):
+            return False
+    click(ui, ptr)                                # hovered already: the button goes down at once
+    return True
+
+
 def ui_upgrade(ui, w: World, S: int, slot, level_key: str) -> bool:
-    click(ui, slot.ptr)
-    pop = _popup_for(ui, slot, "building_construction_popup")
+    pop = _slot_popup(ui, slot, "building_construction_popup")
     card = wait.wait_until(lambda: ui.first(level_key, under=pop), 1.0, f"{level_key} card", must=False) if pop else None
     if card is None:
         return False
-    btn = ui.child(card, "square_building_button")
-    if btn is not None and (ui.state(btn) or "") == "greyed":
+    if _settled(ui, card, level_key) is None or _greyed(ui, card):
         return False                              # the game would ignore the click
-    click(ui, card)
+    if not _press(ui, card, level_key, settled=True):
+        return False
     return _await_started(w, S, f"{level_key} under construction")
+
+
+def _greyed(ui, card: int) -> bool:
+    """The level card cannot be built now (square_building_button state "greyed")."""
+    btn = ui.child(card, "square_building_button")
+    return btn is not None and (ui.state(btn) or "") == "greyed"
+
+
+def ui_repair(ui, w: World, F: int, S: int, slot) -> tuple[str, int]:
+    """Repair the building in this slot: its popup's options_list/button_repair. -> ("repaired", cost), ("queued", 0)
+    when the game offers no repair (one is already under way), or ("not started", 0). A repair costs gold at once
+    (faction treasury, int at F + 0xD58, goes down 6-75 ms after the click) and takes a turn: a damaged building
+    gets a repair construction ([[S + 0x190] + 0x10], its u32 + 0x10 = 1); a halted upgrade keeps its construction
+    and continues once repaired."""
+    busy = constructing(w, S)
+    pop = _slot_popup(ui, slot, "building_construction_popup")
+    if pop is None:
+        return ("queued" if busy else "not started"), 0
+    btn = wait.wait_until(lambda: ui.first("button_repair", under=pop), 0.25, "button_repair", must=False)
+    if btn is None:
+        return ("queued" if busy else "not started"), 0
+    gold = treasury(w, F)
+    if ui.id(btn) != "button_repair" or not _press(ui, btn, "button_repair"):
+        return "not started", 0
+    after = wait.value_changes(lambda: treasury(w, F), gold, timeout=EFFECT_TIMEOUT_S, must=False,
+                               what=f"repair paid for {slot.id}")
+    if after is None or after >= gold:
+        return "not started", 0
+    if not busy:
+        _await_started(w, S, f"repair under way in {slot.id}")
+    return "repaired", gold - after
 
 
 def _learned() -> dict[str, str]:
@@ -276,18 +362,18 @@ def _learn(chains: list[str], category: str) -> None:
         pass
 
 
-def _tree_chains(ui) -> tuple:
-    """Components in the chain list of the construction_building_tree on screen (() when none is shown)."""
-    t = ui.first("construction_building_tree", under=PANEL)
+def _tree_chains(ui, under: int) -> tuple:
+    """Components in the chain list of the construction_building_tree shown below `under` (() when none is)."""
+    t = ui.first("construction_building_tree", under=under)
     cl = ui.first("chain_list", under=t) if t else None
     return tuple(ui.children(cl)) if cl else ()
 
 
-def _category_tree(ui, before: tuple):
+def _category_tree(ui, under: int, before: tuple):
     """Once the hovered category's construction_building_tree is built (its chain list differs from `before`, then
     is unchanged for 3 frames: measured 2026-10-16, the game adds one chain per frame, 15-45 ms after the hover):
     (chain list pointers, {chain: chain component})."""
-    chains = lambda: _tree_chains(ui)
+    chains = lambda: _tree_chains(ui, under)
     got = wait.wait_until(lambda: (lambda c: c if c and c != before else None)(chains()), 1.0,
                           "category tree rebuilt", must=False)
     if got is None:
@@ -302,18 +388,17 @@ def _category_tree(ui, before: tuple):
 
 
 def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str) -> bool:
-    click(ui, slot.ptr)
-    pop = _popup_for(ui, slot, "building_categories_popup")
+    pop = _slot_popup(ui, slot, "building_categories_popup")
     lst = ui.first("category_list", under=pop) if pop else None
     if lst is None:
         return False
     cats = [c for c in ui.children(lst) if (ui.id(c) or "").startswith("CcoBuildingSetRecord")]
     known = _learned().get(chain)
     cats.sort(key=lambda c: ui.id(c) != known)
-    before = _tree_chains(ui)
+    before = _tree_chains(ui, slot.ptr)
     for cat in cats:
         move_to(*ui.comp(cat).center)
-        got = _category_tree(ui, before)
+        got = _category_tree(ui, slot.ptr, before)
         if got is None:
             continue
         before, chains = got
@@ -323,12 +408,66 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str) -> bool
         card = ui.first(level_key, under=chains[chain])
         if card is None:
             continue
-        btn = ui.child(card, "square_building_button")
-        if btn is not None and (ui.state(btn) or "") == "greyed":
+        if _settled(ui, card, level_key) is None or _greyed(ui, card):
             return False
-        click(ui, card)
+        if not _press(ui, card, level_key, settled=True):
+            return False
         return _await_started(w, S, f"{level_key} under construction")
     return False
+
+
+# ------------------------------------------------------------------ repairs
+
+@dataclass
+class Repair:
+    o: OwnedSettlement
+    idx: int
+    level_key: str
+    estimate: int          # level cost x damaged fraction: the game's price, or above it where a local discount applies
+
+
+def construction_kind(w: World, S: int) -> int | None:
+    """u32 at construction + 0x10: 1 for a repair, 3 for a construction or upgrade (9.0.4, 2026-10-16)."""
+    sb = w.q(S + 0x190)
+    c = w.q(sb + 0x10) if sb else 0
+    return w.u32(c + 0x10) if c else None
+
+
+def buildings_setting(name: str, default=True):
+    """strategy/automation.json "buildings" settings (read fresh at every pass)."""
+    try:
+        a = json.loads(AUTOMATION_FILE.read_text(encoding="utf-8"))
+        return a.get("buildings", {}).get(name, default)
+    except (OSError, ValueError, AttributeError):
+        return default
+
+
+def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = False) -> list[Repair]:
+    """Damaged buildings in provinces where building is allowed (the war block applies to repairs too), skipping
+    those already under repair. Province by province, slot order (main building first)."""
+    if not buildings_setting("repair_damaged"):
+        return []
+    levels = {l.key: l for ls in gd.chains().values() for l in ls}
+    out = []
+    for p, owned in models.items():
+        if p in blocked and not override_blocked:
+            continue
+        for o in owned:
+            for i, st in enumerate(o.slot_states):
+                if not st.building:
+                    continue
+                S = slot_ptr(w, o.region_obj, i)
+                h = health(w, S)
+                if h is None or not damaged(w, S) or construction_kind(w, S) == 1:
+                    continue
+                lv = levels.get(st.building)
+                out.append(Repair(o, i, st.building, round((lv.cost if lv else 0) * (1 - h[0] / h[1]))))
+    return out
+
+
+def treasury(w: World, F: int) -> int:
+    """The faction's treasury: int at faction + 0xD58."""
+    return struct.unpack("<i", w.pm.read_bytes(F + 0xD58, 4))[0]
 
 
 def run(log=print, override_blocked: bool = False) -> str:
@@ -340,23 +479,45 @@ def run(log=print, override_blocked: bool = False) -> str:
     todo, skipped = _actions(models, blocked)
     if override_blocked:                          # test only: plan blocked provinces too
         todo, _ = _actions(models, blocked, override_blocked=True)
+    repairs = planned_repairs(w, models, blocked, override_blocked)
     done, problems = [], []
     gold = w.s.read().treasury or 0
     ui = _ui(w)
     with game_focus():
+        # 1. repairs, before any construction or upgrade (player rule, 2026-10-16)
+        for r in repairs:
+            o, name = r.o, gd.level_name(r.level_key)
+            if r.estimate > gold:
+                problems.append(f"{o.region}: repair of {name} needs {r.estimate} gold")
+                continue
+            if not ui_open_province(ui, o):
+                problems.append(f"{o.region}: could not open its province")
+                continue
+            slot = ui_slot(ui, w, o, r.idx)
+            if slot is None:
+                problems.append(f"{o.region}: slot not on screen")
+                continue
+            how, cost = ui_repair(ui, w, snap.faction, slot_ptr(w, o.region_obj, r.idx), slot)
+            if how == "repaired":
+                gold -= cost
+                done.append(f"repaired {name} in {gd.place_name(o.region)}")
+                log(f"build: {done[-1]}")
+            elif how == "not started":
+                problems.append(f"{o.region}: repair of {name} not started")
+        # 2. constructions and upgrades
         for o, a, busy in todo:
+            idx = slot_index_for(o, a)
+            S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
+            if S and constructing(w, S):
+                continue                          # being built, upgraded or repaired
             if a.cost > gold:
                 problems.append(f"{o.region}: {a.item} needs {a.cost} gold")
                 continue
-            idx = slot_index_for(o, a)
             if idx is None or not a.level_key:
                 problems.append(f"{o.region}: no slot for {a.item}")
                 continue
-            S = slot_ptr(w, o.region_obj, idx)
-            if constructing(w, S):
-                continue
             if a.kind != "construct" and damaged(w, S):
-                problems.append(f"{o.region}: {a.item} not started")
+                problems.append(f"{o.region}: {a.item} waits for a repair")
                 continue
             if not ui_open_province(ui, o):
                 problems.append(f"{o.region}: could not open its province")
@@ -399,6 +560,10 @@ def main() -> int:
         print("at war with:", snap.at_war)
         for p, why in skipped:
             print(f"BLOCKED {p}: {why}")
+        w = World()
+        models, blocked = build_models(w, snap)
+        for r in planned_repairs(w, models, blocked):
+            print(f"{r.o.region} repair slot {r.idx} {gd.level_name(r.level_key)} (about {r.estimate} gold)")
         for o, a, busy in todo:
             print(f"{o.region} [{'busy' if busy else 'free'}] {a}")
         if not todo:

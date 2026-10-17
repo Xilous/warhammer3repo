@@ -45,8 +45,9 @@ the same checks as **Run now** (your turn, 3 s idle, no open decision). While th
    1. **Tech**: if research is idle, start the next tech on the bee-line, after that the cheapest remaining one.
    2. **Skills**: spend skill points on Ikit Claw, Verminlord Warpseers and Warlock Engineers in your order.
       Other characters are left alone.
-   3. **Buildings**: upgrades and constructions from your settlement priority list. Provinces where an enemy
-      you are at war with holds a region, or that border one, are skipped.
+   3. **Buildings**: first every damaged building is repaired, then upgrades and constructions from your
+      settlement priority list. Provinces where an enemy you are at war with holds a region, or that border one,
+      are skipped, repairs included. A damaged building is never upgraded (the game would halt the upgrade).
    4. **Army**: only armies you ticked in the window. Each is made to match the doomstack template: extra units
       are disbanded once the army stands where its missing units can be recruited locally, missing units are
       recruited from the local pool (never the global one), the army is moved toward the nearest such province,
@@ -83,7 +84,7 @@ Plain JSON, read fresh at every pass: edits apply from the next pass without a r
 |---|---|
 | `strategy/settlements.json` | building priority list (main building, port, then the rest in order) |
 | `strategy/skills.json` | skill order per character type |
-| `strategy/automation.json` | how the assistant acts, the doomstack template (units and heroes), the ticked armies |
+| `strategy/automation.json` | how the assistant acts (`buildings.repair_damaged`: repairs on or off), the doomstack template (units and heroes), the ticked armies |
 | `strategy/popup_ignore.json` | panels you marked harmless with Ignore |
 | `../tww/skv_beeline.json` | tech bee-line targets in click order (made by `../scripts/game/skv_beeline.py`, explained in `../GUIDE_Skryre_Tech_Beeline.md`) |
 
@@ -126,8 +127,8 @@ player.
 | Settlement build planner (`assist/buildplan.py`, `strategy/settlements.json`) | Done and tested; fed live by `bot/sensor/world.py`. |
 | Tech auto-progress (`assist/tech.py`) | Working: research state from memory; when idle, clicks the next beeline target (then cheapest remaining) in the technology panel by UI-tree id and confirms in memory that research started. Tested live 2026-10-16. |
 | Turn-start runner (`assist/runner.py`) | Working: detects the new turn from memory, waits until it is really the player's turn and the player is idle, runs every step, the overlay shows AUTOMATING / YOUR TURN. Click the overlay to pause. Survives game restarts, the main menu and save loads; stops at once if the player alt-tabs away (see "Day-to-day robustness"). |
-| Skill auto-spend (`assist/skills.py`, `strategy/skills.json`) | Working: cycles every character, spends points in the player's order via the skill search box. Live spend verified on Ikit. |
-| Building automation (`assist/build.py`) | Working: state from memory, provinces next to an enemy at war are skipped, upgrades and constructions done through the province panel and verified in memory. |
+| Skill auto-spend (`assist/skills.py`, `strategy/skills.json`) | Working: opens each character with points from the Lords & Heroes list (then switches inside the open panel), spends points in the player's order by UI-tree node id, every point confirmed in memory. |
+| Building automation (`assist/build.py`) | Working: state from memory, provinces next to an enemy at war are skipped; damaged buildings repaired first, then upgrades and constructions through the province panel, each verified in memory. Repairs verified live 2026-10-16. |
 | Army builder (`assist/army_builder.py`, `assist/army.py`, `assist/recruit.py`, `assist/heroes.py`) | Built: per-army tick in the window. For a ticked army: disband off-template units, recruit missing units from the local pool, recruit a Warlock Engineer, move toward the closest province that can recruit what is missing, walk free heroes in (see "Army builder"). Walking heroes in was verified live. |
 | Assistant window and overlay (`assist/app.py`) | Working: status, Run now, Pause, last turn's log, armies with template gap, free heroes, blocked provinces, Ignore buttons. |
 | Launchers (`run_assistant.bat`, `run_assistant_once.bat`) | Start the assistant, or one pass, from a double-click. |
@@ -155,7 +156,7 @@ assist/app.py          the assistant window and the overlay (colours in assist/w
 assist/popups.py       turn-start popups: closes event notices, holds the pass for decisions
 assist/tech.py         tech step
 assist/skills.py       skill step
-assist/build.py        building step (plan: assist/buildplan.py, icon matching: assist/slots.py)
+assist/build.py        building step: repairs, upgrades, constructions (plan: assist/buildplan.py)
 assist/army_builder.py army step (template compare: army.py, recruitable units: recruit.py, heroes: heroes.py)
 assist/gamedata.py     static game data from ../tww/db and ../tww/loc_en.json
 assist/templates/      screen templates and building icons
@@ -349,8 +350,10 @@ How to recover:
 | Technology panel | `button_technology` on the end-turn ring (hotkey 8); its `alert_icon` child is visible while research is idle |
 | Tech research queue | one chain at a time; clicking a tech (also a queued one) re-targets the chain to it; clicking the tech being researched cancels research and the chain; Shift-click does not append. Some locked techs ignore the click (Plans Within Plans and everything behind it, while Record Effective Recipes is unresearched) |
 | Diplomacy | hotkey 7 |
-| Lords & Heroes list | top-right bar button at (1772, 22); clicking a rank badge opens that character's skills |
-| Skill panel | "Skill Points: N" top right; tree is NOT laid out by DB tier, positions need calibrating per character type |
+| Lords & Heroes list | top bar `tab_units` (state "selected" while shown); clicking a row's rank badge `skill_button` opens that character's skills |
+| Skill panel | `character_details_panel`; the characters of the Lords & Heroes list along its top (`CcoCampaignCharacter<id>`), clicking one switches the panel to it; closed with `button_ok` |
+| Provinces list | top bar `tab_regions`; rows `row_entry_<province key>` open that province's `settlement_panel` |
+| Building slot | hovering a slot opens its popup; clicking a slot under construction CANCELS that construction (refunded) |
 | Turn counter | memory: model+0x6cb0 -> +0x10 (cross-check model+0x719c = turn + 1) |
 
 ## Reading the campaign from memory (`bot/sensor/world.py`)
@@ -371,6 +374,8 @@ offsets, so the assistant reads the same data the game's own scripts use, from o
 | region | slots | [+0x148]+0x10: count +4, array +8 |
 | slot | building / construction | [+0x190]: building +0x20, construction +0x10; active byte +0x1D8 |
 | building | level | [+0x30] level record: key string +8, level index +0x1F0 |
+| building | health | f32 +0x38, max f32 +0x3C (`percent_health` = 100 * hp / max); damaged when hp < max |
+| construction | kind / cost | u32 +0x10: 1 repair, 3 construction or upgrade; cost u32 +0x20 |
 
 The player's faction is found by following candidate paths from the campaign model (`anchors.json:
 faction_paths`) and accepting the one whose name is `player_faction_key`.
@@ -380,17 +385,29 @@ or when it shares a border with a province where such a faction holds a region.
 
 ## Building UI mechanics (`assist/build.py`)
 
-- Province panel: arrows beside the title cycle the player's provinces. Settlements are columns
-  (memory province region order, reversed); the right column is confirmed by matching a finished
-  building's icon before clicking.
-- Construct: click an empty slot, a strip of category cards appears above it; hovering a category
-  opens a panel of chain columns by tier; the parchment card with the target chain's icon is clicked.
-- Upgrade: click the building; its chain stacks above the slot; the parchment card above the current
-  level is the next level.
-- Every action is confirmed in memory (slot shows construction) before the next one.
+All from the UI tree and memory (verified 2026-10-16, 9.0.4); no screenshots:
+
+- Province panel: Provinces tab (`tab_regions`) -> `row_entry_<province>` -> `settlement_panel`, one column
+  `CcoCampaignSettlement<region>` per settlement, slots `CcoCampaignBuildingSlotregion_slot_<n>` (n = u32 at memory
+  slot +0x8). The panel slides in from below the screen when it opens (~0.4 s); the step waits until it is still.
+- Slots are only hovered, never clicked: hovering opens the slot's popup (a child of the slot component) in about
+  20 ms, and a click on a slot under construction cancels that construction.
+- Upgrade: the popup's `construction_building_tree` has one card per level (id = level key); its
+  `square_building_button` reads "built", "normal" (can be built) or "greyed" (not now: not clicked). Card states
+  settle a frame or two after the popup appears, so the step waits for 3 still frames.
+- Construct: an empty slot's popup lists categories (`CcoBuildingSetRecord<set>`); hovering one builds its tree
+  (`CcoBuildingChainRecord<chain>`, one chain per frame). The category each chain was found in is remembered in
+  `runs/build_categories.json`.
+- Repair: a damaged building's popup has `button_repair` (cost in its tooltip: level cost x damaged fraction, less any
+  local construction discount) next to `button_abandon`. The gold goes at once and the repair takes a turn. An
+  upgrade the game starts on a damaged building halts ("construction on it has halted") until it is repaired, and
+  continues after the repair, so damaged buildings are repaired first and never upgraded.
+- A popup item is clicked only once the game shows the cursor over that very item (its hover state): one click aimed
+  while a popup was still being laid out hit Abandon.
+- Every action is confirmed in memory (construction in the slot, or the treasury going down) before the next one.
 
 ```
-python -X utf8 -m assist.build plan      # memory only: blocked provinces and the next builds
+python -X utf8 -m assist.build plan      # memory only: blocked provinces, repairs and the next builds
 python -X utf8 -m assist.build run       # do it
 ```
 
@@ -451,10 +468,8 @@ The army step and the window use this, so the builder never plans around a build
 | unspent skill points | u32 at [character +0x3F0] +0x240 |
 | renamed characters | name entry holds inline UTF-16 text (vtable in the exe, length +0x10, text +0x18) |
 
-The skill step reads points from memory, checks the badge digit against a "0" template (the badge glow
-pulses, so colour counts are unreliable), and confirms each click by the points going down in memory.
-In the search, a locked node turns red but an available node only gets a brighter border, so the searched
-node is found as the largest changed patch.
+The skill step reads points from memory and confirms each click by the points going down in memory (70-120 ms
+after the click). It never looks at the screen (see "The game's UI tree" below for the panel).
 
 ## The game's UI tree (`bot/sensor/ui.py`)
 
@@ -480,15 +495,23 @@ One read of +0x1C8..+0x358 covers every field a lookup needs: a full walk of ~1,
   Character id = u32 at character +0x110.
 - `character_details_panel_skills` (skills panel); each skill node's id is its character_skill_key, with
   child `card` and `icon_check`. The tick shows once any rank is taken, so it only means "maxed" for
-  one-rank skills. Two `list_clip` components exist (skills tree, Lords & Heroes list): scope lookups.
+  one-rank skills. The card's state tells more: "available" (a click takes a point), "maxed", "locked",
+  "locked_rank" (a click changes nothing). Two `list_clip` components exist (skills tree, Lords & Heroes list):
+  scope lookups. The tree's scrollbar thumb is `hslider/handle`.
+- The skills panel lists the Lords & Heroes characters along its top (`char_select_list/.../CcoCampaignCharacter<id>`,
+  `button_character_holder` "selected" for the one shown); clicking one switches the panel to that character. The game
+  then builds a NEW tree (new components, one row per indent level of the character's node set: Ikit 6, Warlock
+  Engineer 4, Verminlord 6), row by row or all at once, 15-300 ms after the switch; until then the previous
+  character's tree is shown. The step waits until every row is a new component.
 - `3d_ui_parent` holds map labels: `label_<character id>` (character flags) and
   `label_settlement:<region key>` (settlement nameplates), positioned in screen pixels.
 - `technology_panel`: see the technology section below.
 - `button_menu`, `button_load`, `button_end_turn`, `button_technology`, `popup_message_box` with
   `button_tick` / `button_cancel`.
 
-The skill step now opens each character's skills from its list row and clicks nodes by id: about 7 s
-per point, down from about 90 s per character, and it follows the order exactly.
+The skill step opens the first character's skills from its list row, switches to the others inside the open panel,
+skips maxed and locked cards without clicking, and clicks nodes by id: 4 characters and 5 points in about 2.3 s (was
+about 7 s per point, and 90 s per character before that), following the order exactly.
 
 ## Army builder (`assist/army_builder.py`)
 
@@ -606,5 +629,8 @@ about 4 s: `tools/bench.py` waits for all of it. The turn-start settle (`assist/
 camera still for 250 ms and no root panel coming or going for 500 ms. The 3 s player-idle check is unchanged.
 
 Benchmark (`python -m tools.bench`, save "ENDGAME SKAVEN", turn 90, same results every step): 94.0 / 93.6 s before,
-55.5 / 55.1 s after the input, lookup, popup, runner and tech changes. What is left is fixed sleeps in the skills,
-buildings and army steps: `python -m tools.timing` lists them by file:line.
+55.5 / 55.1 s after the input, lookup, popup, runner and tech changes, 10.2 / 9.7 s after the skills (19.8 -> 2.5 s)
+and buildings (30.9 -> 1.7 s) steps waited on conditions too, with identical results. With repairs on (2026-10-16)
+the building step also repairs 6 buildings on that save and does 9 upgrades instead of 6: buildings 3.7 s, pass
+10.5-11.4 s. The skills and buildings steps have no fixed sleeps left; what is left is in the army step:
+`python -m tools.timing` lists them by file:line.

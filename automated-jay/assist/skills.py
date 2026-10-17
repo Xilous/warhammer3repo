@@ -183,7 +183,7 @@ def tree_rows(char_key: str) -> int:
 
 def _await_tree(ui, char_id: int, before: tuple, rows: int) -> bool:
     """Until the panel shows this character and its tree has all `rows` rows, every one a new component (none of
-    `before`, the rows seen last), then unchanged for 2 frames. Measured 2026-10-16: the game adds the new rows one
+    `before`, the rows seen last), plus one frame. Measured 2026-10-16: the game adds the new rows one
     by one (or all at once) 15-140 ms after the switch; a panel reopened right after closing first shows a few rows
     of the previous character's tree. When the game does not rebuild (it already showed this character), the
     timeout lets it through."""
@@ -197,7 +197,7 @@ def _await_tree(ui, char_id: int, before: tuple, rows: int) -> bool:
     got = wait.wait_until(built, TREE_TIMEOUT_S, f"skill tree built for character {char_id}", must=False)
     if got is None:
         return _selected(ui, char_id) and bool(_tree_sig(ui))
-    wait.stable(lambda: _tree_sig(ui), n=2, timeout=1.0, what="skill tree complete", must=False)
+    wait.next_frame(1, ui)                       # the frame that added the last row has finished laying it out
     return True
 
 
