@@ -284,6 +284,8 @@ class Runner:
                 self.post("waiting", "WAITING", "Run now: no campaign loaded")
                 return
             ok, why = players_turn(self.ui)
+            if not ok and why.startswith("End Turn button is") and self._clear_notices_first(have_busy=True):
+                ok, why = players_turn(self.ui)
             if not ok:
                 self.post("waiting", f"WAITING (turn {s.turn})", f"Run now: not your turn ({why})", turn=s.turn)
                 return
@@ -316,6 +318,8 @@ class Runner:
                 return
             turn = s.turn
             ok, why = players_turn(self.ui)
+            if not ok and why.startswith("End Turn button is") and self._clear_notices_first(have_busy=True):
+                ok, why = players_turn(self.ui)
             if not ok:
                 self.post("waiting", f"WAITING (turn {turn})", f"Build & End Turn: not your turn ({why})", turn=turn)
                 return
@@ -663,6 +667,32 @@ class Runner:
             if self.my_turn:
                 self._close_notices()
 
+    def _clear_notices_first(self, have_busy: bool = False) -> bool:
+        """It is the player's turn by memory, but End Turn is greyed out: the game does that while an event notice is
+        open (2026-10-17: "Rite Expires" kept a turn-start pass waiting for End Turn, and the pass that would close
+        the notice never started). Close the notices now (never decisions). True when one was closed."""
+        from bot.sensor import turn as turn_mem
+        from . import popups
+        try:
+            if turn_mem.players_turn(self.mem)[0] is not True or not popups._closable(self.ui):
+                return False
+            if not have_busy and not self.busy.acquire(blocking=False):
+                return False
+            try:
+                closed = popups.dismiss_events(self.ui)
+            finally:
+                if not have_busy:
+                    self.busy.release()
+            if closed:
+                print(f"[{datetime.now():%H:%M:%S}] closed {len(closed)} notice(s) that kept End Turn greyed out",
+                      flush=True)
+            return bool(closed)
+        except InputAborted:
+            return False
+        except Exception:
+            traceback.print_exc()
+            return False
+
     def _close_notices(self) -> None:
         """During the player's own turn: close event notices as they come (player request 2026-10-17), the same ones
         the turn-start pass closes; never a decision. Only while the game is the window in front (it is never pulled
@@ -709,6 +739,8 @@ class Runner:
             return
         ok, why = players_turn(self.ui)
         self.my_turn = ok
+        if not ok and why.startswith("End Turn button is") and self._clear_notices_first():
+            ok, why = players_turn(self.ui)                 # (the game greys End Turn out while a notice is open)
         if not ok:
             self.gate_since = None
             self.post("waiting", f"WAITING (turn {turn})", f"{why}; acts when your turn starts", turn=turn)

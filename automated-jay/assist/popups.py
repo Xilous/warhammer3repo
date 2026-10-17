@@ -68,7 +68,7 @@ def scan(ui: UI | None = None) -> list[tuple[int, str]]:
         raise RuntimeError("game UI not found in memory")
     skip = NORMAL | ignored()
     return [(c, cid) for c, cid in ui.root_children()
-            if cid not in skip and not cid.startswith("tooltip")]          # hover tooltips are never popups
+            if cid not in skip and not "tooltip" in cid.lower()]          # hover tooltips are never popups
 
 
 def needs_choice(ui: UI, c: int) -> bool:
