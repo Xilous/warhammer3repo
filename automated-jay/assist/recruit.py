@@ -22,17 +22,21 @@ from functools import lru_cache
 from pathlib import Path
 
 from . import gamedata as gd
-from bot.sensor.world import World, find_player_faction, region_provinces
+from bot.sensor.world import World, current_faction, find_player_faction, region_provinces
 
-FACTION = "wh2_main_skv_clan_skryre"
 HERO_ENABLE_EFFECT = {"wh2_main_skv_warlock_engineer": "wh2_main_effect_agent_enable_recruitment_engineer_skv"}
 
 
-@lru_cache(maxsize=1)
 def unit_buildings() -> dict[str, set[str]]:
+    """unit -> the building levels that recruit it, for the player's faction."""
+    return _unit_buildings(current_faction())
+
+
+@lru_cache(maxsize=4)
+def _unit_buildings(faction: str) -> dict[str, set[str]]:
     out: dict[str, set[str]] = defaultdict(set)
     for r in gd._load("building_units_allowed_tables"):
-        if r.get("faction") not in ("", FACTION, None):   # the dump's "enabled" column is False on valid rows
+        if r.get("faction") not in ("", faction, None):   # the dump's "enabled" column is False on valid rows
             continue
         out[r["unit"]].add(r["building"])
     return dict(out)

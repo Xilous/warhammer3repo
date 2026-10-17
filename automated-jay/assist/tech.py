@@ -45,8 +45,7 @@ from bot.focus import game_focus
 from tools import wait
 from tools.ui import click, click_at, drag, grab, move_to, press
 
-FACTION = "wh2_main_skv_clan_skryre"
-NODE_SET = "skv_mil"
+NODE_SET = "skv_mil"              # the one Skaven tree (Clan Skryre and Clan Scruten have no nodes of their own)
 TECH_HOTKEY = "8"
 CLOSE_BUTTON = (960, 1042)
 PARK = (960, 1062)               # neutral cursor spot for before/after captures
@@ -68,10 +67,12 @@ class Node:
 
 
 def nodes() -> dict[str, Node]:
+    from bot.sensor.world import current_faction
+    faction = current_faction()
     loc = gd.loc()
     out = {}
     for r in gd._load("technology_nodes_tables"):
-        if r["technology_node_set"] != NODE_SET or r["faction_key"] not in ("", FACTION):
+        if r["technology_node_set"] != NODE_SET or r["faction_key"] not in ("", faction):
             continue
         k = r["technology_key"]
         out[k] = Node(k, loc.get("technologies_onscreen_name_" + k, k), int(r["tier"]), int(r["indent"]),

@@ -254,6 +254,111 @@
         "take": [],
         "skip": []
       }
+    },
+    "thanquol": {
+      "agent_subtype": "wh3_dlc29_skv_thanquol",
+      "node_set": "wh3_dlc29_skill_node_set_skv_thanquol",
+      "_note": "Thanquol (Clan Scruten, backup faction), 2026-10-17: Ikit's order on Thanquol's tree (the same skills), with three of his unique skills worked in early: Blessings of the Horned Rat (it opens the row), Replaceable Fodder (-50% recruitment cost and -10% upkeep in his army, -2 turns recruitment faction-wide) and Hasty Redirection (+10% campaign movement). Boneripper: Warpfire Projectors (player choice), taken as soon as rank 15 allows; Warpfire Braziers never (one mount).",
+      "mounts": {
+        "take": [
+          "wh3_dlc29_skill_skv_thanquol_unique_mount_boneripper_2"
+        ],
+        "skip": [
+          "wh3_dlc29_skill_skv_thanquol_unique_mount_boneripper_1"
+        ]
+      },
+      "order": [
+        {
+          "skill": "Route Marcher",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_0",
+          "ranks": 1
+        },
+        {
+          "skill": "Blessings of the Horned Rat",
+          "node": "wh3_dlc29_skill_node_skv_thanquol_unique_0",
+          "ranks": 1
+        },
+        {
+          "skill": "Replaceable Fodder",
+          "node": "wh3_dlc29_skill_node_skv_thanquol_unique_3",
+          "ranks": 1
+        },
+        {
+          "skill": "Inspiring Presence",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_0",
+          "ranks": 1
+        },
+        {
+          "skill": "Blastmaster",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_1_3",
+          "ranks": 3
+        },
+        {
+          "skill": "Respected & Feared",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_1_4",
+          "ranks": 3
+        },
+        {
+          "skill": "Rally!",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_2",
+          "ranks": 1
+        },
+        {
+          "skill": "Warp-Smart",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_3_3",
+          "ranks": 1
+        },
+        {
+          "skill": "Whip-Smart",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_3_1",
+          "ranks": 1
+        },
+        {
+          "skill": "Hasty Redirection",
+          "node": "wh3_dlc29_skill_node_skv_thanquol_unique_1",
+          "ranks": 1
+        },
+        {
+          "skill": "Ancient Cunning",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_1_2",
+          "ranks": 3
+        },
+        {
+          "skill": "Bonded Service",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_1_3",
+          "ranks": 3
+        },
+        {
+          "skill": "Draftmaster",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_2",
+          "ranks": 1
+        },
+        {
+          "skill": "Quartermaster",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_3_2",
+          "ranks": 3
+        },
+        {
+          "skill": "Lightning Strike",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_3_1",
+          "ranks": 3
+        },
+        {
+          "skill": "Renowned & Feared",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_4",
+          "ranks": 1
+        },
+        {
+          "skill": "Wary",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_3_3",
+          "ranks": 3
+        },
+        {
+          "skill": "\"Miiine All Miiine!\"",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_campaign_3_4",
+          "ranks": 3
+        }
+      ]
     }
   }
 }

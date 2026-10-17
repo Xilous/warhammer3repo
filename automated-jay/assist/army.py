@@ -1,6 +1,6 @@
 """Army template: compare an army (from memory) with the doomstack template in strategy/automation.json.
 
-The template is lord (Ikit Claw or a Verminlord Warpseer), 1 Warlock Engineer, 6 Stormvermin (Swords &
+The template is lord (Ikit Claw, Thanquol or a Verminlord Warpseer), 1 Warlock Engineer, 6 Stormvermin (Swords &
 Shields) and 12 Stormfiends (Ratling Cannons). Character units (lord and embedded heroes) appear in the
 army's unit list with "_cha_" in their key.
 
@@ -90,7 +90,7 @@ class Delta:
             return "matches template"
         bits = []
         if not self.lord_ok:
-            bits.append("lord is not Ikit or a Warpseer")
+            bits.append("lord is not Ikit, Thanquol or a Warpseer")
         for name in self.heroes_to_move:
             bits.append(f"move {name} into this army")
         for k, n in self.heroes_missing.items():

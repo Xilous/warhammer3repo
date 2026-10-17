@@ -29,6 +29,7 @@ import re
 from bot import config
 from bot.sensor.world import string_object
 
+SKRYRE = "wh2_main_skv_clan_skryre"               # the workshop is Ikit's (Thanquol's Clan Scruten has none)
 CAVERN_CHAIN = "wh2_main_skv_engineers"          # Construction Cavern -> Warp-Forge -> Warp-Turbine Plant
 CAVERN = "wh2_main_skv_engineers_1"
 STATE = config.RUNS_DIR / "workshop.json"
@@ -106,6 +107,8 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
     """-> (protected: set of (region, slot) the off-list rule must leave alone, build: (settlement, slot, demolish
     first?) to build a Cavern in or None, note: str or None). off_list: (settlement, slot) of off-list buildings the
     building step is about to replace anyway: with no free slot, the Cavern takes one of those slots first."""
+    if w.faction_name(F) != SKRYRE:
+        return set(), None, None
     level = workshop_level(w, F)
     st = _load()
     since = (st.get("cavern") or {}).get("turn") or min((st.get("seen") or {}).values(), default=0)
@@ -215,6 +218,8 @@ def run(log=print) -> str:
     F = find_player_faction(w)
     if F is None:
         return "player faction not found"
+    if w.faction_name(F) != SKRYRE:
+        return "no Forbidden Workshop (Clan Skryre only)"
     owned = set(faction_bundles(w, F))
     todo = [k for k in UPGRADES if k not in owned]
     if not todo:

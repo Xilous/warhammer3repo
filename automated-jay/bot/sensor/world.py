@@ -197,21 +197,64 @@ def _anchors() -> dict:
     return _json.load(open(_config.ANCHORS_FILE))
 
 
+HUMAN = 0x1BC4                    # faction:is_human(): byte < 2 (the Lua binding 0x1427d10e4 tests it, 9.0.4)
+DEFAULT_FACTION = "wh2_main_skv_clan_skryre"
+PLAYER = {"key": None}            # the player's faction key, as last found (modules that need it: current_faction())
+_found: dict = {}                 # model -> (faction object, key): the search runs once per loaded campaign
+
+
+def is_human(w: World, f: int) -> bool:
+    try:
+        return w.pm.read_bytes(f + HUMAN, 1)[0] < 2
+    except Exception:
+        return False
+
+
+def current_faction() -> str:
+    """The player's faction key (Clan Skryre until a campaign has been read)."""
+    return PLAYER["key"] or DEFAULT_FACTION
+
+
 def find_player_faction(w: World) -> int | None:
-    """Follow the candidate pointer paths from the campaign model; accept the first that resolves to
-    a faction whose name is the configured player faction."""
+    """Follow the candidate pointer paths from the campaign model; accept the first that resolves to a human faction
+    the assistant plays (anchors.json player_factions: Ikit's Clan Skryre, and since 2026-10-17 Thanquol's Clan
+    Scruten). Not every path is the player's: in an Ikit campaign one resolved to an AI faction (the Chaos
+    invasion's), hence the human test. Kept per campaign model; re-checked by name on every call."""
     a = _anchors()
-    want = a.get("player_faction_key")
+    model = w.s.model
+    hit = _found.get(model)
+    if hit:
+        try:
+            if w.faction_name(hit[0]) == hit[1]:
+                return hit[0]
+        except Exception:
+            pass
+    want = a.get("player_factions") or [a.get("player_faction_key") or DEFAULT_FACTION]
     for path in a.get("faction_paths", []):
         try:
-            p = w.s.model
+            p = model
             for off in path:
                 p = w.q(p + off)
-            if p and w.faction_name(p) == want:
+            name = w.faction_name(p) if p else None
+            if name in want and is_human(w, p):
+                _found.clear()
+                _found[model] = (p, name)
+                if PLAYER["key"] != name:
+                    PLAYER["key"] = name
+                    try:
+                        from assist import gamedata
+                        gamedata.level_name.cache_clear()
+                    except Exception:
+                        pass
                 return p
         except Exception:
             continue
     return None
+
+
+def player_faction_key(w: World) -> str | None:
+    f = find_player_faction(w)
+    return PLAYER["key"] if f else None
 
 
 @_lru_cache(maxsize=1)

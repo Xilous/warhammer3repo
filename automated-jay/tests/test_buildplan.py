@@ -79,12 +79,27 @@ def test_nothing_built_above_current_tier():
             assert "Arcane Generators" not in a.detail
 
 
-def test_off_plan_building_is_offered_for_replacement_only_with_ok():
+def test_off_plan_building_is_replaced_by_the_planned_one():
+    # player rule 2026-10-17 (automation.json buildings.off_list_buildings "replace"): an off-list building in a
+    # managed province is demolished for the planned building, no OK asked
     p = plan_province(Province("p", [Settlement("m", False, B(MINOR, 3), None,
                                                 [B("wh2_main_skv_farm", 2), B("wh2_main_skv_industry", 2),
                                                  B("wh2_main_skv_assassins", 0)])]))[0]
     rep = [a for a in p.actions if a.kind == "replace"]
-    assert rep and "needs your OK" in rep[0].detail
+    assert rep and rep[0].detail.startswith("demolish Hidden Lair, build")
+
+
+def test_thanquol_landmarks():
+    from bot.sensor import world
+    keep = world.PLAYER["key"]
+    try:
+        world.PLAYER["key"] = "wh3_dlc29_skv_clan_scruten"
+        assert gd.landmarks_for_region("wh3_main_combi_region_zhufbar") == ["wh3_dlc29_skv_special_morskittar_engine"]
+        assert "wh3_dlc29_special_thanquol_scruten_hq" in gd.landmarks_for_region("wh3_main_combi_region_karag_dromar")
+        world.PLAYER["key"] = "wh2_main_skv_clan_skryre"          # the engine is Clan Scruten's only
+        assert gd.landmarks_for_region("wh3_main_combi_region_zhufbar") == []
+    finally:
+        world.PLAYER["key"] = keep
 
 
 def test_skavenblight_landmark_names():

@@ -62,13 +62,16 @@ def level_name(level_key: str) -> str:
     for k in ("building_culture_variants_name_" + level_key, "building_levels_onscreen_name_" + level_key):
         if k in L:
             return _tr(L[k])
-    # Culture variants are keyed level + culture + subculture [+ faction]; prefer Clan Skryre, then any Skaven variant.
+    # Culture variants are keyed level + culture + subculture [+ faction]; prefer the player's faction, then any Skaven
+    # variant without a faction of its own
+    from bot.sensor.world import current_faction
+    mine = current_faction()
     prefix = "building_culture_variants_name_" + level_key + "wh"
     best, rank = None, -1
     for k, v in L.items():
         if not k.startswith(prefix):
             continue
-        r = 2 if k.endswith("wh2_main_skv_clan_skryre") else 1 if "wh2_main_skv_skaven" in k else 0
+        r = 3 if k.endswith(mine) else 2 if k.endswith("wh2_main_sc_skv_skaven") else 1 if "wh2_main_skv_skaven" in k else 0
         if r > rank:
             best, rank = v, r
     return _tr(best) if best is not None else level_key
@@ -120,26 +123,55 @@ def slots_at(main_chain: str, index: int) -> int:
     return best
 
 
-@lru_cache(maxsize=1)
 def skaven_chains() -> frozenset[str]:
-    return frozenset(r["building_chain"] for r in _load("building_chain_availability_sets_tables")
-                     if r["id"] in SKAVEN_AVAILABILITY)
+    """Chains the player's faction can build: the Skaven availability sets, and the faction's own set (Thanquol's
+    Clan Scruten has one, wh3_dlc29_skv_thanquol: his Morskittar Engine is in it only)."""
+    from bot.sensor.world import current_faction
+    return _skaven_chains(current_faction())
 
 
-@lru_cache(maxsize=1)
+@lru_cache(maxsize=4)
+def _skaven_chains(faction: str) -> frozenset[str]:
+    ids = set(SKAVEN_AVAILABILITY) | {r["set_id"] for r in _load("building_chain_availabilities_tables")
+                                      if r.get("faction") == faction}
+    return frozenset(r["building_chain"] for r in _load("building_chain_availability_sets_tables") if r["id"] in ids)
+
+
 def landmark_sets() -> dict[str, list[str]]:
-    """landmark place name -> landmark chains Skaven can build there."""
+    """landmark place name -> landmark chains the player's faction can build there."""
+    from bot.sensor.world import current_faction
+    return _landmark_sets(current_faction())
+
+
+LANDMARK_TEMPLATE = re.compile(r"_special_(.+?)_(?:major_|minor_)?(?:primary|secondary|port)(?:_major|_minor)?$")
+
+
+@lru_cache(maxsize=4)
+def _landmark_sets(faction: str) -> dict[str, list[str]]:
+    """Two ways a landmark set belongs to a place: named after it (wh3_main_secondary_addon_landmark_<place>), or
+    permitted in the place's special slot template (wh_main_special_<place>_secondary): Thanquol's Morskittar
+    Engine set (wh3_dlc29_secondary_addon_landmark_morskittar_engine) goes in Zhufbar's (2026-10-17)."""
     bc = {r["key"]: r for r in _load("building_chains_tables")}
-    out: dict[str, list[str]] = defaultdict(list)
+    can = _skaven_chains(faction)
+    members: dict[str, list[str]] = defaultdict(list)
     for r in _load("building_chain_set_items_tables"):
-        s = r["set"]
-        if not s.startswith("wh3_main_secondary_addon_landmark_") or r["remove"]:
+        if r["remove"]:
             continue
-        place = s[len("wh3_main_secondary_addon_landmark_"):]
         found = [r["chain"]] if r["chain"] else [k for k, c in bc.items() if c["building_superchain"] == r["super_chain"]]
-        for c in found:
-            if c in skaven_chains() and c in chains() and c not in out[place]:
+        members[r["set"]].extend(found)
+    out: dict[str, list[str]] = defaultdict(list)
+
+    def add(place: str, s: str) -> None:
+        for c in members.get(s, []):
+            if c in can and c in chains() and c not in out[place]:
                 out[place].append(c)
+    for s in members:
+        if s.startswith("wh3_main_secondary_addon_landmark_"):
+            add(s[len("wh3_main_secondary_addon_landmark_"):], s)
+    for r in _load("slot_template_permitted_building_chains_tables"):
+        m = LANDMARK_TEMPLATE.search(r.get("slot_template") or "")
+        if m and "_landmark_" in (r.get("chain_set") or "") and not r.get("remove"):
+            add(m.group(1), r["chain_set"])
     return dict(out)
 
 
