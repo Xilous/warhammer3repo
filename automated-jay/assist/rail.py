@@ -3,8 +3,8 @@ https://claude.ai/artifact/1FrWVzY4nT9yF1JEe94vF4).
 
 Two sizes (player feedback 2026-10-17: the full rail across the top centre was in the way):
   compact  (default) a small bar: the state, a row of step dots, the button that fits the moment
-  full     the whole rail, one labelled node per step (turn start | end of turn); shown while a pass runs and while
-           the cursor is over the bar
+  full     the whole rail, one labelled node per step (turn start | end of turn); shown only while a pass runs, so
+           the End Turn button never moves under the player's cursor
 It can be dragged anywhere; the spot is remembered (runs/rail.json). A click (no drag) toggles pause, or presses the
 button under it. Drawn on a Tk canvas; the window's corners are cut out with a transparent colour key. While a pass
 runs it lets clicks through and never takes focus (assist/app.py sets the window styles).
@@ -83,8 +83,6 @@ class TurnRail:
         self.cv.bind("<ButtonPress-1>", self._on_press)
         self.cv.bind("<B1-Motion>", self._on_drag)
         self.cv.bind("<ButtonRelease-1>", self._on_release)
-        self.cv.bind("<Enter>", lambda e: self._set_hover(True))
-        self.cv.bind("<Leave>", lambda e: self._set_hover(False))
         self.draw()
 
     # ---------------------------------------------------------------- model
@@ -99,7 +97,9 @@ class TurnRail:
 
     @property
     def full(self) -> bool:
-        return self.state == "automating" or self.hover
+        # only while automations run (player feedback 2026-10-17: expanding on hover moved the End Turn button
+        # away from the cursor); compact whenever the player has control
+        return self.state == "automating"
 
     # ---------------------------------------------------------------- position
     def _load_pos(self) -> tuple[int, int]:
