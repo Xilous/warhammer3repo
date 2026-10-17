@@ -24,6 +24,7 @@ import threading
 import time
 
 import pydirectinput
+import win32api
 import win32con
 import win32gui
 
@@ -207,8 +208,11 @@ def game_focus():
         # (player request 2026-10-17: "ensure I don't interrupt it"); bot/killswitch.py swallows their physical
         # mouse events meanwhile, Shift+Esc still works, and the hold ends here whatever happens
         outer = getattr(_tls, "depth", 0) == 0
+        cursor0 = None
         if outer:
             killswitch.hold_mouse(True)
+            cursor0 = win32gui.GetCursorPos()   # given back when the pass ends (player request 2026-10-17: "so that i
+                                                # dont get disoriented between turns")
         try:
             terminal_hwnd()                     # remember it before we take focus away
             g = game_hwnd()
@@ -244,4 +248,9 @@ def game_focus():
                         print("WARNING: could not return focus to the terminal")
         finally:
             if outer:
+                if cursor0 is not None:
+                    try:
+                        win32api.SetCursorPos(cursor0)
+                    except Exception:
+                        pass
                 killswitch.hold_mouse(False)
