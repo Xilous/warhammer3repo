@@ -55,12 +55,14 @@ it (bot/killswitch.py, armed by bot/focus.py): it lets go of the mouse buttons a
 spot, mid-click. Only a key press you make counts (the automation cannot trigger it), and the game does not see
 that Escape. Start the assistant again with run_assistant.bat.
 
-### If you touch the mouse or keyboard during a pass
+### Your mouse during a pass
 
-Right before every click the assistant checks that the cursor is still exactly where it aimed and that you did
-not just press a key. If you are using the mouse or keyboard, the pass holds still until you have left both
-alone for 1 s, then aims again: it never clicks where your cursor went. (After 2 minutes of you still going, the
-pass stops: INTERRUPTED.) The overlay's step lines say how often it paused for you.
+Before a pass the assistant waits until you have not **clicked** or pressed a key for 3 s; moving the mouse is
+fine. While the pass runs it **takes the mouse away from you**: your mouse moves and clicks are held back until
+it is done (its own clicks go through), so nothing can disturb it. The mouse comes back the moment the pass
+ends, after an error too, after 5 minutes at most whatever happens, and when the process ends. The keyboard
+stays yours: **Shift+Esc** still stops everything at once. Try the hold by hand with
+`python -X utf8 -m bot.killswitch 5`. If you press a key during a pass, the next click waits until you stop.
 
 **Verification.** After each step, the assistant runs the step once more. Every step plans from what memory
 shows, so a second run that changes nothing (gold, research, skill points, army units and queues) proves that

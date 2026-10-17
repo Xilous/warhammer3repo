@@ -371,11 +371,14 @@ class Runner:
         return open_()
 
     def wait_idle(self, turn, cancel) -> bool:
-        """Wait until the player has left mouse and keyboard alone for IDLE_SECONDS. False when cancelled."""
+        """Wait until the player has not clicked or pressed a key for IDLE_SECONDS (moving the mouse is fine: player
+        request 2026-10-17; the pass then takes the mouse away until it is done, bot/focus.game_focus). False when
+        cancelled."""
+        from bot import killswitch
         while not self.stop.is_set():
             if cancel():
                 return False
-            idle = idle_seconds()
+            idle = min(killswitch.physical_click_age(), killswitch.physical_key_age())
             if idle >= IDLE_SECONDS:
                 return True
             self.post("waiting", f"WAITING (turn {turn})", "waiting for you to stop clicking", turn=turn)

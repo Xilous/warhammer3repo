@@ -208,15 +208,15 @@ def _player_busy(at=None) -> bool:
 
 
 def yield_to_player(why: str = "") -> None:
-    """Hold still until the player has left mouse and keyboard alone for YIELD_IDLE_S (this process sends nothing
-    meanwhile, so the system's last-input time is theirs). InputAborted after YIELD_TIMEOUT_S or if they left the
-    game."""
+    """Hold still until the player has not clicked or pressed a key for YIELD_IDLE_S (moving the mouse is fine; and
+    while a pass holds the game their mouse is held too: bot/killswitch.py). InputAborted after YIELD_TIMEOUT_S or if
+    they left the game."""
     global PLAYER_YIELDS
     PLAYER_YIELDS += 1
     print(f"  pass paused: you are using the mouse/keyboard{f' ({why})' if why else ''}; it goes on when you stop",
           flush=True)
     end = time.monotonic() + YIELD_TIMEOUT_S
-    while idle_seconds() < YIELD_IDLE_S or killswitch.physical_key_age() < YIELD_IDLE_S:
+    while killswitch.physical_click_age() < YIELD_IDLE_S or killswitch.physical_key_age() < YIELD_IDLE_S:
         if time.monotonic() > end:
             raise InputAborted("you kept using the mouse/keyboard, so the pass stopped")
         time.sleep(0.05)

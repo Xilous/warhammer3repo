@@ -203,35 +203,45 @@ def _settle_after_raise() -> None:
 @contextlib.contextmanager
 def game_focus():
     with input_lock():
-        terminal_hwnd()                     # remember it before we take focus away
-        g = game_hwnd()
-        if not g:
-            raise RuntimeError("game window not found")
-        prev = win32gui.GetForegroundWindow()
-        depth = getattr(_tls, "depth", 0)
-        if prev == g:
-            # already in front (an outer game_focus owns the restore): do not hand focus back here
-            _tls.depth = depth + 1
+        # the outermost holder takes the mouse away from the player for as long as the assistant has the game
+        # (player request 2026-10-17: "ensure I don't interrupt it"); bot/killswitch.py swallows their physical
+        # mouse events meanwhile, Shift+Esc still works, and the hold ends here whatever happens
+        outer = getattr(_tls, "depth", 0) == 0
+        if outer:
+            killswitch.hold_mouse(True)
+        try:
+            terminal_hwnd()                     # remember it before we take focus away
+            g = game_hwnd()
+            if not g:
+                raise RuntimeError("game window not found")
+            prev = win32gui.GetForegroundWindow()
+            depth = getattr(_tls, "depth", 0)
+            if prev == g:
+                # already in front (an outer game_focus owns the restore): do not hand focus back here
+                _tls.depth = depth + 1
+                try:
+                    yield g
+                finally:
+                    _tls.depth = depth
+                return
+            if depth:
+                # inside a pass and the game has lost the front: the player switched windows. Never pull it back.
+                raise InputAborted("the game is not in front (you switched windows)")
+            back_to = prev if prev and win32gui.IsWindow(prev) else None
+            _tls.depth = 1
             try:
+                if not _raise(g):
+                    raise RuntimeError("could not bring the game to the front")
+                _settle_after_raise()
                 yield g
             finally:
-                _tls.depth = depth
-            return
-        if depth:
-            # inside a pass and the game has lost the front: the player switched windows. Never pull it back.
-            raise InputAborted("the game is not in front (you switched windows)")
-        back_to = prev if prev and win32gui.IsWindow(prev) else None
-        _tls.depth = 1
-        try:
-            if not _raise(g):
-                raise RuntimeError("could not bring the game to the front")
-            _settle_after_raise()
-            yield g
+                _tls.depth = 0
+                if win32gui.GetForegroundWindow() == g:     # otherwise the player already moved on: leave it there
+                    ok = _raise(back_to) if back_to else return_to_terminal()
+                    if not ok:
+                        ok = return_to_terminal()
+                    if not ok:
+                        print("WARNING: could not return focus to the terminal")
         finally:
-            _tls.depth = 0
-            if win32gui.GetForegroundWindow() == g:     # otherwise the player already moved on: leave it there
-                ok = _raise(back_to) if back_to else return_to_terminal()
-                if not ok:
-                    ok = return_to_terminal()
-                if not ok:
-                    print("WARNING: could not return focus to the terminal")
+            if outer:
+                killswitch.hold_mouse(False)
