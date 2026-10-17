@@ -74,7 +74,7 @@ def caverns(models) -> list[tuple]:
     return out
 
 
-def plan(w, F: int, models, blocked: dict, turn: int, off_list=()):
+def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=None, special=()):
     """-> (protected: set of (region, slot) the off-list rule must leave alone, build: (settlement, slot, demolish
     first?) to build a Cavern in or None, note: str or None). off_list: (settlement, slot) of off-list buildings the
     building step is about to replace anyway: with no free slot, the Cavern takes one of those slots first."""
@@ -115,4 +115,25 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=()):
         st = o.slot_states[idx]                           # (a Cavern only fits a secondary slot, never the port)
         if o.province not in blocked and st.type == "secondary" and not st.constructing:
             return protected, (o, idx, True), None
-    return protected, None, "a Construction Cavern is needed (workshop level 2) but no managed settlement has a free slot"
+    # worst case (player rule 2026-10-17): temporarily replace the lowest-priority building on the settlement list
+    # (lowest level on a tie) in a managed settlement; once the Cavern has counted, the off-list rule puts the
+    # planned building back
+    worst = None
+    if priority_of is not None:
+        for p, owned in models.items():
+            if p in blocked:
+                continue
+            for o in owned:
+                for idx, s in enumerate(o.slot_states):
+                    if idx == 0 or s.type != "secondary" or not s.building or s.constructing:
+                        continue
+                    if any(k in s.building for k in special):
+                        continue
+                    rank = priority_of(o, s.building)
+                    key = (rank, -(s.level or 0))
+                    if worst is None or key > worst[0]:
+                        worst = (key, o, idx)
+    if worst:
+        _key, o, idx = worst
+        return protected, (o, idx, True), None
+    return protected, None, "a Construction Cavern is needed (workshop level 2) but no managed settlement has a slot for it"

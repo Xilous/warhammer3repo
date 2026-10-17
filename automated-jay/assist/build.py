@@ -559,7 +559,12 @@ def run(log=print, override_blocked: bool = False) -> str:
         #    2026-10-17; assist/workshop.py), kept away from the off-list rule until its requirement has counted
         from . import workshop
         off_list = [(o, i) for o, a, _b in todo if a.kind == "replace" for i in [slot_index_for(o, a)] if i is not None]
-        protected, target, note = workshop.plan(w, snap.faction, models, blocked, w.s.read().turn, off_list)
+        def priority_of(o, building):                 # higher = lower priority on the settlement list
+            order = [t.chain for t in plan_targets(o)]
+            lv = level_of(building)
+            return order.index(lv[0]) if lv and lv[0] in order else len(order)
+        protected, target, note = workshop.plan(w, snap.faction, models, blocked, w.s.read().turn, off_list,
+                                                priority_of=priority_of, special=SPECIAL)
         if note:
             problems.append(f"workshop: {note}")
         if target is not None:
@@ -572,7 +577,8 @@ def run(log=print, override_blocked: bool = False) -> str:
             elif ui_open_province(ui, o) and (slot := ui_slot(ui, w, o, idx)) is not None and (
                     not demolish or (ui_demolish(ui, w, o, idx, slot) and (slot := ui_slot(ui, w, o, idx)) is not None))                     and ui_construct(ui, w, S, slot, workshop.CAVERN, workshop.CAVERN_CHAIN):
                 if demolish:
-                    done.append(f"{gd.place_name(o.region)}: demolished {gd.level_name(old)} (not on your list)")
+                    done.append(f"{gd.place_name(o.region)}: demolished {gd.level_name(old)} (for the Cavern; "
+                                f"rebuilt after it)")
                 gold -= lv.cost
                 protected.add((o.region, idx))
                 done.append(f"{gd.place_name(o.region)}: Construction Cavern (for the Forbidden Workshop, "

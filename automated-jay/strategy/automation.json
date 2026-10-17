@@ -8,8 +8,18 @@
   "close_notices_during_turn": true,
   "_close_notices_during_turn": "During your own turn, event notices are closed as they come (never decisions), only while the game is the window in front (player request, 2026-10-17).",
   "schedule": {
-    "turn_start": ["rites", "tech", "skills"],
-    "end_turn": ["rites", "tech", "skills", "buildings", "army"],
+    "turn_start": [
+      "rites",
+      "tech",
+      "skills"
+    ],
+    "end_turn": [
+      "rites",
+      "tech",
+      "skills",
+      "buildings",
+      "army"
+    ],
     "_doc": "turn_start runs when your turn starts. end_turn runs when you press Build & End Turn in the app, right before it presses End Turn, so settlements taken during the turn are built on the same turn (player decision, 2026-10-16). Buildings stay before the army step: buildings take precedence for the gold. If a turn is ended in the game instead, the next turn start runs the end_turn steps too. Tech and skills run at both (2026-10-17): on a campaign's first turn there is no turn start to act on, so research would wait a whole turn, and unspent skill points make the game stop at its End Turn warning (it opens the character panel instead of ending the turn); with nothing to do both steps send no input. rites (commandments + the Dominating Scheme, assist/rites.py) goes first at both: it must be cast before buildings and the army spend the gold (player rule, 2026-10-17). Step names: rites, tech, skills, buildings, army."
   },
   "never_during_battle": true,
@@ -17,7 +27,9 @@
     "order": "beeline then cheapest",
     "beeline_source": "../tww/skv_beeline.json (targets, in order)",
     "after_beeline": "cheapest remaining tech first",
-    "first": ["wh2_main_tech_skv_1_0"],
+    "first": [
+      "wh2_main_tech_skv_1_0"
+    ],
     "_first": "Researched before the beeline, in this order (player build adjustment, 2026-10-17: Ferocious Plans first). Tech keys, as in the game data."
   },
   "buildings": {
@@ -28,6 +40,8 @@
     "_repair_rule": "Damaged buildings are repaired before any construction or upgrade, but the war block applies to repairs too: no repairs in a province that borders a faction we are at war with or is partly enemy-held (player decision, 2026-10-16).",
     "gold_reserve": 0,
     "off_list_buildings": "replace",
+    "_ports_and_specials": "Never replaced: the port of a port settlement is kept (adopted) whatever it is, a unique port too, and so is the main building; special buildings (landmarks, legendary or unique buildings) are kept as well. Only normal slots are replaced (player rule, 2026-10-17).",
+    "_workshop": "At Forbidden Workshop level 1 a Construction Cavern is kept standing for level 2 (the 3rd Stormfiend Ratling Cannon upgrade): built in a free slot, else an off-list building's slot, else in place of the lowest-priority building on the list; removed the turn after it has counted (player rule, 2026-10-17).",
     "_off_list_buildings": "replace: in a province the assistant manages (not frontline), a building that is not on the settlement list is demolished and the planned one is built in its slot; frontline provinces stay entirely yours (player rule, 2026-10-17). ask: leave such buildings alone."
   },
   "skills": {
@@ -39,6 +53,11 @@
       {
         "cqi": 2492,
         "name": "army 2"
+      },
+      {
+        "cqi": 2141,
+        "name": "Chant",
+        "general_id": 3384
       }
     ],
     "_doc": [
