@@ -60,7 +60,8 @@ STEP_FNS = {
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
-DEFAULT_SCHEDULE = {"turn_start": ["tech", "skills"], "end_turn": ["buildings", "army"]}
+DEFAULT_SCHEDULE = {"turn_start": ["tech", "skills"], "end_turn": ["tech", "buildings", "army"]}   # tech at both: a
+# campaign's first turn has no turn start to act on (player decision 2026-10-17); with research running it is free
 AUTOMATION = config.STRATEGY_DIR / "automation.json"
 
 

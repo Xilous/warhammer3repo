@@ -79,8 +79,9 @@ walk orders are not issued twice.
    says **DECISION NEEDED** and nothing is clicked. Once you close the popup, the pass starts (it checks every 2 s).
 3. **The pass**, in this order. Each step is independent: one that fails is reported and the next still runs.
    Which steps run at turn start and which at **Build & End Turn** is set in `strategy/automation.json`
-   (`schedule`). By default only Tech and Skills run at turn start; Buildings and Army run when you press
-   **Build & End Turn**, so settlements you take during the turn are built on the same turn. If you end a
+   (`schedule`). By default Tech and Skills run at turn start; Tech, Buildings and Army run when you press
+   **Build & End Turn**, so settlements you take during the turn are built on the same turn, and research is set
+   on a campaign's very first turn too (there is no turn start to act on there). If you end a
    turn in the game instead, the next turn start runs Buildings and Army too, so nothing waits a turn.
    1. **Tech**: if research is idle, start the next tech on the bee-line, after that the cheapest remaining one.
    2. **Skills**: spend skill points on Ikit Claw, Verminlord Warpseers and Warlock Engineers in your order.
@@ -106,7 +107,7 @@ INTERRUPTED. Clicking the overlay toggles pause, except while automating (then c
 | Part | What it does |
 |---|---|
 | Status line | the same headline as the overlay |
-| **Build & End Turn** | for when you are done with your turn: runs the end-of-turn steps (repairs, buildings, upgrades, then the army builder) and then presses the game's End Turn. It does not wait for idle (you asked), but it checks it is your turn and leaves any decision popup to you; if a step is interrupted or the game asks you something, the turn is **not** ended. |
+| **Build & End Turn** | for when you are done with your turn: runs the end-of-turn steps (tech if research is idle, repairs, buildings, upgrades, then the army builder) and then presses the game's End Turn. It does not wait for idle (you asked), but it checks it is your turn and leaves any decision popup to you; if a step is interrupted or the game asks you something, the turn is **not** ended. |
 | **Run now** | one full pass for the current turn, right away. It still checks that it is your turn and waits for 3 s without input. Use it after INTERRUPTED, SKIPPED or ERROR, after loading a save, or for a turn you paused through. |
 | **Pause / Resume** | while paused, turn starts are skipped (the overlay says so). Resuming does not redo a skipped turn; Run now does. |
 | Turn and treasury | read from memory every 4 s |
