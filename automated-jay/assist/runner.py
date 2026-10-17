@@ -60,8 +60,9 @@ STEP_FNS = {
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
-DEFAULT_SCHEDULE = {"turn_start": ["tech", "skills"], "end_turn": ["tech", "buildings", "army"]}   # tech at both: a
-# campaign's first turn has no turn start to act on (player decision 2026-10-17); with research running it is free
+DEFAULT_SCHEDULE = {"turn_start": ["tech", "skills"], "end_turn": ["tech", "skills", "buildings", "army"]}
+# tech and skills at both: a campaign's first turn has no turn start to act on (2026-10-17), and unspent skill points
+# make End Turn stop at the game's warning; with nothing to do they send no input
 AUTOMATION = config.STRATEGY_DIR / "automation.json"
 
 
@@ -301,7 +302,7 @@ class Runner:
                 self.end_done = (self.model, turn)
             self.post("waiting" if ended else "error", f"TURN {turn} ENDED" if ended else f"TURN {turn} NOT ENDED",
                       "\n".join(done + ["End Turn pressed: the other factions are moving" if ended else
-                                        "End Turn was pressed but the turn did not end: a warning may need you"]),
+                                        f"turn not ended: {getattr(self, 'end_turn_problem', '')}"]),
                       turn=turn)
         except InputAborted as ex:
             self.post("error", f"INTERRUPTED (turn {turn})",
@@ -319,12 +320,50 @@ class Runner:
         from tools import wait
         from tools.ui import click
         with game_focus():
+            # Player report 2026-10-17: End Turn was clicked while Ikit's skill page was still open. Close every
+            # panel a step (or the game's own End Turn warning) left open first, and click only on the bare map.
+            left = self.close_panels()
+            if left:
+                self.end_turn_problem = f"could not close {', '.join(left)}"
+                return False
             b = self.ui.cached("button_end_turn", under="hud_campaign")
             if b is None:
+                self.end_turn_problem = "the End Turn button is not shown"
                 return False
+            before = {cid for _c, cid in self.ui.root_children()}
             click(self.ui, b)
-            return bool(wait.wait_until(lambda: self.mem.read().turn != turn or not players_turn(self.ui)[0], 3.0,
-                                        "the turn ends", must=False))
+            if wait.wait_until(lambda: self.mem.read().turn != turn or not players_turn(self.ui)[0], 3.0,
+                               "the turn ends", must=False):
+                return True
+            # the game stops at its End Turn warnings (unspent skill points, armies that can still move, ...) and
+            # opens the panel concerned instead of ending the turn: say which
+            opened = sorted({cid for _c, cid in self.ui.root_children()} - before)
+            self.end_turn_problem = ("the game stopped at an End Turn warning and opened " + ", ".join(opened)
+                                     if opened else "the game did not end the turn (an End Turn warning?)")
+            return False
+
+    def close_panels(self) -> list[str]:
+        """Close the full-screen panels (character details, settlement, technology, recruitment) with Escape, one at a
+        time, each confirmed gone in the UI tree; the game menu that Escape opens when nothing was open is resumed.
+        Returns what is still open (empty = the bare campaign map). Game in front."""
+        from tools import wait
+        from tools.ui import click, press
+        closable = ("character_details_panel", "settlement_panel", "technology_panel", "recruitment_docker",
+                    "units_recruitment")
+        open_ = lambda: [cid for _c, cid in self.ui.root_children() if cid in closable]
+        for _ in range(6):
+            now = open_()
+            if not now:
+                break
+            press("esc")
+            wait.wait_until(lambda: open_() != now, 1.0, f"{now[0]} closed", must=False)
+            menu = self.ui.root_child("esc_menu")
+            if menu:
+                r = self.ui.first("button_resume", under=menu)
+                if r:
+                    click(self.ui, r)
+                    wait.gone(self.ui, menu, timeout=1.0, must=False, what="game menu closed")
+        return open_()
 
     def wait_idle(self, turn, cancel) -> bool:
         """Wait until the player has left mouse and keyboard alone for IDLE_SECONDS. False when cancelled."""
