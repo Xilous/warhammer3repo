@@ -104,27 +104,14 @@ class App:
                                  font=("Segoe UI", 9), wraplength=600)
         self.prov_lbl.pack(fill="x")
 
-        # overlay over the game
-        self.overlay = tk.Toplevel(self.root)
-        self.overlay.overrideredirect(True)
-        self.overlay.attributes("-topmost", True)
-        self.overlay.attributes("-alpha", 0.92)
-        self.overlay.geometry("+10+72")
-        self.ov_frame = tk.Frame(self.overlay, padx=10, pady=6)
-        self.ov_frame.pack()
-        self.ov_title = tk.Label(self.ov_frame, font=("Segoe UI", 12, "bold"), anchor="w")
-        self.ov_title.pack(fill="x")
-        self.ov_detail = tk.Label(self.ov_frame, font=("Segoe UI", 9), anchor="w", justify="left", wraplength=320)
-        self.ov_detail.pack(fill="x")
-        self.ov_end = None
-        if on_end_turn is not None:                    # reachable without leaving the game (the overlay never takes
-            self.ov_end = tk.Button(self.ov_frame, text="Build & End Turn", command=self._end_turn,   # focus)
-                                    font=("Segoe UI", 9, "bold"), relief="raised", bd=1, padx=8, pady=1,
-                                    bg="#3b3b3b", fg="#f0f0f0", activebackground="#5a5a5a", cursor="hand2")
-            self.ov_end.pack(anchor="w", pady=(4, 0))
-        # a binding on the toplevel already fires for every widget in it (bindtags): binding the children as well
-        # toggled pause twice per click, i.e. not at all. Clicks on the End Turn button are not a pause.
-        self.overlay.bind("<Button-1>", lambda e: None if e.widget is self.ov_end else self._pause())
+        # overlay over the game: the Turn rail (assist/rail.py; the player's pick of the designs, 2026-10-17).
+        # Its button is reachable without leaving the game (the overlay never takes focus); a click elsewhere on it
+        # toggles pause.
+        from .rail import TurnRail
+        self.rail = TurnRail(self.root, on_pause=self._pause,
+                             on_end_turn=self._end_turn if on_end_turn is not None else None,
+                             on_run_now=self._run_now)
+        self.overlay = self.rail.win
         self.ov_hwnd = 0
         self.root.after(100, self._overlay_ready)
 
@@ -135,6 +122,9 @@ class App:
     def post(self, state: str, headline: str, detail: str = "") -> None:
         self._overlay_style(click_through=state == "automating")     # now, not at the next poll: clicks follow
         self.q.put(("status", state, headline, detail))
+
+    def post_steps(self, steps: dict[str, str]) -> None:
+        self.q.put(("steps", steps))
 
     def post_log(self, lines: list[str]) -> None:
         self.q.put(("log", lines))
@@ -185,12 +175,9 @@ class App:
                     _, state, headline, detail = msg
                     bg, fg = COLORS.get(state, COLORS["waiting"])
                     self.state_lbl.configure(text=headline, fg=fg)
-                    for wdg in (self.ov_frame, self.ov_title, self.ov_detail, self.overlay):
-                        wdg.configure(bg=bg)
-                    self.ov_title.configure(text=headline, fg=fg)
-                    self.ov_detail.configure(text=nice(detail), fg="#e8e8e8")
-                    if self.ov_end is not None:        # not while a pass is clicking (the overlay lets clicks through)
-                        self.ov_end.configure(state="disabled" if state == "automating" else "normal")
+                    self.rail.set_status(state, headline, nice(detail))
+                elif kind == "steps":
+                    self.rail.set_steps(msg[1])
                 elif kind == "log":
                     self._show_log(msg[1])
                 elif kind == "paused":

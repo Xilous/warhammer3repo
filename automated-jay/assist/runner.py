@@ -198,6 +198,7 @@ class Runner:
         self.phases: dict[str, float] = {}    # pre-pass phase times for the timing log
         self.turn_seen_at: float | None = None
         self._last_post = None
+        self.rail_steps: dict[str, str] = {}  # the overlay's Turn rail: step -> done/active/pending/later/failed
         config.RUNS_DIR.mkdir(exist_ok=True)
         self.log = open(config.RUNS_DIR / f"assistant-{datetime.now():%Y%m%d}.jsonl", "a", encoding="utf-8")
 
@@ -211,6 +212,17 @@ class Runner:
         write_state(state, headline, detail, turn)
         if self.widget:
             self.widget.post(state, headline, detail)
+
+    def rail(self, reset: bool = False, **changes) -> None:
+        """The overlay's Turn rail (assist/rail.py): one status per step. reset: a new turn (end-of-turn steps
+        "later", the rest pending)."""
+        if reset:
+            end = set(schedule()["end_turn"]) - set(schedule()["turn_start"]) | {"end"}
+            self.rail_steps = {k: ("later" if k in end else "pending")
+                               for k in ("events", "rites", "tech", "skills", "buildings", "army", "end")}
+        self.rail_steps.update(changes)
+        if self.widget and hasattr(self.widget, "post_steps"):
+            self.widget.post_steps(dict(self.rail_steps))
 
     def offer_ignore(self, ids: list[str]) -> None:
         if self.widget and hasattr(self.widget, "post_ignorable"):
@@ -303,6 +315,7 @@ class Runner:
             ended = self.press_end_turn(turn)
             if ended:
                 self.end_done = (self.model, turn)
+                self.rail(end="done")
             self.post("waiting" if ended else "error", f"TURN {turn} ENDED" if ended else f"TURN {turn} NOT ENDED",
                       "\n".join(done + ["End Turn pressed: the other factions are moving" if ended else
                                         f"turn not ended: {getattr(self, 'end_turn_problem', '')}"]),
@@ -527,7 +540,9 @@ class Runner:
         from tools import ui as ui_input
         yields0, suspect0 = ui_input.PLAYER_YIELDS, ui_input.SUSPECT_CLICKS
         try:
+            self.rail(events="done")
             for name in names:
+                self.rail(**{name: "active"})
                 with timing.step(name):
                     try:
                         result = self._call(name)
@@ -538,6 +553,7 @@ class Runner:
                         traceback.print_exc()
                     timing.set_result(result)
                 result = f"{result} | {self._verify(name)}"
+                self.rail(**{name: "failed" if result.startswith("ERROR") else "done"})
                 done.append(f"{name}: {result}")
                 self.post("automating", f"AUTOMATING turn {turn}", "\n".join(done), turn=turn)
             waited = ui_input.PLAYER_YIELDS - yields0
@@ -599,6 +615,7 @@ class Runner:
             self.gate_since = None
             self.turn_seen_at = time.monotonic()
             self.phases = {}
+            self.rail(reset=True)
             if self.paused:
                 self.post("paused", f"PAUSED (turn {s.turn})", "skipped this turn's automations")
             elif self.done_turn != s.turn:                  # Run now may already have done it
