@@ -23,9 +23,15 @@ LOG_MAX_LINES = 18
 
 
 def _version() -> str:
-    """The commit this copy runs (from the repo; the exe has no git): shown in the window title."""
+    """The commit this copy runs (from the repo), or the exe's release name: shown in the window title."""
     import subprocess
     from bot import config
+    if config.FROZEN:
+        try:
+            return (config.BUNDLE / "data" / "release.txt").read_text(encoding="utf-8").strip().replace(
+                "automated-jay-", "")
+        except OSError:
+            return ""
     try:
         out = subprocess.run(["git", "-C", str(config.ROOT), "log", "-1", "--format=%h %cd", "--date=format:%H:%M"],
                              capture_output=True, text=True, timeout=3, creationflags=0x08000000)
