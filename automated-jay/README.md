@@ -55,14 +55,17 @@ it (bot/killswitch.py, armed by bot/focus.py): it lets go of the mouse buttons a
 spot, mid-click. Only a key press you make counts (the automation cannot trigger it), and the game does not see
 that Escape. Start the assistant again with run_assistant.bat.
 
-### Your mouse during a pass
+### Your mouse and keyboard during a pass
 
-Before a pass the assistant waits until you have not **clicked** or pressed a key for 3 s; moving the mouse is
-fine. While the pass runs it **takes the mouse away from you**: your mouse moves and clicks are held back until
-it is done (its own clicks go through), so nothing can disturb it. The mouse comes back the moment the pass
-ends, after an error too, after 5 minutes at most whatever happens, and when the process ends. The keyboard
-stays yours: **Shift+Esc** still stops everything at once. Try the hold by hand with
-`python -X utf8 -m bot.killswitch 5`. If you press a key during a pass, the next click waits until you stop.
+A pass starts as soon as it is really your turn: it does not wait for you to stop clicking. While it runs it
+**takes mouse and keyboard away from you**: your moves, clicks and key presses are held back until it is done
+(its own input goes through), so nothing can interrupt it. When it ends, the cursor is put back where you left
+it and both come back to you; also after an error, after 5 minutes at most whatever happens, and when the
+process ends. **Shift+Esc** always gets through and stops everything at once. Try the hold by hand with
+`python -X utf8 -m bot.killswitch 5`.
+
+Popups still open at the start or end of a pass are recorded in `runs/popups_seen.jsonl` (id, buttons, texts),
+so a notice the assistant leaves open can be taught to it.
 
 **Verification.** After each step, the assistant runs the step once more. Every step plans from what memory
 shows, so a second run that changes nothing (gold, research, skill points, army units and queues) proves that
@@ -75,7 +78,7 @@ walk orders are not issued twice.
 
 1. The assistant sees the turn counter go up. It waits until it really is your turn (End Turn button shown and
    enabled, no AI-turn panel; in sequential multiplayer, once the others are done), lets the turn start settle
-   for 4 s, and then waits until you have left the mouse and keyboard alone for **3 s**.
+   (camera still, no panel coming or going), then takes over at once.
 2. **Popups.** Event notices are closed. Anything that needs a decision is **always left to you**: diplomacy
    offers, battles, dilemmas, confirmation boxes, the game menu, and any panel it does not recognise. The overlay
    says **DECISION NEEDED** and nothing is clicked. Once you close the popup, the pass starts (it checks every 2 s).

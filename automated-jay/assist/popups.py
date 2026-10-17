@@ -155,6 +155,24 @@ def dismiss_events(ui: UI | None = None) -> list[str]:
     return closed
 
 
+def log_open(ui: UI, turn, where: str) -> None:
+    """Append every popup still open to runs/popups_seen.jsonl: its id, buttons and texts, and how the rules here
+    see it. Player report 2026-10-17: some turn-start notices were left open; this tells which, next time."""
+    import time as _t
+    rows = []
+    for c, cid in scan(ui):
+        rows.append({"id": cid, "event": is_event(cid), "choice": needs_choice(ui, c),
+                     "buttons": sorted({n for _b, n, _r in ui.nodes(c) if n.startswith("button")})[:20],
+                     "texts": [t for b, _n, _r in ui.nodes(c) if (t := ui.text(b)) and len(t) < 120][:8]})
+    if not rows:
+        return
+    try:
+        with open(config.RUNS_DIR / "popups_seen.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps({"t": _t.time(), "turn": turn, "where": where, "open": rows}, ensure_ascii=False) + chr(10))
+    except OSError:
+        pass
+
+
 def open_decisions(ui: UI | None = None) -> list[tuple[str, str, bool]]:
     """(id, description, ignorable) for each open popup that needs the player. Only unknown panels can be
     ignored: diplomacy offers, battles, dilemmas and message boxes always wait for the player."""

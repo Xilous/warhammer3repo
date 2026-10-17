@@ -260,8 +260,6 @@ class Runner:
             if not ok:
                 self.post("waiting", f"WAITING (turn {s.turn})", f"Run now: not your turn ({why})", turn=s.turn)
                 return
-            if not self.wait_idle(s.turn, cancel=lambda: False):
-                return
             pre, need = self.check_popups()
             if need:
                 self.post_decisions(s.turn, need, prefix="Run now: ")
@@ -415,6 +413,7 @@ class Runner:
         itself fails (the caller then skips the pass rather than clicking into an unknown screen)."""
         from . import popups
         closed = popups.dismiss_events(self.ui)
+        popups.log_open(self.ui, self.last_turn, "turn start")
         need = popups.open_decisions(self.ui)
         lines = []
         if closed:
@@ -556,6 +555,16 @@ class Runner:
                 self.rail(**{name: "failed" if result.startswith("ERROR") else "done"})
                 done.append(f"{name}: {result}")
                 self.post("automating", f"AUTOMATING turn {turn}", "\n".join(done), turn=turn)
+            from . import popups
+            try:                                        # notices that arrived during the pass, then a record of
+                late = popups.dismiss_events(self.ui)   # anything still open (to teach the popup rules)
+                if late:
+                    done.append(f"closed {len(late)} late notice{'s' if len(late) > 1 else ''}")
+                popups.log_open(self.ui, turn, "after pass")
+            except InputAborted:
+                raise
+            except Exception:
+                traceback.print_exc()
             waited = ui_input.PLAYER_YIELDS - yields0
             if waited:
                 done.append(f"paused {waited}x while you used the mouse/keyboard"
@@ -658,10 +667,8 @@ class Runner:
             if not ok:
                 self.gate_since = None
                 return
-        t_idle = time.monotonic()
-        if not self.wait_idle(turn, cancel=lambda: self.paused):
-            return
-        self.phases["idle"] = time.monotonic() - t_idle
+        # no wait for the player to stop clicking (player request 2026-10-17): the pass takes mouse and keyboard at
+        # once (bot/focus.game_focus) and gives them back, cursor where it was, when it is done
         if not self.busy.acquire(blocking=False):
             return                                          # Run now is doing a pass right now
         try:

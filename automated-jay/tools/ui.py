@@ -204,6 +204,8 @@ def _player_busy(at=None) -> bool:
         cx, cy = win32api.GetCursorPos()
         if abs(cx - at[0]) > CURSOR_SLACK_PX or abs(cy - at[1]) > CURSOR_SLACK_PX:
             return True
+    if killswitch.mouse_held():                 # mouse and keyboard are held for the pass: nothing reaches the game
+        return False
     return killswitch.physical_key_age() < YIELD_IDLE_S
 
 

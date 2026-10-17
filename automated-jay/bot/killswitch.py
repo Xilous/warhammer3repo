@@ -41,6 +41,7 @@ VK_ESCAPE, VK_SHIFT = 0x1B, 0x10
 LLKHF_INJECTED = 0x10
 KEYEVENTF_KEYUP = 0x0002
 MOUSEEVENTF_LEFTUP, MOUSEEVENTF_RIGHTUP, MOUSEEVENTF_MIDDLEUP = 0x0004, 0x0010, 0x0040
+SHIFT_VKS = (0x10, 0xA0, 0xA1)    # Shift, left Shift, right Shift
 RELEASE_VKS = (0x57, 0x41, 0x53, 0x44, 0x11, 0x12)        # W A S D Ctrl Alt (Shift is the player's own key)
 
 _user32 = ctypes.WinDLL("user32", use_last_error=True)
@@ -71,6 +72,7 @@ _kernel32.GetModuleHandleW.restype = wintypes.HMODULE
 
 _installed = False
 _last_key = 0.0                   # time.monotonic() of the player's last physical key event
+_shift_down = False               # the player's Shift, from the hook itself (held input never updates key state)
 _last_click = 0.0                 # ... and of their last physical mouse button / wheel event
 _hold_until = 0.0                 # while time.monotonic() < this, the player's physical mouse events are swallowed
 _mproc = None
@@ -104,7 +106,9 @@ def physical_click_age() -> float:
 
 
 def hold_mouse(on: bool, seconds: float = HOLD_MAX_S) -> None:
-    """Take the mouse away from the player (their physical moves and clicks are swallowed) or give it back."""
+    """Take mouse and keyboard away from the player (their physical moves, clicks and key presses are swallowed;
+    releases pass, and Shift+Esc always works) or give them back. Player request 2026-10-17: a pass must not be
+    interruptible, the turn-start one included."""
     global _hold_until
     _hold_until = time.monotonic() + min(seconds, HOLD_MAX_S) if on else 0.0
 
@@ -131,17 +135,21 @@ def physical_key_age() -> float:
 
 
 def _on_key(n_code, w_param, l_param):
-    global _last_key
+    global _last_key, _shift_down
     if n_code == 0:
         k = ctypes.cast(l_param, ctypes.POINTER(KBDLLHOOKSTRUCT)).contents
-        if not k.flags & LLKHF_INJECTED:
+        physical = not k.flags & LLKHF_INJECTED
+        down = w_param in (WM_KEYDOWN, WM_SYSKEYDOWN)
+        if physical:
             _last_key = time.monotonic()        # the player is at the keyboard (tools/ui.py yields to them)
-    if n_code == 0 and w_param in (WM_KEYDOWN, WM_SYSKEYDOWN):
-        k = ctypes.cast(l_param, ctypes.POINTER(KBDLLHOOKSTRUCT)).contents
-        if (k.vkCode == TRIGGER_VK and _user32.GetAsyncKeyState(VK_SHIFT) & 0x8000
-                and (TEST or not k.flags & LLKHF_INJECTED)):
+            if k.vkCode in SHIFT_VKS:           # tracked here: while held, Shift never reaches the system
+                _shift_down = down
+        if down and k.vkCode == TRIGGER_VK and (TEST or physical) and (
+                _shift_down or _user32.GetAsyncKeyState(VK_SHIFT) & 0x8000):
             _fire()
             return 1
+        if physical and down and time.monotonic() < _hold_until:
+            return 1                            # the assistant has the game: the player's keys wait (releases pass)
     return _user32.CallNextHookEx(None, n_code, w_param, l_param)
 
 
