@@ -229,6 +229,23 @@ class Runner:
         if self.widget and hasattr(self.widget, "post_ignorable"):
             self.widget.post_ignorable(ids)
 
+    def restart(self) -> None:
+        """The app's Restart (player request 2026-10-17): start a fresh copy of the assistant, which loads the latest
+        code and settings, and end this one. Never while a pass runs. The new copy starts "mid-turn" (acts from the
+        next turn start; Run now / Build & End Turn work at once)."""
+        import os
+        import subprocess
+        if not self.busy.acquire(blocking=False):
+            self.post("waiting", "RESTART LATER", "a pass is running: press Restart again when it is done")
+            return
+        if config.FROZEN:
+            cmd = [sys.executable] + sys.argv[1:]
+        else:
+            cmd = [sys.executable, "-X", "utf8", "-m", "assist.runner"] + sys.argv[1:]
+        print(f"[{datetime.now():%H:%M:%S}] RESTART: starting a fresh copy", flush=True)
+        subprocess.Popen(cmd, cwd=str(config.ROOT), creationflags=subprocess.CREATE_NEW_CONSOLE)
+        os._exit(0)
+
     def toggle_pause(self) -> None:
         self.paused = not self.paused
         if self.widget and hasattr(self.widget, "post_paused"):
@@ -745,7 +762,8 @@ def main() -> int:
     from .app import App
     holder: dict = {}
     app = App(on_pause=lambda: holder["r"].toggle_pause(), on_run_now=lambda: holder["r"].run_now(),
-              on_ignore=lambda cid: holder["r"].ignore(cid), on_end_turn=lambda: holder["r"].end_turn_now())
+              on_ignore=lambda cid: holder["r"].ignore(cid), on_end_turn=lambda: holder["r"].end_turn_now(),
+              on_restart=lambda: holder["r"].restart())
     r = Runner(widget=app)
     holder["r"] = r
     threading.Thread(target=r.loop, daemon=True).start()

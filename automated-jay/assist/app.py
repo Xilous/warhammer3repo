@@ -22,6 +22,18 @@ REFRESH_MS = 4000
 LOG_MAX_LINES = 18
 
 
+def _version() -> str:
+    """The commit this copy runs (from the repo; the exe has no git): shown in the window title."""
+    import subprocess
+    from bot import config
+    try:
+        out = subprocess.run(["git", "-C", str(config.ROOT), "log", "-1", "--format=%h %cd", "--date=format:%H:%M"],
+                             capture_output=True, text=True, timeout=3, creationflags=0x08000000)
+        return out.stdout.strip() if out.returncode == 0 else ""
+    except Exception:
+        return ""
+
+
 def nice(text: str) -> str:
     """Replace game keys (regions, provinces, factions) with their in-game names."""
     import re
@@ -52,16 +64,17 @@ def last_logged_turn() -> list[str]:
 
 
 class App:
-    def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None) -> None:
+    def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None, on_restart=None) -> None:
         self.q: queue.Queue = queue.Queue()
         self.on_pause = on_pause
         self.on_run_now = on_run_now
         self.on_ignore = on_ignore
         self.on_end_turn = on_end_turn
+        self.on_restart = on_restart
         self._world = None                         # one sensor for every refresh (bot/sensor/world.py World)
         self._refreshing = threading.Lock()
         self.root = tk.Tk()
-        self.root.title("automated-jay   (Shift+Esc = emergency stop)")
+        self.root.title(f"automated-jay {_version()}   (Shift+Esc = emergency stop)")
         self.root.geometry("640x720+60+60")
         self.root.configure(bg="#1d1f1d")
         style = ttk.Style(self.root)
@@ -78,6 +91,8 @@ class App:
         self.state_lbl.pack(side="left")
         self.pause_btn = ttk.Button(top, text="Pause", command=self._pause)
         self.pause_btn.pack(side="right", padx=4)
+        if on_restart is not None:                 # a fresh copy with the latest code and settings
+            ttk.Button(top, text="Restart", command=self._restart).pack(side="right", padx=4)
         ttk.Button(top, text="Run now", command=self._run_now).pack(side="right", padx=4)
         if on_end_turn is not None:                # buildings + army, then the game's End Turn (runner.end_turn_now)
             ttk.Button(top, text="Build & End Turn", command=self._end_turn).pack(side="right", padx=4)
@@ -141,6 +156,9 @@ class App:
 
     def _run_now(self) -> None:
         threading.Thread(target=self.on_run_now, daemon=True).start()
+
+    def _restart(self) -> None:
+        threading.Thread(target=self.on_restart, daemon=True).start()
 
     def _end_turn(self) -> None:
         threading.Thread(target=self.on_end_turn, daemon=True).start()
