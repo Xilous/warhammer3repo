@@ -27,7 +27,8 @@
     "repair_damaged": true,
     "_repair_rule": "Damaged buildings are repaired before any construction or upgrade, but the war block applies to repairs too: no repairs in a province that borders a faction we are at war with or is partly enemy-held (player decision, 2026-10-16).",
     "gold_reserve": 0,
-    "off_list_buildings": "ask"
+    "off_list_buildings": "replace",
+    "_off_list_buildings": "replace: in a province the assistant manages (not frontline), a building that is not on the settlement list is demolished and the planned one is built in its slot; frontline provinces stay entirely yours (player rule, 2026-10-17). ask: leave such buildings alone."
   },
   "skills": {
     "orders": "skills.json",

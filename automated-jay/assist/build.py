@@ -122,7 +122,8 @@ def _actions(models, blocked: dict, override_blocked: bool = False):
             o = by_name[sp.settlement.name]
             busy = any(s.constructing for s in o.slot_states)
             for a in sp.actions:
-                if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade"):
+                if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade") or (
+                        a.kind == "replace" and buildings_setting("off_list_buildings", "ask") == "replace"):
                     todo.append((o, a, busy))
     return todo, skipped
 
@@ -427,6 +428,35 @@ class Repair:
     estimate: int          # level cost x damaged fraction: the game's price, or above it where a local discount applies
 
 
+def slot_building(w: World, o, idx: int) -> str | None:
+    """The building in o's slot idx, from a fresh read of memory (None: the slot is empty)."""
+    models, _ = build_models(w, snapshot(w))
+    o2 = next((x for xs in models.values() for x in xs if x.region == o.region), None)
+    return o2.slot_states[idx].building if o2 and idx < len(o2.slot_states) else None
+
+
+def ui_demolish(ui, w: World, o, idx: int, slot) -> bool:
+    """Demolish the building in this slot (player rule 2026-10-17: in a province the assistant manages, a building
+    that is not on the settlement list is replaced by the planned one; frontline provinces stay the player's).
+    The slot's hover popup has options_list/button_raze; a confirmation box, if the game shows one, is accepted.
+    Confirmed in memory: the slot is empty."""
+    pop = _slot_popup(ui, slot, "building_construction_popup")
+    if pop is None:
+        return False
+    btn = wait.wait_until(lambda: (lambda b: b if b and ui.effective_visible(b) else None)(
+        ui.first("button_raze", under=pop)), 0.5, "button_raze", must=False)
+    if btn is None or not _press(ui, btn, "button_raze"):
+        return False
+    box = wait.wait_until(lambda: ui.root_child("dialogue_box"), 1.0, "demolish confirmation", must=False)
+    if box:
+        tick = ui.first("button_tick", under=box)
+        if tick is None:
+            return False
+        click(ui, tick)
+        wait.gone(ui, box, timeout=2.0, must=False, what="confirmation closed")
+    return bool(wait.wait_until(lambda: slot_building(w, o, idx) is None, 3.0, "building demolished", must=False))
+
+
 def construction_kind(w: World, S: int) -> int | None:
     """u32 at construction + 0x10: 1 for a repair, 3 for a construction or upgrade (9.0.4, 2026-10-16)."""
     sb = w.q(S + 0x190)
@@ -449,14 +479,19 @@ def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = Fa
     if not buildings_setting("repair_damaged"):
         return []
     levels = {l.key: l for ls in gd.chains().values() for l in ls}
+    replacing = buildings_setting("off_list_buildings", "ask") == "replace"
     out = []
     for p, owned in models.items():
         if p in blocked and not override_blocked:
             continue
         for o in owned:
+            listed = {t.chain for t in plan_targets(o)} | {strategy()["port_chain"]} if replacing else set()
             for i, st in enumerate(o.slot_states):
                 if not st.building:
                     continue
+                lv0 = level_of(st.building)
+                if replacing and i != 0 and lv0 and lv0[0] not in listed:
+                    continue                     # an off-list building is replaced, not repaired (2026-10-17)
                 S = slot_ptr(w, o.region_obj, i)
                 h = health(w, S)
                 if h is None or not damaged(w, S) or construction_kind(w, S) == 1:
@@ -510,6 +545,8 @@ def run(log=print, override_blocked: bool = False) -> str:
             idx = slot_index_for(o, a)
             S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
             if S and constructing(w, S):
+                if a.kind == "replace":           # the game offers no Demolish on a slot with work under way
+                    problems.append(f"{o.region}: {a.detail} once the work under way in that slot is done")
                 continue                          # being built, upgraded or repaired
             if a.cost > gold:
                 problems.append(f"{o.region}: {a.item} needs {a.cost} gold")
@@ -517,7 +554,7 @@ def run(log=print, override_blocked: bool = False) -> str:
             if idx is None or not a.level_key:
                 problems.append(f"{o.region}: no slot for {a.item}")
                 continue
-            if a.kind != "construct" and damaged(w, S):
+            if a.kind not in ("construct", "replace") and damaged(w, S):   # (a replaced one goes anyway)
                 problems.append(f"{o.region}: {a.item} waits for a repair")
                 continue
             if not ui_open_province(ui, o):
@@ -527,7 +564,20 @@ def run(log=print, override_blocked: bool = False) -> str:
             if slot is None:
                 problems.append(f"{o.region}: slot not on screen")
                 continue
-            if a.kind == "construct":
+            if a.kind == "replace":
+                old = next((s.building for s in [o.slot_states[idx]] if s.building), None)
+                old_name = gd.level_name(old) if old else "the building"
+                if not ui_demolish(ui, w, o, idx, slot):
+                    problems.append(f"{o.region}: could not demolish {old_name}")
+                    continue
+                done.append(f"{gd.place_name(o.region)}: demolished {old_name} (not on your list)")
+                log(f"build: {done[-1]}")
+                slot = ui_slot(ui, w, o, idx)
+                chain = next((t.chain for t in plan_targets(o) if t.item == a.item), None)
+                ok = slot is not None and chain is not None and ui_construct(ui, w, S, slot, a.level_key, chain)
+                a = type(a)(a.settlement, "construct", a.item, f"-> {gd.level_name(a.level_key)}", a.slot, a.cost,
+                            a.turns, a.level_key)
+            elif a.kind == "construct":
                 chain = next((t.chain for t in plan_targets(o) if t.item == a.item), None)
                 ok = chain is not None and ui_construct(ui, w, S, slot, a.level_key, chain)
             else:

@@ -263,8 +263,8 @@ def next_actions(s: Settlement, layout: list[Target]) -> list[Action]:
         elif off_plan:
             i = off_plan.pop(0)
             acts.append(Action(s.name, "replace", t.item,
-                               f"demolish {s.slots[i].name} and build {gd.level_name(first.key)} (needs your OK)",
-                               first_slot + i, first.cost, first.turns))
+                               f"demolish {s.slots[i].name}, build {gd.level_name(first.key)}",
+                               first_slot + i, first.cost, first.turns, first.key))
         else:
             acts.append(Action(s.name, "wait", t.item, "no free slot until the main building is upgraded"))
 
