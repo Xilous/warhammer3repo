@@ -60,6 +60,16 @@
         "cqi": 2141,
         "name": "Chant",
         "general_id": 3384
+      },
+      {
+        "cqi": 55,
+        "name": "Ikit Claw",
+        "general_id": 100
+      },
+      {
+        "cqi": 3231,
+        "name": "Schurft",
+        "general_id": 5700
       }
     ],
     "_doc": [
