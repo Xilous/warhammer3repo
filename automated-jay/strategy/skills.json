@@ -258,7 +258,7 @@
     "thanquol": {
       "agent_subtype": "wh3_dlc29_skv_thanquol",
       "node_set": "wh3_dlc29_skill_node_set_skv_thanquol",
-      "_note": "Thanquol (Clan Scruten, backup faction), 2026-10-17: Ikit's order on Thanquol's tree (the same skills), with three of his unique skills worked in early: Blessings of the Horned Rat (it opens the row), Replaceable Fodder (-50% recruitment cost and -10% upkeep in his army, -2 turns recruitment faction-wide) and Hasty Redirection (+10% campaign movement). Boneripper: Warpfire Projectors (player choice), taken as soon as rank 15 allows; Warpfire Braziers never (one mount).",
+      "_note": "Thanquol (Clan Scruten, backup faction), 2026-10-17: Ikit's order on Thanquol's tree (the same skills), with three of his unique skills worked in early: Blessings of the Horned Rat (it opens the row), Replaceable Fodder (-50% recruitment cost and -10% upkeep in his army, -2 turns recruitment faction-wide) and Hasty Redirection (+10% campaign movement). Unlock ranks (character_skill_level_details): his unique row (Blessings of the Horned Rat first) at rank 11, the Boneripper skills at 9, the Projectors mount at 15; until then the step takes the next skill in the order, and each of these is taken as soon as its rank allows. Boneripper: Warpfire Projectors (player choice), taken as soon as rank 15 allows; Warpfire Braziers never (one mount).",
       "mounts": {
         "take": [
           "wh3_dlc29_skill_skv_thanquol_unique_mount_boneripper_2"

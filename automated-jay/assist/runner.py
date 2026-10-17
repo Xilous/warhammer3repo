@@ -185,6 +185,9 @@ def settle(ui: UI, cancel=lambda: False, timeout: float = SETTLE_TIMEOUT) -> tup
 class Runner:
     def __init__(self, widget=None) -> None:
         self.widget = widget
+        # a restarted copy finishes this turn's pass if the old copy left it unfinished: what the old copy last wrote,
+        # read now, before this copy's first status overwrites it (2026-10-17: it was read after, so never acted on)
+        self.prev_state = read_state() if os.environ.get("AJ_RESTARTED") else {}
         self.paused = False
         self.busy = threading.Lock()          # held only while a pass sends input
         self.stop = threading.Event()
@@ -336,6 +339,9 @@ class Runner:
             if not ok:
                 self.post("waiting", f"WAITING (turn {turn})", f"Build & End Turn: not your turn ({why})", turn=turn)
                 return
+            from bot.focus import game_focus
+            with game_focus():                             # (the Masterplans panel, a Hero Actions panel ...)
+                self.close_panels()
             pre, need = self.check_popups()
             if need:
                 self.post_decisions(turn, need, prefix="Build & End Turn: ")
@@ -426,8 +432,18 @@ class Runner:
         # units_panel = an army or character selected: Shift+Enter does not end the turn then (2026-10-17: the army
         # builder left an army selected and End Turn failed twice; deselected, one Shift+Enter ended it)
         closable = ("character_details_panel", "settlement_panel", "technology_panel", "recruitment_docker",
-                    "units_recruitment", "units_panel", "agent_options")
+                    "units_recruitment", "units_panel", "agent_options", "dlc29_skv_chaotic_plans")
         open_ = lambda: [cid for _c, cid in self.ui.root_children() if cid in closable]
+        # Thanquol's Masterplans panel and a scripted tour over it close with their own X (2026-10-17): the player
+        # asked for the pass, so whatever they had open is put away first
+        for panel, under in (("scripted_tour_controls", "under_advisor_docker"), ("plans_main_panel",
+                                                                                  "dlc29_skv_chaotic_plans")):
+            holder = self.ui.root_child(under) if under == "dlc29_skv_chaotic_plans" else self.ui.first(panel)
+            box = self.ui.first(panel, under=under) if holder else None
+            x = self.ui.child(box, "button_close") if box else None
+            if x is not None and self.ui.effective_visible(x):
+                click(self.ui, x)
+                wait.wait_until(lambda: not self.ui.effective_visible(x), 1.0, f"{panel} closed", must=False)
         # a Hero Actions panel (agent_options) is closed with its X, as declining the action (2026-10-17: one left
         # open by the army builder's engineer move blocked the end of the turn)
         hero = self.ui.root_child("agent_options")
@@ -435,19 +451,22 @@ class Runner:
         if x is not None:
             click(self.ui, x)
             wait.gone(self.ui, hero, timeout=1.0, must=False, what="Hero Actions closed")
+        from .army_builder import _resume
         for _ in range(6):
             now = open_()
             if not now:
                 break
+            wait.next_frame(2, self.ui)               # a panel already on its way out: no Escape for it (an Escape
+            if not open_():                           # with nothing open brings up the game menu)
+                break
             press("esc")
-            wait.wait_until(lambda: open_() != now, 1.0, f"{now[0]} closed", must=False)
-            menu = self.ui.root_child("esc_menu")
-            if menu:
-                r = self.ui.first("button_resume", under=menu)
-                if r:
-                    click(self.ui, r)
-                    wait.gone(self.ui, menu, timeout=1.0, must=False, what="game menu closed")
-        return open_()
+            wait.wait_until(lambda: open_() != now or self.ui.root_child("esc_menu"), 1.0, f"{now[0]} closed",
+                            must=False)
+            if self.ui.root_child("esc_menu"):
+                _resume(self.ui)
+        if self.ui.root_child("esc_menu"):            # (left by a step, or by the player)
+            _resume(self.ui)
+        return open_() + (["esc_menu"] if self.ui.root_child("esc_menu") else [])
 
     def wait_idle(self, turn, cancel) -> bool:
         """Wait until the player has not clicked or pressed a key for IDLE_SECONDS (moving the mouse is fine: player
@@ -480,8 +499,9 @@ class Runner:
 
     def post_decisions(self, turn, need, prefix: str = "") -> None:
         can = [cid for cid, _d, ig in need if ig]
-        news = all(d.startswith("a global event") for _cid, d, _ig in need)
-        self.post("paused", f"{'GLOBAL EVENT' if news else 'DECISION NEEDED'} (turn {turn})",
+        news = all(d.startswith(("a global event", "a story event")) for _cid, d, _ig in need)
+        tour = all(d.startswith("a guided tour") for _cid, d, _ig in need)
+        self.post("paused", f"{'GLOBAL EVENT' if news else 'GUIDED TOUR' if tour else 'DECISION NEEDED'} (turn {turn})",
                   prefix + ("take your time to read it; " if news else "") + "waiting for you: "
                   + ", ".join(d for _cid, d, _ig in need) + "\nautomations run when it is closed"
                   + ("\nharmless? 'Ignore' in the assistant window" if can else ""), turn=turn)
@@ -669,7 +689,7 @@ class Runner:
         model = s.extras.get("model")
         if self.last_turn is None:
             self.last_turn, self.model = s.turn, model
-            prev = read_state() if os.environ.get("AJ_RESTARTED") else {}
+            prev, self.prev_state = self.prev_state, {}
             if prev.get("turn") == s.turn and prev.get("state") != "your turn" and not self.campaign_lost:
                 # restarted while this turn's pass was still to do (waiting / interrupted / error): do it now
                 self.pending = s.turn

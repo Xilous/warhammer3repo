@@ -24,6 +24,7 @@ NORMAL = {
     "ai_attack_targets_parent", "3d_ui_parent", "mission_indicator_parent", "endgame_scenarios_holder",
     "hud_campaign", "menu_bar", "panel_manager", "under_advisor_docker", "tooltip_default", "black_fade",
     "tutorial_halo_group",  # tutorial highlight around a HUD element: never a decision (seen 2026-10-16)
+    "highlight_dummy", "text_pointer_parent",   # parts of a scripted tour (fullscreen_highlight is the one reported)
     "advice_interface", "help_panel", "saving_icon", "qa_console", "campaign_space_bar_options",
     "targeting_interface_dimming", "character_map_path_icons", "units_panel", "resources_bar",
     # panels the assistant itself opens
@@ -41,6 +42,9 @@ DECISION_HINTS = {
     "esc_menu": "the game menu",
     # significant global events: left for the player to read and close (player rule 2026-10-17), never ignorable
     "endgame": "a global event to read",               # dlc29_endgame_crisis_scenarios (the Chaos Invasion)
+    # a scripted tour of a panel (first opening of Thanquol's Masterplans, 2026-10-17): it dims the screen and takes
+    # the clicks; the player steps through it or closes it
+    "fullscreen_highlight": "a guided tour (step through it or close it)",
     "event_movie_panel": "a global event to read",     # an event with a movie window
 }
 # event notices about significant global events, never closed by the assistant: the endgame chain (its incidents are
@@ -48,7 +52,8 @@ DECISION_HINTS = {
 # the notice says. ("movie" is no sign: the ordinary events layout has a dy_movie_frame too.)
 SIGNIFICANT = ("episode", "endgame", "end_times")
 SIGNIFICANT_TEXT = ("chaos invasion", "end times", "endgame", "archaon")
-NAMES = {"agent_options": "a Hero Actions panel"}      # known panels that are not decisions (they can be ignored)
+NAMES = {"agent_options": "a Hero Actions panel",      # known panels that are not decisions (they can be ignored)
+         "dlc29_skv_chaotic_plans": "the Masterplans panel (Thanquol)"}
 CLOSE_BUTTONS = ("button_accept", "button_tick", "button_close", "button_ok", "button_dismiss")
 MAX_NOTICES = 24              # notices closed per check at most (they stack at turn start)
 CLOSE_TIMEOUT = 2.0           # s: a clicked notice must be gone (or show the next stacked notice) by then
@@ -214,6 +219,11 @@ def open_decisions(ui: UI | None = None) -> list[tuple[str, str, bool]]:
             out.append((cid, f"a dilemma (choice event, {cid})", False))
         elif significant(ui, c):
             out.append((cid, f"a global event to read: {title(ui, c) or cid}", False))
+        elif _close_button(ui, c) is None:
+            # a notice with no close button the assistant knows: story and world-event panels have only "Continue"
+            # (2026-10-17, Thanquol's turn 2: "Act I - Favoured by the Horned Rat", a modal incident_large panel,
+            # stayed open and the pass clicked the HUD under it for nothing). The player reads and closes it.
+            out.append((cid, f"a story event to read: {title(ui, c) or cid}", False))
     return out
 
 

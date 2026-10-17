@@ -79,11 +79,21 @@ def _busy(ui: UI) -> tuple[str, ...]:
     return tuple(sorted({i for _c, i, _r in ui.nodes(skip=("3d_ui_parent",)) if i in BUSY}))
 
 
-def _resume(ui: UI) -> None:
-    b = ui.first("button_resume", under="esc_menu")
-    if b:
+def _resume(ui: UI) -> bool:
+    """Close the game menu with Resume Game, once the button has stopped moving (2026-10-17: a click while the menu
+    was still sliding in opened its info page instead, and End Turn then failed twice). Checked; up to 3 tries."""
+    for _ in range(3):
+        menu = ui.root_child("esc_menu")
+        if not menu:
+            return True
+        b = ui.first("button_resume", under=menu)
+        if not b:
+            return False
+        wait.stable_rect(ui, b, n=3, timeout=1.0, must=False, what="Resume Game still")
         click(ui, b)
-        wait.gone(ui, "esc_menu", timeout=2.0, must=False)
+        if wait.gone(ui, "esc_menu", timeout=1.5, must=False, what="game menu closed"):
+            return True
+    return not ui.root_child("esc_menu")
 
 
 def clear(ui: UI) -> None:
