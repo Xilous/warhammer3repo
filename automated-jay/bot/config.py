@@ -3,6 +3,7 @@
 Everything downstream (click coordinates, screenshot templates, memory anchors)
 is only valid for the configuration written here.
 """
+import json
 import shutil
 import sys
 from pathlib import Path
@@ -45,17 +46,71 @@ ANCHORS_FILE = ROOT / "anchors.json"     # written by tools/probe.py
 RUNS_DIR = ROOT / "runs"                 # per-run jsonl logs
 
 
+_MISSING = object()
+
+
+def merge_defaults(user, new, olds: list):
+    """The player's value, the new release's default and the same value in earlier releases' defaults -> the value to
+    keep. A value the player never changed (equal to an earlier default) follows the new default, a changed one is
+    kept; keys new in the defaults are added, and a default the new release dropped goes too if it was never
+    changed. Dicts are merged key by key, anything else (lists too) is one value."""
+    if isinstance(user, dict) and isinstance(new, dict):
+        out = {}
+        for k, v in user.items():
+            sub = [o.get(k, _MISSING) if isinstance(o, dict) else _MISSING for o in olds]
+            if k in new:
+                out[k] = merge_defaults(v, new[k], sub)
+            elif not any(o is not _MISSING and o == v for o in sub):
+                out[k] = v                     # the player's own key, or one the app wrote (anchors.json)
+        for k, v in new.items():
+            if k not in user and not any(isinstance(o, dict) and k in o for o in olds):
+                out[k] = v                     # (a key earlier defaults had and the player's file lacks was removed)
+        return out
+    return new if any(o is not _MISSING and o == user for o in olds) else user
+
+
 def _seed_user_files() -> None:
-    """Exe only: put the bundled default strategy files and anchors next to the exe if they are not there yet."""
+    """Exe only: put the bundled default strategy files and anchors next to the exe if they are not there yet, and
+    bring files an earlier exe put there up to this release's defaults (merge_defaults: the player's changes and
+    ticks are kept). Done once per release: runs/defaults_version.txt names the release the files were last brought
+    up to; the earlier releases' defaults ship in BUNDLE/defaults_history/<release>/ (tools/build_exe.py). A file
+    that changes is copied to runs/upgrade_backup/<release it came from>/ first."""
     src = BUNDLE / "defaults"
     if not src.is_dir():
         return
+    RUNS_DIR.mkdir(exist_ok=True)
+    marker = RUNS_DIR / "defaults_version.txt"
+    tag = BUNDLE / "data" / "release.txt"
+    release = tag.read_text(encoding="utf-8").strip() if tag.exists() else "dev"
+    seen = marker.read_text(encoding="utf-8").strip() if marker.exists() else None
+    if seen == release:
+        return
+    hist = BUNDLE / "defaults_history"
+    bases = [hist / seen] if seen and (hist / seen).is_dir() else \
+        sorted(p for p in hist.iterdir() if p.is_dir()) if hist.is_dir() else []
     for f in src.rglob("*"):
-        dst = ROOT / f.relative_to(src)
-        if f.is_file() and not dst.exists():
+        if not f.is_file():
+            continue
+        rel = f.relative_to(src)
+        dst = ROOT / rel
+        if not dst.exists():
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(f, dst)
-    RUNS_DIR.mkdir(exist_ok=True)
+            continue
+        if f.suffix != ".json":
+            continue
+        try:
+            user = json.loads(dst.read_text(encoding="utf-8"))
+            olds = [json.loads((b / rel).read_text(encoding="utf-8")) for b in bases if (b / rel).exists()]
+            out = merge_defaults(user, json.loads(f.read_text(encoding="utf-8")), olds)
+        except (OSError, ValueError):
+            continue                           # a file the player broke stays as it is
+        if out != user:
+            backup = RUNS_DIR / "upgrade_backup" / (seen or "before_" + release) / rel
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(dst, backup)
+            dst.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    marker.write_text(release + "\n", encoding="utf-8")
 
 
 if FROZEN:

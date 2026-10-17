@@ -32,6 +32,8 @@ def selftest() -> int:
 
     from assist import gamedata as gd
     check("paths", lambda: f"user files {config.ROOT}, bundled data {config.DB_DIR.parent}")
+    check("release", lambda: (config.BUNDLE / "data" / "release.txt").read_text(encoding="utf-8").strip()
+          if config.FROZEN else "from the repo")
     check("strategy files", lambda: sorted(p.name for p in config.STRATEGY_DIR.glob("*.json")))
     check("localisation", lambda: f"{len(gd.loc())} names")
     for table in sorted(p.stem for p in config.DB_DIR.glob("*.json")):

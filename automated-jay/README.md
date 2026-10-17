@@ -38,14 +38,20 @@ the same checks as **Run now** (your turn, 3 s idle, no open decision). While th
 1. Download `automated-jay.exe` from the repo's [Releases](https://github.com/Xilous/warhammer3repo/releases) and put it
    in a folder of its own (e.g. `C:\Games\automated-jay\`).
 2. Double-click it. On first start it creates `strategy\` (your settings, ticks and skill/settlement orders),
-   `anchors.json` and `runs\` (logs) next to itself; a newer exe keeps using them.
+   `anchors.json` and `runs\` (logs) next to itself. A new exe starts with no army ticked.
 3. `automated-jay.exe --selftest` checks the bundled game data and the connection to the game (memory reads only,
    no input) and writes `runs\selftest.txt`.
 
+To update, replace the exe in the same folder. On its first start a newer exe brings these files up to its own
+defaults once: every setting you never changed takes the new default, what you changed (and your ticks) stays,
+and new settings are added. The files it changed are copied to `runs\upgrade_backup\` first;
+`runs\defaults_version.txt` names the release the files were last brought up to.
+
 The exe has no console window: what the console would show goes to `runs\console.log`. Requirements are the same
 as from source: the game at 1920x1080 borderless, the same game build (9.0.4: memory offsets change with patches).
-To build the exe yourself: `python -X utf8 -m tools.build_exe` from automated-jay/ (needs the repo's game-data dump in
-`../tww` and `../re`, which is not published; see tools/build_exe.py).
+To build the exe yourself: `python -X utf8 -m tools.build_exe --release automated-jay-vX.Y.Z` from automated-jay/
+(needs the repo's game-data dump in `../tww` and `../re`, which is not published; see tools/build_exe.py). Tag the
+release `automated-jay-vX.Y.Z`: the next build ships each tagged release's defaults for the update above.
 
 ### Emergency stop: Shift+Esc
 

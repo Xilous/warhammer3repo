@@ -1,13 +1,18 @@
 """Build the distributable exe: dist/automated-jay.exe, one file, no console window.
 
-    python -X utf8 -m tools.build_exe            (from automated-jay/, with the repo's game data in ../tww and ../re)
+    python -X utf8 -m tools.build_exe [--release automated-jay-vX.Y.Z]
+                                                 (from automated-jay/, with the repo's game data in ../tww and ../re)
 
 1. data      the game DB tables the code reads (every "*_tables" name in assist/ and bot/, plus the campaign
              variables), the English localisation trimmed to the name keys the code shows (plus every key those
              names refer to with {{tr:...}}), the tech beeline and the RE outputs -> build/exe/data, shipped inside
              the exe (player decision 2026-10-17: game-derived data goes in the exe, never in the repo).
 2. defaults  strategy/*.json and anchors.json -> build/exe/defaults; the exe copies them next to itself on first
-             start (bot/config.py), so the player's edits and ticks survive a new exe.
+             start (bot/config.py), so the player's edits and ticks survive a new exe. Shipped without army ticks
+             (the repo's automation.json holds the ticks of the campaign played from the repo: cqi 55 is Ikit's own
+             army in any Ikit campaign). The defaults each earlier release (git tags automated-jay-v*) shipped go to
+             build/exe/defaults_history/<tag>: a new exe brings an earlier one's files up to its defaults, keeping
+             what the player changed. The release name goes to data/release.txt.
 3. PyInstaller --onefile --windowed.
 Check the result with `dist/automated-jay.exe --selftest` (writes dist/runs/selftest.txt).
 """
@@ -28,6 +33,37 @@ LOC_PREFIXES = ("land_units_onscreen_name_", "provinces_onscreen_", "regions_ons
                 "character_skills_localised_name_", "factions_screen_name_", "technologies_onscreen_name_",
                 "names_name_", "agent_subtypes_onscreen_name_override_")
 TR = re.compile(r"\{\{tr:([^}]+)\}\}")
+TAGS = "automated-jay-v*"
+
+
+def shipped(rel: str, text: str, blank_ticks: bool = True) -> str:
+    """A default file as the exe ships it: automation.json without army ticks."""
+    if not (blank_ticks and rel.endswith("automation.json")):
+        return text
+    d = json.loads(text)
+    d["army_builder"]["enabled_armies"] = []
+    return json.dumps(d, indent=2, ensure_ascii=False) + "\n"
+
+
+def git(*args: str) -> str:
+    return subprocess.run(["git", *args], cwd=REPO, check=True, capture_output=True, text=True,
+                          encoding="utf-8").stdout
+
+
+def defaults_history(release: str) -> list[str]:
+    """Each earlier release's default files, as that release's build shipped them -> build/exe/defaults_history."""
+    tags = [t for t in git("tag", "-l", TAGS).split() if t != release]
+    for tag in tags:
+        blanked = "enabled_armies" in git("show", f"{tag}:automated-jay/tools/build_exe.py")
+        files = git("ls-tree", "-r", "--name-only", tag, "automated-jay/strategy/").split()
+        for path in files + ["automated-jay/anchors.json"]:
+            rel = path[len("automated-jay/"):]
+            if not rel.endswith(".json"):
+                continue
+            dst = OUT / "defaults_history" / tag / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            dst.write_text(shipped(rel, git("show", f"{tag}:{path}"), blanked), encoding="utf-8")
+    return tags
 
 
 def tables() -> set[str]:
@@ -49,7 +85,7 @@ def trimmed_loc() -> dict[str, str]:
     return keep
 
 
-def build_data() -> None:
+def build_data(release: str) -> None:
     if OUT.exists():
         shutil.rmtree(OUT)
     db = OUT / "data" / "db"
@@ -64,12 +100,15 @@ def build_data() -> None:
     shutil.copy2(REPO / "tww" / "skv_beeline.json", OUT / "data" / "skv_beeline.json")
     (OUT / "data" / "re").mkdir()
     shutil.copy2(REPO / "re" / "cv_globals.json", OUT / "data" / "re" / "cv_globals.json")
+    (OUT / "data" / "release.txt").write_text(release + "\n", encoding="utf-8")
     (OUT / "defaults" / "strategy").mkdir(parents=True)
-    for f in (HERE / "strategy").glob("*.json"):
-        shutil.copy2(f, OUT / "defaults" / "strategy" / f.name)
-    shutil.copy2(HERE / "anchors.json", OUT / "defaults" / "anchors.json")
+    for f in list((HERE / "strategy").glob("*.json")) + [HERE / "anchors.json"]:
+        rel = f.relative_to(HERE).as_posix()
+        (OUT / "defaults" / rel).write_text(shipped(rel, f.read_text(encoding="utf-8")), encoding="utf-8")
+    tags = defaults_history(release)
     size = sum(f.stat().st_size for f in OUT.rglob("*") if f.is_file()) / 1e6
-    print(f"data: {len(tables())} tables, {len(loc)} names, {size:.1f} MB -> {OUT}")
+    print(f"data: {len(tables())} tables, {len(loc)} names, {size:.1f} MB, release {release}, "
+          f"defaults of {len(tags)} earlier releases -> {OUT}")
 
 
 def pyinstaller() -> None:
@@ -77,6 +116,7 @@ def pyinstaller() -> None:
            "--name", "automated-jay", "--distpath", str(HERE / "dist"), "--workpath", str(HERE / "build" / "pyi"),
            "--specpath", str(HERE / "build"), "--paths", str(HERE),
            "--add-data", f"{OUT / 'data'};data", "--add-data", f"{OUT / 'defaults'};defaults",
+           "--add-data", f"{OUT / 'defaults_history'};defaults_history",
            "--hidden-import", "pydirectinput", "--hidden-import", "pymem",
            "--exclude-module", "cv2", "--exclude-module", "matplotlib", "--exclude-module", "scipy",
            "--exclude-module", "pandas", "--exclude-module", "mss", "--exclude-module", "pefile",
@@ -87,7 +127,8 @@ def pyinstaller() -> None:
 
 
 def main() -> int:
-    build_data()
+    args = sys.argv[1:]
+    build_data(args[args.index("--release") + 1] if "--release" in args else "dev")
     pyinstaller()
     return 0
 
