@@ -14,7 +14,9 @@
   "tech": {
     "order": "beeline then cheapest",
     "beeline_source": "../tww/skv_beeline.json (targets, in order)",
-    "after_beeline": "cheapest remaining tech first"
+    "after_beeline": "cheapest remaining tech first",
+    "first": ["wh2_main_tech_skv_1_0"],
+    "_first": "Researched before the beeline, in this order (player build adjustment, 2026-10-17: Ferocious Plans first). Tech keys, as in the game data."
   },
   "buildings": {
     "list": "settlements.json",

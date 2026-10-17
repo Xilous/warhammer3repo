@@ -84,7 +84,9 @@ def click_order() -> list[str]:
     other tech cheapest first."""
     b = json.load(open(config.BEELINE_FILE, encoding="utf-8"))
     targets = set(b["targets"])
-    order = [t for t in b["order"] if t in targets]
+    first = [k for k in (json.load(open(config.STRATEGY_DIR / "automation.json", encoding="utf-8"))
+                         .get("tech", {}).get("first") or [])]           # the player's own "research these first"
+    order = first + [t for t in b["order"] if t in targets and t not in first]
     ns = nodes()
     rest = sorted((k for k in ns if k not in order), key=lambda k: (ns[k].rp, ns[k].tier, ns[k].indent))
     return order + rest
