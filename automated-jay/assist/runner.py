@@ -348,6 +348,9 @@ class Runner:
             if any(line.startswith("could not bring the game") for line in done):
                 self.post("error", f"TURN {turn} NOT ENDED", "\n".join(done), turn=turn)
                 return
+            from bot.focus import game_focus
+            with game_focus():                             # what a step left open is not a decision (agent_options)
+                self.close_panels()
             _pre, need = self.check_popups()
             if need:
                 self.post_decisions(turn, need, prefix="steps done, turn not ended: ")
@@ -421,8 +424,15 @@ class Runner:
         # units_panel = an army or character selected: Shift+Enter does not end the turn then (2026-10-17: the army
         # builder left an army selected and End Turn failed twice; deselected, one Shift+Enter ended it)
         closable = ("character_details_panel", "settlement_panel", "technology_panel", "recruitment_docker",
-                    "units_recruitment", "units_panel")
+                    "units_recruitment", "units_panel", "agent_options")
         open_ = lambda: [cid for _c, cid in self.ui.root_children() if cid in closable]
+        # a Hero Actions panel (agent_options) is closed with its X, as declining the action (2026-10-17: one left
+        # open by the army builder's engineer move blocked the end of the turn)
+        hero = self.ui.root_child("agent_options")
+        x = self.ui.first("button_decline", under=hero) if hero else None
+        if x is not None:
+            click(self.ui, x)
+            wait.gone(self.ui, hero, timeout=1.0, must=False, what="Hero Actions closed")
         for _ in range(6):
             now = open_()
             if not now:

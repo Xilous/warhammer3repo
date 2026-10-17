@@ -281,6 +281,7 @@ CARD_TRIES = 3                 # a click on the card that does not close the pan
 WALKING = 2                    # u32 character +0x88: 2 while the character walks, 1 at rest (it flips back exactly when
                                # the walk ends and the movement points are booked; checked live 2026-10-16)
 WALK_TIMEOUT = 20.0            # s: a hero walking its whole movement for the turn took 4.5 s
+LATE_PANEL_S = 1.0             # s: after the hero stopped, the Hero Actions panel is still awaited this long
 
 
 def _embedded(w: World, C: int) -> int:
@@ -394,7 +395,15 @@ def move_into_army(hero_name, lord_name, log=print, ui=None, settle: bool = True
         click(ui, flag.ptr, right=True)
         panel = wait.wait_until(lambda: ui.root_child(HERO_ACTIONS) or (set_off() and -1), 2.0,
                                 "Hero Actions panel (or the hero on the move)", must=False)
-        if panel and panel != -1:
+        if panel == -1:
+            # the hero stirred first, but the panel can still come (2026-10-17, turn 73: the hero stirred at once,
+            # the panel opened a moment later, was left unanswered and blocked End Turn): it is awaited until the
+            # hero has stopped or joined, and a moment more
+            wait.wait_until(lambda: ui.root_child(HERO_ACTIONS) or _embedded(w, hero.ptr) or not walking(w, hero.ptr),
+                            WALK_TIMEOUT, "Hero Actions panel (or the walk over)", must=False)
+            panel = wait.wait_until(lambda: ui.root_child(HERO_ACTIONS), LATE_PANEL_S, "Hero Actions panel, late",
+                                    must=False)
+        if panel:
             problem = _take_card(ui, panel, lord_name)
             if problem:
                 park()
@@ -403,6 +412,15 @@ def move_into_army(hero_name, lord_name, log=print, ui=None, settle: bool = True
         park()
     if settle:
         wait_until_stopped(w, hero.ptr)
+    late = ui.root_child(HERO_ACTIONS)
+    if late:                                       # opened once the hero was in reach: take it now, never leave it
+        with game_focus():
+            problem = _take_card(ui, late, lord_name)
+            park()
+        if problem:
+            return f"{hero_name}: {problem}"
+        if settle:
+            wait_until_stopped(w, hero.ptr)
     if _embedded(w, hero.ptr):
         return f"{hero_name} joined {lord_name}'s army"
     if character_pos(w.pm, hero.ptr) != p0 or walking(w, hero.ptr):

@@ -38,6 +38,7 @@ DECISION_HINTS = {
     "popup_message_box": "a confirmation box",
     "esc_menu": "the game menu",
 }
+NAMES = {"agent_options": "a Hero Actions panel"}      # known panels that are not decisions (they can be ignored)
 CLOSE_BUTTONS = ("button_accept", "button_tick", "button_close", "button_ok", "button_dismiss")
 MAX_NOTICES = 24              # notices closed per check at most (they stack at turn start)
 CLOSE_TIMEOUT = 2.0           # s: a clicked notice must be gone (or show the next stacked notice) by then
@@ -88,6 +89,8 @@ def describe(cid: str) -> str:
     for k, v in DECISION_HINTS.items():
         if k in cid:
             return f"{v} ({cid})"
+    if cid in NAMES:
+        return f"{NAMES[cid]} ({cid})"
     return f"unknown panel '{cid}'"
 
 
