@@ -34,18 +34,34 @@ def save_automation(d: dict) -> None:
     tmp.replace(AUTOMATION)
 
 
-def enabled_armies() -> dict[int, dict]:
-    """cqi -> tick entry {"cqi", "name", "general_id"} ("general_id" is missing in entries made before it was stored)."""
-    return {e["cqi"]: e for e in load_automation()["army_builder"].get("enabled_armies", [])}
+def _faction() -> str:
+    from bot.sensor.world import current_faction
+    return current_faction()
+
+
+def _tick_faction(e: dict) -> str:
+    """A tick's faction; ticks made before factions were stored (2026-10-17) were all made in Ikit campaigns."""
+    from bot.sensor.world import DEFAULT_FACTION
+    return e.get("faction") or DEFAULT_FACTION
+
+
+def enabled_armies(faction: str | None = None) -> dict[int, dict]:
+    """cqi -> tick entry {"cqi", "name", "general_id", "faction"} of the player's faction ("general_id" is missing in
+    entries made before it was stored). Ticks are kept per faction, so an Ikit campaign and a Thanquol campaign
+    (2026-10-17) each see only their own."""
+    f = faction or _faction()
+    return {e["cqi"]: e for e in load_automation()["army_builder"].get("enabled_armies", []) if _tick_faction(e) == f}
 
 
 def set_enabled(cqi: int, name: str, on: bool, general_id: int | None = None) -> None:
     d = load_automation()
-    lst = [e for e in d["army_builder"].get("enabled_armies", []) if e["cqi"] != cqi]
+    f = _faction()
+    lst = [e for e in d["army_builder"].get("enabled_armies", []) if not (e["cqi"] == cqi and _tick_faction(e) == f)]
     if on:
         e = {"cqi": cqi, "name": name}
         if general_id:
             e["general_id"] = general_id
+        e["faction"] = f
         lst.append(e)
     d["army_builder"]["enabled_armies"] = lst
     save_automation(d)
