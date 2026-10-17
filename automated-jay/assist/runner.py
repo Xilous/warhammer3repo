@@ -44,7 +44,9 @@ SETTLE_PANELS_MS = 500
 SETTLE_TIMEOUT = 20.0         # s: never settled (the player keeps panning): go on, the idle check still applies
 POLL_SECONDS = 2.0            # loop period while nothing is about to happen
 POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
-VERIFY_ROUNDS = 2             # verification runs per step (each one that had to redo something is followed by another)
+END_TURN_WAIT_S = 8.0         # after Shift+Enter, until the game runs another faction's turn (took ~2.3 s in the logs)
+END_TURN_TRIES = 2            # a key the game did not take is pressed once more
+VERIFY_ROUNDS = 2            # verification runs per step (each one that had to redo something is followed by another)
 IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alone this long before a pass
 LOST_AFTER = 2                # polls in a row without a campaign before the turn bookkeeping starts over
 # Outside OneDrive: the project lives in a synced folder, and OneDrive locks a file while it syncs it, which made
@@ -334,17 +336,26 @@ class Runner:
             if b is None:
                 self.end_turn_problem = "the End Turn button is not shown"
                 return False
-            before = {cid for _c, cid in self.ui.root_children()}
-            with held("shift"):
-                press("enter")
-            if wait.wait_until(lambda: self.mem.read().turn != turn or not players_turn(self.ui)[0], 3.0,
-                               "the turn ends", must=False):
-                return True
-            # the game stops at its End Turn warnings (unspent skill points, armies that can still move, ...) and
-            # opens the panel concerned instead of ending the turn: say which
-            opened = sorted({cid for _c, cid in self.ui.root_children()} - before)
-            self.end_turn_problem = ("the game stopped at an End Turn warning and opened " + ", ".join(opened)
-                                     if opened else "the game did not end the turn (an End Turn warning?)")
+            from bot.sensor import turn as turn_mem
+
+            def ended() -> bool:
+                # memory only: the game runs another faction's turn, or the counter moved. (2026-10-17: the UI checks
+                # flickered right after the key, the End Turn button among them, and a turn that never ended was
+                # reported ended. The switch to the next faction took ~2.3 s in the logs, so wait well beyond that.)
+                return self.mem.read().turn != turn or turn_mem.players_turn(self.mem)[0] is False
+            opened: list[str] = []
+            for attempt in range(END_TURN_TRIES):
+                before = {cid for _c, cid in self.ui.root_children()}
+                with held("shift"):
+                    press("enter")
+                if wait.wait_until(ended, END_TURN_WAIT_S, "another faction's turn", must=False):
+                    return True
+                # not ended: a warning panel the game opened anyway, or the key went unnoticed: clear and press again
+                opened = sorted({cid for _c, cid in self.ui.root_children()} - before) or opened
+                if self.close_panels():
+                    break
+            self.end_turn_problem = (f"the game did not end the turn after {END_TURN_TRIES} tries"
+                                     + (f"; it opened {', '.join(opened)}" if opened else ""))
             return False
 
     def close_panels(self) -> list[str]:
