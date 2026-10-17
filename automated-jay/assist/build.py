@@ -563,8 +563,11 @@ def run(log=print, override_blocked: bool = False) -> str:
             order = [t.chain for t in plan_targets(o)]
             lv = level_of(building)
             return order.index(lv[0]) if lv and lv[0] in order else len(order)
+        cavern = gd.chains()[workshop.CAVERN_CHAIN][0]
+        from .buildplan import current_tier
         protected, target, note = workshop.plan(w, snap.faction, models, blocked, w.s.read().turn, off_list,
-                                                priority_of=priority_of, special=SPECIAL)
+                                                priority_of=priority_of, special=SPECIAL,
+                                                can_host=lambda o: current_tier(o.model) >= cavern.tier)
         if note:
             problems.append(f"workshop: {note}")
         if target is not None:
