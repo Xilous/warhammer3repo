@@ -43,6 +43,7 @@ SETTLE_CAMERA_MS = 250
 SETTLE_PANELS_MS = 500
 SETTLE_TIMEOUT = 20.0         # s: never settled (the player keeps panning): go on, the idle check still applies
 POLL_SECONDS = 2.0            # loop period while nothing is about to happen
+POLL_NOTICES = 0.5            # during the player's turn: how often to look for event notices to close
 POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
 END_TURN_WAIT_S = 8.0         # after Shift+Enter, until the game runs another faction's turn (took ~2.3 s in the logs)
 END_TURN_TRIES = 2            # a key the game did not take is pressed once more
@@ -592,7 +593,7 @@ class Runner:
             except Exception as ex:          # keep watching: a failed read (game closing, loading) is not fatal
                 traceback.print_exc()
                 self.post("error", "ERROR", f"{ex}\nstill watching for the next turn")
-            self.stop.wait(POLL_FAST if (self.pending is not None or not self.my_turn) else POLL_SECONDS)
+            self.stop.wait(POLL_FAST if (self.pending is not None or not self.my_turn) else POLL_NOTICES)
 
     def _tick(self) -> None:
         s = self.mem.read()
@@ -633,6 +634,41 @@ class Runner:
             self._try_pass(self.pending)
         else:
             self.my_turn = players_turn(self.ui)[0]
+            if self.my_turn:
+                self._close_notices()
+
+    def _close_notices(self) -> None:
+        """During the player's own turn: close event notices as they come (player request 2026-10-17), the same ones
+        the turn-start pass closes; never a decision. Only while the game is the window in front (it is never pulled
+        forward) and no pass runs. Each close holds mouse and keyboard for the moment of the click and puts the cursor
+        back (bot/focus.game_focus). Off with automation.json "close_notices_during_turn": false."""
+        from . import popups
+        from bot.focus import game_hwnd
+        import win32gui
+        try:
+            if not json.load(open(AUTOMATION, encoding="utf-8")).get("close_notices_during_turn", True):
+                return
+            if self.paused or self.busy.locked() or win32gui.GetForegroundWindow() != game_hwnd():
+                return
+            if not popups._closable(self.ui):
+                ids = tuple(sorted(cid for _c, cid in popups.scan(self.ui)))
+                if ids and ids != getattr(self, "_open_seen", ()):
+                    popups.log_open(self.ui, self.last_turn, "during your turn")     # what the rules leave open
+                self._open_seen = ids
+                return
+            if not self.busy.acquire(blocking=False):
+                return
+            try:
+                closed = popups.dismiss_events(self.ui)
+            finally:
+                self.busy.release()
+            if closed:
+                print(f"[{datetime.now():%H:%M:%S}] closed {len(closed)} notice{'s' if len(closed) > 1 else ''}"
+                      " during your turn", flush=True)
+        except InputAborted:
+            pass                                       # the player switched windows mid-click: try again later
+        except Exception:
+            traceback.print_exc()
 
     def _try_pass(self, turn: int) -> None:
         """Start the pending pass once it is really the player's turn and the player is idle. Never blocks for
