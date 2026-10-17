@@ -28,7 +28,8 @@ from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
 from tools.ui import click, held, press as press_key
 
-PREFERRED = ["button_autoresolve", "button_cancel", "button_dismiss", "button_close", "button_accept",
+# TEST ONLY: post-battle captives -> enslave (the player decides this in real play)
+PREFERRED = ["button_captive_option_enslave", "button_autoresolve", "button_cancel", "button_dismiss", "button_close", "button_accept",
              "button_ok", "button_tick", "button_continue", "button_resume"]
 DETECT_TIMEOUT = 90          # s: the runner polls memory every 2 s, then lets the turn settle for 4 s
 FINISH_TIMEOUT = 900         # s: a whole turn-start pass, decisions included

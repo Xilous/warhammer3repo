@@ -107,7 +107,7 @@ Plain JSON, read fresh at every pass: edits apply from the next pass without a r
 |---|---|
 | the console | one line per status change, and the full error when something fails |
 | `runs/assistant-YYYYMMDD.jsonl` | one line per pass: `{"t", "turn", "steps"}`, the steps being what each one did |
-| `runs/state.json` | the current status: `{"state", "headline", "detail", "turn", "time"}` |
+| `%LOCALAPPDATA%\automated-jay\state.json` (outside OneDrive, which locks synced files) | the current status: `{"state", "headline", "detail", "turn", "time"}` |
 
 ### Troubleshooting
 
@@ -304,7 +304,7 @@ python -X utf8 -m assist.runner --once   # run the automations once now (no turn
 python -X utf8 -m assist.tech status     # research idle or running (screen only)
 ```
 
-The current status is also in `runs/state.json` (`state`, `headline`, `detail`, `turn`, `time`), replaced
+The current status is also in `%LOCALAPPDATA%\automated-jay\state.json` (outside OneDrive, which locks synced files) (`state`, `headline`, `detail`, `turn`, `time`), replaced
 atomically on every change. The overlay lets clicks through while the assistant is automating (it sits over
 the game) and never takes focus; click it at other times to pause or resume. Only one of the project's
 processes sends input at a time: `bot/focus.py: game_focus` holds a system-wide mutex.
@@ -564,7 +564,7 @@ pass and the overlay says what is waiting, by panel id. Unknown panels can be ig
 `tools/turn_driver.py` is a test harness that plays whole turns on a test save (cancels AI offers,
 autoresolves battles). It is not part of the assistant. With `--external` it tests the real app: start
 `python -X utf8 -m assist.runner` first; the driver only ends turns and answers the runner's DECISION NEEDED
-popups (read from `runs/state.json`), then checks each turn's log line and that focus came back.
+popups (read from `%LOCALAPPDATA%\automated-jay\state.json` (outside OneDrive, which locks synced files)), then checks each turn's log line and that focus came back.
 
 ## Memory scans and the game's RAM use
 

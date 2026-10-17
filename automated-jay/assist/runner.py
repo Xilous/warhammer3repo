@@ -13,7 +13,7 @@ terminal (bot/focus.py). If the player switches away from the game during a pass
 InputAborted: the pass stops at once ("interrupted"), and "Run now" redoes it.
 The game may be closed, restarted or sent back to the main menu at any time: the sensor re-attaches by itself,
 and a loaded save is a "campaign change" (the assistant acts from the next turn).
-Status: every widget update is also written to runs/state.json ({"state", "headline", "detail", "turn",
+Status: every widget update is also written to %LOCALAPPDATA%/automated-jay/state.json ({"state", "headline", "detail", "turn",
 "time"}), swapped in atomically, for the player and for tools (tools/turn_driver.py --external).
 """
 from __future__ import annotations
@@ -22,7 +22,9 @@ import sys
 import threading
 import time
 import traceback
+import os
 from datetime import datetime
+from pathlib import Path
 
 from bot import config
 from bot.focus import InputAborted, idle_seconds, return_to_terminal
@@ -43,7 +45,9 @@ POLL_SECONDS = 2.0            # loop period while nothing is about to happen
 POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
 IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alone this long before a pass
 LOST_AFTER = 2                # polls in a row without a campaign before the turn bookkeeping starts over
-STATE_FILE = config.RUNS_DIR / "state.json"
+# Outside OneDrive: the project lives in a synced folder, and OneDrive locks a file while it syncs it, which made
+# the swap below fail for seconds at a time (seen 2026-10-16: the widget said YOUR TURN, state.json AUTOMATING).
+STATE_FILE = Path(os.environ.get("LOCALAPPDATA") or config.RUNS_DIR) / "automated-jay" / "state.json"
 
 STEP_FNS = {
     "tech": tech.run,
@@ -79,15 +83,20 @@ def write_state(state: str, headline: str, detail: str, turn: int | None) -> Non
     the swap fails while a reader has the old file open: retry briefly."""
     data = {"state": state, "headline": headline, "detail": detail, "turn": turn,
             "time": datetime.now().isoformat(timespec="seconds")}
+    text = json.dumps(data, ensure_ascii=False, indent=1)
     tmp = STATE_FILE.with_suffix(".tmp")
     for _ in range(20):
         try:
-            tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1), encoding="utf-8")
+            STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+            tmp.write_text(text, encoding="utf-8")
             tmp.replace(STATE_FILE)
             return
         except OSError:
             time.sleep(0.05)
-    print(f"WARNING: could not write {STATE_FILE}", flush=True)
+    try:                                   # the swap kept failing: a plain write is better than a stale state
+        STATE_FILE.write_text(text, encoding="utf-8")
+    except OSError:
+        print(f"WARNING: could not write {STATE_FILE}", flush=True)
 
 
 def read_state() -> dict:
@@ -105,6 +114,10 @@ def read_state() -> dict:
 def players_turn(ui: UI) -> tuple[bool, str]:
     """(True, "") when the player can act on the campaign map now, else (False, why). Root panels plus one cached
     lookup: cheap enough to poll."""
+    from bot.sensor import turn as turn_mem
+    mine, why = turn_mem.players_turn(ui.s)        # authoritative: the faction the campaign runs a turn for
+    if not mine:                                   # (the ai_turns panel hides for moments while the AI moves)
+        return False, why
     if ui.find_root() is None:
         return False, "game UI not found"
     top = dict((cid, c) for c, cid in reversed(ui.root_children()))      # visible root panels, first wins
@@ -497,6 +510,11 @@ class Runner:
             return                                          # Run now is doing a pass right now
         try:
             if self.done_turn == turn or self.pending != turn:
+                return
+            ok, why = players_turn(self.ui)                  # once more, right before the first click
+            if not ok:
+                self.gate_since = None
+                self.post("waiting", f"WAITING (turn {turn})", f"{why}; acts when your turn starts", turn=turn)
                 return
             try:
                 t_pop = time.monotonic()

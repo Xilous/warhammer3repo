@@ -1,0 +1,98 @@
+"""Whose turn it is, from memory: the faction(s) the campaign is currently running a turn for.
+
+Decoded from the game's own Lua bindings (9.0.4, exe binding tables, disassembled 2026-10-17):
+
+  model:turn_number()          [[model+0x6CB0]+0x08] + 1      (+0x10 holds the same number: the turn counter)
+  model:world()                [model+0x6CA0] = world W
+  world:whose_turn_is_it()     0x1426e9f38 on [W+0x310]
+  model:is_player_turn()       0x1426ba85c([W+0x310], local faction)
+  world:is_factions_turn_by_key(k)   0x1426ba85c([W+0x310], faction k)
+
+  T = [W+0x310] (turn manager), R = [T+0x120] (current turn record):
+    byte R+0x38 == 0: one faction at a time, the faction object at [R+0x30]
+    byte R+0x38 == 1: simultaneous turns (multiplayer), the factions in the list u32 R+4 (count), [R+8] (array)
+
+`is_factions_turn` is 0x1426ba85c: the same test the game's scripts make. Cheap (five reads), so it can be polled.
+"""
+from __future__ import annotations
+import struct
+
+WORLD = 0x6CA0           # model -> world
+TURN_MANAGER = 0x310     # world -> turn manager
+CURRENT = 0x120          # turn manager -> current turn record
+MODE = 0x38              # byte in the record: 0 one faction, 1 simultaneous list
+FACTION = 0x30           # record -> faction object (mode 0)
+LIST_COUNT, LIST_ARRAY = 0x4, 0x8   # record -> faction list (mode 1)
+MAX_LIST = 64
+
+
+def _q(pm, a: int) -> int:
+    return struct.unpack("<Q", pm.read_bytes(a, 8))[0]
+
+
+def turn_record(pm, model: int) -> int | None:
+    """The current turn record R, or None when it cannot be read (no campaign, loading)."""
+    try:
+        w = _q(pm, model + WORLD)
+        if w < 0x10000:
+            return None
+        t = _q(pm, w + TURN_MANAGER)
+        if t < 0x10000:
+            return None
+        r = _q(pm, t + CURRENT)
+        return r if r >= 0x10000 else None
+    except Exception:
+        return None
+
+
+def whose_turn(pm, model: int) -> list[int] | None:
+    """Faction objects whose turn it is (one, outside simultaneous multiplayer). None when unreadable."""
+    r = turn_record(pm, model)
+    if r is None:
+        return None
+    try:
+        b = pm.read_bytes(r, 0x40)
+    except Exception:
+        return None
+    mode = b[MODE]
+    if mode == 0:
+        f = struct.unpack_from("<Q", b, FACTION)[0]
+        return [f] if f >= 0x10000 else []
+    if mode == 1:
+        n = struct.unpack_from("<I", b, LIST_COUNT)[0]
+        arr = struct.unpack_from("<Q", b, LIST_ARRAY)[0]
+        if not 0 <= n <= MAX_LIST or (n and arr < 0x10000):
+            return None
+        try:
+            raw = pm.read_bytes(arr, 8 * n) if n else b""
+        except Exception:
+            return None
+        return list(struct.unpack(f"<{n}Q", raw))
+    return None
+
+
+def is_factions_turn(pm, model: int, faction: int) -> bool | None:
+    """True when the campaign is running `faction`'s turn now, False when another faction's, None when unreadable."""
+    w = whose_turn(pm, model)
+    if w is None:
+        return None
+    return faction in w
+
+
+def players_turn(s) -> tuple[bool | None, str]:
+    """Is the campaign running the player's faction's turn now? (MemorySensor s; the player's faction is anchors.json
+    player_faction_key, matched by name so no faction pointer has to be cached across saves.)
+    -> (True, ""), (False, "<faction key> is moving"), or (None, why) when it cannot be read."""
+    from .world import World, _anchors
+    model = s.model
+    if model is None:
+        return None, "no campaign loaded"
+    who = whose_turn(s.pm, model)
+    if who is None:
+        return None, "whose turn it is cannot be read"
+    want = _anchors().get("player_faction_key")
+    w = World(s)
+    names = [w.faction_name(f) or hex(f) for f in who]
+    if want in names:
+        return True, ""
+    return False, f"{names[0] if names else 'nobody'} is moving"
