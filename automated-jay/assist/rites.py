@@ -176,20 +176,33 @@ def _rite_card(ui: UI, panel: int, key: str):
     return next((c for c, ids in ui.walk(panel) if ids[-1] == f"CcoCampaignRitual51{key}"), None)
 
 
-def answer_verminlord_dilemma(ui: UI, timeout: float = 3.0) -> bool:
-    """The Verminlord version's dilemma -> A Verminlord Warpseer. True when it was answered (or never came)."""
+def answer_verminlord_dilemma(ui: UI, timeout: float = 3.0) -> str:
+    """The Verminlord version's dilemma -> A Verminlord Warpseer. -> "taken", "none" (no such dilemma came) or
+    "failed" (it is still open: the player has to choose).
+    2026-10-17, seen on every cast: the dilemma shows up ~50 ms after Perform Rite while it is still animating in and
+    the "Rite Performed!" banner (root rite_performed) plays over it; a click then lands nowhere. So: wait for the
+    banner to go, for the Warpseer button to keep the same rectangle for several frames, click with the hover
+    confirmed, and check the dilemma really closed; again if not."""
     def choice():
         ev = ui.root_child("events")
         if not ev:
             return None
         card = next((c for c, ids in ui.walk(ev) if ids[-1].endswith(VERMINLORD_DILEMMA + WARPSEER_CHOICE)), None)
-        return (ev, ui.first("choice_button", under=card)) if card else None
-    hit = wait.wait_until(choice, timeout, "Verminlord dilemma", must=False)
-    if not hit:
-        return False
-    ev, btn = hit
-    click(ui, btn)
-    return bool(wait.gone(ui, ev, timeout=3.0, must=False, what="Verminlord dilemma closed"))
+        btn = ui.first("choice_button", under=card) if card else None
+        return (ev, btn) if btn else None
+    if not wait.wait_until(choice, timeout, "Verminlord dilemma", must=False):
+        return "none"
+    wait.wait_until(lambda: not ui.root_child("rite_performed"), 5.0, "Rite Performed! banner gone", must=False)
+    for _ in range(4):
+        hit = choice()
+        if not hit:
+            return "taken"                              # (closed by the previous click)
+        ev, btn = hit
+        wait.stable_rect(ui, btn, n=6, timeout=2.5, must=False, what="Warpseer choice still")
+        click(ui, btn)
+        if wait.gone(ui, ev, timeout=1.5, must=False, what="Verminlord dilemma closed"):
+            return "taken"
+    return "taken" if not choice() else "failed"
 
 
 def cast_rite(ui: UI, w: World, F: int) -> str:
@@ -229,7 +242,10 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
         spent = gold - (w.s.read().treasury or 0)
         out = f"cast the Dominating Scheme ({spent} gold)"
         if key == RITE_VERMINLORD:
-            out += "; Verminlord Warpseer chosen" if answer_verminlord_dilemma(ui) else "; no Verminlord choice came"
+            how = answer_verminlord_dilemma(ui)
+            out += {"taken": "; Verminlord Warpseer chosen",
+                    "none": "; no Verminlord choice appeared",
+                    "failed": "; the Verminlord choice is still open: choose the Warpseer yourself"}[how]
         return out
     finally:
         ok = ui.root_child("rituals_panel")

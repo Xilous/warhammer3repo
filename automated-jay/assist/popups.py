@@ -129,7 +129,7 @@ def dismiss_events(ui: UI | None = None) -> list[str]:
     ev = ui.root_child("events")
     if ev and any(ids[-1].endswith(rites.VERMINLORD_DILEMMA + rites.WARPSEER_CHOICE) for _c, ids in ui.walk(ev)):
         with game_focus():
-            if rites.answer_verminlord_dilemma(ui, timeout=0.5):
+            if rites.answer_verminlord_dilemma(ui, timeout=0.5) == "taken":
                 closed.append("Verminlord choice: Warpseer")
     focus = None
     try:
