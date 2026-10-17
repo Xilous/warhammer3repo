@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from assist import gamedata as gd
-from assist.buildplan import Building as B, Settlement, Province, plan_province, strategy, chain_for
+from assist.buildplan import Building as B, Settlement, Province, plan_province, strategy, chain_for, final_layout, final_slot_count
 
 MAJOR, MINOR, PORT = "wh2_main_skv_settlement_major", "wh2_main_skv_settlement_minor", "wh2_main_skv_port"
 SB = "wh2_main_special_settlement_skavenblight"
@@ -119,3 +119,20 @@ if __name__ == "__main__":
                 fails += 1
                 print("FAIL", k, ex)
     sys.exit(1 if fails else 0)
+
+
+def test_standing_landmark_keeps_its_slot_and_is_upgraded():
+    # Thanquol's Karag Dromar (2026-10-17): a minor settlement whose three secondary slots the list would fill before
+    # "Landmarks"; the Grey Seer Lair already standing there stays in the plan and is upgraded
+    from bot.sensor import world
+    keep = world.PLAYER["key"]
+    try:
+        world.PLAYER["key"] = "wh3_dlc29_skv_clan_scruten"
+        hq = "wh3_dlc29_special_thanquol_scruten_hq"
+        s = Settlement("Karag Dromar", False, B(MINOR, 1), None, [B(hq, 0), None, None],
+                       gd.landmarks_for_region("wh3_main_combi_region_karag_dromar"))
+        layout = final_layout(s, lambda c, st: True)
+        assert hq in [t.chain for t in layout]
+        assert len(layout) == final_slot_count(s)
+    finally:
+        world.PLAYER["key"] = keep

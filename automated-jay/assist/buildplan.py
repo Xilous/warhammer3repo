@@ -144,28 +144,40 @@ def current_tier(s: Settlement) -> int:
 # ---------------------------------------------------------------- layout
 
 def final_layout(s: Settlement, allowed_per_province) -> list[Target]:
-    """Walk the priority list and fill the slots the settlement will have at max tier."""
+    """Walk the priority list and fill the slots the settlement will have at max tier.
+    A landmark already standing in the settlement keeps its slot (2026-10-17, Thanquol's Grey Seer Lair in Karag
+    Dromar, a minor settlement with three secondary slots: the list filled them before "Landmarks", so the Lair was
+    neither kept in the plan nor upgraded): the slots standing landmarks take are held back from the entries above
+    "Landmarks". Landmarks not built yet follow the list as before."""
     strat = strategy()
     max_tier = gd.main_tier(s.main.chain, max_main_index(s))
     n = final_slot_count(s)
+    standing = list(dict.fromkeys(b.chain for b in s.slots if b is not None and b.chain in s.landmarks
+                                  and b.chain in gd.chains() and reachable_index(b.chain, max_tier) is not None))
     out: list[Target] = []
+    placed: set[str] = set()
+
+    def room_for(c: str) -> bool:
+        held_back = sum(1 for x in standing if x not in placed and x != c)
+        return len(out) < n - held_back
     for entry in strat["priority"]:
         if entry.get("landmarks"):
-            cands = list(s.landmarks)
+            cands = standing + [c for c in s.landmarks if c not in standing]
         else:
             c = chain_for(entry, s.kind)
             cands = [c] if c else []
         for c in cands:
-            if c not in gd.chains():
+            if c not in gd.chains() or c in placed:
                 continue
             if entry.get("per_province") and not allowed_per_province(c, s):
                 continue
             idx = reachable_index(c, max_tier)
             if idx is None:
                 continue
-            if len(out) >= n:
-                return out
+            if not room_for(c):
+                continue
             out.append(Target(entry["name"], c, idx))
+            placed.add(c)
     return out
 
 
