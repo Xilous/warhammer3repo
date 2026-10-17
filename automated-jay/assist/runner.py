@@ -314,11 +314,15 @@ class Runner:
             self.busy.release()
 
     def press_end_turn(self, turn) -> bool:
-        """Click the game's End Turn button and wait until the turn really ends (the AI phase starts or the turn
-        counter moves). False when the game did not end it (e.g. it asks the player about something first)."""
+        """End the turn with Shift+Enter, the game's own "end turn and skip the End Turn warnings", and wait until the
+        turn really ends (the AI phase starts or the turn counter moves). False when the game did not end it.
+        Why skip the warnings (2026-10-17, turn 1 of a new campaign): a plain End Turn stops at the game's warnings and
+        opens the panel concerned (unspent skill points, "a building can be constructed" in a war-blocked province,
+        an army that can still move). The player pressed Build & End Turn after the assistant did everything the
+        player's rules allow, so those warnings are about things left alone on purpose."""
         from bot.focus import game_focus
         from tools import wait
-        from tools.ui import click
+        from tools.ui import held, press
         with game_focus():
             # Player report 2026-10-17: End Turn was clicked while Ikit's skill page was still open. Close every
             # panel a step (or the game's own End Turn warning) left open first, and click only on the bare map.
@@ -331,7 +335,8 @@ class Runner:
                 self.end_turn_problem = "the End Turn button is not shown"
                 return False
             before = {cid for _c, cid in self.ui.root_children()}
-            click(self.ui, b)
+            with held("shift"):
+                press("enter")
             if wait.wait_until(lambda: self.mem.read().turn != turn or not players_turn(self.ui)[0], 3.0,
                                "the turn ends", must=False):
                 return True

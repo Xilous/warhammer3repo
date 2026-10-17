@@ -109,7 +109,7 @@ INTERRUPTED. Clicking the overlay toggles pause, except while automating (then c
 | Part | What it does |
 |---|---|
 | Status line | the same headline as the overlay |
-| **Build & End Turn** | for when you are done with your turn: runs the end-of-turn steps (tech if research is idle, skill points, repairs, buildings, upgrades, then the army builder) and then presses the game's End Turn. It does not wait for idle (you asked), but it checks it is your turn and leaves any decision popup to you; if a step is interrupted or the game asks you something, the turn is **not** ended. |
+| **Build & End Turn** | for when you are done with your turn: runs the end-of-turn steps (tech if research is idle, skill points, repairs, buildings, upgrades, then the army builder) and then ends the turn like Shift+Enter does in the game: the game's End Turn warnings (unspent skill points, a building that could be constructed, an army that can still move) are skipped, because they are about things the assistant leaves alone on purpose. It does not wait for idle (you asked), but it checks it is your turn and leaves any decision popup to you; if a step is interrupted or the game asks you something, the turn is **not** ended. |
 | **Run now** | one full pass for the current turn, right away. It still checks that it is your turn and waits for 3 s without input. Use it after INTERRUPTED, SKIPPED or ERROR, after loading a save, or for a turn you paused through. |
 | **Pause / Resume** | while paused, turn starts are skipped (the overlay says so). Resuming does not redo a skipped turn; Run now does. |
 | Turn and treasury | read from memory every 4 s |
