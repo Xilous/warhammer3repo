@@ -450,26 +450,30 @@ def slot_building(w: World, o, idx: int) -> str | None:
     return o2.slot_states[idx].building if o2 and idx < len(o2.slot_states) else None
 
 
-def ui_demolish(ui, w: World, o, idx: int, slot) -> bool:
+def ui_demolish(ui, w: World, o, idx: int, slot) -> str | None:
     """Demolish the building in this slot (player rule 2026-10-17: in a province the assistant manages, a building
     that is not on the settlement list is replaced by the planned one; frontline provinces stay the player's).
     The slot's hover popup has options_list/button_raze; a confirmation box, if the game shows one, is accepted.
-    Confirmed in memory: the slot is empty."""
+    -> "gone" (the slot is empty), "pending" (the game demolishes at the end of the turn: until then the building
+    stays in its slot and the slot shows work under way, [[S + 0x190] + 0x10] set; seen 2026-10-17, when every
+    demolish was taken for a failure because the slot was not empty within 3 s), None: not demolished."""
     pop = _slot_popup(ui, slot, "building_construction_popup")
     if pop is None:
-        return False
+        return None
     btn = wait.wait_until(lambda: (lambda b: b if b and ui.effective_visible(b) else None)(
         ui.first("button_raze", under=pop)), 0.5, "button_raze", must=False)
     if btn is None or not _press(ui, btn, "button_raze"):
-        return False
+        return None
     box = wait.wait_until(lambda: ui.root_child("dialogue_box"), 1.0, "demolish confirmation", must=False)
     if box:
         tick = ui.first("button_tick", under=box)
         if tick is None:
-            return False
+            return None
         click(ui, tick)
         wait.gone(ui, box, timeout=2.0, must=False, what="confirmation closed")
-    return bool(wait.wait_until(lambda: slot_building(w, o, idx) is None, 3.0, "building demolished", must=False))
+    S = slot_ptr(w, o.region_obj, idx)
+    return wait.wait_until(lambda: "gone" if slot_building(w, o, idx) is None else "pending" if constructing(w, S)
+                           else None, 3.0, "building demolished", must=False) or None
 
 
 def construction_kind(w: World, S: int) -> int | None:
@@ -565,9 +569,12 @@ def run(log=print, override_blocked: bool = False) -> str:
             return order.index(lv[0]) if lv and lv[0] in order else len(order)
         cavern = gd.chains()[workshop.CAVERN_CHAIN][0]
         from .buildplan import current_tier
-        protected, target, note = workshop.plan(w, snap.faction, models, blocked, w.s.read().turn, off_list,
+        turn = w.s.read().turn
+        faction = w.faction_name(snap.faction)
+        protected, target, note = workshop.plan(w, snap.faction, models, blocked, turn, off_list,
                                                 priority_of=priority_of, special=SPECIAL,
-                                                can_host=lambda o: current_tier(o.model) >= cavern.tier)
+                                                can_host=lambda o: current_tier(o.model) >= cavern.tier,
+                                                faction=faction)
         if note:
             problems.append(f"workshop: {note}")
         if target is not None:
@@ -575,26 +582,38 @@ def run(log=print, override_blocked: bool = False) -> str:
             S = slot_ptr(w, o.region_obj, idx)
             lv = gd.chains()[workshop.CAVERN_CHAIN][0]
             old = o.slot_states[idx].building
+            place = gd.place_name(o.region)
+            protected.add((o.region, idx))
             if lv.cost > gold:
                 problems.append(f"workshop: a Construction Cavern needs {lv.cost} gold")
-            elif ui_open_province(ui, o) and (slot := ui_slot(ui, w, o, idx)) is not None and (
-                    not demolish or (ui_demolish(ui, w, o, idx, slot) and (slot := ui_slot(ui, w, o, idx)) is not None))                     and ui_construct(ui, w, S, slot, workshop.CAVERN, workshop.CAVERN_CHAIN):
-                if demolish:
-                    done.append(f"{gd.place_name(o.region)}: demolished {gd.level_name(old)} (for the Cavern; "
-                                f"rebuilt after it)")
-                gold -= lv.cost
-                protected.add((o.region, idx))
-                done.append(f"{gd.place_name(o.region)}: Construction Cavern (for the Forbidden Workshop, "
-                            f"removed again once it has counted)")
-                log(f"build: {done[-1]}")
+            elif not ui_open_province(ui, o) or (slot := ui_slot(ui, w, o, idx)) is None:
+                problems.append(f"workshop: could not open the Cavern's slot in {place}")
             else:
-                problems.append(f"workshop: could not start a Construction Cavern in {gd.place_name(o.region)}")
+                # the one Cavern's slot, recorded before the first click: whatever a click does, no other slot is
+                # ever chosen (player rule: one Cavern, ever)
+                workshop.commit(o.region, idx, turn, faction=faction)
+                how = ui_demolish(ui, w, o, idx, slot) if demolish else "gone"
+                if how == "pending":
+                    done.append(f"{place}: demolishing {gd.level_name(old)} for the Construction Cavern (built there "
+                                f"next turn; the {gd.level_name(old)} is rebuilt once the Cavern has counted)")
+                    log(f"build: {done[-1]}")
+                elif how is None:
+                    problems.append(f"workshop: could not demolish {gd.level_name(old)} in {place} for the Cavern")
+                elif (slot := ui_slot(ui, w, o, idx)) is not None and ui_construct(
+                        ui, w, S, slot, workshop.CAVERN, workshop.CAVERN_CHAIN):
+                    workshop.commit(o.region, idx, turn, started=True)
+                    gold -= lv.cost
+                    done.append(f"{place}: Construction Cavern (for the Forbidden Workshop, removed again once it "
+                                f"has counted)")
+                    log(f"build: {done[-1]}")
+                else:
+                    problems.append(f"workshop: could not start the Construction Cavern in {place}")
         # 3. constructions and upgrades
         for o, a, busy in todo:
             idx = slot_index_for(o, a)
             S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
-            if a.kind == "replace" and (o.region, idx) in protected:
-                problems.append(f"{o.region}: Construction Cavern kept for the Forbidden Workshop (level 2)")
+            if (o.region, idx) in protected:          # the Cavern's slot (also while it is empty, waiting for it)
+                problems.append(f"{o.region}: Construction Cavern slot kept for the Forbidden Workshop (level 2)")
                 continue
             if S and constructing(w, S):
                 if a.kind == "replace":           # the game offers no Demolish on a slot with work under way
@@ -619,8 +638,14 @@ def run(log=print, override_blocked: bool = False) -> str:
             if a.kind == "replace":
                 old = next((s.building for s in [o.slot_states[idx]] if s.building), None)
                 old_name = gd.level_name(old) if old else "the building"
-                if not ui_demolish(ui, w, o, idx, slot):
+                how = ui_demolish(ui, w, o, idx, slot)
+                if how is None:
                     problems.append(f"{o.region}: could not demolish {old_name}")
+                    continue
+                if how == "pending":                  # the slot is free next turn: the planned building goes up then
+                    done.append(f"{gd.place_name(o.region)}: demolishing {old_name} (not on your list; "
+                                f"{a.item} goes up there next turn)")
+                    log(f"build: {done[-1]}")
                     continue
                 done.append(f"{gd.place_name(o.region)}: demolished {old_name} (not on your list)")
                 log(f"build: {done[-1]}")

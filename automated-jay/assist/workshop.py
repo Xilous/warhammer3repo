@@ -7,11 +7,20 @@ settlement it manages (never a frontline province); while it is being built, and
 finished, the off-list rule leaves it alone; the turn after, it is released, and the off-list rule replaces it with
 the planned building. After that the requirement counts as met (no second Cavern while the workshop is still level 1).
 
+One Cavern, ever (player rule 2026-10-17: "only 1 cavern needs to be built, ever, anywhere in my territory"). The
+slot is chosen once and recorded BEFORE the first click (runs/workshop.json "cavern"); from then on the step only
+ever works on that slot: demolish what stands there, build the Cavern there once the slot is free, then leave it.
+Why it is recorded: memory shows no building key for a building going up in an empty slot (the slot is only
+"constructing"), and a demolished building stays in its slot, "constructing", until the end of the turn; reading
+"no Cavern" in either state built a second Cavern and demolished more buildings for it (turns 50-52 of the 2026-10-17
+campaign: Magritta lost its Equipment Warpforge and its Clan Armoury, Skavenblight two buildings).
+
 Memory (9.0.4, from the faction's has_effect_bundle Lua binding): the faction's effect bundles are an array at
 faction+0x1158 (count u32 +4, array [+8], stride 0x38), each entry -> record, key = string object at record+8. The
 workshop level shows as wh2_dlc12_workshop_level_<N>_dummy (none: level 0).
-The only thing kept across turns is when the Cavern was first seen finished (runs/workshop.json); a turn number below
-the one recorded means another save or campaign, and the record starts over.
+Kept across turns (runs/workshop.json): the Cavern's slot and the turn it was chosen, whether its construction was
+started, and when it was first seen finished. A turn below the one the slot was chosen on (an earlier save, or another
+campaign) or another faction starts the record over.
 """
 from __future__ import annotations
 import json
@@ -74,15 +83,34 @@ def caverns(models) -> list[tuple]:
     return out
 
 
+def commit(region: str, idx: int, turn: int, started: bool = False, faction: str | None = None) -> None:
+    """Record the one Cavern's slot (before the first click on it), and later that its construction was started."""
+    st = _load()
+    c = st.get("cavern") or {"at": f"{region}:{idx}", "turn": turn, "faction": faction}
+    if started:
+        c["started"] = True
+    st["cavern"] = c
+    _save(st)
+
+
+def _committed(st: dict):
+    c = st.get("cavern")
+    if not c:
+        return None
+    region, _, idx = c["at"].rpartition(":")
+    return region, int(idx), bool(c.get("started"))
+
+
 def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=None, special=(),
-         can_host=lambda o: True):
+         can_host=lambda o: True, faction: str | None = None):
     """-> (protected: set of (region, slot) the off-list rule must leave alone, build: (settlement, slot, demolish
     first?) to build a Cavern in or None, note: str or None). off_list: (settlement, slot) of off-list buildings the
     building step is about to replace anyway: with no free slot, the Cavern takes one of those slots first."""
     level = workshop_level(w, F)
     st = _load()
-    if st.get("turn", 0) > (turn or 0):                    # another save or campaign: start over
-        st = {}
+    since = (st.get("cavern") or {}).get("turn") or min((st.get("seen") or {}).values(), default=0)
+    if (turn or 0) < since or (faction and (st.get("cavern") or {}).get("faction") not in (None, faction)):
+        st = {}                                            # an earlier save, or another campaign: start over
     if level != 1:
         if st:
             _save({})
@@ -105,6 +133,21 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
     _save(st)
     if found or st.get("met"):
         return protected, None, None
+    mine = _committed(st)
+    if mine:                                               # the one Cavern's slot: nothing is ever chosen again
+        region, idx, started = mine
+        protected.add((region, idx))
+        o = next((x for xs in models.values() for x in xs if x.region == region), None)
+        s = o.slot_states[idx] if o is not None and idx < len(o.slot_states) else None
+        if started and (s is None or not s.constructing):  # cancelled, or the settlement lost: never another one
+            st["met"] = True
+            _save(st)
+            return set(), None, None
+        if started or s.constructing:                      # going up, or the old building is demolished at the end
+            return protected, None, None                   # of the turn
+        if o.province in blocked:
+            return protected, None, f"the Construction Cavern waits: {o.province} is a frontline province now"
+        return protected, (o, idx, bool(s.building)), None
     # can_host: the settlement's main building is high enough for a Construction Cavern (tier 3, player note
     # 2026-10-17; from the game data in assist/build.py)
     for p, owned in models.items():                        # none yet: a free slot in a managed (not frontline) province
