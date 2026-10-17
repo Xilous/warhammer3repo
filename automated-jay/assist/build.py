@@ -122,10 +122,25 @@ def _actions(models, blocked: dict, override_blocked: bool = False):
             o = by_name[sp.settlement.name]
             busy = any(s.constructing for s in o.slot_states)
             for a in sp.actions:
-                if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade") or (
-                        a.kind == "replace" and buildings_setting("off_list_buildings", "ask") == "replace"):
+                if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade"):
+                    todo.append((o, a, busy))
+                elif a.kind == "replace" and buildings_setting("off_list_buildings", "ask") == "replace"                         and replaceable(o, slot_index_for(o, a)):
                     todo.append((o, a, busy))
     return todo, skipped
+
+
+SPECIAL = ("special", "landmark", "legendary", "unique", "wonder")
+
+
+def replaceable(o, idx) -> bool:
+    """May the off-list rule demolish what stands in this slot? Only a normal (secondary) slot, never the main
+    building or the port slot, and never a special building (a captured landmark, a legendary port: nothing that can
+    be rebuilt). 2026-10-17: the plan wanted to demolish Bordeleaux's legendary port to put a Breeding Pit in the port
+    slot."""
+    if idx is None or idx >= len(o.slot_states):
+        return False
+    st = o.slot_states[idx]
+    return st.type == "secondary" and not (st.building and any(k in st.building for k in SPECIAL))
 
 
 def planned_actions(w: World | None = None):
@@ -540,10 +555,38 @@ def run(log=print, override_blocked: bool = False) -> str:
                 log(f"build: {done[-1]}")
             elif how == "not started":
                 problems.append(f"{o.region}: repair of {name} not started")
-        # 2. constructions and upgrades
+        # 2. Ikit's Forbidden Workshop: a Construction Cavern while the workshop needs one for level 2 (player build,
+        #    2026-10-17; assist/workshop.py), kept away from the off-list rule until its requirement has counted
+        from . import workshop
+        off_list = [(o, i) for o, a, _b in todo if a.kind == "replace" for i in [slot_index_for(o, a)] if i is not None]
+        protected, target, note = workshop.plan(w, snap.faction, models, blocked, w.s.read().turn, off_list)
+        if note:
+            problems.append(f"workshop: {note}")
+        if target is not None:
+            o, idx, demolish = target
+            S = slot_ptr(w, o.region_obj, idx)
+            lv = gd.chains()[workshop.CAVERN_CHAIN][0]
+            old = o.slot_states[idx].building
+            if lv.cost > gold:
+                problems.append(f"workshop: a Construction Cavern needs {lv.cost} gold")
+            elif ui_open_province(ui, o) and (slot := ui_slot(ui, w, o, idx)) is not None and (
+                    not demolish or (ui_demolish(ui, w, o, idx, slot) and (slot := ui_slot(ui, w, o, idx)) is not None))                     and ui_construct(ui, w, S, slot, workshop.CAVERN, workshop.CAVERN_CHAIN):
+                if demolish:
+                    done.append(f"{gd.place_name(o.region)}: demolished {gd.level_name(old)} (not on your list)")
+                gold -= lv.cost
+                protected.add((o.region, idx))
+                done.append(f"{gd.place_name(o.region)}: Construction Cavern (for the Forbidden Workshop, "
+                            f"removed again once it has counted)")
+                log(f"build: {done[-1]}")
+            else:
+                problems.append(f"workshop: could not start a Construction Cavern in {gd.place_name(o.region)}")
+        # 3. constructions and upgrades
         for o, a, busy in todo:
             idx = slot_index_for(o, a)
             S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
+            if a.kind == "replace" and (o.region, idx) in protected:
+                problems.append(f"{o.region}: Construction Cavern kept for the Forbidden Workshop (level 2)")
+                continue
             if S and constructing(w, S):
                 if a.kind == "replace":           # the game offers no Demolish on a slot with work under way
                     problems.append(f"{o.region}: {a.detail} once the work under way in that slot is done")
