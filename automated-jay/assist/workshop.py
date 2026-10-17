@@ -145,3 +145,86 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
         return protected, (o, idx, True), None
     return protected, None, ("a Construction Cavern is needed (workshop level 2) but no managed settlement with a "
                              "tier 3 main building has a slot for it")
+
+
+# ------------------------------------------------------------------ buying the Stormfiend Ratling Cannon upgrades
+# Player rule (2026-10-17): the three Stormfiend Ratling Cannon upgrades are bought as soon as they can be (they
+# cost Warp-Fuel and food, not gold). Owned = the faction carries the upgrade's effect bundle (memory). The panel:
+# HUD button_ikit_workshop -> root ikit_workshop_panel; tab buttons header_list/button_holder_<tab>/button_<tab>, of
+# which only the label (child "tx", the top 50 px) is clickable (the button's centre lies below it: a click there
+# did nothing); the Weapon Teams tab holds tab_weapon_teams/upgrade_list/<upgrade key>, state "available" or
+# "locked_level" (workshop level too low), child icon_check visible once owned, cost/dy_reactor_cores (Warp-Fuel)
+# and cost/dy_food. Closed with button_ok.
+UPGRADES = ["wh3_dlc29_ikit_workshop_stormfiend_ranged_type_0",
+            "wh3_dlc29_ikit_workshop_stormfiend_ranged_type_1",
+            "wh3_dlc29_ikit_workshop_stormfiend_ranged_type_2"]
+LEVEL_NEEDED = {"wh3_dlc29_ikit_workshop_stormfiend_ranged_type_2": 2}   # (the panel shows it "locked_level" below)
+
+
+def run(log=print) -> str:
+    from bot.focus import game_focus
+    from bot.sensor.ui import UI
+    from bot.sensor.world import World, find_player_faction
+    from tools import wait
+    from tools.ui import click
+    from . import gamedata as gd
+    w = World()
+    F = find_player_faction(w)
+    if F is None:
+        return "player faction not found"
+    owned = set(faction_bundles(w, F))
+    todo = [k for k in UPGRADES if k not in owned]
+    if not todo:
+        return "Stormfiend Ratling Cannon upgrades: all 3 owned"
+    level = workshop_level(w, F)                           # memory first: no panel opened for a part still locked
+    todo = [k for k in todo if level >= LEVEL_NEEDED.get(k, 0)]
+    if not todo:
+        return f"Stormfiend Ratling Cannon upgrades: the rest waits for workshop level 2 (now {level})"
+    ui = UI(w.s)
+    ui.find_root()
+    out = []
+    with game_focus():
+        if not ui.root_child("ikit_workshop_panel"):          # (a click on the HUD button would close it)
+            b = ui.cached("button_ikit_workshop") or ui.first("button_ikit_workshop")
+            if b is None:
+                return "Forbidden Workshop button not found"
+            click(ui, b)
+        panel = wait.wait_until(lambda: ui.root_child("ikit_workshop_panel"), 3.0, "Forbidden Workshop", must=False)
+        if not panel:
+            return "the Forbidden Workshop did not open"
+        try:
+            tab = ui.first("button_weapon_teams", under=panel)
+            label = ui.child(tab, "tx") if tab else None
+            if label is not None and not (ui.state(tab) or "").startswith("selected"):
+                click(ui, label)
+                wait.wait_until(lambda: (ui.state(tab) or "").startswith("selected"), 2.0, "Weapon Teams tab",
+                                must=False)
+            for key in todo:
+                item = wait.wait_until(lambda k=key: ui.first(k, under=panel), 1.5, f"{key} shown", must=False)
+                name = gd.loc().get(f"rituals_display_name_{key}", key)
+                if item is None:
+                    out.append(f"{name}: not shown")
+                    continue
+                if (ui.state(item) or "").startswith("locked"):
+                    out.append(f"{name}: waits for the workshop level")
+                    continue
+                wait.stable_rect(ui, item, n=3, timeout=1.5, must=False, what=f"{key} still")
+                click(ui, item)
+                box = wait.wait_until(lambda: ui.root_child("dialogue_box"), 0.8, "confirmation", must=False)
+                if box:
+                    tick = ui.first("button_tick", under=box)
+                    if tick:
+                        click(ui, tick)
+                        wait.gone(ui, box, timeout=2.0, must=False, what="confirmation closed")
+                if wait.wait_until(lambda k=key: k in faction_bundles(w, F), 3.0, f"{key} bought", must=False):
+                    out.append(f"bought {name}")
+                    log(f"workshop: bought {name}")
+                else:
+                    out.append(f"{name}: not bought (not enough Warp-Fuel or food?)")
+        finally:
+            p = ui.root_child("ikit_workshop_panel")
+            ok = ui.first("button_ok", under=p) if p else None
+            if ok:
+                click(ui, ok)
+                wait.gone(ui, p, timeout=2.0, must=False, what="Forbidden Workshop closed")
+    return "Stormfiend Ratling Cannon upgrades: " + "; ".join(out)

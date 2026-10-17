@@ -32,7 +32,7 @@ from bot.focus import InputAborted, idle_seconds, return_to_terminal
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
 from tools import timing
-from . import army_builder, build, rites, skills, tech
+from . import army_builder, build, rites, skills, tech, workshop
 
 # Turn-start settle, by condition (was a fixed 4 s): the pass starts once the turn-start camera pan has finished (the
 # map point at the screen centre moves less than SETTLE_CAMERA_PX per frame for SETTLE_CAMERA_MS) AND no root panel
@@ -56,6 +56,7 @@ STATE_FILE = Path(os.environ.get("LOCALAPPDATA") or config.RUNS_DIR) / "automate
 
 STEP_FNS = {
     "rites": rites.run,                  # commandments + the Dominating Scheme: before any gold is spent (player rule)
+    "workshop": workshop.run,            # the Stormfiend Ratling Cannon upgrades, as soon as they can be bought
     "tech": tech.run,
     "skills": skills.run,
     "buildings": build.run,              # player rule: building upgrades take precedence over refilling armies
@@ -64,7 +65,8 @@ STEP_FNS = {
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
-DEFAULT_SCHEDULE = {"turn_start": ["rites", "tech", "skills"], "end_turn": ["rites", "tech", "skills", "buildings", "army"]}
+DEFAULT_SCHEDULE = {"turn_start": ["rites", "workshop", "tech", "skills"],
+                    "end_turn": ["rites", "workshop", "tech", "skills", "buildings", "army"]}
 # tech and skills at both: a campaign's first turn has no turn start to act on (2026-10-17), and unspent skill points
 # make End Turn stop at the game's warning; with nothing to do they send no input
 AUTOMATION = config.STRATEGY_DIR / "automation.json"
@@ -220,7 +222,7 @@ class Runner:
         if reset:
             end = set(schedule()["end_turn"]) - set(schedule()["turn_start"]) | {"end"}
             self.rail_steps = {k: ("later" if k in end else "pending")
-                               for k in ("events", "rites", "tech", "skills", "buildings", "army", "end")}
+                               for k in ("events", "rites", "workshop", "tech", "skills", "buildings", "army", "end")}
         self.rail_steps.update(changes)
         if self.widget and hasattr(self.widget, "post_steps"):
             self.widget.post_steps(dict(self.rail_steps))
@@ -535,6 +537,8 @@ class Runner:
             return ()
         if name == "rites":
             return rites.fingerprint(w, F)
+        if name == "workshop":
+            return tuple(k for k in workshop.UPGRADES if k in workshop.faction_bundles(w, F))
         if name == "skills":                       # the faction's character list (bot/sensor/world.characters), points only
             out = []
             n, arr = w.u32(F + 0xF24), w.q(F + 0xF28)

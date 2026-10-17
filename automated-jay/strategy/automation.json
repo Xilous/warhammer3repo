@@ -10,11 +10,13 @@
   "schedule": {
     "turn_start": [
       "rites",
+      "workshop",
       "tech",
       "skills"
     ],
     "end_turn": [
       "rites",
+      "workshop",
       "tech",
       "skills",
       "buildings",
