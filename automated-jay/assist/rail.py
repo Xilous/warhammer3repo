@@ -20,7 +20,7 @@ import tkinter.font as tkfont
 from bot import config
 
 FULL = (1000, 76)
-COMPACT = (494, 54)
+COMPACT = (494, 70)                 # + a strip at the bottom: can any province build the template?
 HOME = (10, 72)                 # default top-left corner (where the first overlay sat)
 POS_FILE = config.RUNS_DIR / "rail.json"
 DRAG_PX = 4                     # a press that moves further than this is a drag, not a click
@@ -80,6 +80,7 @@ class TurnRail:
         self.f_btn = _font(["Bahnschrift SemiBold Condensed", "Bahnschrift", "Segoe UI Semibold"], 12, "bold")
         self.f_btn_s = _font(["Bahnschrift SemiBold Condensed", "Bahnschrift", "Segoe UI Semibold"], 10, "bold")
         self.state, self.headline, self.sub = "waiting", "WAITING", ""
+        self.template: tuple[bool, str] | None = None
         self.steps: dict[str, str] = {}
         self.hover = False
         self._press = None
@@ -95,6 +96,11 @@ class TurnRail:
         self.state, self.headline = state, headline
         self.sub = next((ln for ln in (detail or "").splitlines() if ln.strip()), "")[:60]
         self.draw()
+
+    def set_template(self, ok: bool, text: str) -> None:
+        if (ok, text) != self.template:
+            self.template = (ok, text)
+            self.draw()
 
     def set_steps(self, steps: dict[str, str]) -> None:
         self.steps = dict(steps)
@@ -240,8 +246,17 @@ class TurnRail:
             cv.create_text(14, 18, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title_s)
             cv.create_text(14, 38, text=self.sub, anchor="w", fill=MUTED, font=self.f_sub_s, width=150)
             self._rail(180, 300, 27, 5, labels=False)
-            self._button((314, 11, 408, H - 11), small=True)
+            self._button((314, 11, 408, 43), small=True)
             self._draw_icons(W)
+            # bottom strip, always visible: can any province recruit the whole army template?
+            cv.create_line(12, 53, W - 12, 53, fill="#23271f")
+            if self.template is not None:
+                ok, text = self.template
+                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, width=W - 28,
+                               text=("TEMPLATE ✓ " if ok else "TEMPLATE: ") + text,
+                               fill="#8fe678" if ok else "#ffb877")
+            else:
+                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, text="TEMPLATE: checking...", fill=MUTED)
 
     # ---------------------------------------------------------------- input
     def _set_hover(self, on: bool) -> None:

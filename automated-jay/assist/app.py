@@ -44,7 +44,7 @@ def template_status(w, F, src) -> tuple[bool, str]:
     full = sorted(eligible(w, F, set(units)))
     if full:
         return True, "Can build the whole template: " + ", ".join(nice(p) for p in full)
-    lines = []
+    lines, needs = [], []
     for u in units:
         where = sorted({p for p, _r, _b in src.get(u, [])})
         if where:
@@ -52,7 +52,22 @@ def template_status(w, F, src) -> tuple[bool, str]:
         else:
             need = sorted(unit_buildings().get(u, set()))
             lines.append(f"{unit_name(u)}: nowhere yet" + (f" (needs {building_name(need[0])})" if need else ""))
+            if need:
+                needs.append(building_name(need[0]))
     return False, "No province can build the whole template yet" + chr(10) + chr(10).join(lines)
+
+
+def template_needs(src) -> list[str]:
+    """The buildings still missing for template units that no province can recruit (short form for the bar)."""
+    from .army import load_automation
+    from .recruit import unit_buildings, building_name
+    out = []
+    for u in load_automation()["army_builder"]["template"]["units"]:
+        if not src.get(u):
+            need = sorted(unit_buildings().get(u, set()))
+            if need:
+                out.append(building_name(need[0]))
+    return out
 
 
 def nice(text: str) -> str:
@@ -248,7 +263,14 @@ class App:
                 elif kind == "world":
                     self._show_world(*msg[1:])
                     self.panel.show_world(*msg[1:])
-                    self.panel.show_template(getattr(self, "template_status", None))
+                    ts = getattr(self, "template_status", None)
+                    self.panel.show_template(ts)
+                    if ts:
+                        ok, text = ts
+                        short = text.split(": ", 1)[1] if ok else (
+                            "no province yet" + (f" (needs {', '.join(n for n in self.template_needs)})"
+                                                  if getattr(self, "template_needs", None) else ""))
+                        self.rail.set_template(ok, short)
                 elif kind == "ignorable":
                     self._show_ignorable(msg[1])
                     self.panel.show_ignorable(msg[1])
@@ -310,6 +332,7 @@ class App:
             src = sources(w)
             self.recruit_lines = report(src)
             self.template_status = template_status(w, F, src)
+            self.template_needs = template_needs(src)
             self.q.put(("world", st, rows, blocked, heroes))
         except Exception as ex:
             self.q.put(("world", None, [], {"error": str(ex)}, []))
