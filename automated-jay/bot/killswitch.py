@@ -19,6 +19,7 @@ import ctypes
 import os
 import sys
 import threading
+import time
 from ctypes import wintypes
 
 WH_KEYBOARD_LL = 13
@@ -51,6 +52,7 @@ _kernel32.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
 _kernel32.GetModuleHandleW.restype = wintypes.HMODULE
 
 _installed = False
+_last_key = 0.0                   # time.monotonic() of the player's last physical key event
 _lock = threading.Lock()
 _proc = None                      # the ctypes callback: must stay referenced for the life of the hook
 TEST = os.environ.get("KILLSWITCH_TEST") == "1"
@@ -75,7 +77,17 @@ def _fire() -> None:
         os._exit(130)
 
 
+def physical_key_age() -> float:
+    """Seconds since the player last pressed or released a key (physical input only; inf if never seen)."""
+    return time.monotonic() - _last_key if _last_key else float("inf")
+
+
 def _on_key(n_code, w_param, l_param):
+    global _last_key
+    if n_code == 0:
+        k = ctypes.cast(l_param, ctypes.POINTER(KBDLLHOOKSTRUCT)).contents
+        if not k.flags & LLKHF_INJECTED:
+            _last_key = time.monotonic()        # the player is at the keyboard (tools/ui.py yields to them)
     if n_code == 0 and w_param in (WM_KEYDOWN, WM_SYSKEYDOWN):
         k = ctypes.cast(l_param, ctypes.POINTER(KBDLLHOOKSTRUCT)).contents
         if (k.vkCode == TRIGGER_VK and _user32.GetAsyncKeyState(VK_SHIFT) & 0x8000

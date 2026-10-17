@@ -31,7 +31,8 @@ import win32gui
 from PIL import Image
 
 from bot import config
-from bot.focus import InputAborted, game_focus, require_game_front   # noqa: F401  (InputAborted re-exported)
+from bot import killswitch
+from bot.focus import InputAborted, game_focus, idle_seconds, require_game_front   # noqa: F401  (InputAborted re-exported)
 from tools import timing, wait
 
 pydirectinput.PAUSE = 0          # no sleeps inside pydirectinput: every gap below is explicit and measured
@@ -185,6 +186,61 @@ def _aim(x: int, y: int, target=None) -> tuple[int, int]:
     return x, y
 
 
+# ------------------------------------------------------------------ the player's hands
+# Player report (2026-10-17): moving the mouse during a pass made a building click land elsewhere (a click goes
+# wherever the cursor is when the button goes down). So right before every button press the cursor must still be
+# exactly where it was aimed, and no key may have been pressed just now; if the player is busy, the pass holds
+# still until mouse and keyboard have been left alone for YIELD_IDLE_S, then aims again. A pass never clicks where
+# the player's cursor went. (Physical keys come from bot/killswitch.py; the mouse from the cursor position.)
+YIELD_IDLE_S = 1.0
+YIELD_TIMEOUT_S = 120.0       # the player kept going this long: stop the pass (InputAborted) rather than wait forever
+CURSOR_SLACK_PX = 2
+PLAYER_YIELDS = 0             # how often passes waited for the player (the runner reports it)
+SUSPECT_CLICKS = 0            # clicks during which the player moved the cursor (the runner's verification redoes them)
+
+
+def _player_busy(at=None) -> bool:
+    if at is not None:
+        cx, cy = win32api.GetCursorPos()
+        if abs(cx - at[0]) > CURSOR_SLACK_PX or abs(cy - at[1]) > CURSOR_SLACK_PX:
+            return True
+    return killswitch.physical_key_age() < YIELD_IDLE_S
+
+
+def yield_to_player(why: str = "") -> None:
+    """Hold still until the player has left mouse and keyboard alone for YIELD_IDLE_S (this process sends nothing
+    meanwhile, so the system's last-input time is theirs). InputAborted after YIELD_TIMEOUT_S or if they left the
+    game."""
+    global PLAYER_YIELDS
+    PLAYER_YIELDS += 1
+    print(f"  pass paused: you are using the mouse/keyboard{f' ({why})' if why else ''}; it goes on when you stop",
+          flush=True)
+    end = time.monotonic() + YIELD_TIMEOUT_S
+    while idle_seconds() < YIELD_IDLE_S or killswitch.physical_key_age() < YIELD_IDLE_S:
+        if time.monotonic() > end:
+            raise InputAborted("you kept using the mouse/keyboard, so the pass stopped")
+        time.sleep(0.05)
+    require_game_front()
+
+
+def _aim_clear(x: int, y: int, target=None) -> tuple[int, int]:
+    """_aim, then make sure the player's hand is off the mouse and keyboard; after waiting for them, aim again."""
+    for _ in range(4):
+        ax, ay = _aim(x, y, target)
+        if not _player_busy((ax, ay)):
+            return ax, ay
+        yield_to_player()
+    raise InputAborted("the cursor kept being moved by the player")
+
+
+def _after_click(at) -> None:
+    """The player moved the cursor while the button was down: the click may have gone astray (counted; the runner's
+    verification round redoes what did not happen)."""
+    global SUSPECT_CLICKS
+    if _player_busy(at):
+        SUSPECT_CLICKS += 1
+
+
 @_timed("click")
 def click_at(x: int, y: int, right: bool = False, target=None) -> None:
     """Click at (x, y): move, wait until the game registered the cursor there (the target component's hover state
@@ -194,13 +250,14 @@ def click_at(x: int, y: int, right: bool = False, target=None) -> None:
     (verified 2026-10-16). Raises InputAborted when the game is not in front."""
     down, up = ((win32con.MOUSEEVENTF_RIGHTDOWN, win32con.MOUSEEVENTF_RIGHTUP) if right
                 else (win32con.MOUSEEVENTF_LEFTDOWN, win32con.MOUSEEVENTF_LEFTUP))
-    x, y = _aim(int(x), int(y), target)
+    x, y = _aim_clear(int(x), int(y), target)
     require_game_front(at=(x, y))            # again right before the button: the player may have just left
     win32api.mouse_event(down, 0, 0, 0, 0)
     try:
         _frames(CLICK_HOLD_FRAMES)
     finally:
         win32api.mouse_event(up, 0, 0, 0, 0)
+    _after_click((x, y))
 
 
 def click(ui, target, right: bool = False):
@@ -241,7 +298,7 @@ def move_path(points, frames: int = HOVER_MAX_FRAMES) -> None:
 @_timed("dclick")
 def double_click(x: int, y: int, target=None) -> None:
     """Two clicks DC_GAP_FRAMES apart, after the hover registered (as click_at)."""
-    x, y = _aim(int(x), int(y), target)
+    x, y = _aim_clear(int(x), int(y), target)
     require_game_front(at=(x, y))
     for i in range(2):
         win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
@@ -258,7 +315,7 @@ def drag(x0: int, y0: int, x1: int, y1: int, steps: int = DRAG_STEPS, target=Non
     """Left-drag from (x0, y0) to (x1, y1) in `steps` moves one frame apart; the button is released even if the drag
     is interrupted. No delay after release: the caller waits until what it scrolled is stable."""
     x1, y1 = int(x1), int(y1)
-    x0, y0 = _aim(int(x0), int(y0), target)
+    x0, y0 = _aim_clear(int(x0), int(y0), target)
     require_game_front(at=(x0, y0))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
     try:
@@ -276,6 +333,9 @@ def wheel(x: int, y: int, notches: int, pause: float | None = None) -> None:
     seconds, for callers not converted yet). No delay after: the caller waits for the list to move."""
     x, y = int(x), int(y)
     _hover_to(x, y)
+    if _player_busy((x, y)):
+        yield_to_player()
+        _hover_to(x, y)
     for i in range(abs(notches)):
         require_game_front(at=(x, y))        # a wheel event goes to the window under the cursor
         win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 0, 0, 120 if notches > 0 else -120, 0)
@@ -288,6 +348,8 @@ def wheel(x: int, y: int, notches: int, pause: float | None = None) -> None:
 @_timed("key")
 def press(key: str) -> None:
     """Key down, KEY_HOLD_FRAMES rendered frames, key up (the game samples keys once per frame)."""
+    if _player_busy():
+        yield_to_player()
     require_game_front()
     pydirectinput.keyDown(key, _pause=False)
     try:
@@ -300,6 +362,8 @@ def press(key: str) -> None:
 def held(key: str):
     """Hold a key for the duration of the block (registered by the game before the block runs: KEY_HOLD_FRAMES);
     it is released even if the block raises."""
+    if _player_busy():
+        yield_to_player()
     require_game_front()
     pydirectinput.keyDown(key, _pause=False)
     try:

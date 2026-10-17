@@ -17,6 +17,7 @@ Status: every widget update is also written to %LOCALAPPDATA%/automated-jay/stat
 "time"}), swapped in atomically, for the player and for tools (tools/turn_driver.py --external).
 """
 from __future__ import annotations
+import inspect
 import json
 import sys
 import threading
@@ -43,6 +44,7 @@ SETTLE_PANELS_MS = 500
 SETTLE_TIMEOUT = 20.0         # s: never settled (the player keeps panning): go on, the idle check still applies
 POLL_SECONDS = 2.0            # loop period while nothing is about to happen
 POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
+VERIFY_ROUNDS = 2             # verification runs per step (each one that had to redo something is followed by another)
 IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alone this long before a pass
 LOST_AFTER = 2                # polls in a row without a campaign before the turn bookkeeping starts over
 # Outside OneDrive: the project lives in a synced folder, and OneDrive locks a file while it syncs it, which made
@@ -394,18 +396,93 @@ class Runner:
             except RuntimeError as ex:
                 return list(pre) + [f"could not bring the game to the front: {ex}"]
 
+    def _call(self, name: str, verify: bool = False):
+        fn = STEP_FNS[name]
+        if verify and "verify" in inspect.signature(fn).parameters:
+            return fn(log=lambda m: None, verify=True)
+        return fn(log=lambda m: None)
+
+    def fingerprint(self, name: str) -> tuple:
+        """What step `name` changes, from memory: tech the research running, skills every character's unspent skill
+        points, buildings the treasury (every construction, upgrade and repair costs gold), army the treasury and
+        every army's units and recruitment queue."""
+        from bot.sensor.world import World, find_player_faction
+        w = World(self.mem)
+        if name == "buildings":
+            return (self.mem.read().treasury,)
+        if name == "tech":
+            try:
+                T = tech.tech_manager(w)
+                return (tech.researching(w, T) if T else None,)
+            except Exception:
+                return ("?",)
+        F = find_player_faction(w)
+        if F is None:
+            return ()
+        if name == "skills":                       # the faction's character list (bot/sensor/world.characters), points only
+            out = []
+            n, arr = w.u32(F + 0xF24), w.q(F + 0xF28)
+            for i in range(min(n, 500)):
+                try:
+                    C = w.q(w.q(arr + 8 * i))
+                    out.append((C, skills._points(w, C)))
+                except Exception:
+                    pass
+            return tuple(sorted(out))
+        forces = []                                # the faction's forces (bot/sensor/world.armies): unit and queue counts
+        n, arr = w.u32(F + 0xF64), w.q(F + 0xF68)
+        for i in range(min(n, 200)):
+            try:
+                MF = w.q(w.q(arr + 8 * i))
+                forces.append((MF, w.u32(MF + 0x6C8 + 0xC), w.u32(MF + 0x6EC)))
+            except Exception:
+                pass
+        return self.mem.read().treasury, tuple(sorted(forces))
+
+    def _verify(self, name: str) -> str:
+        """Verification run (player request 2026-10-17: a mouse move during a pass made a building slot get missed).
+        Every step plans from memory, so running it again is the check: a run that changes nothing in memory means
+        everything the first run tried really happened. One that does change something redid what was missed (a
+        click that went astray, a construction that got cancelled): it is reported and checked once more."""
+        notes = []
+        for _ in range(VERIFY_ROUNDS):
+            before = self.fingerprint(name)
+            with timing.step(f"{name}:verify"):
+                try:
+                    r = self._call(name, verify=True)
+                except InputAborted:
+                    raise
+                except Exception as ex:
+                    traceback.print_exc()
+                    return f"verification failed ({ex})"
+                timing.set_result(r)
+            if self.fingerprint(name) == before:
+                return "verified" if not notes else "; ".join(notes) + "; then verified"
+            notes.append(f"verification redid: {r}")
+        return "; ".join(notes) + "; still changing after verification"
+
     def _automate(self, turn, done: list[str], names: list[str]) -> list[str]:
+        from tools import ui as ui_input
+        yields0, suspect0 = ui_input.PLAYER_YIELDS, ui_input.SUSPECT_CLICKS
         try:
             for name in names:
                 with timing.step(name):
                     try:
-                        result = STEP_FNS[name](log=lambda m: None)
+                        result = self._call(name)
+                    except InputAborted:
+                        raise
                     except Exception as ex:
                         result = f"ERROR {ex}"
                         traceback.print_exc()
                     timing.set_result(result)
+                result = f"{result} | {self._verify(name)}"
                 done.append(f"{name}: {result}")
                 self.post("automating", f"AUTOMATING turn {turn}", "\n".join(done), turn=turn)
+            waited = ui_input.PLAYER_YIELDS - yields0
+            if waited:
+                done.append(f"paused {waited}x while you used the mouse/keyboard"
+                            + (f"; {ui_input.SUSPECT_CLICKS - suspect0} click(s) disturbed, re-checked"
+                               if ui_input.SUSPECT_CLICKS > suspect0 else ""))
         except InputAborted as ex:
             done.append(f"interrupted: {ex}")
             raise

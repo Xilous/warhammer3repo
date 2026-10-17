@@ -41,6 +41,20 @@ it (bot/killswitch.py, armed by bot/focus.py): it lets go of the mouse buttons a
 spot, mid-click. Only a key press you make counts (the automation cannot trigger it), and the game does not see
 that Escape. Start the assistant again with run_assistant.bat.
 
+### If you touch the mouse or keyboard during a pass
+
+Right before every click the assistant checks that the cursor is still exactly where it aimed and that you did
+not just press a key. If you are using the mouse or keyboard, the pass holds still until you have left both
+alone for 1 s, then aims again: it never clicks where your cursor went. (After 2 minutes of you still going, the
+pass stops: INTERRUPTED.) The overlay's step lines say how often it paused for you.
+
+**Verification.** After each step, the assistant runs the step once more. Every step plans from what memory
+shows, so a second run that changes nothing (gold, research, skill points, army units and queues) proves that
+everything the first run tried really happened: the step line ends in `verified`. If the second run had to do
+something (a click that went astray, a construction that got cancelled), the line says `verification redid:
+...` and it is checked once more. The army step's verification only redoes disbands and recruitment; march and
+walk orders are not issued twice.
+
 ### What happens each turn
 
 1. The assistant sees the turn counter go up. It waits until it really is your turn (End Turn button shown and

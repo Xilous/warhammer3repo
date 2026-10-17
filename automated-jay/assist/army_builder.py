@@ -687,7 +687,7 @@ def walk_engineer(ui: UI, w: World, F: int, hero, army, log) -> str:
 
 # ------------------------------------------------------------------ the step
 
-def build_one(ui: UI, w: World, F: int, army, mine: list, log):
+def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = False):
     """One ticked army. mine: the free engineers that count as its engineer. Returns (log lines, the engineer
     recruited for it this turn or None). Everything is decided from memory first; the army is selected (a single
     click on its Lords & Heroes row, no camera move) only when a disband, a recruitment or a move order follows, so an
@@ -725,9 +725,10 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log):
                 out.append("no free settlement in a province that can recruit the missing units")
             else:
                 region, province, hops = tgt
-                if not select_army(ui, army):
-                    return [f"{name}: could not select the army"], None
-                out.append(move_to(ui, w, army, region) + f" ({hops} regions away)")
+                if not verify:                 # a verification run does not order the march again
+                    if not select_army(ui, army):
+                        return [f"{name}: could not select the army"], None
+                    out.append(move_to(ui, w, army, region) + f" ({hops} regions away)")
     # Engineer (player rule 2026-10-16): never a reason to move the army or to pick a province. Recruited as soon
     # as the faction cap allows, at the settlement nearest the army that can recruit one, then walked to the army.
     if d.heroes_missing.get(ENGINEER, 0) > len(mine):
@@ -738,12 +739,14 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log):
     army = next((a for a in armies(w, F) if a.cqi == army.cqi), army)
     if army.queued:
         out.append(f"{len(army.queued)} units in recruitment")
-    for c in mine + ([recruited] if recruited else []):
+    for c in ([] if verify else mine + ([recruited] if recruited else [])):   # walks: ordered by the first run
         out.append(walk_engineer(ui, w, F, c, army, log))
     return ([f"{name}: {x}" for x in out] if out else [f"{name}: matches template"]), recruited
 
 
-def run(log=print) -> str:
+def run(log=print, verify: bool = False) -> str:
+    """verify: the runner's verification run (assist/runner.py): only disbands, recruitment and engineer recruitment
+    are redone if they did not happen; march and walk orders are not issued again."""
     ticked = enabled_armies()
     if not ticked:
         return "no army ticked"
@@ -770,7 +773,7 @@ def run(log=print) -> str:
     with game_focus():
         for a in acting:
             try:
-                lines, _new = build_one(ui, w, F, a, mine.get(a.cqi, []), log)
+                lines, _new = build_one(ui, w, F, a, mine.get(a.cqi, []), log, verify=verify)
             except Exception as ex:                   # one army's failure must not skip the others
                 import traceback
                 traceback.print_exc()
