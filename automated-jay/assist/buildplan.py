@@ -9,6 +9,8 @@ The planner never decides anything the list doesn't: it only orders work the pla
     python -X utf8 -m assist.buildplan          # demo on a few example provinces
 """
 from __future__ import annotations
+
+from bot import config
 import json
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -16,7 +18,7 @@ from pathlib import Path
 
 from . import gamedata as gd
 
-STRATEGY = Path(__file__).resolve().parents[1] / "strategy" / "settlements.json"
+STRATEGY = config.STRATEGY_DIR / "settlements.json"
 
 # Game fact, unverified in-game: a port settlement's port building occupies one of the slots its
 # main building unlocks (the player describes it as "the 2nd slot").

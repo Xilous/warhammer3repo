@@ -26,6 +26,8 @@ screen, and every wait is a condition (tools/wait.py):
     python -X utf8 -m assist.skills plan [ikit_claw|warlock_engineer|verminlord_warpseer]
 """
 from __future__ import annotations
+
+from bot import config
 import json
 import sys
 from functools import lru_cache
@@ -37,7 +39,7 @@ from tools import wait
 from tools.ui import click, drag, wheel
 
 HERE = Path(__file__).resolve().parent
-STRATEGY = HERE.parent / "strategy" / "skills.json"
+STRATEGY = config.STRATEGY_DIR / "skills.json"
 
 POINTS_OFF = 0x240        # unspent skill points: u32 at [character + 0x3F0] + 0x240 (verified 9.0.4)
 CHAR_ID_OFF = 0x110       # character id: u32 at character + 0x110 (character_row_<id>, CcoCampaignCharacter<id>)

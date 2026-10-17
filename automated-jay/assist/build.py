@@ -47,7 +47,7 @@ from tools.ui import click, move_to, wheel
 PARK = (1700, 700)
 PANEL = "settlement_panel"
 CATEGORIES_FILE = config.RUNS_DIR / "build_categories.json"
-AUTOMATION_FILE = Path(__file__).resolve().parents[1] / "strategy" / "automation.json"
+AUTOMATION_FILE = config.STRATEGY_DIR / "automation.json"
 EFFECT_TIMEOUT_S = 1.0        # a click on a card / button that has not started construction by then never will
                               # (measured 2026-10-16: the slot shows construction 10-100 ms after the click)
 POPUP_TIMEOUT_S = 0.3         # hovering a slot opens its popup in 18-22 ms (measured 2026-10-16)

@@ -27,6 +27,8 @@ the turn-start step never falls back to it (fixed coordinates click blindly when
     python -X utf8 -m assist.tech plan          # print the click order
 """
 from __future__ import annotations
+
+from bot import config
 import json
 import sys
 import time
@@ -80,7 +82,7 @@ def nodes() -> dict[str, Node]:
 def click_order() -> list[str]:
     """Beeline targets in the guide's click order (first appearance in the expanded order), then every
     other tech cheapest first."""
-    b = json.load(open(gd.REPO / "tww" / "skv_beeline.json", encoding="utf-8"))
+    b = json.load(open(config.BEELINE_FILE, encoding="utf-8"))
     targets = set(b["targets"])
     order = [t for t in b["order"] if t in targets]
     ns = nodes()

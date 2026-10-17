@@ -61,7 +61,7 @@ STEP_FNS = {
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
 DEFAULT_SCHEDULE = {"turn_start": ["tech", "skills"], "end_turn": ["buildings", "army"]}
-AUTOMATION = config.ROOT / "strategy" / "automation.json"
+AUTOMATION = config.STRATEGY_DIR / "automation.json"
 
 
 def schedule() -> dict[str, list[str]]:

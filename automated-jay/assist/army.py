@@ -12,6 +12,8 @@ campaign and the player's real campaign hand out the same cqis. So a tick also s
 ignored (tick_for). Entries ticked before the id was stored are matched by the general's name.
 """
 from __future__ import annotations
+
+from bot import config
 import json
 from collections import Counter
 from dataclasses import dataclass, field
@@ -19,7 +21,7 @@ from pathlib import Path
 
 from . import gamedata as gd
 
-AUTOMATION = Path(__file__).resolve().parents[1] / "strategy" / "automation.json"
+AUTOMATION = config.STRATEGY_DIR / "automation.json"
 
 
 def load_automation() -> dict:

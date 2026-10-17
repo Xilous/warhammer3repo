@@ -14,6 +14,8 @@ under construction does not count.
     python -X utf8 -m assist.recruit
 """
 from __future__ import annotations
+
+from bot import config
 import json
 from collections import defaultdict
 from functools import lru_cache
@@ -66,7 +68,7 @@ def sources(w: World | None = None) -> dict[str, list[tuple[str, str, str]]]:
     """template unit/hero key -> [(province, region, building level)] where it can be recruited now."""
     w = w or World()
     F = find_player_faction(w)
-    t = json.load(open(Path(__file__).resolve().parents[1] / "strategy" / "automation.json", encoding="utf-8"))["army_builder"]["template"]
+    t = json.load(open(config.STRATEGY_DIR / "automation.json", encoding="utf-8"))["army_builder"]["template"]
     need = {**{u: unit_buildings().get(u, set()) for u in t["units"]},
             **{h: hero_buildings().get(h, set()) for h in t["heroes"]}}
     live = live_buildings(w, F)

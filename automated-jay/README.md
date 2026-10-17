@@ -33,6 +33,20 @@ To stop, close the assistant window.
 `run_assistant_once.bat` does a single pass right now, without the window, after asking you to confirm. It makes
 the same checks as **Run now** (your turn, 3 s idle, no open decision). While the assistant is running, use **Run now** instead.
 
+### Using the exe (any Windows PC, no Python needed)
+
+1. Download `automated-jay.exe` from the repo's [Releases](https://github.com/Xilous/warhammer3repo/releases) and put it
+   in a folder of its own (e.g. `C:\Gamesutomated-jay\`).
+2. Double-click it. On first start it creates `strategy\` (your settings, ticks and skill/settlement orders),
+   `anchors.json` and `runs\` (logs) next to itself; a newer exe keeps using them.
+3. `automated-jay.exe --selftest` checks the bundled game data and the connection to the game (memory reads only,
+   no input) and writes `runs\selftest.txt`.
+
+The exe has no console window: what the console would show goes to `runs\console.log`. Requirements are the same
+as from source: the game at 1920x1080 borderless, the same game build (9.0.4: memory offsets change with patches).
+To build the exe yourself: `python -X utf8 -m tools.build_exe` from automated-jay/ (needs the repo's game-data dump in
+`../tww` and `../re`, which is not published; see tools/build_exe.py).
+
 ### Emergency stop: Shift+Esc
 
 Press **Shift+Esc** at any time, in any window, to end the assistant immediately (and any test driver or test

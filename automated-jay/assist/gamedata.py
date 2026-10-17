@@ -13,9 +13,11 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
-DB = REPO / "tww" / "db"
-LOC = REPO / "tww" / "loc_en.json"
+from bot import config
+
+REPO = config.REPO
+DB = config.DB_DIR
+LOC = config.LOC_FILE
 
 SKAVEN_AVAILABILITY = ("wh2_main_bas_skv", "everyone")
 

@@ -17,7 +17,7 @@ from bot.sensor.ui import UI
 from tools import wait
 from tools.ui import click
 
-IGNORE_FILE = config.ROOT / "strategy" / "popup_ignore.json"
+IGNORE_FILE = config.STRATEGY_DIR / "popup_ignore.json"
 
 NORMAL = {
     "ai_turns",            # AI turn progress bar (only during end turn)
