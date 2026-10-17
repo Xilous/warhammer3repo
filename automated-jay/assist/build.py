@@ -214,7 +214,8 @@ def ui_open_province(ui, o: OwnedSettlement) -> bool:
     """The province panel showing o's settlement column (CcoCampaignSettlement<region>: unique to its province, so a
     panel still showing the previous province never passes)."""
     col = f"CcoCampaignSettlement{o.region}"
-    if ui.first(col, under=PANEL) is not None:
+    shown = lambda: ui.root_child(PANEL) and ui.first(col, under=PANEL)   # (a lookup under a closed panel walks
+    if shown():                                                          # the whole tree)
         return True
     row = ui.first(f"row_entry_{o.province}")
     if row is None:
@@ -230,7 +231,7 @@ def ui_open_province(ui, o: OwnedSettlement) -> bool:
     if not _scroll_into_clip(ui, row, "Provinces list"):
         return False
     click(ui, row)
-    return wait.appears(ui, col, under=PANEL, timeout=3.0, must=False) is not None
+    return wait.wait_until(shown, 3.0, f"{col} shown", must=False) is not None
 
 
 def ui_slot(ui, w: World, o: OwnedSettlement, idx: int):

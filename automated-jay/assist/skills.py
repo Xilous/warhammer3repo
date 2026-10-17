@@ -158,6 +158,8 @@ _last_sig: tuple = ()      # the tree rows seen last: a reopened panel can show 
 def _tree_sig(ui) -> tuple:
     """Pointers of the skill tree's rows (character_details_panel_skills/listview/list_clip/list_box/chainN/chain).
     The game builds new ones for every character it shows; () while the panel is not shown."""
+    if not ui.root_child(DETAILS):                # (a lookup under a panel that is not open walks the whole tree)
+        return ()
     sk = ui.cached(SKILLS_PANEL, under=DETAILS)
     lb = ui.cached("list_box", under=sk) if sk else None
     if lb is None:
@@ -167,7 +169,7 @@ def _tree_sig(ui) -> tuple:
 
 def _selected(ui, char_id: int) -> bool:
     """The open panel shows this character (its entry along the top is "selected")."""
-    e = ui.cached(f"CcoCampaignCharacter{char_id}", under=DETAILS)
+    e = ui.cached(f"CcoCampaignCharacter{char_id}", under=DETAILS) if ui.root_child(DETAILS) else None
     h = ui.child(e, "button_character_holder") if e else None
     return h is not None and (ui.state(h) or "").startswith("selected")
 
@@ -240,7 +242,8 @@ def _show(ui, char_id: int, rows: int) -> bool:
         return False
     before = _tree_sig(ui) or _last_sig
     click(ui, badge)
-    if wait.appears(ui, SKILLS_PANEL, under=DETAILS, timeout=3.0, must=False) is None:
+    if wait.wait_until(lambda: ui.root_child(DETAILS) and ui.first(SKILLS_PANEL, under=DETAILS), 3.0,
+                       f"{SKILLS_PANEL} shown", must=False) is None:
         return False
     return _await_tree(ui, char_id, before, rows)
 
@@ -248,7 +251,7 @@ def _show(ui, char_id: int, rows: int) -> bool:
 def _close(ui) -> None:
     global _last_sig
     _last_sig = _tree_sig(ui) or _last_sig
-    ok = ui.first("button_ok", under=DETAILS)
+    ok = ui.first("button_ok", under=DETAILS) if ui.root_child(DETAILS) else None
     if ok is None:
         return
     click(ui, ok)
