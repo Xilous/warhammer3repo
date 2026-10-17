@@ -1,5 +1,6 @@
 """Build the permanent-buff layer per unit from the installed game's database tables."""
-import json,re,collections
+import json,re,collections,sys
+IN=sys.argv[1] if len(sys.argv)>1 else 'tww/model_units.json'; OUT=sys.argv[2] if len(sys.argv)>2 else 'tww/buffs.json'
 L=lambda t: json.load(open('tww/db/%s.json'%t,encoding='utf-8'))
 loc=json.load(open('tww/loc_en.json',encoding='utf-8'))
 def tr(t):
@@ -12,7 +13,7 @@ def keyname(k):
     m=re.search(r'_(skv|dwf|emp|grn|vmp|brt|chs|bst|wef|nor|hef|def|lzd|tmb|cst|kho|nur|tze|sla|ksl|cth|ogr|chd|dae|nag|pro)_(.+)$',k)
     tail=m.group(2) if m else k
     return ' '.join(w.capitalize() for w in tail.split('_'))
-units=json.load(open('tww/model_units.json',encoding='utf-8'))
+units=json.load(open(IN,encoding='utf-8'))
 mu={r['unit']:r for r in L('main_units_tables')}
 lu={r['key']:r for r in L('land_units_tables')}
 
@@ -221,7 +222,7 @@ for u in units:
     b=build(u['k'],u['r'])
     if b['tech'] or b['gen'] or b['ll'] or b['mech']:
         out[u['k']]=b; cnt[u['r']]+=1
-json.dump(out,open('tww/buffs.json','w',encoding='utf-8'),ensure_ascii=False)
+json.dump(out,open(OUT,'w',encoding='utf-8'),ensure_ascii=False)
 print('units with buffs',len(out),dict(cnt))
 sf=out.get('wh3_dlc29_skv_mon_stormfiend_ratling_cannons')
 print(json.dumps(sf,ensure_ascii=False,indent=1)[:6000])

@@ -1,0 +1,1346 @@
+[
+[
+"140108293",
+25904,
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement",
+"call qword ptr [rsi + 0x6530]"
+],
+[
+"140108300",
+25896,
+"autoresolver_min_hp_for_enemy_hp_dps_modifier",
+"call qword ptr [rsi + 0x6528]"
+],
+[
+"14010bac7",
+26000,
+"autoresolver_flying_unit_melee_damage_dealt_modifier",
+"call qword ptr [rsi + 0x6590]"
+],
+[
+"14010bc10",
+25904,
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement",
+"call qword ptr [rsi + 0x6530]"
+],
+[
+"14010bc7d",
+25896,
+"autoresolver_min_hp_for_enemy_hp_dps_modifier",
+"call qword ptr [rsi + 0x6528]"
+],
+[
+"14052b7e7",
+26384,
+"autoresolver_battle_tower_level_2_damage_multiplier",
+"lea edx, [rsi + 0x6710]"
+],
+[
+"140543080",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"lea ecx, [rsi + 0x6160]"
+],
+[
+"140554102",
+24984,
+"autoresolver_chase_down_damage_multiplier",
+"lea ecx, [rsi + 0x6198]"
+],
+[
+"140611cf8",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"and dword ptr [rdi + 0x6158], 0"
+],
+[
+"140611d00",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"lea ecx, [rdi + 0x6160]"
+],
+[
+"140611d0e",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"and dword ptr [rdi + 0x6190], 0"
+],
+[
+"140611d16",
+24984,
+"autoresolver_chase_down_damage_multiplier",
+"lea ecx, [rdi + 0x6198]"
+],
+[
+"140611d24",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"and dword ptr [rdi + 0x61c8], 0"
+],
+[
+"140611d42",
+25096,
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"lea ecx, [rdi + 0x6208]"
+],
+[
+"140611e00",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"and dword ptr [rdi + 0x63f8], 0"
+],
+[
+"140611f3c",
+26384,
+"autoresolver_battle_tower_level_2_damage_multiplier",
+"lea ecx, [rdi + 0x6710]"
+],
+[
+"140611fb8",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"and dword ptr [rdi + 0x6858], 0"
+],
+[
+"140611fc0",
+26720,
+"autoresolver_chase_down_speed_comparison_divider",
+"lea ecx, [rdi + 0x6860]"
+],
+[
+"140612010",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"and dword ptr [rdi + 0x6938], 0"
+],
+[
+"14061205a",
+27112,
+"autoresolver_minimum_morale_loss_per_second",
+"lea ecx, [rdi + 0x69e8]"
+],
+[
+"1406a0eee",
+24944,
+"autoresolver_unit_wipe_out_threshold",
+"lea ecx, [rsi + 0x6170]"
+],
+[
+"1406a0f07",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"lea ecx, [rsi + 0x61c8]"
+],
+[
+"1406a0f20",
+25120,
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier",
+"lea ebx, [rsi + 0x6220]"
+],
+[
+"140706479",
+27112,
+"autoresolver_minimum_morale_loss_per_second",
+"lea edx, [rdi + 0x69e8]"
+],
+[
+"14075d122",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"cmp dword ptr [rdi + 0x6858], ebx"
+],
+[
+"14075d12f",
+26728,
+"autoresolver_chase_down_maximum_damage_unary",
+"lea esi, [rdi + 0x6868]"
+],
+[
+"14075d13e",
+26720,
+"autoresolver_chase_down_speed_comparison_divider",
+"inc dword ptr [rdi + 0x6860]"
+],
+[
+"14075d144",
+26720,
+"autoresolver_chase_down_speed_comparison_divider",
+"mov eax, dword ptr [rdi + 0x6860]"
+],
+[
+"14075d14b",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"cmp dword ptr [rdi + 0x6858], ebx"
+],
+[
+"14075d215",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"mov dword ptr [rdi + 0x6858], eax"
+],
+[
+"14075d22b",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"mov eax, dword ptr [rdi + 0x6858]"
+],
+[
+"14075d24c",
+26720,
+"autoresolver_chase_down_speed_comparison_divider",
+"mov eax, dword ptr [rdi + 0x6860]"
+],
+[
+"14075d254",
+26720,
+"autoresolver_chase_down_speed_comparison_divider",
+"mov dword ptr [rdi + 0x6860], eax"
+],
+[
+"14075d264",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"mov eax, dword ptr [rdi + 0x6858]"
+],
+[
+"1407977c9",
+27112,
+"autoresolver_minimum_morale_loss_per_second",
+"lea ecx, [rdi + 0x69e8]"
+],
+[
+"1408abfa2",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"lea eax, [rsi + 0x6160]"
+],
+[
+"1408da212",
+24924,
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"mov byte ptr [rcx + 0x615c], 1"
+],
+[
+"141239b02",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov ecx, dword ptr [rax + rcx + 0x61b8]"
+],
+[
+"14123ad32",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov ecx, dword ptr [rax + rcx + 0x61b8]"
+],
+[
+"14123b3e2",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov ecx, dword ptr [rax + rcx + 0x61b8]"
+],
+[
+"1412cf685",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"mov eax, dword ptr [rcx + 0x6858]"
+],
+[
+"1414a0359",
+27112,
+"autoresolver_minimum_morale_loss_per_second",
+"lea ecx, [rbx + 0x69e8]"
+],
+[
+"1414a03ad",
+26720,
+"autoresolver_chase_down_speed_comparison_divider",
+"lea ecx, [rbx + 0x6860]"
+],
+[
+"1414a03f5",
+26384,
+"autoresolver_battle_tower_level_2_damage_multiplier",
+"lea ecx, [rbx + 0x6710]"
+],
+[
+"1414a0509",
+25096,
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"lea ecx, [rbx + 0x6208]"
+],
+[
+"1414a0521",
+24984,
+"autoresolver_chase_down_damage_multiplier",
+"lea ecx, [rbx + 0x6198]"
+],
+[
+"1414a052d",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"lea ecx, [rbx + 0x6160]"
+],
+[
+"1414a3e50",
+26720,
+"autoresolver_chase_down_speed_comparison_divider",
+"lea ecx, [rbx + 0x6860]"
+],
+[
+"1414a3e91",
+26448,
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"lea ecx, [rbx + 0x6750]"
+],
+[
+"1414a3e9e",
+26408,
+"autoresolver_damage_transfer_diff_from_average_to_transfer",
+"lea ecx, [rbx + 0x6728]"
+],
+[
+"1414a3f6e",
+25576,
+"autoresolver_building_damage_num_assult_equipment_percentage",
+"lea ecx, [rbx + 0x63e8]"
+],
+[
+"1414a3fe3",
+25096,
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"lea ecx, [rbx + 0x6208]"
+],
+[
+"1414a3ffd",
+24992,
+"autoresolver_special_ability_cp_to_strength_divider",
+"lea ecx, [rbx + 0x61a0]"
+],
+[
+"1414a400a",
+24952,
+"autoresolver_wipe_out_army_force_unary_lost",
+"lea ecx, [rbx + 0x6178]"
+],
+[
+"1414ea1a9",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov ecx, dword ptr [rbx + 0x6158]"
+],
+[
+"1414ea1bd",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov dword ptr [rbx + 0x6158], edi"
+],
+[
+"1414ea1c4",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov ecx, dword ptr [rbx + 0x6190]"
+],
+[
+"1414ea1d8",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov dword ptr [rbx + 0x6190], edi"
+],
+[
+"1414ea1df",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov ecx, dword ptr [rbx + 0x61c8]"
+],
+[
+"1414ea1f3",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov dword ptr [rbx + 0x61c8], edi"
+],
+[
+"1414ea2ed",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov ecx, dword ptr [rbx + 0x63f8]"
+],
+[
+"1414ea301",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov dword ptr [rbx + 0x63f8], edi"
+],
+[
+"1414ea509",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"mov ecx, dword ptr [rbx + 0x6858]"
+],
+[
+"1414ea51d",
+26712,
+"autoresolver_chase_down_loser_modifier",
+"mov dword ptr [rbx + 0x6858], edi"
+],
+[
+"1414ea575",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov ecx, dword ptr [rbx + 0x6938]"
+],
+[
+"1414ea589",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov dword ptr [rbx + 0x6938], edi"
+],
+[
+"1415023dc",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov eax, dword ptr [rcx + 0x6190]"
+],
+[
+"141502412",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"cmp dword ptr [rsi + 0x6190], ebx"
+],
+[
+"14150241f",
+24984,
+"autoresolver_chase_down_damage_multiplier",
+"lea edx, [rsi + 0x6198]"
+],
+[
+"141502433",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"cmp dword ptr [rsi + 0x6190], ebx"
+],
+[
+"141502532",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov dword ptr [rsi + 0x6190], eax"
+],
+[
+"141502548",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov eax, dword ptr [rsi + 0x6190]"
+],
+[
+"14150257e",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov eax, dword ptr [rsi + 0x6190]"
+],
+[
+"1415025b7",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov eax, dword ptr [rcx + 0x6190]"
+],
+[
+"1415025c5",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov eax, dword ptr [rbx + 0x6190]"
+],
+[
+"141515528",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov eax, dword ptr [rcx + 0x6938]"
+],
+[
+"14151555e",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"cmp dword ptr [rsi + 0x6938], ebx"
+],
+[
+"14151557f",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"cmp dword ptr [rsi + 0x6938], ebx"
+],
+[
+"14151567e",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov dword ptr [rsi + 0x6938], eax"
+],
+[
+"141515694",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov eax, dword ptr [rsi + 0x6938]"
+],
+[
+"1415156ca",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov eax, dword ptr [rsi + 0x6938]"
+],
+[
+"141515703",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov eax, dword ptr [rcx + 0x6938]"
+],
+[
+"141515711",
+26936,
+"autoresolver_ensured_unit_loss_damage_multiplier",
+"mov eax, dword ptr [rbx + 0x6938]"
+],
+[
+"14151b008",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rcx + 0x6158]"
+],
+[
+"14151b03e",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"cmp dword ptr [rsi + 0x6158], ebx"
+],
+[
+"14151b04b",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"lea edx, [rsi + 0x6160]"
+],
+[
+"14151b05f",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"cmp dword ptr [rsi + 0x6158], ebx"
+],
+[
+"14151b15e",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov dword ptr [rsi + 0x6158], eax"
+],
+[
+"14151b174",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rsi + 0x6158]"
+],
+[
+"14151b1aa",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rsi + 0x6158]"
+],
+[
+"14151b1e3",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rcx + 0x6158]"
+],
+[
+"14151b1f1",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rbx + 0x6158]"
+],
+[
+"14151c120",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov eax, dword ptr [rcx + 0x63f8]"
+],
+[
+"14151c156",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"cmp dword ptr [rsi + 0x63f8], ebx"
+],
+[
+"14151c177",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"cmp dword ptr [rsi + 0x63f8], ebx"
+],
+[
+"14151c276",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov dword ptr [rsi + 0x63f8], eax"
+],
+[
+"14151c28c",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov eax, dword ptr [rsi + 0x63f8]"
+],
+[
+"14151c2c2",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov eax, dword ptr [rsi + 0x63f8]"
+],
+[
+"14151c2fb",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov eax, dword ptr [rcx + 0x63f8]"
+],
+[
+"14151c309",
+25592,
+"autoresolver_building_damage_num_units_percentage",
+"mov eax, dword ptr [rbx + 0x63f8]"
+],
+[
+"141537cea",
+25096,
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"inc dword ptr [rdi + 0x6208]"
+],
+[
+"141537cf0",
+25096,
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"mov eax, dword ptr [rdi + 0x6208]"
+],
+[
+"141537e05",
+25096,
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"mov eax, dword ptr [rdi + 0x6208]"
+],
+[
+"141537e0d",
+25096,
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"mov dword ptr [rdi + 0x6208], eax"
+],
+[
+"141537e9a",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov eax, dword ptr [rcx + 0x61c8]"
+],
+[
+"141537ed0",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"cmp dword ptr [rdi + 0x61c8], ebx"
+],
+[
+"141537ef1",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"cmp dword ptr [rdi + 0x61c8], ebx"
+],
+[
+"141537fc6",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov dword ptr [rdi + 0x61c8], eax"
+],
+[
+"141537fdc",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov eax, dword ptr [rdi + 0x61c8]"
+],
+[
+"141538012",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov eax, dword ptr [rdi + 0x61c8]"
+],
+[
+"141538043",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov eax, dword ptr [rcx + 0x61c8]"
+],
+[
+"141538051",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov eax, dword ptr [rbx + 0x61c8]"
+],
+[
+"141714494",
+24932,
+"autoresolver_bound_max_ranged_kills_per_second",
+"or byte ptr [rax + 0x6164], bh"
+],
+[
+"14194ecd1",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"lea ecx, [rbx + 0x6160]"
+],
+[
+"1419505d9",
+25120,
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier",
+"mov dword ptr [rbx + 0x6220], ebp"
+],
+[
+"1419505ee",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"lea ecx, [rbx + 0x6190]"
+],
+[
+"1419505f5",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov dword ptr [rbx + 0x61c8], ebp"
+],
+[
+"141950611",
+24944,
+"autoresolver_unit_wipe_out_threshold",
+"mov dword ptr [rbx + 0x6170], ebp"
+],
+[
+"1419ff78e",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"mov eax, dword ptr [rax + 0x6180]"
+],
+[
+"141ac587a",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov ebx, dword ptr [rdi + 0x6158]"
+],
+[
+"141accf0b",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"mov dword ptr [rsi + 0x6180], esi"
+],
+[
+"141accf12",
+24968,
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"mov dword ptr [rsi + 0x6188], esi"
+],
+[
+"141accf19",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov dword ptr [rsi + 0x6190], esi"
+],
+[
+"141accf20",
+24984,
+"autoresolver_chase_down_damage_multiplier",
+"mov dword ptr [rsi + 0x6198], esi"
+],
+[
+"141accf27",
+24992,
+"autoresolver_special_ability_cp_to_strength_divider",
+"mov dword ptr [rsi + 0x61a0], esi"
+],
+[
+"141accf2e",
+25000,
+"autoresolver_special_ability_maximum_strength_proportion",
+"mov dword ptr [rsi + 0x61a8], esi"
+],
+[
+"141accf35",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"mov dword ptr [rsi + 0x6160], esi"
+],
+[
+"141accf3c",
+24936,
+"autoresolver_bound_min_ranged_kills_per_second",
+"mov dword ptr [rsi + 0x6168], esi"
+],
+[
+"141accf43",
+24944,
+"autoresolver_unit_wipe_out_threshold",
+"mov dword ptr [rsi + 0x6170], esi"
+],
+[
+"141accf4a",
+24948,
+"autoresolver_unit_base_retreat_threshold",
+"mov byte ptr [rsi + 0x6174], dh"
+],
+[
+"141accf51",
+24952,
+"autoresolver_wipe_out_army_force_unary_lost",
+"mov dword ptr [rsi + 0x6178], esi"
+],
+[
+"141accf58",
+24956,
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"mov byte ptr [rsi + 0x617c], dh"
+],
+[
+"141accf5f",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"mov dword ptr [rsi + 0x61b0], esi"
+],
+[
+"141accf66",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov dword ptr [rsi + 0x61b8], esi"
+],
+[
+"141accf6d",
+25024,
+"autoresolver_special_ability_debuff_kps_modifier_minimum",
+"mov dword ptr [rsi + 0x61c0], esi"
+],
+[
+"141accf7a",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov byte ptr [rsi + 0x61c8], ch"
+],
+[
+"141ad1b6f",
+25024,
+"autoresolver_special_ability_debuff_kps_modifier_minimum",
+"mov ecx, dword ptr [rbx + 0x61c0]"
+],
+[
+"141ad1b80",
+25000,
+"autoresolver_special_ability_maximum_strength_proportion",
+"mov edi, dword ptr [rbx + 0x61a8]"
+],
+[
+"141ad1ba1",
+24992,
+"autoresolver_special_ability_cp_to_strength_divider",
+"mov ecx, dword ptr [rbx + 0x61a0]"
+],
+[
+"141ad1bb5",
+24984,
+"autoresolver_chase_down_damage_multiplier",
+"mov ecx, dword ptr [rbx + 0x6198]"
+],
+[
+"141ad1bc9",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov ecx, dword ptr [rbx + 0x6190]"
+],
+[
+"141ad1bdd",
+24968,
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"mov ecx, dword ptr [rbx + 0x6188]"
+],
+[
+"141ad1bf1",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"mov ecx, dword ptr [rbx + 0x6180]"
+],
+[
+"141ad3728",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"cmp byte ptr [rax + 0x61c8], cl"
+],
+[
+"141adece2",
+24944,
+"autoresolver_unit_wipe_out_threshold",
+"cmp dword ptr [rcx + 0x6170], 2"
+],
+[
+"141aded6b",
+24944,
+"autoresolver_unit_wipe_out_threshold",
+"cmp dword ptr [rdi + 0x6170], 2"
+],
+[
+"141adedd4",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"ucomiss xmm1, dword ptr [rdi + 0x6160]"
+],
+[
+"141adede0",
+24932,
+"autoresolver_bound_max_ranged_kills_per_second",
+"ucomiss xmm0, dword ptr [rdi + 0x6164]"
+],
+[
+"141adede9",
+24936,
+"autoresolver_bound_min_ranged_kills_per_second",
+"ucomiss xmm2, dword ptr [rdi + 0x6168]"
+],
+[
+"141adee01",
+24932,
+"autoresolver_bound_max_ranged_kills_per_second",
+"adc dword ptr [rdi + 0x6164], eax"
+],
+[
+"141adee09",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"adc dword ptr [rdi + 0x6160], ecx"
+],
+[
+"141adee10",
+24936,
+"autoresolver_bound_min_ranged_kills_per_second",
+"mov dword ptr [rdi + 0x6168], esp"
+],
+[
+"141adee66",
+24932,
+"autoresolver_bound_max_ranged_kills_per_second",
+"cvttps2pi mm0, qword ptr [rdi + 0x6164]"
+],
+[
+"141adee73",
+24928,
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"mov eax, dword ptr [rdi + 0x6160]"
+],
+[
+"141adee7c",
+24936,
+"autoresolver_bound_min_ranged_kills_per_second",
+"mov eax, dword ptr [rdi + 0x6168]"
+],
+[
+"141ae5690",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"mov eax, dword ptr [rcx + 0x61b0]"
+],
+[
+"141ae56af",
+25020,
+"autoresolver_special_ability_buff_kps_modifier_maximum",
+"cmp dword ptr [rdi + 0x61bc], edi"
+],
+[
+"141ae56b8",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"mov dword ptr [rdi + 0x61b0], edi"
+],
+[
+"141ae70d6",
+24948,
+"autoresolver_unit_base_retreat_threshold",
+"cmp byte ptr [rcx + 0x6174], dl"
+],
+[
+"141ae70de",
+24944,
+"autoresolver_unit_wipe_out_threshold",
+"cmp dword ptr [rcx + 0x6170], edx"
+],
+[
+"141ae957a",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"mov ecx, dword ptr [rcx + 0x6180]"
+],
+[
+"141ae9716",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"cmp dword ptr [rcx + 0x6180], 0"
+],
+[
+"141ae977a",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"mov eax, dword ptr [rdi + 0x6190]"
+],
+[
+"141ae9781",
+24968,
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"mov esi, dword ptr [rdi + 0x6188]"
+],
+[
+"141ae9788",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"mov ebp, dword ptr [rdi + 0x6180]"
+],
+[
+"141ae9861",
+25000,
+"autoresolver_special_ability_maximum_strength_proportion",
+"mov esi, dword ptr [rdi + 0x61a8]"
+],
+[
+"141ae99c2",
+25020,
+"autoresolver_special_ability_buff_kps_modifier_maximum",
+"and dword ptr [rdi + 0x61bc], 0"
+],
+[
+"141ae99cc",
+25020,
+"autoresolver_special_ability_buff_kps_modifier_maximum",
+"mov eax, dword ptr [rdi + 0x61bc]"
+],
+[
+"141ae99dd",
+25024,
+"autoresolver_special_ability_debuff_kps_modifier_minimum",
+"mov eax, dword ptr [rdi + 0x61c0]"
+],
+[
+"141ae99fb",
+25020,
+"autoresolver_special_ability_buff_kps_modifier_maximum",
+"dec dword ptr [rdi + 0x61bc]"
+],
+[
+"141aefdb3",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"mov ecx, dword ptr [rbx + 0x6180]"
+],
+[
+"141aefdba",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"mov dword ptr [rbx + 0x6180], ebp"
+],
+[
+"141af3ee5",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"mov byte ptr [rsi + 0x61c8], cl"
+],
+[
+"141af3f2a",
+24984,
+"autoresolver_chase_down_damage_multiplier",
+"lea edi, [rsi + 0x6198]"
+],
+[
+"141af3fbe",
+24992,
+"autoresolver_special_ability_cp_to_strength_divider",
+"lea ebx, [rsi + 0x61a0]"
+],
+[
+"141af4012",
+24968,
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"lea ebx, [rsi + 0x6188]"
+],
+[
+"141af4092",
+24960,
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"lea ebx, [rsi + 0x6180]"
+],
+[
+"141af409d",
+25032,
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction",
+"cmp byte ptr [rsi + 0x61c8], dh"
+],
+[
+"141af4130",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"lea ebx, [rsi + 0x6190]"
+],
+[
+"141af41e4",
+25000,
+"autoresolver_special_ability_maximum_strength_proportion",
+"lea ecx, [rsi + 0x61a8]"
+],
+[
+"141af4f91",
+24952,
+"autoresolver_wipe_out_army_force_unary_lost",
+"subps xmm1, xmmword ptr [rbx + 0x6178]"
+],
+[
+"141af4fa6",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rbx + 0x6158]"
+],
+[
+"141af50c7",
+24952,
+"autoresolver_wipe_out_army_force_unary_lost",
+"adc dword ptr [rbx + 0x6178], edx"
+],
+[
+"141af50d9",
+24956,
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"mov byte ptr [rbx + 0x617c], 1"
+],
+[
+"141af5ce9",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov ecx, dword ptr [rsi + 0x6158]"
+],
+[
+"141af5dce",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov ebp, dword ptr [rsi + 0x6158]"
+],
+[
+"141af5f98",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov ecx, dword ptr [rsi + 0x6158]"
+],
+[
+"141af60a4",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov edi, dword ptr [rsi + 0x6158]"
+],
+[
+"141af715b",
+25028,
+"autoresolver_special_ability_debuff_kps_modifier_maximum",
+"cvttps2pi mm0, qword ptr [rsi + 0x61c4]"
+],
+[
+"141af7172",
+25024,
+"autoresolver_special_ability_debuff_kps_modifier_minimum",
+"cvttps2pi mm1, qword ptr [rsi + 0x61c0]"
+],
+[
+"141af94b7",
+24924,
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"cmp byte ptr [rsi + 0x615c], 0"
+],
+[
+"141afb83f",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov ecx, dword ptr [rcx + 0x6158]"
+],
+[
+"141afb877",
+24956,
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"cmp byte ptr [rbx + 0x617c], dl"
+],
+[
+"141afb896",
+24952,
+"autoresolver_wipe_out_army_force_unary_lost",
+"subps xmm0, xmmword ptr [rbx + 0x6178]"
+],
+[
+"141afb8a3",
+24940,
+"autoresolver_bound_max_ammo_per_second_mod_unit_size",
+"mov dword ptr [rbx + 0x616c], edx"
+],
+[
+"141afb8b6",
+24952,
+"autoresolver_wipe_out_army_force_unary_lost",
+"mov dword ptr [rbx + 0x6178], ecx"
+],
+[
+"141afb8bc",
+24956,
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"mov byte ptr [rbx + 0x617c], dl"
+],
+[
+"141afb8c2",
+24948,
+"autoresolver_unit_base_retreat_threshold",
+"cmp byte ptr [rbx + 0x6174], dl"
+],
+[
+"141afb8d8",
+24944,
+"autoresolver_unit_wipe_out_threshold",
+"mov dword ptr [rbx + 0x6170], eax"
+],
+[
+"141afb8de",
+24940,
+"autoresolver_bound_max_ammo_per_second_mod_unit_size",
+"cmp dword ptr [rbx + 0x616c], 1"
+],
+[
+"141afb8e8",
+24940,
+"autoresolver_bound_max_ammo_per_second_mod_unit_size",
+"mov dword ptr [rbx + 0x616c], eax"
+],
+[
+"141afb8ef",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rbx + 0x6158]"
+],
+[
+"141afb9c1",
+24940,
+"autoresolver_bound_max_ammo_per_second_mod_unit_size",
+"mov dword ptr [rbx + 0x616c], edx"
+],
+[
+"141afb9d4",
+24952,
+"autoresolver_wipe_out_army_force_unary_lost",
+"mov dword ptr [rbx + 0x6178], eax"
+],
+[
+"141afb9da",
+24956,
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"mov byte ptr [rbx + 0x617c], dl"
+],
+[
+"141afbd2d",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov eax, dword ptr [rcx + 0x6158]"
+],
+[
+"141afbd64",
+24920,
+"autoresolver_bound_max_melee_strength_proportion",
+"mov dword ptr [rcx + 0x6158], ecx"
+],
+[
+"142d9aa58",
+25004,
+"autoresolver_special_ability_damage_damage_minimum",
+"add byte ptr [rcx + 0x61ac], bh"
+],
+[
+"142da6e79",
+25004,
+"autoresolver_special_ability_damage_damage_minimum",
+"add byte ptr [rdx + 0x61ac], bh"
+],
+[
+"142daec50",
+24976,
+"autoresolver_winner_kpd_minor_win_threshold",
+"adc byte ptr [rax + 0x6190], dh"
+],
+[
+"142db59eb",
+25012,
+"autoresolver_special_ability_damage_range",
+"cmp dword ptr [rcx + 0x61b4], edx"
+],
+[
+"142db59f4",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov eax, dword ptr [rcx + 0x61b8]"
+],
+[
+"142db5a0d",
+25012,
+"autoresolver_special_ability_damage_range",
+"cmp ecx, dword ptr [rcx + 0x61b4]"
+],
+[
+"142db5a16",
+25012,
+"autoresolver_special_ability_damage_range",
+"mov dword ptr [rcx + 0x61b4], edx"
+],
+[
+"142de2b44",
+25080,
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"mulps xmm6, xmmword ptr [rax + 0x61f8]"
+],
+[
+"142f6ebb4",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"mov dword ptr [rbx + 0x61b0], edi"
+],
+[
+"142f6ebbb",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov dword ptr [rbx + 0x61b8], edi"
+],
+[
+"142f6f0c2",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"lea ecx, [rdx + 0x61b0]"
+],
+[
+"143067756",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"mov dword ptr [rbx + 0x61b0], eax"
+],
+[
+"14306775d",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov dword ptr [rbx + 0x61b8], eax"
+],
+[
+"14306785b",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"lea ecx, [rdx + 0x61b0]"
+],
+[
+"1430a704f",
+25008,
+"autoresolver_special_ability_damage_damage_maximum",
+"mov dword ptr [rbx + 0x61b0], ebp"
+],
+[
+"1430a7056",
+25016,
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"mov dword ptr [rbx + 0x61b8], ebp"
+],
+[
+"1431dc14a",
+27112,
+"autoresolver_minimum_morale_loss_per_second",
+"mov ecx, dword ptr [rbx + 0x69e8]"
+]
+]

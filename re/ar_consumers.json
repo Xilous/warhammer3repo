@@ -1,0 +1,1618 @@
+{
+"1409094e0": [
+[
+"14090958e",
+"autoresolver_battle_num_defender_towers_in_fortified_settlement"
+]
+],
+"140909c80": [
+[
+"140909f5d",
+"autoresolver_battle_naval_ramming_initial_seperation"
+]
+],
+"14090e150": [
+[
+"14090e5ed",
+"autoresolver_winner_additional_building_damage_num_units_percentage"
+]
+],
+"14090eec0": [
+[
+"14090eefa",
+"autoresolver_winner_additional_wall_damage_per_wall_breach"
+]
+],
+"14090f5b0": [
+[
+"14090f68f",
+"autoresolver_bound_max_melee_strength_proportion"
+],
+[
+"14090f6d7",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size"
+]
+],
+"140910590": [
+[
+"14091063e",
+"autoresolver_winner_additional_building_damage_num_units_percentage"
+]
+],
+"140910d10": [
+[
+"140910d5b",
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple"
+]
+],
+"1409114c0": [
+[
+"140911567",
+"autoresolver_minimum_morale_loss"
+]
+],
+"140917780": [
+[
+"140917850",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size"
+]
+],
+"140917df0": [
+[
+"140917e1e",
+"autoresolver_flying_skirmish_units_use_entire_combat_time"
+],
+[
+"140917e73",
+"autoresolver_special_ability_damage_range"
+]
+],
+"140919a80": [
+[
+"140919c4e",
+"autoresolver_bound_max_ranged_kills_per_second"
+],
+[
+"140919c98",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target"
+]
+],
+"14091abe0": [
+[
+"14091ac27",
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction"
+]
+],
+"14091b120": [
+[
+"14091b30f",
+"autoresolver_bound_max_melee_strength_proportion"
+]
+],
+"140920dd0": [
+[
+"14092128a",
+"autoresolver_battle_result_accuracy_very_low_prediction_variation"
+]
+],
+"140921dd0": [
+[
+"140921e21",
+"autoresolver_unit_base_retreat_threshold"
+]
+],
+"140923bd0": [
+[
+"140923ce6",
+"autoresolver_bound_min_ranged_kills_per_second"
+]
+],
+"14092e130": [
+[
+"14092e583",
+"autoresolver_damage_transfer_enabled"
+]
+],
+"14092f530": [
+[
+"14092f743",
+"autoresolver_flying_skirmish_units_use_entire_combat_time"
+],
+[
+"14092f793",
+"autoresolver_special_ability_damage_range"
+]
+],
+"140934e30": [
+[
+"140934f38",
+"autoresolver_bound_min_ranged_kills_per_second"
+]
+],
+"14093d490": [
+[
+"14093d4d7",
+"autoresolver_winner_kpd_minor_win_threshold"
+],
+[
+"14093d515",
+"autoresolver_special_ability_minimum_strength_proportion"
+]
+],
+"140947350": [
+[
+"140947583",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size"
+],
+[
+"140947605",
+"autoresolver_wipe_out_army_force_unary_lost"
+]
+],
+"14094a000": [
+[
+"14094a144",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale"
+]
+],
+"14094ae80": [
+[
+"14094b87b",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"14094b924",
+"autoresolver_winner_kpd_major_win_threshold"
+],
+[
+"14094b990",
+"autoresolver_special_ability_minimum_strength_proportion"
+]
+],
+"14094c0c0": [
+[
+"14094c1b4",
+"autoresolver_battle_result_accuracy_low_prediction_variation"
+]
+],
+"14094dc30": [
+[
+"14094e06f",
+"autoresolver_bound_max_ranged_kills_per_second"
+],
+[
+"14094e1ab",
+"autoresolver_special_ability_buff_kps_modifier_minimum"
+]
+],
+"1409531f0": [
+[
+"14095342f",
+"autoresolver_bound_min_ranged_kills_per_second"
+],
+[
+"14095351d",
+"autoresolver_special_ability_damage_range"
+]
+],
+"140954cc0": [
+[
+"140954cf3",
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat"
+],
+[
+"140955061",
+"autoresolver_flying_unit_melee_damage_received_modifier"
+]
+],
+"1409550c0": [
+[
+"14095524f",
+"autoresolver_minimum_morale_loss"
+]
+],
+"140955a90": [
+[
+"140955d00",
+"autoresolver_battle_result_accuracy_low_prediction_variation"
+]
+],
+"140955db0": [
+[
+"140955eaf",
+"autoresolver_chase_down_loser_modifier"
+],
+[
+"140956127",
+"autoresolver_battle_size_kill_factor"
+]
+],
+"140959750": [
+[
+"140959776",
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee"
+]
+],
+"1409614b0": [
+[
+"140961595",
+"autoresolver_battle_result_accuracy_moderate_prediction_variation"
+],
+[
+"140961794",
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement"
+],
+[
+"140961b84",
+"autoresolver_battle_tower_level_3_damage_multiplier"
+],
+[
+"140961c89",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale"
+]
+],
+"140962180": [
+[
+"140962b9d",
+"autoresolver_special_ability_debuff_kps_modifier_maximum"
+]
+],
+"140962d40": [
+[
+"140962e65",
+"autoresolver_special_ability_damage_damage_maximum"
+]
+],
+"1409635e0": [
+[
+"140963655",
+"autoresolver_unit_wipe_out_threshold"
+]
+],
+"140966610": [
+[
+"140966645",
+"autoresolver_special_ability_damage_range"
+]
+],
+"140969dd0": [
+[
+"140969f51",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier"
+]
+],
+"14096bec0": [
+[
+"14096bf6a",
+"autoresolver_special_ability_damage_range"
+]
+],
+"14096c9b0": [
+[
+"14096ca27",
+"autoresolver_wipe_out_army_force_unary_lost"
+]
+],
+"14096ca70": [
+[
+"14096cae7",
+"autoresolver_special_ability_minimum_strength_proportion"
+]
+],
+"14096e6f0": [
+[
+"14096e73b",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target"
+],
+[
+"14096e78f",
+"autoresolver_winner_kpd_minor_win_threshold"
+],
+[
+"14096e7db",
+"autoresolver_special_ability_maximum_strength_proportion"
+]
+],
+"140977d70": [
+[
+"140977e1c",
+"autoresolver_battle_result_accuracy_moderate_prediction_variation"
+]
+],
+"140978c60": [
+[
+"140978e02",
+"autoresolver_chase_down_speed_comparison_cap"
+]
+],
+"14097b5e0": [
+[
+"14097b72c",
+"autoresolver_special_ability_buff_kps_modifier_maximum"
+]
+],
+"14097c660": [
+[
+"14097c690",
+"autoresolver_special_ability_buff_kps_modifier_minimum"
+],
+[
+"14097c6d8",
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction"
+]
+],
+"14097c840": [
+[
+"14097c87a",
+"autoresolver_wall_damage_num_artillery_units_percentage"
+]
+],
+"14097e900": [
+[
+"14097ece4",
+"autoresolver_battle_timestep"
+]
+],
+"140981650": [
+[
+"1409817d5",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size"
+]
+],
+"140981a70": [
+[
+"140981ce6",
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement"
+]
+],
+"1409833f0": [
+[
+"140983479",
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement"
+]
+],
+"1409837c0": [
+[
+"140983820",
+"autoresolver_wall_damage_num_artillery_units_percentage"
+]
+],
+"140983cb0": [
+[
+"14098408b",
+"autoresolver_bound_max_ranged_kills_per_second"
+],
+[
+"14098422a",
+"autoresolver_special_ability_debuff_kps_modifier_maximum"
+]
+],
+"1409857f0": [
+[
+"140985833",
+"autoresolver_wall_damage_num_artillery_units_percentage"
+],
+[
+"14098588f",
+"autoresolver_battle_result_accuracy_very_low_prediction_variation"
+]
+],
+"140985e10": [
+[
+"140985f09",
+"autoresolver_unit_wipe_out_threshold"
+],
+[
+"140985f6e",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat"
+]
+],
+"140993100": [
+[
+"14099320c",
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement"
+]
+],
+"140995cf0": [
+[
+"140995de4",
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee"
+]
+],
+"140996150": [
+[
+"1409961a5",
+"autoresolver_battle_result_accuracy_high_prediction_variation"
+],
+[
+"14099630d",
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat"
+],
+[
+"1409965d8",
+"autoresolver_battle_num_defender_towers_in_fortified_settlement"
+]
+],
+"14099dd80": [
+[
+"14099de3b",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target"
+]
+],
+"1409a6310": [
+[
+"1409a6452",
+"autoresolver_special_ability_damage_damage_maximum"
+],
+[
+"1409a64be",
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction"
+],
+[
+"1409a6572",
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold"
+]
+],
+"1409aaa00": [
+[
+"1409aac55",
+"autoresolver_chase_down_speed_comparison_cap"
+]
+],
+"1409af6b0": [
+[
+"1409af714",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target"
+],
+[
+"1409af7c0",
+"autoresolver_special_ability_damage_damage_maximum"
+],
+[
+"1409af817",
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction"
+]
+],
+"1409afee0": [
+[
+"1409b0049",
+"autoresolver_building_damage_num_units_percentage"
+],
+[
+"1409b00b4",
+"autoresolver_battle_result_accuracy_low_prediction_variation"
+]
+],
+"1409b03a0": [
+[
+"1409b0672",
+"autoresolver_min_entity_reduction_unary_of_max"
+]
+],
+"1409b4290": [
+[
+"1409b45db",
+"autoresolver_min_hp_for_enemy_hp_dps_modifier"
+],
+[
+"1409b4a05",
+"autoresolver_winner_additional_wall_damage_per_wall_breach"
+],
+[
+"1409b4cee",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale"
+],
+[
+"1409b4f9b",
+"autoresolver_chase_down_maximum_damage_unary"
+]
+],
+"1409b5090": [
+[
+"1409b50c7",
+"autoresolver_ensured_unit_loss_damage_multiplier"
+]
+],
+"1409b5ae0": [
+[
+"1409b5d2e",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"1409b5da8",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target"
+],
+[
+"1409b5e1d",
+"autoresolver_battle_timestep"
+]
+],
+"1409b8860": [
+[
+"1409b899e",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"1409b8a28",
+"autoresolver_unit_base_retreat_threshold"
+],
+[
+"1409b8b78",
+"autoresolver_special_ability_buff_kps_modifier_maximum"
+]
+],
+"1409baa40": [
+[
+"1409baac7",
+"autoresolver_chase_down_surviver_ratio_multiplier"
+]
+],
+"1409c2270": [
+[
+"1409c22ad",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"1409c2360",
+"autoresolver_winner_kpd_minor_win_threshold"
+],
+[
+"1409c2428",
+"autoresolver_special_ability_buff_kps_modifier_maximum"
+]
+],
+"1409c39b0": [
+[
+"1409c39fe",
+"autoresolver_winner_kpd_minor_win_threshold"
+],
+[
+"1409c3a3c",
+"autoresolver_special_ability_minimum_strength_proportion"
+],
+[
+"1409c3ad4",
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier"
+]
+],
+"1409c4760": [
+[
+"1409c48ab",
+"autoresolver_battle_reinforcement_time"
+]
+],
+"1409c6e00": [
+[
+"1409c6eaa",
+"autoresolver_winner_kpd_major_win_threshold"
+]
+],
+"1409c7b20": [
+[
+"1409c7c3e",
+"autoresolver_min_hp_for_enemy_hp_dps_modifier"
+]
+],
+"1409c9c20": [
+[
+"1409c9c6f",
+"autoresolver_winner_kpd_major_win_threshold"
+]
+],
+"1409ce180": [
+[
+"1409ced59",
+"autoresolver_unit_base_retreat_threshold"
+],
+[
+"1409cedda",
+"autoresolver_special_ability_damage_range"
+]
+],
+"1409d39d0": [
+[
+"1409d3b59",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"1409d3be2",
+"autoresolver_chase_down_damage_multiplier"
+]
+],
+"1409da1c0": [
+[
+"1409da224",
+"autoresolver_battle_result_accuracy_moderate_prediction_variation"
+]
+],
+"1409dde00": [
+[
+"1409de00e",
+"autoresolver_bound_min_ranged_kills_per_second"
+],
+[
+"1409de0d3",
+"autoresolver_chase_down_damage_multiplier"
+],
+[
+"1409de12e",
+"autoresolver_special_ability_damage_range"
+],
+[
+"1409de239",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea"
+],
+[
+"1409de27d",
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold"
+]
+],
+"1409de430": [
+[
+"1409de496",
+"autoresolver_battle_tower_level_3_damage_multiplier"
+],
+[
+"1409de4f0",
+"autoresolver_damage_transfer_diff_from_average_to_transfer"
+],
+[
+"1409de905",
+"autoresolver_chase_down_loser_modifier"
+]
+],
+"1409de970": [
+[
+"1409deceb",
+"autoresolver_flying_unit_melee_damage_dealt_modifier"
+]
+],
+"1409f2890": [
+[
+"1409f28d6",
+"autoresolver_winner_kpd_minor_win_threshold"
+]
+],
+"1409faaf0": [
+[
+"1409fb02c",
+"autoresolver_flying_skirmish_units_use_entire_combat_time"
+]
+],
+"1409fc6d0": [
+[
+"1409fcaaa",
+"autoresolver_battle_naval_ramming_initial_seperation"
+]
+],
+"1409fd610": [
+[
+"1409fd734",
+"autoresolver_minimum_morale_loss"
+]
+],
+"1409fe310": [
+[
+"1409fe38d",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target"
+]
+],
+"140a00160": [
+[
+"140a00198",
+"autoresolver_battle_result_accuracy_low_prediction_variation"
+]
+],
+"140a003e0": [
+[
+"140a00875",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"140a0094e",
+"autoresolver_special_ability_buff_kps_modifier_maximum"
+]
+],
+"140a031d0": [
+[
+"140a0323d",
+"autoresolver_special_ability_minimum_strength_proportion"
+],
+[
+"140a032a9",
+"autoresolver_special_ability_debuff_kps_modifier_minimum"
+]
+],
+"140a09870": [
+[
+"140a099f4",
+"autoresolver_min_entity_reduction_unary_of_max"
+]
+],
+"140a0dd50": [
+[
+"140a0e6b9",
+"autoresolver_bound_min_ranged_kills_per_second"
+],
+[
+"140a0e801",
+"autoresolver_special_ability_minimum_strength_proportion"
+]
+],
+"140a10890": [
+[
+"140a108e7",
+"autoresolver_building_damage_num_assult_equipment_percentage"
+]
+],
+"140a165d0": [
+[
+"140a1671d",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier"
+]
+],
+"140a17620": [
+[
+"140a17693",
+"autoresolver_battle_naval_ramming_damage_multiplier"
+]
+],
+"140a30d10": [
+[
+"140a30ef5",
+"autoresolver_flying_unit_melee_damage_received_modifier"
+],
+[
+"140a31426",
+"autoresolver_damage_transfer_proportion_of_alliance"
+]
+],
+"140a31b20": [
+[
+"140a31c7d",
+"autoresolver_battle_reinforcement_time"
+],
+[
+"140a31d58",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea"
+]
+],
+"140a42c20": [
+[
+"140a42fa3",
+"autoresolver_bound_max_melee_strength_proportion"
+],
+[
+"140a43017",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target"
+],
+[
+"140a4309d",
+"autoresolver_flying_skirmish_units_use_entire_combat_time"
+],
+[
+"140a4318e",
+"autoresolver_special_ability_debuff_kps_modifier_maximum"
+]
+],
+"140a4e0b0": [
+[
+"140a4e0e8",
+"autoresolver_unit_wipe_out_threshold"
+],
+[
+"140a4e199",
+"autoresolver_special_ability_damage_damage_maximum"
+]
+],
+"140a4f7d0": [
+[
+"140a4fb23",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size"
+],
+[
+"140a4fbcc",
+"autoresolver_winner_kpd_minor_win_threshold"
+],
+[
+"140a4fc06",
+"autoresolver_special_ability_damage_damage_maximum"
+]
+],
+"140a4fe30": [
+[
+"140a50246",
+"autoresolver_battle_result_accuracy_moderate_prediction_variation"
+]
+],
+"140a54a90": [
+[
+"140a54e57",
+"autoresolver_ensured_unit_loss_damage_multiplier"
+]
+],
+"140a59e20": [
+[
+"140a5a4b0",
+"autoresolver_special_ability_minimum_strength_proportion"
+],
+[
+"140a5a55c",
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction"
+],
+[
+"140a5ac4a",
+"autoresolver_building_damage_num_units_percentage"
+],
+[
+"140a5acb0",
+"autoresolver_battle_result_accuracy_low_prediction_variation"
+],
+[
+"140a5ae35",
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat"
+]
+],
+"140a601d0": [
+[
+"140a60223",
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple"
+]
+],
+"140a62fa0": [
+[
+"140a6335f",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target"
+],
+[
+"140a633f1",
+"autoresolver_battle_timestep"
+]
+],
+"140a6eeb0": [
+[
+"140a6ef18",
+"autoresolver_unit_wipe_out_threshold"
+],
+[
+"140a6f046",
+"autoresolver_min_battle_time_before_retreat"
+],
+[
+"140a6f094",
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple"
+]
+],
+"140a74090": [
+[
+"140a74453",
+"autoresolver_bound_max_melee_strength_proportion"
+],
+[
+"140a7449f",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size"
+]
+],
+"140a75140": [
+[
+"140a754ff",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"140a75554",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat"
+],
+[
+"140a755d6",
+"autoresolver_special_ability_minimum_strength_proportion"
+]
+],
+"140a79f10": [
+[
+"140a7a3b9",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size"
+],
+[
+"140a7a44c",
+"autoresolver_chase_down_damage_multiplier"
+],
+[
+"140a7a4a1",
+"autoresolver_special_ability_maximum_strength_proportion"
+],
+[
+"140a7a58e",
+"autoresolver_battle_damage_modifier_full_naval_units_at_sea"
+],
+[
+"140a7a5df",
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold"
+]
+],
+"140a7a670": [
+[
+"140a7aa7e",
+"autoresolver_winner_additional_building_damage_num_units_percentage"
+],
+[
+"140a7ab3c",
+"autoresolver_battle_result_accuracy_very_high_prediction_variation"
+],
+[
+"140a7ab88",
+"autoresolver_battle_naval_ramming_initial_seperation"
+]
+],
+"140a7f110": [
+[
+"140a7f55e",
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold"
+]
+],
+"140a884d0": [
+[
+"140a8854d",
+"autoresolver_special_ability_buff_kps_modifier_maximum"
+]
+],
+"140a940d0": [
+[
+"140a941a4",
+"autoresolver_battle_result_accuracy_very_low_prediction_variation"
+]
+],
+"140a97010": [
+[
+"140a971e0",
+"autoresolver_battle_result_accuracy_high_prediction_variation"
+]
+],
+"140a9e370": [
+[
+"140a9e4f4",
+"autoresolver_bound_max_melee_strength_proportion"
+]
+],
+"140aa5320": [
+[
+"140aa557a",
+"autoresolver_bound_max_melee_strength_proportion"
+]
+],
+"140aa7390": [
+[
+"140aa743c",
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier"
+]
+],
+"140aa9f90": [
+[
+"140aaa239",
+"autoresolver_building_damage_num_units_percentage"
+]
+],
+"140aac4e0": [
+[
+"140aac53b",
+"autoresolver_building_damage_num_units_percentage"
+]
+],
+"140aaf050": [
+[
+"140aaf0ac",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea"
+]
+],
+"140ab0c30": [
+[
+"140ab0d01",
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat"
+]
+],
+"140ac19d0": [
+[
+"140ac1a63",
+"autoresolver_winner_additional_building_damage_num_assult_equipment_percentage"
+]
+],
+"140acac00": [
+[
+"140acad1c",
+"autoresolver_special_ability_damage_damage_maximum"
+],
+[
+"140acadd3",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size"
+]
+],
+"140acb950": [
+[
+"140acbc06",
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat"
+]
+],
+"140ad0040": [
+[
+"140ad00c7",
+"autoresolver_battle_num_defender_towers_in_fortified_settlement"
+]
+],
+"140ad3d40": [
+[
+"140ad3da1",
+"autoresolver_minimum_morale_loss_per_second"
+]
+],
+"140ad7c50": [
+[
+"140ad7e4d",
+"autoresolver_bound_max_ranged_kills_per_second"
+],
+[
+"140ad7e81",
+"autoresolver_wipe_out_army_force_unary_lost"
+]
+],
+"140ad8200": [
+[
+"140ad82e0",
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple"
+]
+],
+"140ad88c0": [
+[
+"140ad8a90",
+"autoresolver_damage_transfer_enabled"
+],
+[
+"140ad8e62",
+"autoresolver_chase_down_winner_modifier"
+]
+],
+"140ad8fa0": [
+[
+"140ad8ff9",
+"autoresolver_winner_additional_building_damage_num_assult_equipment_percentage"
+],
+[
+"140ad9359",
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement"
+]
+],
+"140ada7e0": [
+[
+"140ada835",
+"autoresolver_battle_tower_level_1_damage_multiplier"
+]
+],
+"140ae39e0": [
+[
+"140ae3a32",
+"autoresolver_flying_skirmish_units_use_entire_combat_time"
+],
+[
+"140ae3ad8",
+"autoresolver_battle_damage_modifier_full_naval_units_at_sea"
+]
+],
+"140ae4f40": [
+[
+"140ae4fb5",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size"
+]
+],
+"140af79a0": [
+[
+"140af79da",
+"autoresolver_chase_down_surviver_ratio_multiplier"
+]
+],
+"140af8760": [
+[
+"140af87b7",
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold"
+]
+],
+"140af8f20": [
+[
+"140af8fcc",
+"autoresolver_battle_tower_level_2_damage_multiplier"
+]
+],
+"140afa440": [
+[
+"140afa475",
+"autoresolver_battle_excess_melee_damage_received_from_single_entity_target_multiplier"
+]
+],
+"140afa600": [
+[
+"140afa635",
+"autoresolver_battle_tower_level_1_damage_multiplier"
+]
+],
+"140afa6a0": [
+[
+"140afa6d5",
+"autoresolver_battle_tower_level_3_damage_multiplier"
+]
+],
+"140afa780": [
+[
+"140afa7b5",
+"autoresolver_battle_tower_level_4_damage_multiplier"
+]
+],
+"140afa860": [
+[
+"140afa895",
+"autoresolver_damage_transfer_min_health_remaining"
+]
+],
+"140afa940": [
+[
+"140afa975",
+"autoresolver_damage_transfer_diff_from_average_to_transfer"
+]
+],
+"140afaa20": [
+[
+"140afaa55",
+"autoresolver_damage_transfer_max_diff_from_average_after_transfer"
+]
+],
+"140afaf60": [
+[
+"140afaf95",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale"
+]
+],
+"140afc080": [
+[
+"140afc283",
+"autoresolver_unit_wipe_out_threshold"
+]
+],
+"140afc3e0": [
+[
+"140afc42b",
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple"
+]
+],
+"140afdfe0": [
+[
+"140afe09e",
+"autoresolver_battle_tower_level_1_damage_multiplier"
+]
+],
+"140b026c0": [
+[
+"140b02866",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target"
+]
+],
+"140b03460": [
+[
+"140b0384a",
+"autoresolver_battle_result_accuracy_moderate_prediction_variation"
+]
+],
+"140b109b0": [
+[
+"140b10ba3",
+"autoresolver_wall_damage_num_artillery_units_percentage"
+]
+],
+"140b11170": [
+[
+"140b111e2",
+"autoresolver_flying_skirmish_units_use_entire_combat_time"
+],
+[
+"140b11230",
+"autoresolver_special_ability_damage_range"
+]
+],
+"140b1c930": [
+[
+"140b1d45e",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size"
+]
+],
+"140b71850": [
+[
+"140b71cb5",
+"autoresolver_wipe_out_army_force_unary_lost"
+],
+[
+"140b71dac",
+"autoresolver_special_ability_debuff_kps_modifier_maximum"
+]
+],
+"140b72110": [
+[
+"140b72205",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier"
+]
+],
+"140b72310": [
+[
+"140b72473",
+"autoresolver_flying_unit_melee_damage_dealt_modifier"
+]
+],
+"140b73210": [
+[
+"140b73316",
+"autoresolver_winner_additional_building_damage_num_assult_equipment_percentage"
+]
+],
+"140b88e80": [
+[
+"140b88f41",
+"autoresolver_winner_additional_building_damage_num_units_percentage"
+],
+[
+"140b88ffe",
+"autoresolver_battle_result_accuracy_low_prediction_variation"
+]
+],
+"140b895c0": [
+[
+"140b896d5",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"140b89721",
+"autoresolver_unit_base_retreat_threshold"
+],
+[
+"140b897bf",
+"autoresolver_special_ability_debuff_kps_modifier_maximum"
+],
+[
+"140b898f4",
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple"
+]
+],
+"140b8d210": [
+[
+"140b8d5e3",
+"autoresolver_bound_min_melee_kills_per_second_full_strength"
+],
+[
+"140b8d6bf",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target"
+],
+[
+"140b8d79e",
+"autoresolver_special_ability_cp_to_strength_divider"
+],
+[
+"140b8d7ec",
+"autoresolver_special_ability_damage_range"
+]
+],
+"140b8f1c0": [
+[
+"140b8f48e",
+"autoresolver_bound_max_ranged_kills_per_second"
+],
+[
+"140b8f534",
+"autoresolver_chase_down_damage_multiplier"
+],
+[
+"140b8f5fc",
+"autoresolver_special_ability_debuff_kps_modifier_maximum"
+],
+[
+"140b8f699",
+"autoresolver_min_battle_time_before_retreat"
+]
+],
+"140b902c0": [
+[
+"140b9057c",
+"autoresolver_special_ability_maximum_strength_proportion"
+]
+],
+"140b92b60": [
+[
+"140b92cf6",
+"autoresolver_chase_down_loser_modifier"
+],
+[
+"140b92d39",
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee"
+]
+],
+"140bc9950": [
+[
+"140bc9a05",
+"autoresolver_special_ability_damage_damage_minimum"
+]
+],
+"140bc9f30": [
+[
+"140bca097",
+"autoresolver_flying_unit_melee_damage_dealt_modifier"
+]
+],
+"140bcabd0": [
+[
+"140bcabfb",
+"autoresolver_min_battle_time_before_retreat"
+]
+],
+"140bcaf90": [
+[
+"140bcb1b9",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size"
+]
+],
+"140bcb210": [
+[
+"140bcb25d",
+"autoresolver_chase_down_maximum_damage_unary"
+]
+],
+"140bcc940": [
+[
+"140bccc29",
+"autoresolver_building_damage_num_assult_equipment_percentage"
+]
+],
+"140bd0dd0": [
+[
+"140bd0e71",
+"autoresolver_minimum_morale_loss_per_second"
+]
+],
+"140bd5680": [
+[
+"140bd5c69",
+"autoresolver_damage_transfer_diff_from_average_to_transfer"
+]
+],
+"140bd6520": [
+[
+"140bd696f",
+"autoresolver_minimum_morale_loss_per_second"
+]
+],
+"140bde0e0": [
+[
+"140bde30a",
+"autoresolver_bound_max_melee_strength_proportion"
+],
+[
+"140bde3c0",
+"autoresolver_wipe_out_army_force_unary_lost"
+],
+[
+"140bde438",
+"autoresolver_chase_down_damage_multiplier"
+]
+],
+"140bdfed0": [
+[
+"140be0254",
+"autoresolver_winner_additional_building_damage_num_units_percentage"
+]
+],
+"140be0780": [
+[
+"140be083e",
+"autoresolver_chase_down_speed_comparison_cap"
+]
+],
+"140be0fa0": [
+[
+"140be1038",
+"autoresolver_damage_transfer_proportion_of_alliance"
+]
+],
+"140be1cc0": [
+[
+"140be1d51",
+"autoresolver_special_ability_cp_to_strength_divider"
+]
+],
+"140be2220": [
+[
+"140be259e",
+"autoresolver_battle_result_accuracy_moderate_prediction_variation"
+]
+],
+"140be6d00": [
+[
+"140be7084",
+"autoresolver_ensured_unit_loss_damage_multiplier"
+]
+],
+"140bf0150": [
+[
+"140bf024d",
+"autoresolver_special_ability_debuff_kps_modifier_minimum"
+]
+],
+"140bf8e80": [
+[
+"140bf900a",
+"autoresolver_bound_max_ranged_kills_per_second"
+],
+[
+"140bf90c1",
+"autoresolver_chase_down_damage_multiplier"
+]
+],
+"140bf9760": [
+[
+"140bf97c2",
+"autoresolver_battle_excess_melee_damage_multiplier"
+]
+],
+"140bfa290": [
+[
+"140bfa963",
+"autoresolver_bound_max_melee_strength_proportion"
+]
+],
+"140bfaa20": [
+[
+"140bfaada",
+"autoresolver_special_ability_buff_kps_modifier_minimum"
+]
+],
+"140bfb160": [
+[
+"140bfb192",
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat"
+]
+],
+"140bffc20": [
+[
+"140c002fe",
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple"
+]
+],
+"140c13910": [
+[
+"140c139e7",
+"autoresolver_winner_additional_building_damage_num_units_percentage"
+]
+],
+"140c14820": [
+[
+"140c14a00",
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement"
+],
+[
+"140c15331",
+"autoresolver_chase_down_winner_modifier"
+]
+],
+"140c18960": [
+[
+"140c18ab6",
+"autoresolver_battle_tower_level_4_damage_multiplier"
+]
+],
+"140c33ec0": [
+[
+"140c33fbf",
+"autoresolver_ensured_unit_loss_cp_weight"
+]
+],
+"140c35da0": [
+[
+"140c35ea1",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat"
+],
+[
+"140c35f4a",
+"autoresolver_special_ability_buff_kps_modifier_minimum"
+],
+[
+"140c35fd3",
+"autoresolver_min_battle_time_before_retreat"
+]
+],
+"140c36ce0": [
+[
+"140c36d94",
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee"
+]
+],
+"140c36e10": [
+[
+"140c36fde",
+"autoresolver_ensured_unit_loss_damage_multiplier"
+]
+],
+"140c37840": [
+[
+"140c378ba",
+"autoresolver_battle_naval_ramming_damage_multiplier"
+]
+],
+"140c39230": [
+[
+"140c393c1",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target"
+]
+],
+"140c39520": [
+[
+"140c396b1",
+"autoresolver_battle_excess_melee_damage_multiplier"
+]
+],
+"140c39e40": [
+[
+"140c39ff8",
+"autoresolver_building_damage_num_assult_equipment_percentage"
+]
+],
+"140c3e380": [
+[
+"140c3effc",
+"autoresolver_bound_min_ranged_kills_per_second"
+],
+[
+"140c3f054",
+"autoresolver_winner_kpd_minor_win_threshold"
+]
+],
+"140c40de0": [
+[
+"140c41088",
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier"
+]
+],
+"140c422e0": [
+[
+"140c424c4",
+"autoresolver_minimum_morale_loss_per_second"
+]
+],
+"140c488a0": [
+[
+"140c48af9",
+"autoresolver_battle_naval_ramming_damage_multiplier"
+]
+],
+"140c65650": [
+[
+"140c656fe",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size"
+],
+[
+"140c65742",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target"
+]
+],
+"14117f430": [
+[
+"14117f4bd",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size"
+],
+[
+"14117f56f",
+"autoresolver_battle_reinforcement_time"
+],
+[
+"14117f5bb",
+"autoresolver_special_ability_maximum_strength_proportion"
+],
+[
+"14117f65f",
+"autoresolver_special_ability_debuff_kps_modifier_maximum"
+],
+[
+"14117f72f",
+"autoresolver_battle_damage_modifier_full_naval_units_at_sea"
+]
+]
+}

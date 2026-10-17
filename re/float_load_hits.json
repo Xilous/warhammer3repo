@@ -1,0 +1,1793 @@
+{
+"1404ee85c": [
+[
+"1404eeb62",
+"autoresolver_special_ability_maximum_strength_proportion",
+"cvttss2si eax, dword ptr [rbx + 0x5c0]"
+],
+[
+"1404eeba0",
+"autoresolver_special_ability_damage_damage_minimum",
+"cvttss2si eax, dword ptr [rbx + 0x5c4]"
+],
+[
+"1404eebde",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"cvttss2si eax, dword ptr [rbx + 0x5d0]"
+]
+],
+"1408d8f40": [
+[
+"1408d8f47",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm0, dword ptr [rax + 0xa94]"
+]
+],
+"1408d9620": [
+[
+"1408d9636",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss dword ptr [rax + 0xa94], xmm2"
+]
+],
+"1408e4490": [
+[
+"1408e4494",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"cvttss2si eax, dword ptr [rax + 0x5d0]"
+]
+],
+"140c6fd50": [
+[
+"140c7009b",
+"autoresolver_winner_additional_building_damage_num_units_percentage",
+"movss xmm12, dword ptr [rax + 0x804]"
+]
+],
+"14126422e": [
+[
+"1412645eb",
+"autoresolver_minimum_morale_loss",
+"movss xmm0, dword ptr [rbx + 0xdfc]"
+],
+[
+"1412645fc",
+"autoresolver_minimum_morale_loss",
+"movss xmm0, dword ptr [rbx + 0xdfc]"
+],
+[
+"141264625",
+"autoresolver_minimum_morale_loss_per_second",
+"movss xmm0, dword ptr [rbx + 0xe00]"
+],
+[
+"141264636",
+"autoresolver_minimum_morale_loss_per_second",
+"movss xmm0, dword ptr [rbx + 0xe00]"
+]
+],
+"1418ca4d0": [
+[
+"1418ca79b",
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"cvttss2si ecx, dword ptr [r14 + 0x574]"
+],
+[
+"1418ca7aa",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"cvttss2si ecx, dword ptr [r14 + 0x578]"
+]
+],
+"1418cc4f0": [
+[
+"1418cc524",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"movss xmm5, dword ptr [rax + 0x5d0]"
+],
+[
+"1418cc52c",
+"autoresolver_special_ability_buff_kps_modifier_maximum",
+"movss xmm6, dword ptr [rax + 0x5d4]"
+]
+],
+"1418cceac": [
+[
+"1418cda33",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm7, dword ptr [rax + 0x57c]"
+]
+],
+"1418d302c": [
+[
+"1418d308a",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm9, dword ptr [rcx + 0x570]"
+],
+[
+"1418d30d0",
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"addss xmm10, dword ptr [rcx + 0x574]"
+],
+[
+"1418d30dd",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"addss xmm11, dword ptr [rcx + 0x578]"
+],
+[
+"1418d3203",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm2, dword ptr [rax + 0x57c]"
+],
+[
+"1418d326d",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm5, dword ptr [rax + 0x57c]"
+]
+],
+"1418d3390": [
+[
+"1418d33b9",
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"movss xmm0, dword ptr [r10 + 0x574]"
+],
+[
+"1418d33c5",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"movss xmm1, dword ptr [r10 + 0x578]"
+],
+[
+"1418d33da",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm0, dword ptr [r10 + 0x57c]"
+],
+[
+"1418d33ef",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm1, dword ptr [r10 + 0x570]"
+]
+],
+"1418d3420": [
+[
+"1418d3430",
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"movss xmm0, dword ptr [rdx + 0x574]"
+],
+[
+"1418d343d",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"movss xmm1, dword ptr [rdx + 0x578]"
+],
+[
+"1418d345b",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm0, dword ptr [rdx + 0x57c]"
+],
+[
+"1418d3473",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm1, dword ptr [rdx + 0x570]"
+]
+],
+"1418d43f4": [
+[
+"1418d49b0",
+"autoresolver_special_ability_buff_kps_modifier_maximum",
+"movss xmm0, dword ptr [rsi + 0x5d4]"
+],
+[
+"1418d49ba",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"movss xmm1, dword ptr [rsi + 0x5d0]"
+]
+],
+"1418dda34": [
+[
+"1418dda75",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm7, dword ptr [r8 + 0xa94]"
+]
+],
+"1418ddfe0": [
+[
+"1418de104",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm7, dword ptr [rax + 0x570]"
+],
+[
+"1418de217",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm2, dword ptr [rdx + 0xa94]"
+]
+],
+"1418e0c4c": [
+[
+"1418e0ccc",
+"autoresolver_bound_max_melee_strength_proportion",
+"mulss xmm4, dword ptr [rdi + 0x570]"
+]
+],
+"1418e133c": [
+[
+"1418e1374",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"movss dword ptr [rbx + 0x5d0], xmm0"
+],
+[
+"1418e137c",
+"autoresolver_special_ability_buff_kps_modifier_maximum",
+"movss dword ptr [rbx + 0x5d4], xmm1"
+]
+],
+"1418e85d4": [
+[
+"1418e8602",
+"autoresolver_bound_max_melee_strength_proportion",
+"divss xmm2, dword ptr [rcx + 0x570]"
+],
+[
+"1418e8653",
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"subss xmm3, dword ptr [rcx + 0x574]"
+],
+[
+"1418e865b",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"subss xmm2, dword ptr [rcx + 0x578]"
+],
+[
+"1418e87d1",
+"autoresolver_wipe_out_army_force_unary_lost",
+"comiss xmm5, dword ptr [rbx + 0x590]"
+],
+[
+"1418e87de",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"comiss xmm5, dword ptr [rbx + 0x598]"
+],
+[
+"1418e87eb",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"comiss xmm7, dword ptr [rbx + 0x594]"
+],
+[
+"1418e87f8",
+"autoresolver_battle_reinforcement_time",
+"comiss xmm7, dword ptr [rbx + 0x59c]"
+],
+[
+"1418e8930",
+"autoresolver_bound_max_ranged_kills_per_second",
+"mulss xmm0, dword ptr [rbx + 0x57c]"
+]
+],
+"1418e8ea0": [
+[
+"1418e8ea6",
+"autoresolver_wipe_out_army_force_unary_lost",
+"movss xmm1, dword ptr [rcx + 0x590]"
+],
+[
+"1418e8eb1",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"movss xmm2, dword ptr [rcx + 0x594]"
+],
+[
+"1418e8eb9",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [rcx + 0x598]"
+],
+[
+"1418e8ee2",
+"autoresolver_battle_reinforcement_time",
+"movss xmm0, dword ptr [rcx + 0x59c]"
+],
+[
+"1418e8f9c",
+"autoresolver_bound_max_melee_strength_proportion",
+"mulss xmm1, dword ptr [rbx + 0x570]"
+]
+],
+"1418f17b0": [
+[
+"1418f1a19",
+"autoresolver_unit_wipe_out_threshold",
+"movss xmm3, dword ptr [rax + 0x588]"
+],
+[
+"1418f1a21",
+"autoresolver_unit_base_retreat_threshold",
+"movss xmm1, dword ptr [rax + 0x58c]"
+],
+[
+"1418f1a29",
+"autoresolver_bound_min_ranged_kills_per_second",
+"movss xmm4, dword ptr [rax + 0x580]"
+],
+[
+"1418f1a31",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size",
+"movss xmm2, dword ptr [rax + 0x584]"
+],
+[
+"1418f1a6d",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm0, dword ptr [rax + 0x570]"
+]
+],
+"1418f2404": [
+[
+"1418f30a5",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"addss xmm1, dword ptr [rsi + 0x578]"
+],
+[
+"1418f30c5",
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"addss xmm0, dword ptr [rsi + 0x574]"
+]
+],
+"1418f4f1c": [
+[
+"1418f5182",
+"autoresolver_bound_max_melee_strength_proportion",
+"mulss xmm3, dword ptr [rsi + 0x570]"
+]
+],
+"1418f8b98": [
+[
+"1418f8bc2",
+"autoresolver_bound_max_melee_strength_proportion",
+"mulss xmm6, dword ptr [rax + 0x570]"
+]
+],
+"141900308": [
+[
+"14190100a",
+"autoresolver_battle_reinforcement_time",
+"movss xmm0, dword ptr [r15 + 0x59c]"
+],
+[
+"141901013",
+"autoresolver_wipe_out_army_force_unary_lost",
+"subss xmm1, dword ptr [r15 + 0x590]"
+],
+[
+"14190101c",
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target",
+"subss xmm0, dword ptr [r15 + 0x594]"
+],
+[
+"141901074",
+"autoresolver_bound_max_melee_strength_proportion",
+"mulss xmm0, dword ptr [rdx + 0x570]"
+],
+[
+"141901f45",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm1, dword ptr [rax + 0x57c]"
+]
+],
+"141911610": [
+[
+"141911734",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm0, dword ptr [rax + 0x57c]"
+]
+],
+"1419122e0": [
+[
+"141912310",
+"autoresolver_bound_min_ranged_kills_per_second",
+"movss xmm5, dword ptr [rax + 0x580]"
+],
+[
+"14191231d",
+"autoresolver_bound_max_ammo_per_second_mod_unit_size",
+"movss xmm2, dword ptr [rax + 0x584]"
+],
+[
+"14191232a",
+"autoresolver_unit_wipe_out_threshold",
+"movss xmm0, dword ptr [rax + 0x588]"
+],
+[
+"141912337",
+"autoresolver_unit_base_retreat_threshold",
+"movss xmm1, dword ptr [rax + 0x58c]"
+]
+],
+"14191d070": [
+[
+"14191d2e3",
+"autoresolver_bound_max_melee_strength_proportion",
+"mulss xmm9, dword ptr [rcx + 0x570]"
+],
+[
+"14191d330",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm7, dword ptr [rax + 0x570]"
+]
+],
+"14199b6ec": [
+[
+"14199b745",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier",
+"movss xmm0, dword ptr [rdi + 0x93c]"
+],
+[
+"14199b77b",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier",
+"movss dword ptr [rdi + 0x93c], xmm0"
+],
+[
+"14199b7ae",
+"autoresolver_min_hp_for_enemy_hp_dps_modifier",
+"movss xmm0, dword ptr [rdi + 0x940]"
+],
+[
+"14199b7e4",
+"autoresolver_min_hp_for_enemy_hp_dps_modifier",
+"movss dword ptr [rdi + 0x940], xmm0"
+]
+],
+"141a18328": [
+[
+"141a18b57",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm7, dword ptr [rax + 0xa94]"
+]
+],
+"141a4517c": [
+[
+"141a45285",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm0, dword ptr [rcx + 0xa94]"
+]
+],
+"141a4cad8": [
+[
+"141a4cba2",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"addss xmm6, dword ptr [rax + 0x5d0]"
+],
+[
+"141a4cfac",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"addss xmm6, dword ptr [rax + 0x5d0]"
+]
+],
+"141a53918": [
+[
+"141a5391e",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier",
+"movss xmm1, dword ptr [rcx + 0x93c]"
+]
+],
+"141a766f8": [
+[
+"141a76710",
+"autoresolver_battle_tower_level_4_damage_multiplier",
+"movss xmm1, dword ptr [rcx + 0xb30]"
+],
+[
+"141a76736",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm5, dword ptr [rax + 0xa94]"
+],
+[
+"141a7689e",
+"autoresolver_battle_tower_level_4_damage_multiplier",
+"movss dword ptr [rbx + 0xb30], xmm4"
+]
+],
+"141a79e10": [
+[
+"141a79e5f",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm0, dword ptr [r8 + 0xa94]"
+]
+],
+"141a88820": [
+[
+"141a88a6e",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm6, dword ptr [rcx + 0xa94]"
+]
+],
+"141a972ac": [
+[
+"141a972ed",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm3, dword ptr [rax + 0xa94]"
+],
+[
+"141a9736b",
+"autoresolver_winner_additional_wall_damage_per_wall_breach",
+"movss xmm3, dword ptr [rax + 0xa94]"
+]
+],
+"141aadaa0": [
+[
+"141aadb15",
+"autoresolver_battle_tower_level_4_damage_multiplier",
+"movss xmm0, dword ptr [rdi + 0xb30]"
+]
+],
+"141ae7508": [
+[
+"141ae7572",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm3, dword ptr [rbx + 0x57c]"
+]
+],
+"141bd34e4": [
+[
+"141bd353b",
+"autoresolver_battle_reinforcement_time",
+"movss xmm0, dword ptr [r8 + 0x59c]"
+]
+],
+"141c078d0": [
+[
+"141c0790f",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [rax + 0x598]"
+],
+[
+"141c0791d",
+"autoresolver_battle_reinforcement_time",
+"movss xmm1, dword ptr [rax + 0x59c]"
+],
+[
+"141c0792b",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rax + 0x5a0]"
+]
+],
+"141c08ce0": [
+[
+"141c08d73",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [rax + 0x598]"
+],
+[
+"141c08d81",
+"autoresolver_battle_reinforcement_time",
+"movss xmm1, dword ptr [rax + 0x59c]"
+],
+[
+"141c08d8f",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rax + 0x5a0]"
+]
+],
+"141c242ac": [
+[
+"141c2449e",
+"autoresolver_special_ability_damage_damage_maximum",
+"addss xmm1, dword ptr [rcx + 0x5c8]"
+],
+[
+"141c244ad",
+"autoresolver_special_ability_damage_damage_maximum",
+"movss xmm1, dword ptr [rcx + 0x5c8]"
+],
+[
+"141c244c3",
+"autoresolver_special_ability_damage_range",
+"addss xmm2, dword ptr [rcx + 0x5cc]"
+],
+[
+"141c244cb",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"addss xmm0, dword ptr [rcx + 0x5d0]"
+]
+],
+"141c26330": [
+[
+"141c264a8",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [rdx + 0x598]"
+],
+[
+"141c264b2",
+"autoresolver_battle_reinforcement_time",
+"movss xmm1, dword ptr [rdx + 0x59c]"
+],
+[
+"141c264c0",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rdx + 0x5a0]"
+],
+[
+"141c265f5",
+"autoresolver_special_ability_damage_range",
+"addss xmm6, dword ptr [rdx + 0x5cc]"
+]
+],
+"141c29e34": [
+[
+"141c29e80",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [rdi + 0x598]"
+],
+[
+"141c29e88",
+"autoresolver_battle_reinforcement_time",
+"movss xmm1, dword ptr [rdi + 0x59c]"
+],
+[
+"141c29e9d",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rdi + 0x5a0]"
+]
+],
+"141c2a024": [
+[
+"141c2a0a6",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"subss xmm5, dword ptr [rdi + 0x598]"
+],
+[
+"141c2a0b5",
+"autoresolver_battle_reinforcement_time",
+"subss xmm6, dword ptr [rdi + 0x59c]"
+],
+[
+"141c2a0c9",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"subss xmm7, dword ptr [rdi + 0x5a0]"
+],
+[
+"141c2a103",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"addss xmm7, dword ptr [rdi + 0x5a0]"
+],
+[
+"141c2a121",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"addss xmm0, dword ptr [rdi + 0x598]"
+],
+[
+"141c2a129",
+"autoresolver_battle_reinforcement_time",
+"addss xmm3, dword ptr [rdi + 0x59c]"
+],
+[
+"141c2a2db",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [rax + 0x598]"
+],
+[
+"141c2a2e3",
+"autoresolver_battle_reinforcement_time",
+"movss xmm1, dword ptr [rax + 0x59c]"
+],
+[
+"141c2a2f1",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rax + 0x5a0]"
+]
+],
+"141c32150": [
+[
+"141c321df",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"comiss xmm0, dword ptr [rcx + 0x610]"
+]
+],
+"141c3a3fc": [
+[
+"141c3a47f",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm6, dword ptr [r8 + 0x598]"
+],
+[
+"141c3a488",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm7, dword ptr [r8 + 0x5a0]"
+]
+],
+"141c4d004": [
+[
+"141c4d035",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm1, dword ptr [rbx + 0x570]"
+],
+[
+"141c4d060",
+"autoresolver_bound_min_melee_kills_per_second_full_strength",
+"maxss xmm1, dword ptr [rbx + 0x574]"
+]
+],
+"141cf8d04": [
+[
+"141cf8f63",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"comiss xmm0, dword ptr [rcx + 0x610]"
+]
+],
+"141d0f8cc": [
+[
+"141d0fab7",
+"autoresolver_special_ability_maximum_strength_proportion",
+"movss xmm6, dword ptr [rax + 0x5c0]"
+]
+],
+"141e923dc": [
+[
+"141e9240b",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm7, dword ptr [r8 + 0x598]"
+],
+[
+"141e92414",
+"autoresolver_battle_reinforcement_time",
+"movss xmm6, dword ptr [r8 + 0x59c]"
+],
+[
+"141e92429",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm8, dword ptr [r8 + 0x5a0]"
+],
+[
+"141e9250e",
+"autoresolver_special_ability_damage_range",
+"addss xmm6, dword ptr [rdx + 0x5cc]"
+]
+],
+"141e93a18": [
+[
+"141e93b05",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [rax + 0x598]"
+],
+[
+"141e93b0d",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm1, dword ptr [rax + 0x5a0]"
+]
+],
+"142236148": [
+[
+"14223618b",
+"autoresolver_battle_result_accuracy_very_low_prediction_variation",
+"movss xmm0, dword ptr [rcx + 0x830]"
+]
+],
+"142260548": [
+[
+"142260584",
+"autoresolver_battle_result_accuracy_moderate_prediction_variation",
+"movss xmm1, dword ptr [rax + 0x838]"
+]
+],
+"1424c6418": [
+[
+"1424c6444",
+"autoresolver_special_ability_damage_damage_minimum",
+"addss xmm0, dword ptr [rcx + 0x5c4]"
+],
+[
+"1424c644c",
+"autoresolver_special_ability_maximum_strength_proportion",
+"addss xmm0, dword ptr [rcx + 0x5c0]"
+]
+],
+"142784f0c": [
+[
+"142784f2c",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss dword ptr [rax + 0x5a0], xmm0"
+],
+[
+"142784f38",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rax + 0x5a0]"
+],
+[
+"142784f40",
+"autoresolver_winner_kpd_major_win_threshold",
+"subss xmm0, dword ptr [rax + 0x5a4]"
+],
+[
+"142784f48",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss dword ptr [rax + 0x5a0], xmm0"
+]
+],
+"14279d844": [
+[
+"14279d96c",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"comiss xmm6, dword ptr [rdi + 0x5a0]"
+]
+],
+"1427d2f3c": [
+[
+"1427d2f43",
+"autoresolver_special_ability_minimum_strength_proportion",
+"ucomiss xmm0, dword ptr [rax + 0x5bc]"
+]
+],
+"1427f02ac": [
+[
+"1427f0313",
+"autoresolver_winner_kpd_major_win_threshold",
+"movss dword ptr [rbx + 0x5a4], xmm0"
+]
+],
+"1427f0488": [
+[
+"1427f05ba",
+"autoresolver_winner_kpd_major_win_threshold",
+"movss dword ptr [rbx + 0x5a4], xmm0"
+]
+],
+"142821fa0": [
+[
+"142821fd1",
+"autoresolver_special_ability_maximum_strength_proportion",
+"movss xmm0, dword ptr [rcx + 0x5c0]"
+]
+],
+"14282200c": [
+[
+"14282203d",
+"autoresolver_special_ability_damage_damage_minimum",
+"movss xmm0, dword ptr [rcx + 0x5c4]"
+]
+],
+"142823520": [
+[
+"142823662",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss xmm0, dword ptr [rsi + 0x5bc]"
+],
+[
+"142823673",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss dword ptr [rsi + 0x5bc], xmm0"
+],
+[
+"14282367b",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rsi + 0x5a0]"
+],
+[
+"14282368c",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss dword ptr [rsi + 0x5a0], xmm0"
+],
+[
+"1428237e5",
+"autoresolver_special_ability_minimum_strength_proportion",
+"comiss xmm6, dword ptr [rsi + 0x5bc]"
+]
+],
+"14296ec94": [
+[
+"14296ecef",
+"autoresolver_special_ability_damage_damage_minimum",
+"movss xmm0, dword ptr [r8 + 0x5c4]"
+],
+[
+"14296ed00",
+"autoresolver_special_ability_maximum_strength_proportion",
+"addss xmm0, dword ptr [r8 + 0x5c0]"
+]
+],
+"14298d530": [
+[
+"14298d871",
+"autoresolver_bound_max_melee_strength_proportion",
+"movss xmm0, dword ptr [rbx + 0x570]"
+]
+],
+"142d385a4": [
+[
+"142d38c82",
+"autoresolver_special_ability_cp_to_strength_divider",
+"addss xmm1, dword ptr [rax + 0x5b8]"
+],
+[
+"142d38c8a",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"addss xmm0, dword ptr [rax + 0x5b4]"
+],
+[
+"142d38c92",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [rax + 0x5b8], xmm1"
+],
+[
+"142d38c9a",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [rax + 0x5b4], xmm0"
+],
+[
+"142d38d00",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss xmm0, dword ptr [rax + 0x5b4]"
+],
+[
+"142d38d08",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss xmm1, dword ptr [rax + 0x5b8]"
+],
+[
+"142d38d1a",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [rax + 0x5b4], xmm0"
+],
+[
+"142d38d22",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [rax + 0x5b8], xmm1"
+]
+],
+"142d394b4": [
+[
+"142d39566",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"addss xmm0, dword ptr [r10 + 0x5b4]"
+],
+[
+"142d3956f",
+"autoresolver_special_ability_cp_to_strength_divider",
+"addss xmm1, dword ptr [r10 + 0x5b8]"
+],
+[
+"142d39578",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [r10 + 0x5b4], xmm0"
+],
+[
+"142d39581",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [r10 + 0x5b8], xmm1"
+],
+[
+"142d395ac",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [r10 + 0x5b4], xmm0"
+],
+[
+"142d395b5",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [r10 + 0x5b8], xmm6"
+],
+[
+"142d396bb",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss dword ptr [rax + 0x5bc], xmm0"
+],
+[
+"142d396d7",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss xmm0, dword ptr [rax + 0x5b4]"
+],
+[
+"142d396e4",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss xmm1, dword ptr [rax + 0x5b8]"
+],
+[
+"142d3976c",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss xmm3, dword ptr [rax + 0x5bc]"
+],
+[
+"142d39804",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [rax + 0x5b4], xmm0"
+],
+[
+"142d3980c",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [rax + 0x5b8], xmm1"
+],
+[
+"142d39824",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss xmm3, dword ptr [rdx + 0x5bc]"
+]
+],
+"142d4d220": [
+[
+"142d4d552",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm2, dword ptr [rax + 0xb68]"
+],
+[
+"142d4d5bc",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm1, dword ptr [rax + 0xb68]"
+]
+],
+"142d5b8b0": [
+[
+"142d5ba11",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [rbx + 0x5b4], xmm6"
+],
+[
+"142d5ba19",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [rbx + 0x5b8], xmm9"
+],
+[
+"142d5bb82",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [rbx + 0x5b4], xmm9"
+],
+[
+"142d5bb8b",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [rbx + 0x5b8], xmm6"
+]
+],
+"142d5c5ac": [
+[
+"142d5c5e2",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss xmm3, dword ptr [rbx + 0x5bc]"
+]
+],
+"142d600a0": [
+[
+"142d601d2",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss dword ptr [rdi + 0x5bc], xmm0"
+],
+[
+"142d604a5",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss xmm9, dword ptr [rdi + 0x5b8]"
+],
+[
+"142d604ae",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss xmm8, dword ptr [rdi + 0x5b4]"
+],
+[
+"142d6052f",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [rdi + 0x5b4], xmm2"
+],
+[
+"142d60537",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [rdi + 0x5b8], xmm0"
+],
+[
+"142d6053f",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss xmm0, dword ptr [rdi + 0x5b4]"
+],
+[
+"142d6054b",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss xmm1, dword ptr [rdi + 0x5b8]"
+],
+[
+"142d605c9",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss xmm3, dword ptr [rdi + 0x5bc]"
+],
+[
+"142d6066f",
+"autoresolver_flying_skirmish_units_use_entire_combat_time",
+"movss dword ptr [rdi + 0x5b4], xmm0"
+],
+[
+"142d60677",
+"autoresolver_special_ability_cp_to_strength_divider",
+"movss dword ptr [rdi + 0x5b8], xmm1"
+]
+],
+"142d7c4d0": [
+[
+"142d7c5ee",
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"movss xmm1, dword ptr [rdi + 0x620]"
+],
+[
+"142d7c623",
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold",
+"movss dword ptr [rdi + 0x620], xmm6"
+]
+],
+"142dbe318": [
+[
+"142dbe7b3",
+"autoresolver_special_ability_minimum_strength_proportion",
+"movss xmm1, dword ptr [rsi + 0x5bc]"
+],
+[
+"142dbe97f",
+"autoresolver_chase_down_damage_multiplier",
+"movss dword ptr [rsi + 0x5b0], xmm6"
+],
+[
+"142dbe9e4",
+"autoresolver_battle_timestep",
+"movss dword ptr [rsi + 0x5ac], xmm10"
+]
+],
+"142dcd78c": [
+[
+"142dcda65",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm0, dword ptr [rcx + 0xb68]"
+]
+],
+"142ddd258": [
+[
+"142ddd3da",
+"autoresolver_special_ability_debuff_kps_modifier_maximum",
+"movss xmm1, dword ptr [rbx + 0x5dc]"
+],
+[
+"142ddd405",
+"autoresolver_special_ability_debuff_kps_modifier_minimum",
+"addss xmm0, dword ptr [rbx + 0x5d8]"
+],
+[
+"142ddd410",
+"autoresolver_special_ability_debuff_kps_modifier_minimum",
+"movss dword ptr [rbx + 0x5d8], xmm0"
+]
+],
+"142e0de24": [
+[
+"142e0df85",
+"autoresolver_flying_unit_melee_damage_dealt_modifier",
+"movss dword ptr [r14 + 0x9a8], xmm7"
+]
+],
+"142e2129c": [
+[
+"142e2162f",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"subss xmm0, dword ptr [rbx + 0x598]"
+],
+[
+"142e21637",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"subss xmm1, dword ptr [rbx + 0x5a0]"
+],
+[
+"142e21664",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm2, dword ptr [rbx + 0x598]"
+],
+[
+"142e21678",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm0, dword ptr [rbx + 0x5a0]"
+]
+],
+"142e3efb4": [
+[
+"142e3f5d4",
+"autoresolver_battle_result_accuracy_very_low_prediction_variation",
+"addss xmm6, dword ptr [rax + 0x830]"
+]
+],
+"142e45fc0": [
+[
+"142e4604b",
+"autoresolver_special_ability_damage_damage_minimum",
+"movss xmm0, dword ptr [rax + 0x5c4]"
+],
+[
+"142e46053",
+"autoresolver_special_ability_maximum_strength_proportion",
+"addss xmm0, dword ptr [rax + 0x5c0]"
+]
+],
+"142e53ac4": [
+[
+"142e53bbb",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"comiss xmm0, dword ptr [rcx + 0x610]"
+]
+],
+"142e541f0": [
+[
+"142e542a6",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"comiss xmm0, dword ptr [rcx + 0x610]"
+]
+],
+"142e55634": [
+[
+"142e558b1",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"comiss xmm0, dword ptr [rcx + 0x610]"
+]
+],
+"142e5590c": [
+[
+"142e559da",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"comiss xmm0, dword ptr [rcx + 0x610]"
+]
+],
+"142e59ff0": [
+[
+"142e5a146",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [r15 + 0x598]"
+],
+[
+"142e5a14f",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm1, dword ptr [r15 + 0x5a0]"
+],
+[
+"142e5a1f4",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm0, dword ptr [r15 + 0x598]"
+],
+[
+"142e5a204",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm1, dword ptr [r15 + 0x5a0]"
+]
+],
+"142e613f0": [
+[
+"142e61545",
+"autoresolver_flying_unit_melee_damage_dealt_modifier",
+"movss xmm1, dword ptr [rdi + 0x9a8]"
+]
+],
+"142e67f0c": [
+[
+"142e680e9",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"comiss xmm0, dword ptr [rcx + 0x610]"
+]
+],
+"142e7f548": [
+[
+"142e7fa8c",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"movss xmm0, dword ptr [rbx + 0x610]"
+],
+[
+"142e7fa9d",
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea",
+"movss dword ptr [rbx + 0x610], xmm0"
+]
+],
+"142e83b1c": [
+[
+"142e8424e",
+"autoresolver_siege_attack_kill_multiplier",
+"mulss xmm6, dword ptr [rdx + 0xd3c]"
+],
+[
+"142e84265",
+"autoresolver_battle_size_kill_factor",
+"mulss xmm3, dword ptr [rdx + 0xd38]"
+]
+],
+"142ec0d4c": [
+[
+"142ec0dba",
+"autoresolver_special_ability_damage_damage_minimum",
+"movss xmm0, dword ptr [rdx + 0x5c4]"
+],
+[
+"142ec0dc2",
+"autoresolver_special_ability_damage_damage_minimum",
+"movss xmm1, dword ptr [rcx + 0x5c4]"
+],
+[
+"142ec0dca",
+"autoresolver_special_ability_maximum_strength_proportion",
+"addss xmm1, dword ptr [rcx + 0x5c0]"
+],
+[
+"142ec0dd2",
+"autoresolver_special_ability_maximum_strength_proportion",
+"addss xmm0, dword ptr [rdx + 0x5c0]"
+]
+],
+"142ece558": [
+[
+"142ece596",
+"autoresolver_special_ability_debuff_kps_modifier_maximum",
+"movss dword ptr [rax + 0x5dc], xmm0"
+]
+],
+"142f18568": [
+[
+"142f185e5",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier",
+"movss dword ptr [rbx + 0x93c], xmm0"
+],
+[
+"142f1862e",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier",
+"movss xmm0, dword ptr [rbx + 0x93c]"
+],
+[
+"142f18647",
+"autoresolver_max_hp_for_enemy_hp_dps_modifier",
+"movss dword ptr [rbx + 0x93c], xmm0"
+]
+],
+"142f1cde8": [
+[
+"142f1cdf4",
+"autoresolver_chase_down_damage_multiplier",
+"movss xmm0, dword ptr [rcx + 0x5b0]"
+],
+[
+"142f1ce2a",
+"autoresolver_chase_down_damage_multiplier",
+"movss dword ptr [rcx + 0x5b0], xmm0"
+]
+],
+"142f20c68": [
+[
+"142f2154b",
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size",
+"movss xmm0, dword ptr [rdi + 0x578]"
+],
+[
+"142f21558",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss xmm1, dword ptr [rdi + 0x57c]"
+],
+[
+"142f2156c",
+"autoresolver_bound_min_ranged_kills_per_second",
+"movss xmm0, dword ptr [rdi + 0x580]"
+]
+],
+"142f372cc": [
+[
+"142f373b4",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm7, dword ptr [rax + 0xb68]"
+]
+],
+"142f8a540": [
+[
+"142f8a7d5",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm2, dword ptr [rbx + 0xb68]"
+],
+[
+"142f8a7eb",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss dword ptr [rbx + 0xb68], xmm1"
+]
+],
+"142f9c848": [
+[
+"142f9d001",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss dword ptr [r14 + 0x598], xmm0"
+],
+[
+"142f9d012",
+"autoresolver_battle_reinforcement_time",
+"movss dword ptr [r14 + 0x59c], xmm1"
+],
+[
+"142f9d023",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss dword ptr [r14 + 0x5a0], xmm0"
+]
+],
+"142fa5064": [
+[
+"142fa50af",
+"autoresolver_bound_max_ranged_kills_per_second",
+"movss dword ptr [rdi + 0x57c], xmm0"
+]
+],
+"142fc7540": [
+[
+"142fc79e1",
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target",
+"movss xmm7, dword ptr [rcx + 0x598]"
+],
+[
+"142fc79e9",
+"autoresolver_battle_reinforcement_time",
+"movss xmm0, dword ptr [rcx + 0x59c]"
+],
+[
+"142fc79f1",
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat",
+"movss xmm8, dword ptr [rcx + 0x5a0]"
+],
+[
+"142fc7d95",
+"autoresolver_battle_result_accuracy_very_low_prediction_variation",
+"movss xmm6, dword ptr [rax + 0x830]"
+]
+],
+"14300b178": [
+[
+"14300b47d",
+"autoresolver_special_ability_damage_damage_maximum",
+"movss dword ptr [rdi + 0x5c8], xmm0"
+],
+[
+"14300b48d",
+"autoresolver_special_ability_damage_range",
+"movss dword ptr [rdi + 0x5cc], xmm1"
+],
+[
+"14300b49d",
+"autoresolver_special_ability_buff_kps_modifier_minimum",
+"movss dword ptr [rdi + 0x5d0], xmm0"
+]
+],
+"143015794": [
+[
+"143016053",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"subss xmm1, dword ptr [rcx + 0xb68]"
+]
+],
+"143017424": [
+[
+"143017506",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm1, dword ptr [r14 + 0xb68]"
+]
+],
+"14301f96c": [
+[
+"14301fa58",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm7, dword ptr [rax + 0xb68]"
+]
+],
+"14302e7d8": [
+[
+"14302eb09",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm6, dword ptr [rcx + 0xb68]"
+]
+],
+"143039da4": [
+[
+"14303a6fe",
+"autoresolver_special_ability_damage_range",
+"addss xmm0, dword ptr [rsi + 0x5cc]"
+],
+[
+"14303a706",
+"autoresolver_special_ability_damage_range",
+"movss dword ptr [rsi + 0x5cc], xmm0"
+]
+],
+"14303a920": [
+[
+"14303aabc",
+"autoresolver_special_ability_maximum_strength_proportion",
+"comiss xmm6, dword ptr [rbx + 0x5c0]"
+]
+],
+"14304a2d8": [
+[
+"14304a3af",
+"autoresolver_special_ability_maximum_strength_proportion",
+"comiss xmm0, dword ptr [rax + 0x5c0]"
+],
+[
+"14304a464",
+"autoresolver_special_ability_maximum_strength_proportion",
+"comiss xmm6, dword ptr [rax + 0x5c0]"
+]
+],
+"143052a98": [
+[
+"143052fff",
+"autoresolver_building_damage_num_assult_equipment_percentage",
+"movss dword ptr [rbx + 0x800], xmm0"
+],
+[
+"143053188",
+"autoresolver_min_hp_for_enemy_hp_dps_modifier",
+"movss dword ptr [rbx + 0x940], xmm0"
+],
+[
+"143053198",
+"autoresolver_battle_num_defender_towers_in_fortified_settlement",
+"movss dword ptr [rbx + 0x944], xmm1"
+],
+[
+"1430531cb",
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement",
+"movss dword ptr [rbx + 0x948], xmm0"
+],
+[
+"14305344a",
+"autoresolver_damage_transfer_proportion_of_alliance",
+"movss dword ptr [rbx + 0xb38], xmm0"
+],
+[
+"14305345a",
+"autoresolver_damage_transfer_min_health_remaining",
+"movss dword ptr [rbx + 0xb3c], xmm1"
+],
+[
+"14305346a",
+"autoresolver_damage_transfer_diff_from_average_to_transfer",
+"movss dword ptr [rbx + 0xb40], xmm0"
+]
+],
+"143055748": [
+[
+"143055798",
+"autoresolver_chase_down_maximum_damage_unary",
+"movss xmm0, dword ptr [rcx + 0xc80]"
+],
+[
+"1430557a0",
+"autoresolver_max_attackers_damaging_a_single_target_in_excess_melee",
+"movss xmm2, dword ptr [rcx + 0xc84]"
+],
+[
+"143055884",
+"autoresolver_chase_down_maximum_damage_unary",
+"mulss xmm0, dword ptr [r10 + 0xc80]"
+]
+],
+"14305e2d4": [
+[
+"14305e34f",
+"autoresolver_max_attackers_damaging_a_single_target_in_excess_melee",
+"movss xmm6, dword ptr [rcx + 0xc84]"
+]
+],
+"14305f434": [
+[
+"14305f4b0",
+"autoresolver_chase_down_maximum_damage_unary",
+"movss xmm3, dword ptr [rcx + 0xc80]"
+]
+],
+"143068e94": [
+[
+"1430690f6",
+"autoresolver_max_attackers_damaging_a_single_target_in_excess_melee",
+"movss dword ptr [rcx + 0xc84], xmm1"
+],
+[
+"143069104",
+"autoresolver_chase_down_maximum_damage_unary",
+"movss dword ptr [rcx + 0xc80], xmm0"
+],
+[
+"14306911e",
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee",
+"movss dword ptr [rcx + 0xc88], xmm1"
+]
+],
+"143070344": [
+[
+"143070367",
+"autoresolver_chase_down_maximum_damage_unary",
+"movss dword ptr [rcx + 0xc80], xmm0"
+],
+[
+"143070375",
+"autoresolver_max_attackers_damaging_a_single_target_in_excess_melee",
+"movss dword ptr [rcx + 0xc84], xmm1"
+]
+],
+"14308ae34": [
+[
+"14308b3d4",
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee",
+"movss xmm2, dword ptr [rsi + 0xc88]"
+]
+],
+"1430915a8": [
+[
+"143091a9f",
+"autoresolver_damage_transfer_proportion_of_alliance",
+"addss xmm7, dword ptr [rdi + 0xb38]"
+],
+[
+"143091aa7",
+"autoresolver_damage_transfer_diff_from_average_to_transfer",
+"addss xmm6, dword ptr [rdi + 0xb40]"
+]
+],
+"14309ffe0": [
+[
+"1430a008e",
+"autoresolver_special_ability_damage_damage_minimum",
+"movss xmm6, dword ptr [rcx + 0x5c4]"
+],
+[
+"1430a0096",
+"autoresolver_special_ability_maximum_strength_proportion",
+"addss xmm6, dword ptr [rcx + 0x5c0]"
+]
+],
+"143111194": [
+[
+"1431113ba",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm0, dword ptr [rcx + 0xb68]"
+]
+],
+"143117668": [
+[
+"1431176cf",
+"autoresolver_special_ability_maximum_strength_proportion",
+"mulss xmm6, dword ptr [rax + 0x5c0]"
+]
+],
+"143152484": [
+[
+"1431524f3",
+"autoresolver_minimum_morale_loss",
+"movss xmm7, dword ptr [r12 + 0xdfc]"
+],
+[
+"1431525b9",
+"autoresolver_minimum_morale_loss",
+"movss xmm0, dword ptr [r12 + 0xdfc]"
+]
+],
+"14318e4e8": [
+[
+"14318e531",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm0, dword ptr [rax + 0xb68]"
+]
+],
+"143198ee4": [
+[
+"14319954b",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm0, dword ptr [rax + 0xb68]"
+],
+[
+"143199705",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm0, dword ptr [rax + 0xb68]"
+],
+[
+"14319970d",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"subss xmm0, dword ptr [r15 + 0xb68]"
+]
+],
+"1431b9ad8": [
+[
+"1431b9bcb",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm0, dword ptr [rbx + 0xb68]"
+]
+],
+"1431ba43c": [
+[
+"1431ba516",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm0, dword ptr [rcx + 0xb68]"
+]
+],
+"1431dd07c": [
+[
+"1431dd125",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm0, dword ptr [rax + 0xb68]"
+]
+],
+"1431f618c": [
+[
+"1431f61b0",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm0, dword ptr [rax + 0xb68]"
+]
+],
+"143204f18": [
+[
+"143205122",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm3, dword ptr [rcx + 0xb68]"
+],
+[
+"1432052a5",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm0, dword ptr [rax + 0xb68]"
+],
+[
+"143205490",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm0, dword ptr [rax + 0xb68]"
+]
+],
+"14322c2b0": [
+[
+"14322c3f3",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm7, dword ptr [rdx + 0xb68]"
+],
+[
+"14322c45e",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm0, dword ptr [rcx + 0xb68]"
+]
+],
+"14323a874": [
+[
+"14323a9f3",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm3, dword ptr [rax + 0xb68]"
+]
+],
+"14323c210": [
+[
+"14323c344",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm7, dword ptr [rcx + 0xb68]"
+]
+],
+"1432486b4": [
+[
+"143248768",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm7, dword ptr [rax + 0xb68]"
+]
+],
+"14324a6fc": [
+[
+"14324a8bd",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm3, dword ptr [rcx + 0xb68]"
+],
+[
+"14324a8e8",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm3, dword ptr [rcx + 0xb68]"
+],
+[
+"14324a9d6",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm3, dword ptr [rax + 0xb68]"
+],
+[
+"14324aa52",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm3, dword ptr [rax + 0xb68]"
+]
+],
+"143270278": [
+[
+"1432702b4",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm10, dword ptr [rcx + 0xb68]"
+]
+],
+"14327cdac": [
+[
+"14327d2ca",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"addss xmm7, dword ptr [rax + 0xb68]"
+]
+],
+"14327f3a4": [
+[
+"14327f4dd",
+"autoresolver_battle_result_battle_complexity_max_units_for_scale",
+"movss xmm0, dword ptr [r14 + 0xb68]"
+]
+]
+}

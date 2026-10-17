@@ -109,3 +109,18 @@ scour/, wiki/              seed files that are committed (categories, titles, bu
 snapshot/2026-10-14/       outputs at 9.0: model_units.json, settlement_tier.json, mechanics.json, abilities_90.json,
                            the published page, the offline page, and the schema versions that were used
 ```
+
+## Melee frontline companion (added 16 October 2026)
+
+`GUIDE_Stormfiend_Frontline.md` answers which melee unit to spam in front of the Stormfiend (Ratling Cannons) army.
+`scripts/game/melee_model.py` builds `tww/model_melee.json` (all Skaven non-missile units from the twwstats dump);
+`buffs.py` and `settle.py` accept `<in.json> <out.json>` arguments so the same buff and settlement-tier layers run over it;
+`scripts/game/frontline_eval.py [raw|full|full+r7]` prints the ranking (soak = damage absorbed, time = seconds in contact from a contact-front estimate, width, mass) over infantry, monstrous infantry, monsters, war beasts, chariots and the Doomwheel (vehicles use their engine entity; the Doom-Flayer's Best Defence passive is folded in as +24 armour). Three extra DB tables (special-ability phase junctions,
+stat effects, attribute effects) supply the passive-ability numbers; dump them with `dumpdb.py` before running.
+
+## Skryre tech bee-line and hero buffs (added 16 October 2026)
+
+`GUIDE_Skryre_Tech_Beeline.md` (built by `scripts/game/skv_beeline.py`) is the Clan Skryre tech tree reduced to the click
+targets whose prerequisite chains contain every tech worth having for a Stormvermin (Sword & Shield) + Stormfiend
+(Ratling Cannons) army (only techs that purely buff other units or unused hero types are skipped), plus every Chieftain / Warlock Engineer skill with an army-scope effect on either unit. Needs two extra
+tables: `python scripts/game/dumpdb.py character_skill_node_links_tables technology_required_technology_junctions_tables`.

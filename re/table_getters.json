@@ -1,0 +1,4702 @@
+{
+"1414a9d1d": {
+"slot": "17a70",
+"slow": "1405607c8",
+"name": null
+},
+"1414a9d4d": {
+"slot": "49b8",
+"slow": "140692e94",
+"name": "ability_to_ui_collection_junctions_table"
+},
+"1414a9d7d": {
+"slot": "49f0",
+"slow": "140627f54",
+"name": null
+},
+"1414a9dad": {
+"slot": "22c8",
+"slow": "14068f7a0",
+"name": "achievement_to_battle_set_piece_and_score_junctions_table"
+},
+"1414a9fdd": {
+"slot": "2488",
+"slow": "1414a9ddc",
+"name": "achievement_unlocks_table"
+},
+"1414aa00d": {
+"slot": "165a8",
+"slow": "1406438a8",
+"name": null
+},
+"1414aa03d": {
+"slot": "13cf8",
+"slow": "1406bfb74",
+"name": null
+},
+"1414aa06d": {
+"slot": "13d68",
+"slow": "1406bff70",
+"name": null
+},
+"1414ab715": {
+"slot": "12d38",
+"slow": "1414ab554",
+"name": "advice_info_texts_table"
+},
+"1414ab93d": {
+"slot": "f308",
+"slow": "1414ab744",
+"name": "advice_levels_info_text_juncs_table"
+},
+"1414abb2d": {
+"slot": "17568",
+"slow": "1414ab96c",
+"name": "advice_levels_table"
+},
+"1414abd35": {
+"slot": "175a0",
+"slow": "1414abb5c",
+"name": "advice_threads_table"
+},
+"1414abfcd": {
+"slot": "16340",
+"slow": "1414abdf4",
+"name": "advisors_table"
+},
+"1414abffd": {
+"slot": "13d30",
+"slow": "1406c0148",
+"name": "agent_actions_table"
+},
+"1414ac02d": {
+"slot": "17a00",
+"slow": "140560cd4",
+"name": "agent_culture_details_table"
+},
+"1414ac21d": {
+"slot": "12980",
+"slow": "1414ac05c",
+"name": "agent_localisations_table"
+},
+"1414ac24d": {
+"slot": "6c10",
+"slow": "1407956c0",
+"name": "agent_recruitment_categories_table"
+},
+"1414ac27d": {
+"slot": "13208",
+"slow": "140877dfc",
+"name": "agent_string_faction_overrides_table"
+},
+"1414ac2ad": {
+"slot": "13240",
+"slow": "1405603bc",
+"name": "agent_string_subculture_overrides_table"
+},
+"1414ac4dd": {
+"slot": "12520",
+"slow": "1414ac2dc",
+"name": "agent_subculture_gender_overrides_table"
+},
+"1414ac705": {
+"slot": "b3d0",
+"slow": "1414ac50c",
+"name": "agent_subtype_military_force_creation_overrides_table"
+},
+"1414ac735": {
+"slot": "3bf0",
+"slow": "1405eacac",
+"name": null
+},
+"1414ac985": {
+"slot": "f7d8",
+"slow": "1414ac764",
+"name": "agent_subtype_subculture_overrides_table"
+},
+"1414acbad": {
+"slot": "aaa0",
+"slow": "1414ac9b4",
+"name": "agent_subtype_to_vows_table"
+},
+"1414acbdd": {
+"slot": "103a8",
+"slow": "140706d24",
+"name": null
+},
+"1414ace11": {
+"slot": "91e8",
+"slow": "1414acc0c",
+"name": "agent_subtypes_to_mission_groups_table"
+},
+"1414ace41": {
+"slot": "15ee0",
+"slow": "1406bbba0",
+"name": null
+},
+"1414ace71": {
+"slot": "17b18",
+"slow": "140560594",
+"name": null
+},
+"1414acea1": {
+"slot": "13cc0",
+"slow": "140631658",
+"name": "ai_usage_groups_table"
+},
+"1414ad0a9": {
+"slot": "16308",
+"slow": "1414aced0",
+"name": "aide_de_camp_speeches_table"
+},
+"1414ad0ed": {
+"slot": "6078",
+"slow": "1405f2d1c",
+"name": "allied_foreign_slot_sets_table"
+},
+"1414ad30d": {
+"slot": "2bc0",
+"slow": "1414ad11c",
+"name": "allied_recruitment_core_units_table"
+},
+"1414ad52d": {
+"slot": "3a30",
+"slow": "1414ad33c",
+"name": "allied_recruitment_unit_permissions_table"
+},
+"1414ad75d": {
+"slot": "1dc0",
+"slow": "1414ad55c",
+"name": "ancillaries_categories_agent_subtype_override_junctions_table"
+},
+"1414ad98d": {
+"slot": "104f8",
+"slow": "1414ad78c",
+"name": "ancillaries_categories_faction_junctions_table"
+},
+"1414ad9bd": {
+"slot": "11d78",
+"slow": "14072cf84",
+"name": null
+},
+"1414ad9ed": {
+"slot": "e818",
+"slow": "14063bac8",
+"name": "ancillaries_subcategories_table"
+},
+"1414ada1d": {
+"slot": "18020",
+"slow": "1407073b8",
+"name": null
+},
+"1414adc45": {
+"slot": "b558",
+"slow": "14072cda0",
+"name": "ancillary_salvage_resources_table"
+},
+"1414adc75": {
+"slot": "96b8",
+"slow": "1406bcbf0",
+"name": null
+},
+"1414adf3d": {
+"slot": "96f0",
+"slow": "1414adca4",
+"name": "ancillary_to_equipment_variants_table"
+},
+"1414adf6d": {
+"slot": "17fe8",
+"slow": "14072e548",
+"name": "ancillary_types_table"
+},
+"1414adf9d": {
+"slot": "ea48",
+"slow": "14063b760",
+"name": null
+},
+"1414ae76d": {
+"slot": "7850",
+"slow": "140707a78",
+"name": null
+},
+"1414ae79d": {
+"slot": "73f0",
+"slow": "1407067c0",
+"name": null
+},
+"1414ae7cd": {
+"slot": "9300",
+"slow": "1406be368",
+"name": null
+},
+"1414ae7fd": {
+"slot": "7348",
+"slow": "140704d00",
+"name": "armory_item_to_category_sets_table"
+},
+"1414ae82d": {
+"slot": "8030",
+"slow": "1406ba804",
+"name": "armory_item_to_life_time_type_junctions_table"
+},
+"1414ae85d": {
+"slot": "4868",
+"slow": "1404debc0",
+"name": null
+},
+"1414ae88d": {
+"slot": "9338",
+"slow": "1406bc0f8",
+"name": "armory_item_variants_table"
+},
+"1414ae8bd": {
+"slot": "9370",
+"slow": "1406bc31c",
+"name": null
+},
+"1414ae8ed": {
+"slot": "93a8",
+"slow": "1406bc884",
+"name": null
+},
+"1414aeb15": {
+"slot": "b750",
+"slow": "1414ae91c",
+"name": "army_special_abilities_for_faction_junctions_table"
+},
+"1414aeb45": {
+"slot": "da50",
+"slow": "1405b9e3c",
+"name": null
+},
+"1414aed65": {
+"slot": "6ba0",
+"slow": "1414aeb74",
+"name": "athel_tamarha_ritual_chains_table"
+},
+"1414aed95": {
+"slot": "4980",
+"slow": "140627d7c",
+"name": "attribute_to_ui_collection_junctions_table"
+},
+"1414aefd9": {
+"slot": "109c8",
+"slow": "14063ca80",
+"name": null
+},
+"1414af201": {
+"slot": "1ce0",
+"slow": "1414af008",
+"name": "audio_battle_environment_corruption_exclusions_table"
+},
+"1414af231": {
+"slot": "47c0",
+"slow": "14068fef8",
+"name": null
+},
+"1414af261": {
+"slot": "e150",
+"slow": "140691084",
+"name": null
+},
+"1414af291": {
+"slot": "e2d8",
+"slow": "1406909e0",
+"name": null
+},
+"1414af499": {
+"slot": "11950",
+"slow": "1414af2c0",
+"name": "audio_battle_ground_types_table"
+},
+"1414af695": {
+"slot": "ee00",
+"slow": "14063b070",
+"name": "audio_campaign_buildings_table"
+},
+"1414afa69": {
+"slot": "56a0",
+"slow": "140663bf8",
+"name": "audio_campaign_environment_reverbs_table"
+},
+"1414afc7d": {
+"slot": "5630",
+"slow": "1414afa98",
+"name": "audio_campaign_environments_table"
+},
+"1414afcad": {
+"slot": "e000",
+"slow": "140637c60",
+"name": null
+},
+"1414b00ad": {
+"slot": "4638",
+"slow": "1414afea8",
+"name": "audio_campaign_pooled_resource_sounds_table"
+},
+"1414b02d5": {
+"slot": "6eb0",
+"slow": "1414b00dc",
+"name": "audio_campaign_region_group_assignments_table"
+},
+"1414b06d5": {
+"slot": "ecb0",
+"slow": "1414b04d0",
+"name": "audio_campaign_stances_table"
+},
+"1414b0705": {
+"slot": "fca8",
+"slow": "14062eba4",
+"name": "audio_entity_actors_table"
+},
+"1414b0735": {
+"slot": "6d60",
+"slow": "14062d948",
+"name": "audio_entity_looping_sound_mappings_table"
+},
+"1414b0765": {
+"slot": "10808",
+"slow": "14062e4dc",
+"name": null
+},
+"1414b0795": {
+"slot": "11bb8",
+"slow": "14062dd0c",
+"name": null
+},
+"1414b0991": {
+"slot": "57f0",
+"slow": "1414b07c4",
+"name": "audio_event_trigger_responses_table"
+},
+"1414b0bc1": {
+"slot": "1f48",
+"slow": "1414b09c0",
+"name": "audio_faction_corruption_vo_overrides_table"
+},
+"1414b0bf1": {
+"slot": "3678",
+"slow": "14063c8ec",
+"name": "audio_group_focus_pools_table"
+},
+"1414b0df9": {
+"slot": "110c8",
+"slow": "14063c714",
+"name": null
+},
+"1414b0ff5": {
+"slot": "1ea0",
+"slow": "1414b0e28",
+"name": "audio_limitations_table"
+},
+"1414b11fd": {
+"slot": "e6c8",
+"slow": "1414b1024",
+"name": "audio_markers_table"
+},
+"1414b122d": {
+"slot": "10a00",
+"slow": "14063c53c",
+"name": null
+},
+"1414b125d": {
+"slot": "e9a0",
+"slow": "14062e2f8",
+"name": null
+},
+"1414b1631": {
+"slot": "1998",
+"slow": "1414b1440",
+"name": "audio_pooled_resource_tooltip_dialogue_events_table"
+},
+"1414b1851": {
+"slot": "1420",
+"slow": "1414b1660",
+"name": "audio_pre_battle_unit_targeted_abilities_table"
+},
+"1414b1881": {
+"slot": "c470",
+"slow": "14062ac40",
+"name": "audio_projectile_limitations_table"
+},
+"1414b1aa1": {
+"slot": "19d0",
+"slow": "1414b18b0",
+"name": "audio_ritual_dialogue_events_table"
+},
+"1414b1ad1": {
+"slot": "efc0",
+"slow": "140631b68",
+"name": "audio_shield_types_table"
+},
+"1414b1cd9": {
+"slot": "14c8",
+"slow": "1414b1b00",
+"name": "audio_spawnable_forces_table"
+},
+"1414b1d09": {
+"slot": "d660",
+"slow": "14062f0f8",
+"name": null
+},
+"1414b1f05": {
+"slot": "3b80",
+"slow": "1414b1d38",
+"name": "audio_switches_table"
+},
+"1414b212d": {
+"slot": "b670",
+"slow": "1414b1f34",
+"name": "audio_technologies_table"
+},
+"1414b2335": {
+"slot": "d200",
+"slow": "1414b215c",
+"name": "audio_ui_categories_table"
+},
+"1414b2519": {
+"slot": "5208",
+"slow": "1414b2364",
+"name": "audio_ui_cooldowns_table"
+},
+"1414b2715": {
+"slot": "2728",
+"slow": "1414b2548",
+"name": "audio_vfx_limitations_table"
+},
+"1414b293d": {
+"slot": "2cd8",
+"slow": "1414b2744",
+"name": "audio_vfx_sounds_table"
+},
+"1414b296d": {
+"slot": "db68",
+"slow": "1405b6fd4",
+"name": null
+},
+"1414b2bcd": {
+"slot": "ba60",
+"slow": "1414b29dc",
+"name": "autoresolver_ai_usage_group_combat_potential_modifiers_table"
+},
+"1414b2ded": {
+"slot": "c978",
+"slow": "1414b2bfc",
+"name": "autoresolver_battle_types_table"
+},
+"1414b31ed": {
+"slot": "c860",
+"slow": "1414b2fe8",
+"name": "autoresolver_modifier_group_lookups_table"
+},
+"1414b3415": {
+"slot": "c898",
+"slow": "1414b321c",
+"name": "autoresolver_modifier_group_to_modifiers_table"
+},
+"1414b3b99": {
+"slot": "adb0",
+"slow": "1414b39c0",
+"name": "autoresolver_unit_record_usage_flags_table"
+},
+"1414b3e11": {
+"slot": "ae90",
+"slow": "1414b3c18",
+"name": "background_character_initiative_sets_table"
+},
+"1414b405d": {
+"slot": "b28",
+"slow": "1414b3e40",
+"name": "background_initiative_sets_table"
+},
+"1414b408d": {
+"slot": "f730",
+"slow": "140635a68",
+"name": null
+},
+"1414b40bd": {
+"slot": "ec78",
+"slow": "1406bb82c",
+"name": null
+},
+"1414b42e5": {
+"slot": "b1a0",
+"slow": "1414b40ec",
+"name": "battle_armies_junctions_table"
+},
+"1414b4315": {
+"slot": "fdf8",
+"slow": "140629094",
+"name": null
+},
+"1414b4511": {
+"slot": "15968",
+"slow": "1414b4344",
+"name": "battle_cameras_table"
+},
+"1414b470d": {
+"slot": "d7b0",
+"slow": "1414b4540",
+"name": "battle_catchment_override_areas_table"
+},
+"1414b4941": {
+"slot": "d740",
+"slow": "1414b473c",
+"name": "battle_catchment_override_battle_mappings_table"
+},
+"1414b4bc1": {
+"slot": "d778",
+"slow": "1414b49e8",
+"name": "battle_catchment_override_group_battles_table"
+},
+"1414b4da5": {
+"slot": "d7e8",
+"slow": "1414b4bf0",
+"name": "battle_catchment_override_groups_table"
+},
+"1414b5161": {
+"slot": "129b8",
+"slow": "1414b4f88",
+"name": "battle_cinematic_events_table"
+},
+"1414b5395": {
+"slot": "17178",
+"slow": "1414b5190",
+"name": "battle_climate_weather_descriptions_table"
+},
+"1414b55bd": {
+"slot": "18b10",
+"slow": "1414b53c4",
+"name": "battle_currency_army_special_abilities_cost_values_table"
+},
+"1414b57e5": {
+"slot": "24c0",
+"slow": "1414b55ec",
+"name": "battle_currency_army_special_abilities_group_upgrades_cost_values_table"
+},
+"1414b5a0d": {
+"slot": "18b80",
+"slow": "1414b5814",
+"name": "battle_currency_buildings_cost_values_table"
+},
+"1414b5c2d": {
+"slot": "18bb8",
+"slow": "1414b5a3c",
+"name": "battle_currency_casualties_taken_event_flagged_units_table"
+},
+"1414b5e55": {
+"slot": "18b48",
+"slow": "1414b5c5c",
+"name": "battle_currency_deployables_cost_values_table"
+},
+"1414b6071": {
+"slot": "54e0",
+"slow": "1414b5e84",
+"name": "battle_currency_disconnect_behaviours_table"
+},
+"1414b6299": {
+"slot": "95d8",
+"slow": "1414b60a0",
+"name": "battle_currency_map_barriers_cost_values_table"
+},
+"1414b6495": {
+"slot": "afa8",
+"slow": "1414b62c8",
+"name": "battle_currency_modifiers_table"
+},
+"1414b66bd": {
+"slot": "afe0",
+"slow": "1414b64c4",
+"name": "battle_currency_modifiers_thresholds_table"
+},
+"1414b68f1": {
+"slot": "9fe8",
+"slow": "1414b66ec",
+"name": "battle_currency_modifiers_to_army_special_abilities_table"
+},
+"1414b6b25": {
+"slot": "a020",
+"slow": "1414b6920",
+"name": "battle_currency_modifiers_to_buildings_table"
+},
+"1414b6d59": {
+"slot": "9fb0",
+"slow": "1414b6b54",
+"name": "battle_currency_modifiers_to_deployables_table"
+},
+"1414b6f8d": {
+"slot": "18c28",
+"slow": "1414b6d88",
+"name": "battle_currency_modifiers_to_source_types_table"
+},
+"1414b71c1": {
+"slot": "9f40",
+"slow": "1414b6fbc",
+"name": "battle_currency_modifiers_to_unit_abilities_table"
+},
+"1414b73f5": {
+"slot": "9f78",
+"slow": "1414b71f0",
+"name": "battle_currency_modifiers_to_units_table"
+},
+"1414b77f5": {
+"slot": "18ad8",
+"slow": "1414b75fc",
+"name": "battle_currency_unit_abilities_cost_values_table"
+},
+"1414b7a1d": {
+"slot": "18bf0",
+"slow": "1414b7824",
+"name": "battle_currency_units_cost_values_table"
+},
+"1414b7dcd": {
+"slot": "175d8",
+"slow": "14062d714",
+"name": null
+},
+"1414b7dfd": {
+"slot": "14628",
+"slow": "1406277bc",
+"name": "battle_entity_effects_table"
+},
+"1414b7e2d": {
+"slot": "10bf8",
+"slow": "1406b9b68",
+"name": null
+},
+"1414b8035": {
+"slot": "145f0",
+"slow": "1414b7e5c",
+"name": "battle_misc_effects_table"
+},
+"1414b8065": {
+"slot": "17878",
+"slow": "1406b95b8",
+"name": null
+},
+"1414b828d": {
+"slot": "24f8",
+"slow": "1414b8094",
+"name": "battle_purchasable_group_to_army_abilities_table"
+},
+"1414b84bd": {
+"slot": "9178",
+"slow": "1414b82bc",
+"name": "battle_purchasable_group_to_unit_abilities_table"
+},
+"1414b86a1": {
+"slot": "9140",
+"slow": "1414b84ec",
+"name": "battle_purchasable_groups_table"
+},
+"1414b8885": {
+"slot": "9f08",
+"slow": "1414b86d0",
+"name": "battle_purchasable_items_ui_categories_table"
+},
+"1414b8add": {
+"slot": "9ed0",
+"slow": "1414b88b4",
+"name": "battle_purchasable_items_ui_categories_to_battle_currency_unit_abiities_cost_value_junctions_table"
+},
+"1414b8d45": {
+"slot": "eee0",
+"slow": "1414b8b84",
+"name": "battle_result_types_table"
+},
+"1414b8f35": {
+"slot": "b050",
+"slow": "1414b8d74",
+"name": "battle_secondary_currency_source_types_table"
+},
+"1414b91fd": {
+"slot": "b0c0",
+"slow": "1414b8f64",
+"name": "battle_secondary_currency_sources_links_table"
+},
+"1414b922d": {
+"slot": "b088",
+"slow": "1406428b8",
+"name": "battle_secondary_currency_types_table"
+},
+"1414b944d": {
+"slot": "167d8",
+"slow": "1414b925c",
+"name": "battle_sequences_table"
+},
+"1414b947d": {
+"slot": "10e60",
+"slow": "1405b8b64",
+"name": "battle_set_piece_armies_characters_items_table"
+},
+"1414b96a5": {
+"slot": "f8f0",
+"slow": "140654b38",
+"name": "battle_set_piece_armies_characters_skills_table"
+},
+"1414b96d5": {
+"slot": "10fb0",
+"slow": "1405b8d34",
+"name": "battle_set_piece_armies_characters_table"
+},
+"1414b9f09": {
+"slot": "10f40",
+"slow": "1414b9cec",
+"name": "battle_set_piece_armies_table"
+},
+"1414ba131": {
+"slot": "10e98",
+"slow": "1414b9f38",
+"name": "battle_set_piece_armies_units_junctions_table"
+},
+"1414ba351": {
+"slot": "10f78",
+"slow": "1414ba160",
+"name": "battle_set_piece_armies_units_table"
+},
+"1414ba579": {
+"slot": "bb08",
+"slow": "140691ee4",
+"name": "battle_set_piece_campaign_battle_scenes_table"
+},
+"1414ba799": {
+"slot": "f1b8",
+"slow": "1414ba5a8",
+"name": "battle_set_piece_frontend_groups_table"
+},
+"1414ba9c1": {
+"slot": "f180",
+"slow": "1414ba7c8",
+"name": "battle_set_piece_frontend_groups_to_characters_table"
+},
+"1414babe9": {
+"slot": "7a80",
+"slow": "1414ba9f0",
+"name": "battle_set_pieces_siege_items_table"
+},
+"1414bac19": {
+"slot": "10db8",
+"slow": "140691234",
+"name": null
+},
+"1414bac49": {
+"slot": "fb58",
+"slow": "140639a94",
+"name": "battle_skeleton_parts_table"
+},
+"1414bac79": {
+"slot": "13f60",
+"slow": "1406bb9e8",
+"name": "battle_skeletons_table"
+},
+"1414baea9": {
+"slot": "17990",
+"slow": "140691488",
+"name": null
+},
+"1414bb0b1": {
+"slot": "3598",
+"slow": "1414baed8",
+"name": "battle_ui_cheatsheet_items_table"
+},
+"1414bb2ad": {
+"slot": "8378",
+"slow": "1414bb0e0",
+"name": "battle_ui_gameplay_values_table"
+},
+"1414bb491": {
+"slot": "71f8",
+"slow": "1414bb2dc",
+"name": "battle_unit_caps_for_team_sizes_table"
+},
+"1414bb6b9": {
+"slot": "b280",
+"slow": "1414bb4c0",
+"name": "battle_vortex_composite_scene_group_to_scenes_table"
+},
+"1414bb6e9": {
+"slot": "106f0",
+"slow": "140629740",
+"name": null
+},
+"1414bb8f1": {
+"slot": "17140",
+"slow": "1414bb718",
+"name": "battle_weather_types_table"
+},
+"1414bbe79": {
+"slot": "5828",
+"slow": "1414bbca0",
+"name": "battlefield_building_to_settlement_levels_table"
+},
+"1414bc32d": {
+"slot": "176f0",
+"slow": "1414bc068",
+"name": "battlefield_buildings_table"
+},
+"1414bc555": {
+"slot": "b520",
+"slow": "1414bc35c",
+"name": "battlefield_buildings_to_special_abilities_table"
+},
+"1414bc789": {
+"slot": "12398",
+"slow": "1414bc584",
+"name": "battlefield_buildings_with_projectiles_names_table"
+},
+"1414bc96d": {
+"slot": "10ed0",
+"slow": "1414bc7b8",
+"name": "battlefield_civilian_amounts_table"
+},
+"1414bcb9d": {
+"slot": "10c30",
+"slow": "1414bc99c",
+"name": "battlefield_civilian_behaviour_groups_behaviour_proportions_table"
+},
+"1414bd139": {
+"slot": "10ca0",
+"slow": "1414bcf34",
+"name": "battlefield_civilian_group_variations_table"
+},
+"1414bd569": {
+"slot": "10cd8",
+"slow": "1414bd334",
+"name": "battlefield_civilian_type_civilian_group_junctions_table"
+},
+"1414bd765": {
+"slot": "10f08",
+"slow": "1414bd598",
+"name": "battlefield_civilian_types_table"
+},
+"1414bd795": {
+"slot": "16ae8",
+"slow": "1406fb438",
+"name": "battlefield_deployable_siege_items_table"
+},
+"1414bd7c5": {
+"slot": "13c18",
+"slow": "14062bfd0",
+"name": null
+},
+"1414bd9cd": {
+"slot": "12558",
+"slow": "1414bd7f4",
+"name": "battlefield_siege_vehicles_custom_battles_table"
+},
+"1414bd9fd": {
+"slot": "14d28",
+"slow": "1406fb608",
+"name": "battlefield_siege_vehicles_table"
+},
+"1414bdbe1": {
+"slot": "6c80",
+"slow": "1414bda2c",
+"name": "battlefield_zones_table"
+},
+"1414bde09": {
+"slot": "6c48",
+"slow": "1414bdc10",
+"name": "battlefield_zones_to_special_abilities_table"
+},
+"1414bde39": {
+"slot": "167a0",
+"slow": "14063c364",
+"name": null
+},
+"1414bde69": {
+"slot": "f928",
+"slow": "140691d28",
+"name": null
+},
+"1414be089": {
+"slot": "9a0",
+"slow": "1414bde98",
+"name": "books_of_nagash_details_table"
+},
+"1414be2bd": {
+"slot": "968",
+"slow": "1414be0b8",
+"name": "books_of_nagash_to_faction_effect_bundle_junctions_table"
+},
+"1414be6bd": {
+"slot": "aad8",
+"slow": "1414be4c4",
+"name": "bretonnia_vows_to_traits_table"
+},
+"1414beb11": {
+"slot": "14708",
+"slow": "1414be8f0",
+"name": "building_chain_availabilities_table"
+},
+"1414beb41": {
+"slot": "12018",
+"slow": "1407bb5ac",
+"name": "building_chain_availability_sets_table"
+},
+"1414beb71": {
+"slot": "179c8",
+"slow": "1407071b8",
+"name": null
+},
+"1414beba1": {
+"slot": "17c30",
+"slow": "140662890",
+"name": "building_culture_variants_table"
+},
+"1414bebd1": {
+"slot": "4b78",
+"slow": "1406bf9d4",
+"name": "building_effect_context_expressions_table"
+},
+"1414bedf9": {
+"slot": "690",
+"slow": "1414bec00",
+"name": "building_level_character_traits_junctions_table"
+},
+"1414bf019": {
+"slot": "7888",
+"slow": "1414bee28",
+"name": "building_level_ui_position_override_junctions_table"
+},
+"1414bf049": {
+"slot": "17ca0",
+"slow": "14070804c",
+"name": null
+},
+"1414bf079": {
+"slot": "7e70",
+"slow": "1407a3c8c",
+"name": "building_lifecycle_states_table"
+},
+"1414bf461": {
+"slot": "2760",
+"slow": "1414bf268",
+"name": "building_pooled_resource_effect_constraints_table"
+},
+"1414bf491": {
+"slot": "1960",
+"slow": "140625808",
+"name": "building_set_required_sets_table"
+},
+"1414bf4c1": {
+"slot": "12718",
+"slow": "1406259d8",
+"name": null
+},
+"1414bf4f1": {
+"slot": "14740",
+"slow": "1405f13fc",
+"name": null
+},
+"1414bfedd": {
+"slot": "101b0",
+"slow": "1414bfce4",
+"name": "cai_agent_embed_profile_agent_type_junctions_table"
+},
+"1414c0129": {
+"slot": "15b98",
+"slow": "1414bff0c",
+"name": "cai_agent_record_to_cai_agent_type_junctions_table"
+},
+"1414c0529": {
+"slot": "15af0",
+"slow": "1414c0324",
+"name": "cai_agent_type_distribution_profile_junctions_table"
+},
+"1414c075d": {
+"slot": "15a48",
+"slow": "1414c0558",
+"name": "cai_agent_type_recruitment_profile_junctions_table"
+},
+"1414c0941": {
+"slot": "15bd0",
+"slow": "1414c078c",
+"name": "cai_agent_types_table"
+},
+"1414c0d35": {
+"slot": "76c8",
+"slow": "1414c0b68",
+"name": "cai_algorithm_variables_table"
+},
+"1414c1119": {
+"slot": "be88",
+"slow": "1414c0f18",
+"name": "cai_character_skill_synergies_table"
+},
+"1414c12fd": {
+"slot": "e5e8",
+"slow": "1406378dc",
+"name": null
+},
+"1414c132d": {
+"slot": "15658",
+"slow": "1405f1794",
+"name": "cai_construction_system_building_values_table"
+},
+"1414c135d": {
+"slot": "157a8",
+"slow": "1405f1d98",
+"name": "cai_construction_system_categories_table"
+},
+"1414c138d": {
+"slot": "157e0",
+"slow": "1405f1f70",
+"name": null
+},
+"1414c15dd": {
+"slot": "11448",
+"slow": "1414c13bc",
+"name": "cai_construction_system_strategic_context_faction_status_overrides_table"
+},
+"1414c1811": {
+"slot": "156c8",
+"slow": "1414c160c",
+"name": "cai_construction_system_strategic_context_template_policy_junctions_table"
+},
+"1414c1a31": {
+"slot": "12f68",
+"slow": "1414c1840",
+"name": "cai_construction_system_superchain_hints_table"
+},
+"1414c1cd9": {
+"slot": "15070",
+"slow": "1414c1a60",
+"name": "cai_construction_system_synergies_table"
+},
+"1414c2095": {
+"slot": "c0b8",
+"slow": "1414c1ed4",
+"name": "cai_construction_system_synergy_scopes_table"
+},
+"1414c22c9": {
+"slot": "113d8",
+"slow": "1414c20c4",
+"name": "cai_construction_system_template_assignment_policy_faction_status_overrides_table"
+},
+"1414c24fd": {
+"slot": "15738",
+"slow": "1414c22f8",
+"name": "cai_construction_system_templates_junctions_table"
+},
+"1414c2fc1": {
+"slot": "7700",
+"slow": "1414c2c68",
+"name": "cai_decision_items_table"
+},
+"1414c342d": {
+"slot": "7508",
+"slow": "14075d438",
+"name": "cai_decision_profiles_table"
+},
+"1414c3655": {
+"slot": "13470",
+"slow": "1414c345c",
+"name": "cai_diplomacy_complex_treacheries_table"
+},
+"1414c3885": {
+"slot": "bb40",
+"slow": "1414c3684",
+"name": "cai_diplomacy_excluded_factions_table"
+},
+"1414c3ab5": {
+"slot": "13438",
+"slow": "1414c38b4",
+"name": "cai_diplomacy_simple_treacheries_table"
+},
+"1414c484d": {
+"slot": "5278",
+"slow": "1414c4680",
+"name": "cai_domain_variables_table"
+},
+"1414c487d": {
+"slot": "67e8",
+"slow": "14075ceac",
+"name": "cai_domains_table"
+},
+"1414c4c79": {
+"slot": "bbb0",
+"slow": "1414c4a78",
+"name": "cai_factions_to_hint_profile_groups_table"
+},
+"1414c50a5": {
+"slot": "5588",
+"slow": "1414c4ea0",
+"name": "cai_gds_task_generators_table"
+},
+"1414c52ad": {
+"slot": "bbe8",
+"slow": "1414c50d4",
+"name": "cai_hint_profile_groups_table"
+},
+"1414c5a59": {
+"slot": "8f80",
+"slow": "1414c5860",
+"name": "cai_personalities_budget_policy_context_overrides_junctions_table"
+},
+"1414c5c89": {
+"slot": "8fb8",
+"slow": "1414c5a88",
+"name": "cai_personalities_budget_policy_context_overrides_table"
+},
+"1414c6265": {
+"slot": "7460",
+"slow": "1414c606c",
+"name": "cai_personalities_decision_profile_context_overrides_junctions_table"
+},
+"1414c648d": {
+"slot": "7498",
+"slow": "1414c6294",
+"name": "cai_personalities_decision_profile_context_overrides_table"
+},
+"1414c68ad": {
+"slot": "8f10",
+"slow": "1414c66b4",
+"name": "cai_personalities_income_allocation_policy_context_overrides_junctions_table"
+},
+"1414c6ad5": {
+"slot": "8f48",
+"slow": "1414c68dc",
+"name": "cai_personalities_income_allocation_policy_context_overrides_table"
+},
+"1414c6d15": {
+"slot": "5d68",
+"slow": "1414c6b04",
+"name": "cai_personalities_personality_variable_profile_context_overrides_junctions_table"
+},
+"1414c6f3d": {
+"slot": "5da0",
+"slow": "1414c6d44",
+"name": "cai_personalities_personality_variable_profile_context_overrides_table"
+},
+"1414c6f6d": {
+"slot": "15498",
+"slow": "1406f9a34",
+"name": "cai_personalities_reliability_policies_table"
+},
+"1414c6f9d": {
+"slot": "15620",
+"slow": "1406f7324",
+"name": "cai_personalities_table"
+},
+"1414c71dd": {
+"slot": "7fc0",
+"slow": "1414c6fcc",
+"name": "cai_personalities_task_management_system_variable_profiles_overrides_junctions_table"
+},
+"1414c7405": {
+"slot": "7ff8",
+"slow": "1414c720c",
+"name": "cai_personalities_task_management_system_variable_profiles_overrides_table"
+},
+"1414c760d": {
+"slot": "e658",
+"slow": "1414c7434",
+"name": "cai_personalities_technology_research_path_junctions_table"
+},
+"1414c7a85": {
+"slot": "e850",
+"slow": "1414c7834",
+"name": "cai_personalities_technology_research_policy_strategic_context_junctions_table"
+},
+"1414c7e61": {
+"slot": "7f18",
+"slow": "1414c7c68",
+"name": "cai_personalities_tms_task_generator_profiles_overrides_junctions_table"
+},
+"1414c8089": {
+"slot": "7f50",
+"slow": "1414c7e90",
+"name": "cai_personalities_tms_task_generator_profiles_overrides_table"
+},
+"1414c82b9": {
+"slot": "3790",
+"slow": "1414c80b8",
+"name": "cai_personality_cultural_relations_overrides_table"
+},
+"1414c84c1": {
+"slot": "13550",
+"slow": "1414c82e8",
+"name": "cai_personality_deal_evaluation_component_overrides_table"
+},
+"1414c84f1": {
+"slot": "135f8",
+"slow": "140648b7c",
+"name": "cai_personality_deal_evaluation_deal_component_names_table"
+},
+"1414c8731": {
+"slot": "53c8",
+"slow": "1414c8520",
+"name": "cai_personality_deal_evaluation_deal_component_opponent_context_modifiers_table"
+},
+"1414c8959": {
+"slot": "4e88",
+"slow": "1414c8760",
+"name": "cai_personality_deal_evaluation_deal_component_target_stance_modifiers_table"
+},
+"1414c8b81": {
+"slot": "135c0",
+"slow": "1414c8988",
+"name": "cai_personality_deal_evaluation_deal_component_values_table"
+},
+"1414c8da9": {
+"slot": "3f00",
+"slow": "1414c8bb0",
+"name": "cai_personality_deal_evaluation_profile_context_overrides_junctions_table"
+},
+"1414c8fd1": {
+"slot": "3f38",
+"slow": "1414c8dd8",
+"name": "cai_personality_deal_evaluation_profile_context_overrides_table"
+},
+"1414c91d9": {
+"slot": "f7a0",
+"slow": "1414c9000",
+"name": "cai_personality_deal_generation_component_overrides_table"
+},
+"1414c9401": {
+"slot": "136d8",
+"slow": "1414c9208",
+"name": "cai_personality_deal_generation_generator_priorities_table"
+},
+"1414c97ed": {
+"slot": "13518",
+"slow": "1414c95fc",
+"name": "cai_personality_diplomatic_component_overrides_table"
+},
+"1414c981d": {
+"slot": "145b8",
+"slow": "1406f96c4",
+"name": "cai_personality_diplomatic_components_table"
+},
+"1414c9a4d": {
+"slot": "14548",
+"slow": "1414c984c",
+"name": "cai_personality_diplomatic_event_values_table"
+},
+"1414c9c55": {
+"slot": "14580",
+"slow": "1414c9a7c",
+"name": "cai_personality_diplomatic_events_table"
+},
+"1414ca039": {
+"slot": "14510",
+"slow": "1414c9e38",
+"name": "cai_personality_diplomatic_treaty_values_table"
+},
+"1414ca611": {
+"slot": "4a28",
+"slow": "1414ca438",
+"name": "cai_personality_faction_potential_modifiers_table"
+},
+"1414ca839": {
+"slot": "11758",
+"slow": "1414ca640",
+"name": "cai_personality_group_junctions_table"
+},
+"1414caa89": {
+"slot": "11790",
+"slow": "1414ca868",
+"name": "cai_personality_group_overrides_table"
+},
+"1414cac85": {
+"slot": "117c8",
+"slow": "1414caab8",
+"name": "cai_personality_groups_table"
+},
+"1414cae8d": {
+"slot": "11d08",
+"slow": "1414cacb4",
+"name": "cai_personality_occupation_decision_priorities_table"
+},
+"1414cb0b5": {
+"slot": "9418",
+"slow": "1414caebc",
+"name": "cai_personality_strategic_components_strategic_context_band_override_values_table"
+},
+"1414cb2bd": {
+"slot": "136a0",
+"slow": "1414cb0e4",
+"name": "cai_personality_strategic_desired_attitudes_table"
+},
+"1414cb4e5": {
+"slot": "3410",
+"slow": "1414cb2ec",
+"name": "cai_personality_strategic_profile_context_overrides_junctions_table"
+},
+"1414cb70d": {
+"slot": "3448",
+"slow": "1414cb514",
+"name": "cai_personality_strategic_profile_context_overrides_table"
+},
+"1414cb93d": {
+"slot": "13668",
+"slow": "1414cb73c",
+"name": "cai_personality_strategic_resource_values_table"
+},
+"1414cbd21": {
+"slot": "5e80",
+"slow": "1414cbb6c",
+"name": "cai_personality_variables_table"
+},
+"1414cbf49": {
+"slot": "4e18",
+"slow": "1414cbd50",
+"name": "cai_plague_recipes_table"
+},
+"1414cc4fd": {
+"slot": "77a8",
+"slow": "1414cc348",
+"name": "cai_query_variables_table"
+},
+"1414cc8d9": {
+"slot": "bcc8",
+"slow": "1414cc6e0",
+"name": "cai_region_groups_to_regions_junctions_table"
+},
+"1414ccce1": {
+"slot": "bc20",
+"slow": "1414ccb08",
+"name": "cai_region_hint_profile_overrides_table"
+},
+"1414cd0d5": {
+"slot": "bc58",
+"slow": "1414ccedc",
+"name": "cai_region_hint_profiles_to_region_hint_groups_table"
+},
+"1414cd2b9": {
+"slot": "bda8",
+"slow": "1414cd104",
+"name": "cai_region_hints_table"
+},
+"1414cd695": {
+"slot": "8110",
+"slow": "1414cd49c",
+"name": "cai_ritual_policy_to_category_junctions_table"
+},
+"1414cd8c9": {
+"slot": "d1c8",
+"slow": "1414cd6c4",
+"name": "cai_ritual_ritual_check_type_junctions_table"
+},
+"1414cdac5": {
+"slot": "15c40",
+"slow": "1414cd8f8",
+"name": "cai_ritual_variables_table"
+},
+"1414cdccd": {
+"slot": "c358",
+"slow": "1414cdaf4",
+"name": "cai_ritual_weights_table"
+},
+"1414cdeed": {
+"slot": "11b80",
+"slow": "1414cdcfc",
+"name": "cai_siege_strength_modifiers_table"
+},
+"1414ce11d": {
+"slot": "139e8",
+"slow": "1414cdf1c",
+"name": "cai_stance_hints_table"
+},
+"1414ce4d9": {
+"slot": "f490",
+"slow": "1414ce300",
+"name": "cai_task_management_system_task_generator_group_overrides_table"
+},
+"1414ce70d": {
+"slot": "12a98",
+"slow": "1414ce508",
+"name": "cai_task_management_system_task_generator_groups_generators_junctions_table"
+},
+"1414ce935": {
+"slot": "9b88",
+"slow": "1407830f8",
+"name": null
+},
+"1414ceb19": {
+"slot": "9bc0",
+"slow": "1414ce964",
+"name": "cai_task_management_system_task_generator_variables_table"
+},
+"1414ced15": {
+"slot": "12b08",
+"slow": "1414ceb48",
+"name": "cai_task_management_system_task_generators_table"
+},
+"1414cf109": {
+"slot": "9c68",
+"slow": "1414cef10",
+"name": "cai_task_management_system_variable_group_junctions_table"
+},
+"1414cf311": {
+"slot": "9c30",
+"slow": "1414cf138",
+"name": "cai_task_management_system_variable_group_overrides_table"
+},
+"1414cf50d": {
+"slot": "9cd8",
+"slow": "1414cf340",
+"name": "cai_task_management_system_variables_table"
+},
+"1414cf715": {
+"slot": "11c60",
+"slow": "1414cf53c",
+"name": "cai_variables_overides_table"
+},
+"1414cf911": {
+"slot": "11c98",
+"slow": "1414cf744",
+"name": "cai_variables_table"
+},
+"1414d01c9": {
+"slot": "16688",
+"slow": "1414cfff0",
+"name": "campaign_ai_managers_table"
+},
+"1414d0561": {
+"slot": "15ce8",
+"slow": "1414d03ac",
+"name": "campaign_ai_technology_path_junctions_table"
+},
+"1414d0769": {
+"slot": "13be0",
+"slow": "1414d0590",
+"name": "campaign_ambush_ground_types_table"
+},
+"1414d0a71": {
+"slot": "174f8",
+"slow": "1414d0904",
+"name": null
+},
+"1414d0c19": {
+"slot": "17530",
+"slow": "1414d0aa0",
+"name": null
+},
+"1414d0e15": {
+"slot": "e700",
+"slow": "1414d0c48",
+"name": "campaign_autoresolver_skirmish_effectiveness_relative_to_speeds_table"
+},
+"1414d103d": {
+"slot": "12478",
+"slow": "1414d0e44",
+"name": "campaign_battle_presets_table"
+},
+"1414d1265": {
+"slot": "ea10",
+"slow": "1414d106c",
+"name": "campaign_battle_scenes_table"
+},
+"1414d240d": {
+"slot": "1d88",
+"slow": "1414d224c",
+"name": "campaign_border_display_modes_table"
+},
+"1414d2615": {
+"slot": "d270",
+"slow": "1414d243c",
+"name": "campaign_building_chain_slot_unlocks_table"
+},
+"1414d27f9": {
+"slot": "e9d8",
+"slow": "1414d2644",
+"name": "campaign_camera_map_bounds_table"
+},
+"1414d2829": {
+"slot": "6238",
+"slow": "140885004",
+"name": "campaign_caravan_networks_table"
+},
+"1414d2a49": {
+"slot": "12750",
+"slow": "1414d2858",
+"name": "campaign_character_art_set_campaign_junctions_table"
+},
+"1414d2c69": {
+"slot": "5d30",
+"slow": "1414d2a78",
+"name": "campaign_character_art_set_porthole_overrides_table"
+},
+"1414d2e59": {
+"slot": "15850",
+"slow": "1414d2c98",
+"name": "campaign_character_art_sets_table"
+},
+"1414d2e89": {
+"slot": "15818",
+"slow": "1405b87b4",
+"name": "campaign_character_arts_table"
+},
+"1414d30b1": {
+"slot": "3640",
+"slow": "1414d2eb8",
+"name": "campaign_cinematic_resources_table"
+},
+"1414d3295": {
+"slot": "11918",
+"slow": "1414d30e0",
+"name": "campaign_climate_change_phases_table"
+},
+"1414d32c5": {
+"slot": "e0a8",
+"slow": "14063dc6c",
+"name": "campaign_companion_army_details_table"
+},
+"1414d32f5": {
+"slot": "f378",
+"slow": "14063a858",
+"name": null
+},
+"1414d3515": {
+"slot": "11720",
+"slow": "1414d3324",
+"name": "campaign_cultural_relations_table"
+},
+"1414d3545": {
+"slot": "8420",
+"slow": "14063fe34",
+"name": "campaign_decision_choices_table"
+},
+"1414d3575": {
+"slot": "8458",
+"slow": "140640c34",
+"name": null
+},
+"1414d37a5": {
+"slot": "16570",
+"slow": "1414d35a4",
+"name": "campaign_difficulty_handicap_effects_table"
+},
+"1414d37d5": {
+"slot": "ae58",
+"slow": "1406bcdac",
+"name": null
+},
+"1414d3f45": {
+"slot": "10a70",
+"slow": "1414d3d44",
+"name": "campaign_effect_scope_to_category_junctions_table"
+},
+"1414d3f75": {
+"slot": "14900",
+"slow": "1406bde68",
+"name": null
+},
+"1414d419d": {
+"slot": "d580",
+"slow": "1414d3fa4",
+"name": "campaign_faction_feature_forest_overrides_table"
+},
+"1414d43a5": {
+"slot": "ab80",
+"slow": "1414d41cc",
+"name": "campaign_factorial_category_base_thresholds_table"
+},
+"1414d43d5": {
+"slot": "ad78",
+"slow": "140712e48",
+"name": "campaign_factorial_ui_infos_table"
+},
+"1414d4405": {
+"slot": "10098",
+"slow": "14063e720",
+"name": "campaign_features_table"
+},
+"1414d4435": {
+"slot": "17798",
+"slow": "140663874",
+"name": "campaign_ground_types_table"
+},
+"1414d4465": {
+"slot": "ce48",
+"slow": "14063d50c",
+"name": "campaign_group_abandoned_cultures_overrides_table"
+},
+"1414d4495": {
+"slot": "bb78",
+"slow": "1405ea444",
+"name": "campaign_group_agent_action_composite_scenes_table"
+},
+"1414d44c5": {
+"slot": "ade8",
+"slow": "1405f3b98",
+"name": "campaign_group_agent_action_foreign_slots_table"
+},
+"1414d44f5": {
+"slot": "8b90",
+"slow": "1405f2efc",
+"name": "campaign_group_allied_foreign_slot_sets_table"
+},
+"1414d4525": {
+"slot": "79d8",
+"slow": "1407a6d5c",
+"name": "campaign_group_campaign_prison_actions_table"
+},
+"1414d4555": {
+"slot": "2108",
+"slow": "1408866d0",
+"name": "campaign_group_caravan_lootings_table"
+},
+"1414d4585": {
+"slot": "5cc0",
+"slow": "14088c664",
+"name": "campaign_group_compass_manipulation_needed_pooled_resources_table"
+},
+"1414d45b5": {
+"slot": "7a48",
+"slow": "1406bec94",
+"name": "campaign_group_cooking_ingredients_table"
+},
+"1414d45e5": {
+"slot": "7ab8",
+"slow": "1407480e4",
+"name": "campaign_group_cooking_recipes_table"
+},
+"1414d4615": {
+"slot": "4bb0",
+"slow": "140784fc8",
+"name": "campaign_group_corruption_counters_table"
+},
+"1414d4645": {
+"slot": "b590",
+"slow": "140643338",
+"name": "campaign_group_crafting_infos_table"
+},
+"1414d4675": {
+"slot": "7310",
+"slow": "1407847dc",
+"name": "campaign_group_diplomatic_manipulation_category_junctions_table"
+},
+"1414d46a5": {
+"slot": "6bd8",
+"slow": "1407ccc18",
+"name": "campaign_group_effect_bundles_table"
+},
+"1414d46d5": {
+"slot": "7118",
+"slow": "1405eb5f4",
+"name": "campaign_group_faction_character_tags_table"
+},
+"1414d4705": {
+"slot": "4a98",
+"slow": "14073cfa4",
+"name": "campaign_group_faction_plague_setup_sets_table"
+},
+"1414d4735": {
+"slot": "d858",
+"slow": "14063da94",
+"name": "campaign_group_food_effects_table"
+},
+"1414d4765": {
+"slot": "c710",
+"slow": "14055ed5c",
+"name": "campaign_group_food_unique_agent_charges_table"
+},
+"1414d4795": {
+"slot": "c518",
+"slow": "1407a5018",
+"name": "campaign_group_loyalty_dilemmas_table"
+},
+"1414d47c5": {
+"slot": "d890",
+"slow": "140623278",
+"name": "campaign_group_member_criteria_numeric_ranges_table"
+},
+"1414d47f5": {
+"slot": "3fa8",
+"slow": "14073c848",
+"name": "campaign_group_military_force_plague_setup_sets_table"
+},
+"1414d4825": {
+"slot": "ece8",
+"slow": "14063dffc",
+"name": "campaign_group_morale_effects_table"
+},
+"1414d4855": {
+"slot": "be50",
+"slow": "1405eef2c",
+"name": "campaign_group_occupation_purchasable_primary_slot_levels_table"
+},
+"1414d4885": {
+"slot": "bfd8",
+"slow": "14051e9dc",
+"name": "campaign_group_pending_battle_purchasable_effects_table"
+},
+"1414d48b5": {
+"slot": "4fd8",
+"slow": "14073e950",
+"name": "campaign_group_plague_component_setup_sets_table"
+},
+"1414d48e5": {
+"slot": "4fa0",
+"slow": "14073d350",
+"name": "campaign_group_plague_special_compositions_table"
+},
+"1414d4b0d": {
+"slot": "c240",
+"slow": "1414d4914",
+"name": "campaign_group_pooled_resource_effects_table"
+},
+"1414d4b3d": {
+"slot": "6a88",
+"slow": "140705440",
+"name": "campaign_group_pooled_resource_threshold_operation_sets_table"
+},
+"1414d4b6d": {
+"slot": "c278",
+"slow": "140641c1c",
+"name": "campaign_group_pooled_resources_table"
+},
+"1414d4d95": {
+"slot": "8d88",
+"slow": "1414d4b9c",
+"name": "campaign_group_post_battle_casualty_resources_table"
+},
+"1414d4dc5": {
+"slot": "bf30",
+"slow": "140642f70",
+"name": "campaign_group_post_battle_looted_pooled_resources_table"
+},
+"1414d4df5": {
+"slot": "4d38",
+"slow": "1406f636c",
+"name": "campaign_group_province_automanagement_focus_sets_table"
+},
+"1414d4e25": {
+"slot": "cef0",
+"slow": "14063d6e4",
+"name": "campaign_group_racial_suitability_effects_table"
+},
+"1414d5055": {
+"slot": "8848",
+"slow": "1414d4e54",
+"name": "campaign_group_rebel_faction_probabilities_table"
+},
+"1414d5085": {
+"slot": "6430",
+"slow": "14086de78",
+"name": "campaign_group_refund_effects_table"
+},
+"1414d50b5": {
+"slot": "6548",
+"slow": "140889634",
+"name": "campaign_group_refund_units_table"
+},
+"1414d50e5": {
+"slot": "d120",
+"slow": "14061dd10",
+"name": "campaign_group_ritual_chains_table"
+},
+"1414d5115": {
+"slot": "d3c0",
+"slow": "14088cca4",
+"name": "campaign_group_rituals_table"
+},
+"1414d5145": {
+"slot": "8bc8",
+"slow": "140815088",
+"name": "campaign_group_settlement_occupation_gift_factions_table"
+},
+"1414d5175": {
+"slot": "bef8",
+"slow": "140643154",
+"name": "campaign_group_settlement_occupation_looted_pooled_resources_table"
+},
+"1414d51a5": {
+"slot": "b2f0",
+"slow": "1405f3d70",
+"name": "campaign_group_settlement_occupation_option_foreign_slots_table"
+},
+"1414d51d5": {
+"slot": "5f60",
+"slow": "1405ef110",
+"name": "campaign_group_settlement_type_sets_table"
+},
+"1414d5205": {
+"slot": "9d10",
+"slow": "14055e094",
+"name": "campaign_group_spawnable_forces_table"
+},
+"1414d542d": {
+"slot": "8c38",
+"slow": "1414d5234",
+"name": "campaign_group_streak_sets_table"
+},
+"1414d545d": {
+"slot": "7ce8",
+"slow": "140620ec4",
+"name": "campaign_group_transported_military_force_unit_pools_table"
+},
+"1414d548d": {
+"slot": "c6a0",
+"slow": "14055eb84",
+"name": "campaign_group_unique_agents_table"
+},
+"1414d54bd": {
+"slot": "11b10",
+"slow": "14063e8f0",
+"name": null
+},
+"1414d56a1": {
+"slot": "c828",
+"slow": "1414d54ec",
+"name": "campaign_initial_loyalty_distribution_table"
+},
+"1414d5891": {
+"slot": "d708",
+"slow": "1414d56d0",
+"name": "campaign_interactable_marker_infos_table"
+},
+"1414d5a99": {
+"slot": "9a70",
+"slow": "1414d58c0",
+"name": "campaign_map_areas_of_interest_label_positions_table"
+},
+"1414d5cb9": {
+"slot": "9ae0",
+"slow": "1414d5ac8",
+"name": "campaign_map_areas_of_interest_table"
+},
+"1414d5ee1": {
+"slot": "147b0",
+"slow": "1414d5ce8",
+"name": "campaign_map_attrition_faction_immunities_table"
+},
+"1414d5f11": {
+"slot": "147e8",
+"slow": "1406237f0",
+"name": null
+},
+"1414d6145": {
+"slot": "13b0",
+"slow": "1414d5f40",
+"name": "campaign_map_event_area_province_region_junctions_table"
+},
+"1414d6329": {
+"slot": "bd0",
+"slow": "1414d6174",
+"name": "campaign_map_event_area_types_table"
+},
+"1414d6525": {
+"slot": "18f0",
+"slow": "1414d6358",
+"name": "campaign_map_event_areas_table"
+},
+"1414d6709": {
+"slot": "122f0",
+"slow": "1414d6554",
+"name": "campaign_map_masks_table"
+},
+"1414d6931": {
+"slot": "16998",
+"slow": "14069223c",
+"name": null
+},
+"1414d6ce1": {
+"slot": "183d8",
+"slow": "1414d6b2c",
+"name": "campaign_map_roads_table"
+},
+"1414d6d11": {
+"slot": "62e0",
+"slow": "1405ed2f8",
+"name": null
+},
+"1414d6d41": {
+"slot": "62a8",
+"slow": "1405ecf8c",
+"name": null
+},
+"1414d6d71": {
+"slot": "18090",
+"slow": "140645f2c",
+"name": null
+},
+"1414d6f79": {
+"slot": "16618",
+"slow": "1414d6da0",
+"name": "campaign_map_tooltips_table"
+},
+"1414d71a1": {
+"slot": "f068",
+"slow": "1414d6fa8",
+"name": "campaign_map_winds_of_magic_areas_table"
+},
+"1414d71d1": {
+"slot": "f030",
+"slow": "1407e0608",
+"name": "campaign_map_winds_of_magic_strengths_table"
+},
+"1414d73d9": {
+"slot": "ef50",
+"slow": "1414d7200",
+"name": "campaign_markers_table"
+},
+"1414d7609": {
+"slot": "e038",
+"slow": "1414d7408",
+"name": "campaign_mercenary_unit_character_level_restrictions_table"
+},
+"1414d7839": {
+"slot": "f9d0",
+"slow": "1414d7638",
+"name": "campaign_mount_animation_set_overrides_table"
+},
+"1414d7a35": {
+"slot": "c9b0",
+"slow": "1414d7868",
+"name": "campaign_movement_spline_materials_table"
+},
+"1414d7c3d": {
+"slot": "121a0",
+"slow": "1414d7a64",
+"name": "campaign_mp_coop_groups_table"
+},
+"1414d7e45": {
+"slot": "4050",
+"slow": "1408703ac",
+"name": "campaign_new_game_effect_bundles_table"
+},
+"1414d7e75": {
+"slot": "69e0",
+"slow": "140706430",
+"name": "campaign_operation_armory_item_category_sets_table"
+},
+"1414d7ea5": {
+"slot": "6a50",
+"slow": "140704b48",
+"name": "campaign_operation_armory_items_table"
+},
+"1414d7ed5": {
+"slot": "6b30",
+"slow": "1407059a0",
+"name": "campaign_operation_effect_bundles_table"
+},
+"1414d7f05": {
+"slot": "1810",
+"slow": "1407045d8",
+"name": "campaign_operation_rituals_table"
+},
+"1414d7f35": {
+"slot": "6b68",
+"slow": "1407060c0",
+"name": null
+},
+"1414d7f65": {
+"slot": "40c0",
+"slow": "1407050b0",
+"name": "campaign_operation_unlock_pooled_resource_thresholds_table"
+},
+"1414d8199": {
+"slot": "8f8",
+"slow": "1414d7f94",
+"name": "campaign_payload_chaotic_plans_table"
+},
+"1414d83a1": {
+"slot": "1f8",
+"slow": "14063ee3c",
+"name": "campaign_payload_region_group_resource_transactions_table"
+},
+"1414d83d1": {
+"slot": "3e58",
+"slow": "14063f380",
+"name": "campaign_payload_resource_transactions_table"
+},
+"1414d87d1": {
+"slot": "108e8",
+"slow": "1414d85f8",
+"name": "campaign_payload_ui_details_table"
+},
+"1414d89cd": {
+"slot": "78c0",
+"slow": "14088b730",
+"name": "campaign_payload_unit_components_table"
+},
+"1414d8bf5": {
+"slot": "9958",
+"slow": "14064072c",
+"name": null
+},
+"1414d8c25": {
+"slot": "f420",
+"slow": "1405f004c",
+"name": "campaign_post_battle_captive_options_table"
+},
+"1414d8e21": {
+"slot": "7a10",
+"slow": "1407a6f34",
+"name": "campaign_prison_actions_table"
+},
+"1414d9049": {
+"slot": "12b78",
+"slow": "1414d8e50",
+"name": "campaign_public_order_populace_effects_table"
+},
+"1414d9689": {
+"slot": "d900",
+"slow": "1414d9440",
+"name": "campaign_rogue_army_leaders_table"
+},
+"1414d98b1": {
+"slot": "d938",
+"slow": "1414d96b8",
+"name": "campaign_rogue_army_setups_table"
+},
+"1414d9ab9": {
+"slot": "da18",
+"slow": "1414d98e0",
+"name": "campaign_rogue_army_spawn_groups_table"
+},
+"1414d9e99": {
+"slot": "cb70",
+"slow": "1414d9cc0",
+"name": "campaign_settlement_display_building_culture_overlays_table"
+},
+"1414da121": {
+"slot": "13a90",
+"slow": "1414d9ec8",
+"name": "campaign_settlement_display_building_ids_table"
+},
+"1414da329": {
+"slot": "10108",
+"slow": "1414da150",
+"name": "campaign_settlement_display_building_siege_models_table"
+},
+"1414da359": {
+"slot": "13a58",
+"slow": "1406fedf8",
+"name": null
+},
+"1414da7cd": {
+"slot": "13978",
+"slow": "1414da554",
+"name": "campaign_stance_effects_junctions_table"
+},
+"1414da7fd": {
+"slot": "f2d0",
+"slow": "14063e548",
+"name": "campaign_stances_composite_scenes_table"
+},
+"1414da82d": {
+"slot": "139b0",
+"slow": "1405e5fa8",
+"name": null
+},
+"1414daa4d": {
+"slot": "12440",
+"slow": "1414da85c",
+"name": "campaign_statistics_categories_table"
+},
+"1414daa7d": {
+"slot": "b440",
+"slow": "1405edefc",
+"name": "campaign_storm_types_table"
+},
+"1414dac85": {
+"slot": "cac8",
+"slow": "1414daaac",
+"name": "campaign_storms_excluded_regions_table"
+},
+"1414daeb9": {
+"slot": "cba8",
+"slow": "1414dacb4",
+"name": "campaign_storms_table"
+},
+"1414db0c1": {
+"slot": "8c70",
+"slow": "1414daee8",
+"name": "campaign_streak_effects_table"
+},
+"1414db2e1": {
+"slot": "8ca8",
+"slow": "1414db0f0",
+"name": "campaign_streaks_table"
+},
+"1414db6c9": {
+"slot": "3db0",
+"slow": "1405edd5c",
+"name": "campaign_terrain_patch_areas_table"
+},
+"1414db8f9": {
+"slot": "2060",
+"slow": "1414db6f8",
+"name": "campaign_to_agent_subtypes_table"
+},
+"1414dbb19": {
+"slot": "fae8",
+"slow": "1414db928",
+"name": "campaign_tree_ids_table"
+},
+"1414dbd41": {
+"slot": "fc38",
+"slow": "1414dbb48",
+"name": "campaign_tree_type_cultures_table"
+},
+"1414dbd71": {
+"slot": "ccf8",
+"slow": "14085ecd4",
+"name": "campaign_tunnelling_excluded_regions_table"
+},
+"1414dbfd1": {
+"slot": "34b8",
+"slow": "1414dbdd0",
+"name": "campaign_ui_cheatsheet_items_table"
+},
+"1414dc1c1": {
+"slot": "14a50",
+"slow": "1414dc000",
+"name": "campaign_unit_stat_bonuses_table"
+},
+"1414dc44d": {
+"slot": "16768",
+"slow": "1414dc298",
+"name": "campaign_variables_table"
+},
+"1414dc66d": {
+"slot": "12a28",
+"slow": "1414dc47c",
+"name": "campaign_vfx_descriptions_table"
+},
+"1414dc8bd": {
+"slot": "129f0",
+"slow": "1414dc69c",
+"name": "campaign_vfx_lookups_table"
+},
+"1414dcadd": {
+"slot": "b9f0",
+"slow": "1414dc8ec",
+"name": "campaign_videos_table"
+},
+"1414dccfd": {
+"slot": "57b8",
+"slow": "1414dcb0c",
+"name": "campaign_vo_cs_conversation_mappings_table"
+},
+"1414dceed": {
+"slot": "16490",
+"slow": "1414dcd2c",
+"name": "campaigns_campaign_variables_junctions_table"
+},
+"1414dd175": {
+"slot": "183a0",
+"slow": "1414dcf1c",
+"name": "campaigns_table"
+},
+"1414dd519": {
+"slot": "7428",
+"slow": "1414dd358",
+"name": "capture_point_category_types_table"
+},
+"1414dd721": {
+"slot": "13390",
+"slow": "1414dd548",
+"name": "capture_point_types_table"
+},
+"1414dd751": {
+"slot": "26b8",
+"slow": "1405ed9c0",
+"name": null
+},
+"1414ddd71": {
+"slot": "11f38",
+"slow": "1406250f0",
+"name": null
+},
+"1414ddda1": {
+"slot": "14ee8",
+"slow": "140657e48",
+"name": "cdir_events_dilemma_choice_details_table"
+},
+"1414dddd1": {
+"slot": "5c88",
+"slow": "140657c98",
+"name": null
+},
+"1414ddfcd": {
+"slot": "9a00",
+"slow": "140657778",
+"name": null
+},
+"1414de1c9": {
+"slot": "13f28",
+"slow": "1405f24b8",
+"name": null
+},
+"1414de1f9": {
+"slot": "13e48",
+"slow": "1405f22d8",
+"name": "cdir_military_generator_template_priorities_table"
+},
+"1414de229": {
+"slot": "13e80",
+"slow": "1405f2650",
+"name": "cdir_military_generator_template_ratios_table"
+},
+"1414de259": {
+"slot": "13eb8",
+"slow": "1405f2828",
+"name": null
+},
+"1414de289": {
+"slot": "13ef0",
+"slow": "1405f29c0",
+"name": null
+},
+"1414de2b9": {
+"slot": "13e10",
+"slow": "1405f1bb4",
+"name": "cdir_military_generator_unit_qualities_table"
+},
+"1414de6d9": {
+"slot": "af0",
+"slow": "1414de4e0",
+"name": "chaotic_plan_culture_added_tokens_junctions_table"
+},
+"1414de901": {
+"slot": "e38",
+"slow": "1414de708",
+"name": "chaotic_plan_faction_added_tokens_junctions_table"
+},
+"1414decd5": {
+"slot": "e00",
+"slow": "1414deafc",
+"name": "chaotic_plan_region_level_added_tokens_junctions_table"
+},
+"1414df0e1": {
+"slot": "818",
+"slow": "1414deedc",
+"name": "chaotic_plan_resource_activated_tokens_table"
+},
+"1414df6f9": {
+"slot": "c40",
+"slow": "1414df500",
+"name": "chaotic_plan_schemer_skill_to_token_sets_junctions_table"
+},
+"1414dfb21": {
+"slot": "658",
+"slow": "1414df920",
+"name": "chaotic_plan_schemer_trait_to_token_set_junctions_table"
+},
+"1414dfd41": {
+"slot": "2d8",
+"slow": "1414dfb50",
+"name": "chaotic_plan_schemers_special_infos_table"
+},
+"1414dff49": {
+"slot": "a10",
+"slow": "1414dfd70",
+"name": "chaotic_plan_schemers_table"
+},
+"1414e0151": {
+"slot": "d90",
+"slow": "1414dff78",
+"name": "chaotic_plan_shop_categories_table"
+},
+"1414e073d": {
+"slot": "d58",
+"slow": "1414e0544",
+"name": "chaotic_plan_shop_category_objects_table"
+},
+"1414e0b55": {
+"slot": "188",
+"slow": "1414e0964",
+"name": "chaotic_plan_token_flavor_text_descriptions_table"
+},
+"1414e1145": {
+"slot": "1030",
+"slow": "1406cf49c",
+"name": "chaotic_plan_token_types_table"
+},
+"1414e1175": {
+"slot": "ff8",
+"slow": "1406cf2a0",
+"name": null
+},
+"1414e1595": {
+"slot": "ea8",
+"slow": "1414e139c",
+"name": "chaotic_plan_tokens_to_token_sets_junctions_table"
+},
+"1414e1d6d": {
+"slot": "e70",
+"slow": "1414e1b74",
+"name": "chaotic_plans_region_group_added_tokens_junctions_table"
+},
+"1414e1d9d": {
+"slot": "1068",
+"slow": "1406cf7e8",
+"name": null
+},
+"1414e1dcd": {
+"slot": "6708",
+"slow": "14052b798",
+"name": "character_ancillary_quest_ui_details_table"
+},
+"1414e1fed": {
+"slot": "f6f8",
+"slow": "1414e1dfc",
+"name": "character_skill_categories_table"
+},
+"1414e201d": {
+"slot": "15d90",
+"slow": "140652ea0",
+"name": null
+},
+"1414e2245": {
+"slot": "3c28",
+"slow": "1414e204c",
+"name": "character_skill_to_unit_list_display_junctions_table"
+},
+"1414e2275": {
+"slot": "15dc8",
+"slow": "140654d08",
+"name": null
+},
+"1414e22a5": {
+"slot": "2b88",
+"slow": "140653ee0",
+"name": "character_skills_to_level_reached_criterias_table"
+},
+"1414e24d5": {
+"slot": "e7e0",
+"slow": "1414e22d4",
+"name": "character_skills_to_quest_ancillaries_table"
+},
+"1414e26f5": {
+"slot": "6660",
+"slow": "1414e2504",
+"name": "character_tint_colours_table"
+},
+"1414e2725": {
+"slot": "8a40",
+"slow": "140561d0c",
+"name": null
+},
+"1414e2755": {
+"slot": "8a78",
+"slow": "140561ec8",
+"name": null
+},
+"1414e2785": {
+"slot": "8998",
+"slow": "140561b50",
+"name": null
+},
+"1414e27b5": {
+"slot": "17d80",
+"slow": "140562084",
+"name": null
+},
+"1414e2a3d": {
+"slot": "17e28",
+"slow": "1414e27e4",
+"name": "character_traits_table"
+},
+"1414e2c2d": {
+"slot": "149e0",
+"slow": "1414e2a6c",
+"name": "chat_shortcuts_table"
+},
+"1414e3eb1": {
+"slot": "17108",
+"slow": "1414e3cfc",
+"name": "climates_table"
+},
+"1414e40e1": {
+"slot": "ef18",
+"slow": "1414e3ee0",
+"name": "climbing_ladders_meshes_definitions_table"
+},
+"1414e4401": {
+"slot": "6008",
+"slow": "1405ebcfc",
+"name": null
+},
+"1414e4431": {
+"slot": "f618",
+"slow": "14063a30c",
+"name": "composite_scene_files_table"
+},
+"1414e4461": {
+"slot": "9d48",
+"slow": "14055e26c",
+"name": "conditionally_spawnable_forces_table"
+},
+"1414e4689": {
+"slot": "100d0",
+"slow": "1414e4490",
+"name": "confederation_effect_bundles_table"
+},
+"1414e46b9": {
+"slot": "3288",
+"slow": "1406ba104",
+"name": "context_expressions_to_initiatives_table"
+},
+"1414e46e9": {
+"slot": "7bd0",
+"slow": "1405ee28c",
+"name": null
+},
+"1414e4719": {
+"slot": "7b98",
+"slow": "1406be8dc",
+"name": null
+},
+"1414e4749": {
+"slot": "1500",
+"slow": "1407a46d4",
+"name": "cooking_recipe_chains_table"
+},
+"1414e4779": {
+"slot": "7af0",
+"slow": "1406beabc",
+"name": "cooking_recipe_required_ingredients_table"
+},
+"1414e47a9": {
+"slot": "7b60",
+"slow": "140706fd8",
+"name": null
+},
+"1414e4c51": {
+"slot": "1a08",
+"slow": "1414e4a60",
+"name": "core_mercenary_units_table"
+},
+"1414e4c81": {
+"slot": "4c90",
+"slow": "1407856f0",
+"name": "corruption_counter_intervals_table"
+},
+"1414e4cb1": {
+"slot": "4be8",
+"slow": "1407851a0",
+"name": "corruption_counters_table"
+},
+"1414e4ce1": {
+"slot": "81b8",
+"slow": "140784a30",
+"name": null
+},
+"1414e4f01": {
+"slot": "3cd0",
+"slow": "1414e4d10",
+"name": "corruption_uncorrupted_tile_upgrades_table"
+},
+"1414e5619": {
+"slot": "cc50",
+"slow": "1414e5418",
+"name": "culture_packs_table"
+},
+"1414e5821": {
+"slot": "12d0",
+"slow": "1414e5648",
+"name": "culture_settlement_occupation_options_groups_table"
+},
+"1414e5851": {
+"slot": "16d88",
+"slow": "1405efd6c",
+"name": null
+},
+"1414e5a79": {
+"slot": "1298",
+"slow": "1414e5880",
+"name": "culture_settlement_occupation_options_to_groups_junctions_table"
+},
+"1414e5c81": {
+"slot": "10fe8",
+"slow": "1414e5aa8",
+"name": "culture_to_battle_animation_tables_table"
+},
+"1414e5cb1": {
+"slot": "16dc0",
+"slow": "14063bff0",
+"name": null
+},
+"1414e5ed1": {
+"slot": "b4b0",
+"slow": "1414e5ce0",
+"name": "custom_battle_factions_table"
+},
+"1414e60c1": {
+"slot": "8b58",
+"slow": "1414e5f00",
+"name": "custom_battle_settings_table"
+},
+"1414e62e1": {
+"slot": "cd30",
+"slow": "1414e60f0",
+"name": "custom_loading_screen_components_table"
+},
+"1414e64c5": {
+"slot": "cd68",
+"slow": "1414e6310",
+"name": "custom_loading_screens_table"
+},
+"1414e64f5": {
+"slot": "a790",
+"slow": "140628d30",
+"name": "custom_splines_table"
+},
+"1414e66fd": {
+"slot": "6040",
+"slow": "1414e6524",
+"name": "daemon_ability_bar_descriptions_table"
+},
+"1414e6bd1": {
+"slot": "113a0",
+"slow": "1414e6a10",
+"name": "death_types_table"
+},
+"1414e6f41": {
+"slot": "5c50",
+"slow": "1414e6d68",
+"name": "default_army_special_abilities_table"
+},
+"1414e7161": {
+"slot": "1ff0",
+"slow": "1414e6f70",
+"name": "default_changeling_battle_forms_table"
+},
+"1414f3325": {
+"slot": "12280",
+"slow": "14062fee8",
+"name": "deployables_abilities_table"
+},
+"1414f36e1": {
+"slot": "124e8",
+"slow": "1414f3508",
+"name": "deployables_custom_battles_table"
+},
+"1414f3711": {
+"slot": "137f0",
+"slow": "14062f974",
+"name": null
+},
+"1414f39a5": {
+"slot": "10610",
+"slow": "1414f37ac",
+"name": "deployment_area_displays_table"
+},
+"1414f3be5": {
+"slot": "460",
+"slow": "1414f3a0c",
+"name": "devastation_campaign_battle_scenes_table"
+},
+"1414f3c15": {
+"slot": "b98",
+"slow": "14063c1d0",
+"name": "devastation_states_table"
+},
+"1414f3e45": {
+"slot": "35d0",
+"slow": "1414f3c44",
+"name": "dilemma_vo_events_table"
+},
+"1414f3e75": {
+"slot": "18758",
+"slow": "14065674c",
+"name": null
+},
+"1414f4249": {
+"slot": "131d0",
+"slow": "1414f4070",
+"name": "diplomacy_current_treaties_to_diplomatic_options_table"
+},
+"1414f4471": {
+"slot": "6f90",
+"slow": "1414f4278",
+"name": "diplomacy_disabled_between_factions_table"
+},
+"1414f4655": {
+"slot": "170d0",
+"slow": "1406f851c",
+"name": "diplomacy_negotiation_string_options_table"
+},
+"1414f4875": {
+"slot": "6120",
+"slow": "1414f4684",
+"name": "diplomacy_quick_deal_offers_table"
+},
+"1414f48a5": {
+"slot": "17060",
+"slow": "1406f9bec",
+"name": null
+},
+"1414f4ac5": {
+"slot": "13048",
+"slow": "1414f48d4",
+"name": "diplomatic_action_faction_restrictions_table"
+},
+"1414f4ce5": {
+"slot": "13080",
+"slow": "1414f4af4",
+"name": "diplomatic_action_subculture_restrictions_table"
+},
+"1414f4ec9": {
+"slot": "eab8",
+"slow": "1414f4d14",
+"name": "diplomatic_actions_table"
+},
+"1414f50c5": {
+"slot": "16ab0",
+"slow": "1414f4ef8",
+"name": "diplomatic_relations_attitudes_table"
+},
+"1414f52f9": {
+"slot": "2f40",
+"slow": "1414f50f4",
+"name": "diplomatic_relationship_effects_table"
+},
+"1414f5329": {
+"slot": "172c8",
+"slow": "1406252ac",
+"name": null
+},
+"1414f56f5": {
+"slot": "11f70",
+"slow": "1408821a4",
+"name": "effect_bonus_value_technology_junctions_table"
+},
+"1414f5e25": {
+"slot": "16068",
+"slow": "14063e3a4",
+"name": null
+},
+"1414f60a1": {
+"slot": "e738",
+"slow": "1414f5ea0",
+"name": "effects_additional_tooltip_details_table"
+},
+"1414f60d1": {
+"slot": "16928",
+"slow": "1406260d0",
+"name": null
+},
+"1414f62d9": {
+"slot": "a838",
+"slow": "1414f6100",
+"name": "elector_count_region_to_capital_region_junctions_table"
+},
+"1414f6529": {
+"slot": "a870",
+"slow": "1414f6308",
+"name": "elector_counts_table"
+},
+"1414f67d9": {
+"slot": "29c8",
+"slow": "1414f65e8",
+"name": "end_game_settings_table"
+},
+"1414f6809": {
+"slot": "fc00",
+"slow": "14062299c",
+"name": null
+},
+"1414fc2a5": {
+"slot": "31e0",
+"slow": "1405f0b04",
+"name": "entity_association_tags_table"
+},
+"1414fc4ad": {
+"slot": "850",
+"slow": "1414fc2d4",
+"name": "episode_event_popup_elements_table"
+},
+"1414fc9f1": {
+"slot": "112f8",
+"slow": "1414fc830",
+"name": "event_feed_categories_table"
+},
+"1414fcc25": {
+"slot": "11330",
+"slow": "1414fca20",
+"name": "event_feed_events_table"
+},
+"1414fd5a1": {
+"slot": "10920",
+"slow": "1414fd3b0",
+"name": "event_feed_subcategories_table"
+},
+"1414fd9c9": {
+"slot": "112c0",
+"slow": "1414fd7a8",
+"name": "event_feed_targeted_events_table"
+},
+"1414fdbd1": {
+"slot": "17f08",
+"slow": "1414fd9f8",
+"name": "events_table"
+},
+"1414fe04d": {
+"slot": "10370",
+"slow": "140892660",
+"name": "faction_agent_permitted_subtypes_table"
+},
+"1414fe07d": {
+"slot": "7150",
+"slow": "1405eb7d4",
+"name": "faction_character_tags_table"
+},
+"1414fe0ad": {
+"slot": "d5f0",
+"slow": "1407b3404",
+"name": "faction_feature_forests_table"
+},
+"1414fe0dd": {
+"slot": "dc10",
+"slow": "1407b379c",
+"name": "faction_feature_trees_table"
+},
+"1414fe305": {
+"slot": "130f0",
+"slow": "1414fe10c",
+"name": "faction_groups_table"
+},
+"1414fe52d": {
+"slot": "8c00",
+"slow": "1414fe334",
+"name": "faction_initiative_sets_table"
+},
+"1414fe711": {
+"slot": "5be0",
+"slow": "1414fe55c",
+"name": "faction_potential_categories_table"
+},
+"1414fe941": {
+"slot": "5c18",
+"slow": "1414fe740",
+"name": "faction_potential_difficulty_overrides_table"
+},
+"1414feb71": {
+"slot": "5ba8",
+"slow": "1414fe970",
+"name": "faction_potential_handicap_effects_table"
+},
+"1414fed55": {
+"slot": "15c08",
+"slow": "1414feba0",
+"name": "faction_resource_consumptions_table"
+},
+"1414fef7d": {
+"slot": "36b0",
+"slow": "1414fed84",
+"name": "faction_set_treasure_hunt_dilemma_categories_table"
+},
+"1414ff1b1": {
+"slot": "1b58",
+"slow": "1414fefac",
+"name": "faction_set_war_contract_points_pooled_resource_junctions_table"
+},
+"1414ff1e1": {
+"slot": "90d0",
+"slow": "140642c2c",
+"name": null
+},
+"1414ff409": {
+"slot": "94c0",
+"slow": "1414ff210",
+"name": "faction_strategic_threat_levels_table"
+},
+"1414ff611": {
+"slot": "130b8",
+"slow": "1414ff438",
+"name": "faction_to_faction_groups_junctions_table"
+},
+"1414ff841": {
+"slot": "14ba0",
+"slow": "1414ff640",
+"name": "faction_to_mercenary_set_junctions_table"
+},
+"1414ffc51": {
+"slot": "1c00",
+"slow": "1414ffa60",
+"name": "factions_settlement_caps_table"
+},
+"1414ffc81": {
+"slot": "16ff0",
+"slow": "1407083bc",
+"name": null
+},
+"141500099": {
+"slot": "12210",
+"slow": "1414ffea0",
+"name": "fame_levels_table"
+},
+"14150046d": {
+"slot": "17290",
+"slow": "141500294",
+"name": "famous_battle_pools_table"
+},
+"14150049d": {
+"slot": "dc48",
+"slow": "140693970",
+"name": "feature_set_transitions_table"
+},
+"1415004cd": {
+"slot": "dcf0",
+"slow": "140693b48",
+"name": null
+},
+"141502181": {
+"slot": "14938",
+"slow": "141501fb4",
+"name": "fonts_table"
+},
+"14150237d": {
+"slot": "d820",
+"slow": "1415021b0",
+"name": "food_factors_table"
+},
+"1415025a5": {
+"slot": "6190",
+"slow": "1415023ac",
+"name": "foreign_building_level_diplomatic_stance_requirements_table"
+},
+"1415027ad": {
+"slot": "13b00",
+"slow": "1415025d4",
+"name": "formations_table"
+},
+"1415029d5": {
+"slot": "13010",
+"slow": "1415027dc",
+"name": "formations_to_subcultures_table"
+},
+"14150301d": {
+"slot": "152d8",
+"slow": "141502dd4",
+"name": "frontend_faction_leaders_table"
+},
+"141503245": {
+"slot": "e968",
+"slow": "140675884",
+"name": null
+},
+"141503479": {
+"slot": "2290",
+"slow": "141503274",
+"name": "frontend_themes_table"
+},
+"14150448d": {
+"slot": "c390",
+"slow": "1415042b4",
+"name": "geomantic_web_links_table"
+},
+"141505ef5": {
+"slot": "12360",
+"slow": "141505cfc",
+"name": "ground_type_to_stat_effects_table"
+},
+"141506115": {
+"slot": "e3f0",
+"slow": "141505f24",
+"name": "ground_type_to_texture_groups_table"
+},
+"141506349": {
+"slot": "127c0",
+"slow": "141506144",
+"name": "ground_types_table"
+},
+"14150660d": {
+"slot": "f340",
+"slow": "141506434",
+"name": "help_page_index_records_table"
+},
+"1415069d5": {
+"slot": "13588",
+"slow": "1415067fc",
+"name": "historical_battles_ui_locations_table"
+},
+"141506e29": {
+"slot": "17ed0",
+"slow": "141506bd0",
+"name": "historical_characters_table"
+},
+"141507051": {
+"slot": "3608",
+"slow": "141506e58",
+"name": "incident_vo_events_table"
+},
+"141507081": {
+"slot": "18720",
+"slow": "14065654c",
+"name": null
+},
+"14150714d": {
+"slot": "32f8",
+"slow": "1406baf78",
+"name": null
+},
+"141507331": {
+"slot": "8e30",
+"slow": "1406bada0",
+"name": null
+},
+"141507561": {
+"slot": "10a0",
+"slow": "141507360",
+"name": "initiative_to_ui_graph_node_junctions_table"
+},
+"141507591": {
+"slot": "1b20",
+"slow": "1406354f0",
+"name": "initiative_unit_set_requirements_table"
+},
+"1415075c1": {
+"slot": "8e68",
+"slow": "1406bb4a8",
+"name": null
+},
+"141508125": {
+"slot": "bfa0",
+"slow": "141507f2c",
+"name": "intrigue_actions_incidents_junctions_table"
+},
+"1415084c9": {
+"slot": "189c0",
+"slow": "1415082c4",
+"name": "kv_battle_ai_ability_usage_variables_table"
+},
+"1415086fd": {
+"slot": "18790",
+"slow": "1415084f8",
+"name": "kv_experience_bonuses_table"
+},
+"141508931": {
+"slot": "187c8",
+"slow": "14150872c",
+"name": "kv_fatigue_table"
+},
+"141508b65": {
+"slot": "18918",
+"slow": "141508960",
+"name": "kv_fire_values_table"
+},
+"141508d99": {
+"slot": "18870",
+"slow": "141508b94",
+"name": "kv_key_buildings_table"
+},
+"141508fcd": {
+"slot": "18800",
+"slow": "141508dc8",
+"name": "kv_morale_table"
+},
+"141509201": {
+"slot": "18838",
+"slow": "141508ffc",
+"name": "kv_naval_morale_table"
+},
+"141509435": {
+"slot": "188e0",
+"slow": "141509230",
+"name": "kv_naval_rules_table"
+},
+"141509465": {
+"slot": "188a8",
+"slow": "1407ca7c8",
+"name": "kv_rules_table"
+},
+"1415096c1": {
+"slot": "18988",
+"slow": "141509494",
+"name": "kv_ui_tweakers_table"
+},
+"1415096f1": {
+"slot": "189f8",
+"slow": "1407cabac",
+"name": "kv_unit_ability_scaling_rules_table"
+},
+"141509721": {
+"slot": "18950",
+"slow": "1407ca9d0",
+"name": "kv_winds_of_magic_params_table"
+},
+"141509929": {
+"slot": "b948",
+"slow": "141509750",
+"name": "lab_settings_table"
+},
+"141509959": {
+"slot": "134a8",
+"slow": "14062c204",
+"name": null
+},
+"141509bbd": {
+"slot": "142a8",
+"slow": "140631d20",
+"name": null
+},
+"141509bed": {
+"slot": "5518",
+"slow": "1406b93e0",
+"name": "land_units_to_battle_personalities_junctions_table"
+},
+"141509c1d": {
+"slot": "2878",
+"slow": "14080659c",
+"name": "land_units_to_extra_engines_table"
+},
+"141509c4d": {
+"slot": "141c8",
+"slow": "140630458",
+"name": "land_units_to_unit_abilites_junctions_table"
+},
+"14150d9c5": {
+"slot": "f998",
+"slow": "14150d7cc",
+"name": "loading_screen_quotes_table"
+},
+"14150dbf5": {
+"slot": "b868",
+"slow": "14150d9f4",
+"name": "loading_screen_quotes_to_campaigns_table"
+},
+"14150de1d": {
+"slot": "b8a0",
+"slow": "14150dc24",
+"name": "loading_screen_quotes_to_cultures_table"
+},
+"14150e045": {
+"slot": "2028",
+"slow": "14150de4c",
+"name": "loading_screen_quotes_to_faction_sets_table"
+},
+"14150e26d": {
+"slot": "e620",
+"slow": "14150e074",
+"name": "loading_screen_quotes_to_quest_battles_table"
+},
+"14150e495": {
+"slot": "f880",
+"slow": "14150e29c",
+"name": "loading_screen_quotes_to_units_table"
+},
+"14150ef45": {
+"slot": "15348",
+"slow": "14150ed6c",
+"name": "loyalty_effects_table"
+},
+"14150ef75": {
+"slot": "c7f0",
+"slow": "1407720b0",
+"name": "loyalty_event_effects_table"
+},
+"14150efa5": {
+"slot": "15310",
+"slow": "140772280",
+"name": "loyalty_factors_table"
+},
+"14150efd5": {
+"slot": "2e28",
+"slow": "140760e34",
+"name": "main_unit_faction_overrides_table"
+},
+"14150f005": {
+"slot": "14200",
+"slow": "140707c34",
+"name": null
+},
+"14150f271": {
+"slot": "9610",
+"slow": "14150f0a4",
+"name": "map_barriers_table"
+},
+"14150f2f1": {
+"slot": "144d8",
+"slow": "140629e80",
+"name": null
+},
+"14150f4d5": {
+"slot": "14af8",
+"slow": "14150f320",
+"name": "mercenary_pool_modifiers_table"
+},
+"14150f505": {
+"slot": "14c48",
+"slow": "140696f44",
+"name": "mercenary_pool_to_groups_junctions_table"
+},
+"14150f701": {
+"slot": "14bd8",
+"slow": "14069664c",
+"name": null
+},
+"14150f731": {
+"slot": "14c10",
+"slow": "140697154",
+"name": null
+},
+"141510ba1": {
+"slot": "171e8",
+"slow": "14151099c",
+"name": "message_event_strings_table"
+},
+"141510bd1": {
+"slot": "13b38",
+"slow": "140624b88",
+"name": "military_force_legacy_emblems_table"
+},
+"141510dc1": {
+"slot": "14cb8",
+"slow": "141510c00",
+"name": "military_force_legacy_names_table"
+},
+"1415111f5": {
+"slot": "1bc8",
+"slow": "141510ff0",
+"name": "military_force_pooled_resource_transfer_rules_table"
+},
+"14151141d": {
+"slot": "af70",
+"slow": "140695298",
+"name": "military_force_type_horde_details_table"
+},
+"14151144d": {
+"slot": "7f88",
+"slow": "14069646c",
+"name": "military_force_type_sphere_of_influence_details_table"
+},
+"14151147d": {
+"slot": "dba0",
+"slow": "14069498c",
+"name": null
+},
+"1415116ad": {
+"slot": "1e68",
+"slow": "1415114ac",
+"name": "military_force_unit_restrictions_table"
+},
+"1415116dd": {
+"slot": "d2a8",
+"slow": "14063d8bc",
+"name": "ministerial_position_effect_bundles_table"
+},
+"141511905": {
+"slot": "ba28",
+"slow": "14151170c",
+"name": "ministerial_position_to_required_building_junctions_table"
+},
+"141511b55": {
+"slot": "11800",
+"slow": "141511934",
+"name": "ministerial_positions_culture_details_table"
+},
+"141511b85": {
+"slot": "17920",
+"slow": "140622ef0",
+"name": null
+},
+"141511dad": {
+"slot": "8ce0",
+"slow": "141511bb4",
+"name": "ministerial_positions_to_region_restrictions_table"
+},
+"141511fd5": {
+"slot": "d238",
+"slow": "141511ddc",
+"name": "ministerial_positition_to_subtype_restrictions_table"
+},
+"141512005": {
+"slot": "144a0",
+"slow": "14062bdec",
+"name": null
+},
+"14151220d": {
+"slot": "eb98",
+"slow": "141512034",
+"name": "mission_category_age_multipliers_table"
+},
+"141512631": {
+"slot": "ed20",
+"slow": "14151242c",
+"name": "mission_category_thresholds_table"
+},
+"141512a25": {
+"slot": "9220",
+"slow": "14151282c",
+"name": "mission_groups_to_missions_table"
+},
+"141512a55": {
+"slot": "15f18",
+"slow": "140657af8",
+"name": "mission_issuers_table"
+},
+"141512a85": {
+"slot": "186e8",
+"slow": "1406562f8",
+"name": null
+},
+"141512c75": {
+"slot": "b910",
+"slow": "141512ab4",
+"name": "mortuary_cult_categories_table"
+},
+"141512e9d": {
+"slot": "b8d8",
+"slow": "141512ca4",
+"name": "mortuary_cult_categories_to_rituals_table"
+},
+"1415130c5": {
+"slot": "124b0",
+"slow": "141512ecc",
+"name": "mountable_artillery_units_custom_battles_table"
+},
+"1415132e5": {
+"slot": "133c8",
+"slow": "1415130f4",
+"name": "mountable_artillery_units_table"
+},
+"141513315": {
+"slot": "166f8",
+"slow": "14062d1d4",
+"name": "mounts_table"
+},
+"141513345": {
+"slot": "16fb8",
+"slow": "140885dc8",
+"name": "movie_event_strings_table"
+},
+"141513575": {
+"slot": "15930",
+"slow": "1415133c0",
+"name": "mp_budgets_table"
+},
+"141513969": {
+"slot": "158f8",
+"slow": "141513770",
+"name": "mp_force_gen_template_junctions_table"
+},
+"141513b71": {
+"slot": "8ae8",
+"slow": "141513998",
+"name": "multiplayer_campaign_settings_options_table"
+},
+"141513d79": {
+"slot": "8b20",
+"slow": "141513ba0",
+"name": "multiplayer_campaign_settings_table"
+},
+"141513f81": {
+"slot": "1730",
+"slow": "141513da8",
+"name": "mutually_exclusive_initiative_set_categories_table"
+},
+"1415143cd": {
+"slot": "a8e0",
+"slow": "1415141c8",
+"name": "nakai_temple_levels_table"
+},
+"1415145f5": {
+"slot": "a918",
+"slow": "1415143fc",
+"name": "nakai_temples_table"
+},
+"141514625": {
+"slot": "16df8",
+"slow": "140626b5c",
+"name": null
+},
+"141514859": {
+"slot": "23e0",
+"slow": "141514654",
+"name": "narrative_viewer_entries_table"
+},
+"141514a81": {
+"slot": "2450",
+"slow": "141514888",
+"name": "narrative_viewer_tabs_table"
+},
+"141514e79": {
+"slot": "128a0",
+"slow": "141514c88",
+"name": "naval_ramming_events_table"
+},
+"1415150dd": {
+"slot": "14238",
+"slow": "140630f08",
+"name": null
+},
+"1415152cd": {
+"slot": "e310",
+"slow": "14151510c",
+"name": "new_content_alerts_table"
+},
+"1415154c9": {
+"slot": "6970",
+"slow": "1415152fc",
+"name": "new_content_patch_notes_table"
+},
+"1415156f1": {
+"slot": "6938",
+"slow": "1415154f8",
+"name": "new_content_to_patch_notes_junctions_table"
+},
+"141515a19": {
+"slot": "2ed0",
+"slow": "141515814",
+"name": "override_main_unit_character_tints_table"
+},
+"141515a49": {
+"slot": "4280",
+"slow": "1407087d4",
+"name": null
+},
+"141515a79": {
+"slot": "42b8",
+"slow": "14070eba8",
+"name": null
+},
+"141515f95": {
+"slot": "16b58",
+"slow": "140628b98",
+"name": null
+},
+"1415161bd": {
+"slot": "1570",
+"slow": "141515fc4",
+"name": "patron_faction_to_associated_provinces_table"
+},
+"1415163c5": {
+"slot": "15e0",
+"slow": "1415161ec",
+"name": "patronage_slots_table"
+},
+"1415165d5": {
+"slot": "50f0",
+"slow": "14073e074",
+"name": null
+},
+"141516605": {
+"slot": "5160",
+"slow": "14073dcf0",
+"name": null
+},
+"141516635": {
+"slot": "3b10",
+"slow": "14073e3ec",
+"name": null
+},
+"141516665": {
+"slot": "5128",
+"slow": "140641864",
+"name": null
+},
+"141516695": {
+"slot": "5320",
+"slow": "14073e20c",
+"name": null
+},
+"1415166c5": {
+"slot": "50b8",
+"slow": "14073d70c",
+"name": "plague_special_compositions_table"
+},
+"1415166f5": {
+"slot": "118e0",
+"slow": "14064168c",
+"name": null
+},
+"141516c69": {
+"slot": "1180",
+"slow": "141516a90",
+"name": "pooled_resource_celebration_animations_table"
+},
+"141516c99": {
+"slot": "2840",
+"slow": "14076cdec",
+"name": "pooled_resource_constraints_table"
+},
+"141516ec9": {
+"slot": "26f0",
+"slow": "141516cc8",
+"name": "pooled_resource_distributions_table"
+},
+"1415170f9": {
+"slot": "c2b0",
+"slow": "140641df4",
+"name": null
+},
+"141517129": {
+"slot": "c2e8",
+"slow": "1406421b0",
+"name": null
+},
+"14151735d": {
+"slot": "8d18",
+"slow": "141517158",
+"name": "pooled_resource_influence_overrides_table"
+},
+"14151738d": {
+"slot": "6ac0",
+"slow": "1407057c8",
+"name": "pooled_resource_threshold_operation_sets_table"
+},
+"1415175b5": {
+"slot": "5940",
+"slow": "1415173bc",
+"name": "pooled_resource_to_region_junctions_table"
+},
+"1415177e5": {
+"slot": "15a8",
+"slow": "1415175e4",
+"name": "pooled_resource_tracked_factions_to_dilemmas_junctions_table"
+},
+"141517a19": {
+"slot": "16f8",
+"slow": "141517814",
+"name": "pooled_resource_tracking_factions_table"
+},
+"141517a49": {
+"slot": "c320",
+"slow": "140641fd8",
+"name": null
+},
+"14151802d": {
+"slot": "159a0",
+"slow": "141517e54",
+"name": "pre_battle_speeches_table"
+},
+"14151805d": {
+"slot": "1688",
+"slow": "1407633a4",
+"name": "pre_battle_unit_targeted_abilities_table"
+},
+"14151808d": {
+"slot": "102c8",
+"slow": "14063cdf4",
+"name": null
+},
+"141518605": {
+"slot": "11138",
+"slow": "14062b478",
+"name": "projectile_bombardments_table"
+},
+"141518635": {
+"slot": "2258",
+"slow": "14062b108",
+"name": "projectile_shot_type_displays_table"
+},
+"141518665": {
+"slot": "16848",
+"slow": "14062a8ac",
+"name": null
+},
+"141518695": {
+"slot": "177d0",
+"slow": "14062bbb8",
+"name": null
+},
+"1415186c5": {
+"slot": "17610",
+"slow": "14062a3ec",
+"name": null
+},
+"1415188cd": {
+"slot": "128d8",
+"slow": "1415186f4",
+"name": "prologue_chapters_table"
+},
+"141518afd": {
+"slot": "aa30",
+"slow": "1415188fc",
+"name": "prophecy_of_sotek_stages_table"
+},
+"141518d25": {
+"slot": "a9f8",
+"slow": "141518b2c",
+"name": "prophecy_of_sotek_stages_to_missions_table"
+},
+"141518d55": {
+"slot": "4da8",
+"slow": "1406f671c",
+"name": null
+},
+"141518d85": {
+"slot": "4de0",
+"slow": "1406f68f0",
+"name": null
+},
+"141518fad": {
+"slot": "8340",
+"slow": "141518db4",
+"name": "province_background_pooled_resource_transactions_table"
+},
+"141518fdd": {
+"slot": "84c8",
+"slow": "140830b40",
+"name": "province_governor_sets_table"
+},
+"14151900d": {
+"slot": "8500",
+"slow": "140830d18",
+"name": null
+},
+"14151922d": {
+"slot": "46e0",
+"slow": "1407936e0",
+"name": "province_growth_factors_table"
+},
+"14151945d": {
+"slot": "14b68",
+"slow": "14151925c",
+"name": "province_to_mercenary_set_junctions_table"
+},
+"14151948d": {
+"slot": "14ac0",
+"slow": "140723974",
+"name": "provinces_table"
+},
+"1415196b5": {
+"slot": "132e8",
+"slow": "1415194bc",
+"name": "provincial_initiative_records_table"
+},
+"141519aad": {
+"slot": "c438",
+"slow": "1415198d4",
+"name": "provincial_initiative_strength_province_to_province_junctions_table"
+},
+"141519cfd": {
+"slot": "132b0",
+"slow": "141519adc",
+"name": "provincial_initiatives_to_subculture_junctions_table"
+},
+"141519d2d": {
+"slot": "87d8",
+"slow": "140794844",
+"name": "public_order_providers_table"
+},
+"141519d5d": {
+"slot": "c010",
+"slow": "14051ebb4",
+"name": "purchasable_effect_levels_table"
+},
+"141519d8d": {
+"slot": "c048",
+"slow": "14051ed98",
+"name": null
+},
+"14151a3c5": {
+"slot": "16d18",
+"slow": "14151a204",
+"name": "random_localisation_strings_table"
+},
+"14151ab85": {
+"slot": "7ee0",
+"slow": "140696824",
+"name": null
+},
+"14151ad81": {
+"slot": "ab8",
+"slow": "14151abb4",
+"name": "region_group_categories_table"
+},
+"14151afa9": {
+"slot": "a80",
+"slow": "14151adb0",
+"name": "region_group_category_pooled_resource_junctions_table"
+},
+"14151b1d1": {
+"slot": "6158",
+"slow": "14151afd8",
+"name": "region_group_pooled_resources_table"
+},
+"14151b201": {
+"slot": "153b8",
+"slow": "1405ed490",
+"name": null
+},
+"14151b3fd": {
+"slot": "14a88",
+"slow": "14151b230",
+"name": "region_to_province_junctions_table"
+},
+"14151b42d": {
+"slot": "16bc8",
+"slow": "14088b408",
+"name": "region_unit_resources_table"
+},
+"14151b45d": {
+"slot": "17300",
+"slow": "1405edb7c",
+"name": null
+},
+"14151b685": {
+"slot": "7c08",
+"slow": "14151b48c",
+"name": "regions_vampire_mercenary_pools_junctions_table"
+},
+"14151c0c1": {
+"slot": "6900",
+"slow": "14151bec8",
+"name": "reign_of_chaos_table"
+},
+"14151c2e9": {
+"slot": "63f8",
+"slow": "14151c0f0",
+"name": "reinforcement_spawn_zone_to_cultures_table"
+},
+"14151c54d": {
+"slot": "c128",
+"slow": "140640fb0",
+"name": null
+},
+"14151c781": {
+"slot": "b6a8",
+"slow": "14151c57c",
+"name": "resource_ui_overrides_table"
+},
+"14151c7b1": {
+"slot": "17bf8",
+"slow": "140695a04",
+"name": null
+},
+"14151c9d1": {
+"slot": "10178",
+"slow": "14151c7e0",
+"name": "resources_to_campaign_junctions_table"
+},
+"14151cbd9": {
+"slot": "be18",
+"slow": "14151ca00",
+"name": "ritual_additional_ui_explanation_texts_table"
+},
+"14151cc09": {
+"slot": "cb00",
+"slow": "1407f255c",
+"name": "ritual_beams_table"
+},
+"14151cc39": {
+"slot": "d0b0",
+"slow": "14061e460",
+"name": null
+},
+"14151cc69": {
+"slot": "28e8",
+"slow": "14061e61c",
+"name": "ritual_category_groups_table"
+},
+"14151cc99": {
+"slot": "d4a0",
+"slow": "14061e2a4",
+"name": null
+},
+"14151ccc9": {
+"slot": "11f0",
+"slow": "140634fd0",
+"name": "ritual_faction_target_criterias_context_expressions_table"
+},
+"14151cee9": {
+"slot": "1260",
+"slow": "14063517c",
+"name": "ritual_military_force_target_criterias_context_expressions_table"
+},
+"14151d111": {
+"slot": "43d0",
+"slow": "1408b1e10",
+"name": "ritual_payload_add_foreign_slots_table"
+},
+"14151d141": {
+"slot": "b7c0",
+"slow": "140757fdc",
+"name": "ritual_payload_ancillaries_table"
+},
+"14151d171": {
+"slot": "41d8",
+"slow": "14056dbb4",
+"name": "ritual_payload_change_agent_capacities_table"
+},
+"14151d1a1": {
+"slot": "1c38",
+"slow": "14055f8c4",
+"name": "ritual_payload_change_unit_allowance_capacities_table"
+},
+"14151d1d1": {
+"slot": "4328",
+"slow": "14056dd94",
+"name": "ritual_payload_change_unit_capacities_table"
+},
+"14151d201": {
+"slot": "7e0",
+"slow": "1405eeb54",
+"name": "ritual_payload_convert_settlements_table"
+},
+"14151d231": {
+"slot": "1340",
+"slow": "1407f0a24",
+"name": "ritual_payload_cooking_recipes_table"
+},
+"14151d261": {
+"slot": "ba98",
+"slow": "1408888ec",
+"name": "ritual_payload_diplomatic_attitude_changes_table"
+},
+"14151d291": {
+"slot": "1538",
+"slow": "1407fbaf4",
+"name": "ritual_payload_reassign_agents_table"
+},
+"14151d2c1": {
+"slot": "d318",
+"slow": "140560008",
+"name": "ritual_payload_spawn_agents_table"
+},
+"14151d2f1": {
+"slot": "cf60",
+"slow": "14055dcbc",
+"name": "ritual_payload_spawn_armies_table"
+},
+"14151d321": {
+"slot": "b830",
+"slow": "1407c2f6c",
+"name": "ritual_payload_spawn_mercenaries_table"
+},
+"14151d351": {
+"slot": "b718",
+"slow": "1405ec28c",
+"name": "ritual_payload_spawn_storms_table"
+},
+"14151d381": {
+"slot": "6580",
+"slow": "1405ec0b4",
+"name": "ritual_payload_teleport_armies_table"
+},
+"14151d3b1": {
+"slot": "d0e8",
+"slow": "1406583d8",
+"name": "ritual_payload_trigger_dilemmas_table"
+},
+"14151d3e1": {
+"slot": "d388",
+"slow": "14063ec80",
+"name": null
+},
+"14151d411": {
+"slot": "8730",
+"slow": "14056225c",
+"name": "ritual_performing_characters_table"
+},
+"14151d441": {
+"slot": "1228",
+"slow": "140636d10",
+"name": "ritual_region_target_criterias_context_expressions_table"
+},
+"14151d669": {
+"slot": "1928",
+"slow": "14151d470",
+"name": "ritual_target_settlement_captured_post_battle_audio_overrides_table"
+},
+"14151d84d": {
+"slot": "d4d8",
+"slow": "140707824",
+"name": null
+},
+"14151da7d": {
+"slot": "a8a8",
+"slow": "14151d87c",
+"name": "rituals_to_nakai_temple_levels_table"
+},
+"14151dcb1": {
+"slot": "58d0",
+"slow": "14151daac",
+"name": "rituals_to_regions_table"
+},
+"14151dce1": {
+"slot": "d468",
+"slow": "14061db30",
+"name": "rituals_to_ritual_chains_table"
+},
+"14151dfc1": {
+"slot": "aa68",
+"slow": "14151dde8",
+"name": "sacrifices_to_sotek_rituals_table"
+},
+"14151fd71": {
+"slot": "8570",
+"slow": "1406ef780",
+"name": "scripted_bonus_value_ids_table"
+},
+"14151ff61": {
+"slot": "12cc8",
+"slow": "14151fda0",
+"name": "scripted_objectives_table"
+},
+"141520151": {
+"slot": "12c90",
+"slow": "14151ff90",
+"name": "scripted_subtitles_table"
+},
+"141520341": {
+"slot": "17220",
+"slow": "141520180",
+"name": "sea_surfaces_table"
+},
+"141520525": {
+"slot": "1618",
+"slow": "141520370",
+"name": "seafang_teleportation_ritual_cooldowns_table"
+},
+"141520771": {
+"slot": "121d8",
+"slow": "141520554",
+"name": "season_province_effect_bundles_table"
+},
+"141520961": {
+"slot": "16ce0",
+"slow": "1415207a0",
+"name": "seasons_table"
+},
+"141521dc5": {
+"slot": "ed90",
+"slow": "1407f3518",
+"name": "settlement_abandoment_buildings_table"
+},
+"141521df5": {
+"slot": "10a38",
+"slow": "1406460e8",
+"name": null
+},
+"141521ffd": {
+"slot": "1c0",
+"slow": "141521e24",
+"name": "settlement_nameplate_offsets_per_primary_building_levels_table"
+},
+"14152202d": {
+"slot": "114b8",
+"slow": "1405f07b4",
+"name": "settlement_occupation_options_table"
+},
+"14152225d": {
+"slot": "150",
+"slow": "14152205c",
+"name": "settlement_occupation_pooled_resource_transfers_table"
+},
+"14152228d": {
+"slot": "3b8",
+"slow": "1405ef86c",
+"name": "settlement_type_owning_limit_groups_table"
+},
+"1415222bd": {
+"slot": "5fd0",
+"slow": "1405ef4c0",
+"name": null
+},
+"1415222ed": {
+"slot": "60e8",
+"slow": "1405ef698",
+"name": null
+},
+"14152231d": {
+"slot": "f500",
+"slow": "1408345ec",
+"name": "settlement_vandalisation_buildings_table"
+},
+"141522525": {
+"slot": "11678",
+"slow": "14152234c",
+"name": "shortcut_localisation_table"
+},
+"141522a81": {
+"slot": "2d80",
+"slow": "1415228a8",
+"name": "shroud_blackout_regions_table"
+},
+"141522c89": {
+"slot": "8810",
+"slow": "141522ab0",
+"name": "simultaneous_turns_multiplayer_options_table"
+},
+"141522cb9": {
+"slot": "b328",
+"slow": "140697328",
+"name": "slot_set_items_table"
+},
+"141522ce9": {
+"slot": "b398",
+"slow": "14063a658",
+"name": null
+},
+"141522d19": {
+"slot": "14698",
+"slow": "140695830",
+"name": null
+},
+"141522d49": {
+"slot": "146d0",
+"slow": "1406960e4",
+"name": null
+},
+"141522f2d": {
+"slot": "d040",
+"slow": "14055f4c8",
+"name": "spawnable_force_unit_junctions_table"
+},
+"141522f5d": {
+"slot": "cf98",
+"slow": "14055f2e8",
+"name": "spawnable_force_unit_list_junctions_table"
+},
+"141522f8d": {
+"slot": "d078",
+"slow": "14055f6a0",
+"name": null
+},
+"1415234fd": {
+"slot": "2098",
+"slow": "141523324",
+"name": "special_ability_behaviour_to_ability_junctions_table"
+},
+"14152352d": {
+"slot": "2a0",
+"slow": "14062a218",
+"name": null
+},
+"14152355d": {
+"slot": "2fe8",
+"slow": "1405b9718",
+"name": "special_ability_exclusive_toggle_groups_table"
+},
+"141523765": {
+"slot": "dd98",
+"slow": "14152358c",
+"name": "special_ability_group_parents_table"
+},
+"141523795": {
+"slot": "12be8",
+"slow": "1405b936c",
+"name": null
+},
+"1415237c5": {
+"slot": "12bb0",
+"slow": "1405ba1d0",
+"name": "special_ability_groups_to_unit_abilities_junctions_table"
+},
+"1415237f5": {
+"slot": "ff48",
+"slow": "1405b9194",
+"name": "special_ability_groups_to_units_junctions_table"
+},
+"141523a29": {
+"slot": "88b8",
+"slow": "141523824",
+"name": "special_ability_intensity_settings_table"
+},
+"141523dd9": {
+"slot": "12c58",
+"slow": "1405bae24",
+"name": null
+},
+"141523e09": {
+"slot": "12fa0",
+"slow": "140628104",
+"name": "special_ability_phase_attribute_effects_table"
+},
+"141523e39": {
+"slot": "14fc8",
+"slow": "140627bd0",
+"name": "special_ability_phase_stat_effects_table"
+},
+"141523e69": {
+"slot": "15038",
+"slow": "14062799c",
+"name": null
+},
+"141524091": {
+"slot": "2f78",
+"slow": "141523e98",
+"name": "special_ability_phases_to_additional_ui_effects_junctions_table"
+},
+"1415242b1": {
+"slot": "b168",
+"slow": "1415240c0",
+"name": "specialized_building_projectile_emitters_table"
+},
+"141525b91": {
+"slot": "31a8",
+"slow": "14152598c",
+"name": "start_pos_entity_association_faction_regions_table"
+},
+"141526639": {
+"slot": "13400",
+"slow": "141526438",
+"name": "start_pos_past_events_table"
+},
+"14152686d": {
+"slot": "b360",
+"slow": "141526668",
+"name": "start_pos_region_foreign_slots_table"
+},
+"141526c91": {
+"slot": "14660",
+"slow": "141526a8c",
+"name": "start_pos_region_slot_templates_table"
+},
+"141527c9d": {
+"slot": "16538",
+"slow": "141527ae8",
+"name": "start_pos_victory_conditions_table"
+},
+"141527e99": {
+"slot": "15ff8",
+"slow": "141527ccc",
+"name": "stats_table"
+},
+"141528285": {
+"slot": "9530",
+"slow": "141528094",
+"name": "storm_of_magic_ascendancy_cooldowns_table"
+},
+"14152848d": {
+"slot": "47f8",
+"slow": "1415282b4",
+"name": "storm_of_magic_ascendancy_selection_cultures_table"
+},
+"1415286bd": {
+"slot": "94f8",
+"slow": "1415284bc",
+"name": "storm_of_magic_ascendancy_stat_effects_table"
+},
+"1415288e5": {
+"slot": "93e0",
+"slow": "1415286ec",
+"name": "storm_of_magic_ascendancy_to_army_special_abilities_table"
+},
+"141528b15": {
+"slot": "44e8",
+"slow": "141528914",
+"name": "storm_of_magic_ascendancy_to_cataclysms_table"
+},
+"141528d3d": {
+"slot": "9568",
+"slow": "141528b44",
+"name": "storm_of_magic_ascendancy_types_table"
+},
+"141528f6d": {
+"slot": "4600",
+"slow": "141528d6c",
+"name": "storm_of_magic_cataclysm_overrides_table"
+},
+"14152919d": {
+"slot": "9108",
+"slow": "141528f9c",
+"name": "storm_of_magic_faction_stat_effects_table"
+},
+"14152a3d9": {
+"slot": "d158",
+"slow": "14152a1d8",
+"name": "subculture_settlement_occupation_effect_bundle_suitabilities_table"
+},
+"14152a5bd": {
+"slot": "16e68",
+"slow": "140624d60",
+"name": null
+},
+"14152a815": {
+"slot": "14f20",
+"slow": "14152a660",
+"name": "subtitle_timings_table"
+},
+"14152a9c9": {
+"slot": "16c70",
+"slow": "1406bf214",
+"name": "taxes_effects_jct_table"
+},
+"14152a9f9": {
+"slot": "16ca8",
+"slow": "1406f9da8",
+"name": "taxes_keys_table"
+},
+"14152aa29": {
+"slot": "16960",
+"slow": "1406f8384",
+"name": null
+},
+"14152aa59": {
+"slot": "18410",
+"slow": "140707640",
+"name": null
+},
+"14152ac81": {
+"slot": "b6e0",
+"slow": "14152aa88",
+"name": "technology_character_traits_junctions_table"
+},
+"14152aecd": {
+"slot": "8d50",
+"slow": "14152acb0",
+"name": "technology_initiative_effects_table"
+},
+"14152aefd": {
+"slot": "18480",
+"slow": "1406b5064",
+"name": null
+},
+"14152af2d": {
+"slot": "184b8",
+"slow": "1406b4e64",
+"name": null
+},
+"14152af5d": {
+"slot": "b600",
+"slow": "1406b4ab4",
+"name": "technology_nodes_to_ancillaries_junctions_table"
+},
+"14152b165": {
+"slot": "65b8",
+"slow": "14152af8c",
+"name": "technology_ui_group_links_table"
+},
+"14152b195": {
+"slot": "dac0",
+"slow": "1406b5220",
+"name": "technology_ui_groups_table"
+},
+"14152b3bd": {
+"slot": "da88",
+"slow": "14152b1c4",
+"name": "technology_ui_groups_to_technology_nodes_junctions_table"
+},
+"14152b5ad": {
+"slot": "2958",
+"slow": "14152b3ec",
+"name": "technology_ui_tabs_table"
+},
+"14152b7dd": {
+"slot": "2920",
+"slow": "14152b5dc",
+"name": "technology_ui_tabs_to_technology_nodes_junctions_table"
+},
+"14152b80d": {
+"slot": "12d70",
+"slow": "140881920",
+"name": null
+},
+"14152b83d": {
+"slot": "4ef8",
+"slow": "1405ea714",
+"name": "teleportation_network_nodes_table"
+},
+"14152b86d": {
+"slot": "4f30",
+"slow": "1405ea8ec",
+"name": null
+},
+"14152b89d": {
+"slot": "4f68",
+"slow": "1405eb3f4",
+"name": null
+},
+"14152bd79": {
+"slot": "5b00",
+"slow": "14152bba0",
+"name": "time_of_legends_campaigns_table"
+},
+"14152bfa9": {
+"slot": "5780",
+"slow": "14152bda8",
+"name": "time_of_legends_campaigns_to_factions_table"
+},
+"14152c1dd": {
+"slot": "8180",
+"slow": "14152bfd8",
+"name": "toggle_system_building_variants_table"
+},
+"14152c411": {
+"slot": "b0f8",
+"slow": "14152c20c",
+"name": "toggle_system_type_to_faction_vfx_junctions_table"
+},
+"14152c9cd": {
+"slot": "17e98",
+"slow": "14152c7d4",
+"name": "trait_info_table"
+},
+"14152cbfd": {
+"slot": "fa78",
+"slow": "14152c9fc",
+"name": "trait_level_string_subculture_overrides_table"
+},
+"14152f029": {
+"slot": "7d58",
+"slow": "14062109c",
+"name": null
+},
+"14152f059": {
+"slot": "7d20",
+"slow": "140696b80",
+"name": "transported_military_forces_table"
+},
+"14152f279": {
+"slot": "b478",
+"slow": "14152f088",
+"name": "treasure_hunt_extra_informations_table"
+},
+"14152f4a1": {
+"slot": "1df8",
+"slow": "14152f2a8",
+"name": "trespass_permissions_table"
+},
+"14152fa91": {
+"slot": "17488",
+"slow": "14152f8a0",
+"name": "trigger_events_table"
+},
+"14152fac1": {
+"slot": "cc18",
+"slow": "1405ee9b4",
+"name": "ui_colour_profiles_table"
+},
+"14152faf1": {
+"slot": "105d8",
+"slow": "1405ee7f8",
+"name": null
+},
+"14152fd19": {
+"slot": "2a70",
+"slow": "14152fb20",
+"name": "ui_effect_excluded_units_and_sets_table"
+},
+"1415300d5": {
+"slot": "2ca0",
+"slow": "14152fefc",
+"name": "ui_faction_set_to_localised_names_table"
+},
+"1415302fd": {
+"slot": "3e90",
+"slow": "141530104",
+"name": "ui_feature_to_subcultures_table"
+},
+"1415306d9": {
+"slot": "3ec8",
+"slow": "1415304e0",
+"name": "ui_features_to_cultures_table"
+},
+"141530901": {
+"slot": "4408",
+"slow": "141530708",
+"name": "ui_features_to_factions_table"
+},
+"141530b09": {
+"slot": "e0",
+"slow": "141530930",
+"name": "ui_graph_node_clusters_table"
+},
+"141530d29": {
+"slot": "10d8",
+"slow": "141530b38",
+"name": "ui_graph_node_links_table"
+},
+"141530f31": {
+"slot": "118",
+"slow": "141530d58",
+"name": "ui_graph_node_superclusters_table"
+},
+"14153151d": {
+"slot": "1110",
+"slow": "141531318",
+"name": "ui_graph_nodes_table"
+},
+"141531719": {
+"slot": "1148",
+"slow": "14153154c",
+"name": "ui_graphs_table"
+},
+"141531949": {
+"slot": "2f08",
+"slow": "141531748",
+"name": "ui_initiative_to_agent_subtypes_table"
+},
+"141531b51": {
+"slot": "fe68",
+"slow": "141531978",
+"name": "ui_large_images_table"
+},
+"141531b81": {
+"slot": "2df0",
+"slow": "140806d00",
+"name": "ui_main_theme_options_table"
+},
+"141531bb1": {
+"slot": "3250",
+"slow": "1406969e0",
+"name": "ui_mercenary_recruitment_infos_table"
+},
+"14153217d": {
+"slot": "5978",
+"slow": "141531f78",
+"name": "ui_purchasable_effects_to_hex_ids_table"
+},
+"1415321ad": {
+"slot": "9488",
+"slow": "140642ddc",
+"name": "ui_resource_transaction_pooled_resource_junctions_table"
+},
+"141532391": {
+"slot": "f810",
+"slow": "1415321dc",
+"name": "ui_tagged_images_table"
+},
+"1415325b1": {
+"slot": "fff0",
+"slow": "1415323c0",
+"name": "ui_tooltip_components_table"
+},
+"141532795": {
+"slot": "10028",
+"slow": "1415325e0",
+"name": "ui_tooltips_table"
+},
+"141532b7d": {
+"slot": "10ae0",
+"slow": "141532984",
+"name": "ui_unit_bullet_point_unit_overrides_table"
+},
+"141532dc9": {
+"slot": "115d0",
+"slow": "141532bac",
+"name": "ui_unit_bullet_points_generations_table"
+},
+"141532df9": {
+"slot": "10798",
+"slow": "140717054",
+"name": "ui_unit_group_parents_table"
+},
+"141532e29": {
+"slot": "11640",
+"slow": "140716e9c",
+"name": "ui_unit_groupings_table"
+},
+"141533059": {
+"slot": "e348",
+"slow": "141532e58",
+"name": "ui_unit_stat_to_unit_castes_table"
+},
+"141533089": {
+"slot": "15e70",
+"slow": "140632bc0",
+"name": "ui_unit_stats_table"
+},
+"141533291": {
+"slot": "eff8",
+"slow": "1415330b8",
+"name": "ui_unit_statuses_table"
+},
+"141533321": {
+"slot": "c748",
+"slow": "14055ef34",
+"name": null
+},
+"141533529": {
+"slot": "f5a8",
+"slow": "141533350",
+"name": "unit_abilities_additional_ui_effects_table"
+},
+"141533559": {
+"slot": "17840",
+"slow": "140692414",
+"name": null
+},
+"141533781": {
+"slot": "f570",
+"slow": "141533588",
+"name": "unit_abilities_to_additional_ui_effects_juncs_table"
+},
+"1415337b1": {
+"slot": "f5e0",
+"slow": "14063a4b8",
+"name": "unit_ability_types_table"
+},
+"1415339d9": {
+"slot": "23a8",
+"slow": "1415337e0",
+"name": "unit_allowances_table"
+},
+"141533a09": {
+"slot": "13c88",
+"slow": "1406282bc",
+"name": null
+},
+"141533a39": {
+"slot": "bf68",
+"slow": "1406fe500",
+"name": "unit_banner_unit_height_offsets_table"
+},
+"141533c41": {
+"slot": "104c0",
+"slow": "141533a68",
+"name": "unit_banners_table"
+},
+"141533c71": {
+"slot": "15f88",
+"slow": "140625f2c",
+"name": null
+},
+"141533ca1": {
+"slot": "169d0",
+"slow": "1406322d8",
+"name": null
+},
+"141533cd1": {
+"slot": "16a08",
+"slow": "14063265c",
+"name": null
+},
+"141533d01": {
+"slot": "1f10",
+"slow": "1406b9d48",
+"name": "unit_component_animation_table_junctions_table"
+},
+"141533d31": {
+"slot": "140b0",
+"slow": "1406329f0",
+"name": "unit_experience_bonuses_table"
+},
+"141533f39": {
+"slot": "152a0",
+"slow": "141533d60",
+"name": "unit_experience_threshold_modifiers_table"
+},
+"14153411d": {
+"slot": "16c00",
+"slow": "141533f68",
+"name": "unit_experience_thresholds_table"
+},
+"141534325": {
+"slot": "14078",
+"slow": "14153414c",
+"name": "unit_fatigue_effects_table"
+},
+"141534559": {
+"slot": "3720",
+"slow": "141534354",
+"name": "unit_general_details_table"
+},
+"141534939": {
+"slot": "d008",
+"slow": "14055fc7c",
+"name": null
+},
+"141534969": {
+"slot": "b210",
+"slow": "1406b9990",
+"name": null
+},
+"141534999": {
+"slot": "10840",
+"slow": "14062d564",
+"name": null
+},
+"141534b95": {
+"slot": "78f8",
+"slow": "1415349c8",
+"name": "unit_purchasable_effect_lock_reasons_table"
+},
+"141534bc5": {
+"slot": "64d8",
+"slow": "14064f8c0",
+"name": null
+},
+"141534bf5": {
+"slot": "7dc8",
+"slow": "14064f720",
+"name": "unit_purchasable_effects_categories_table"
+},
+"141534c25": {
+"slot": "7e00",
+"slow": "14064f4fc",
+"name": null
+},
+"141534c55": {
+"slot": "348",
+"slow": "1406356d0",
+"name": "unit_recruitment_queue_sets_table"
+},
+"141534e89": {
+"slot": "1378",
+"slow": "141534c84",
+"name": "unit_recruitment_source_overrides_table"
+},
+"141535091": {
+"slot": "6698",
+"slow": "141534eb8",
+"name": "unit_recruitment_type_recruitment_sources_table"
+},
+"1415350c1": {
+"slot": "a800",
+"slow": "1405b85b8",
+"name": "unit_set_to_mp_unit_caps_table"
+},
+"1415350f1": {
+"slot": "12638",
+"slow": "140633d2c",
+"name": null
+},
+"141535311": {
+"slot": "4b40",
+"slow": "141535120",
+"name": "unit_size_global_scalings_table"
+},
+"141535341": {
+"slot": "17648",
+"slow": "1405ba388",
+"name": null
+},
+"1415354d9": {
+"slot": "11058",
+"slow": "1406332b8",
+"name": null
+},
+"1415356f9": {
+"slot": "65f0",
+"slow": "140632d78",
+"name": "unit_stat_to_size_scaling_values_table"
+},
+"1415358dd": {
+"slot": "16880",
+"slow": "141535728",
+"name": "unit_stats_land_experience_bonuses_table"
+},
+"141535ea9": {
+"slot": "16810",
+"slow": "141535cf4",
+"name": "unit_stats_naval_experience_bonuses_table"
+},
+"141536285": {
+"slot": "3170",
+"slow": "14153608c",
+"name": "unit_upgrade_group_ui_infos_table"
+},
+"1415364a5": {
+"slot": "3090",
+"slow": "1415362b4",
+"name": "unit_upgrade_group_ui_links_table"
+},
+"1415364d5": {
+"slot": "33d8",
+"slow": "1406414dc",
+"name": null
+},
+"141536505": {
+"slot": "33a0",
+"slow": "140641304",
+"name": null
+},
+"141536939": {
+"slot": "10b88",
+"slow": "141536738",
+"name": "unit_variants_ships_table"
+},
+"141536969": {
+"slot": "14158",
+"slow": "1406994f0",
+"name": null
+},
+"141536b89": {
+"slot": "10450",
+"slow": "141536998",
+"name": "units_custom_battle_mounts_table"
+},
+"141536ded": {
+"slot": "14040",
+"slow": "141536bb8",
+"name": "units_custom_battle_permissions_table"
+},
+"141536e1d": {
+"slot": "3058",
+"slow": "1405a5fe8",
+"name": "units_custom_battle_type_categories_table"
+},
+"141536e4d": {
+"slot": "3020",
+"slow": "1405a5e08",
+"name": null
+},
+"141537569": {
+"slot": "a48",
+"slow": "141537364",
+"name": "vampire_counts_confederation_rituals_to_missions_table"
+},
+"141537771": {
+"slot": "10060",
+"slow": "141537598",
+"name": "vampire_mercenary_set_junctions_table"
+},
+"1415377a1": {
+"slot": "13898",
+"slow": "1406bbf54",
+"name": null
+},
+"141537811": {
+"slot": "14f90",
+"slow": "1406919c4",
+"name": "victory_conditions_table"
+},
+"141537a19": {
+"slot": "10b18",
+"slow": "141537840",
+"name": "victory_type_links_table"
+},
+"141537c09": {
+"slot": "10b50",
+"slow": "141537a48",
+"name": "victory_types_table"
+},
+"141537c39": {
+"slot": "162d0",
+"slow": "140692628",
+"name": null
+},
+"141537e41": {
+"slot": "6200",
+"slow": "141537c68",
+"name": "war_coordination_invalidation_reasons_table"
+},
+"141538031": {
+"slot": "61c8",
+"slow": "141537e70",
+"name": "war_coordination_requests_table"
+},
+"141538061": {
+"slot": "173e0",
+"slow": "14062c78c",
+"name": null
+},
+"141538325": {
+"slot": "17258",
+"slow": "141538134",
+"name": "wind_levels_table"
+},
+"141538509": {
+"slot": "66d0",
+"slow": "141538354",
+"name": "winds_of_magic_battle_thresholds_table"
+},
+"141538539": {
+"slot": "5a90",
+"slow": "14063fad8",
+"name": null
+},
+"141538569": {
+"slot": "7268",
+"slow": "14084b998",
+"name": "winds_of_magic_manipulation_costs_table"
+},
+"1415387b5": {
+"slot": "ab48",
+"slow": "141538598",
+"name": "workshop_categories_progress_levels_table"
+},
+"141538999": {
+"slot": "abf0",
+"slow": "1415387e4",
+"name": "workshop_categories_table"
+},
+"141538bc9": {
+"slot": "abb8",
+"slow": "1415389c8",
+"name": "workshop_categories_to_rituals_table"
+}
+}

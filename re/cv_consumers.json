@@ -1,0 +1,564 @@
+{
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size": [
+[
+"140159966",
+"[+0] lea ecx, [rip + 0x3c9aa74]"
+]
+],
+"autoresolver_unit_wipe_out_threshold": [
+[
+"1401599b2",
+"[+0] lea ecx, [rip + 0x3c9ac08]"
+]
+],
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target": [
+[
+"1401599fe",
+"[+0] lea ecx, [rip + 0x3c9ad9c]"
+]
+],
+"autoresolver_winner_kpd_minor_win_threshold": [
+[
+"140159a4a",
+"[+0] lea ecx, [rip + 0x3c9af30]"
+]
+],
+"autoresolver_special_ability_cp_to_strength_divider": [
+[
+"140159a96",
+"[+0] lea ecx, [rip + 0x3c9b0c4]"
+]
+],
+"autoresolver_special_ability_damage_damage_maximum": [
+[
+"140159ae2",
+"[+0] lea ecx, [rip + 0x3c9b258]"
+]
+],
+"autoresolver_special_ability_debuff_kps_modifier_minimum": [
+[
+"140159b2e",
+"[+0] lea ecx, [rip + 0x3c9b3ec]"
+]
+],
+"autoresolver_min_battle_time_before_retreat": [
+[
+"140159c12",
+"[+0] lea ecx, [rip + 0x3c9b8a8]"
+],
+[
+"147f67815",
+"[+3c] lea esi, [rip - 0x417231f]"
+]
+],
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier": [
+[
+"140159cf6",
+"[+0] lea ecx, [rip + 0x3c9bd64]"
+],
+[
+"14b9cfdd0",
+"[+21] lea ecx, [rip - 0x7bda355]"
+]
+],
+"autoresolver_winner_additional_building_damage_num_assult_equipment_percentage": [
+[
+"14015a592",
+"[+0] lea ecx, [rip + 0x3c9eb28]"
+]
+],
+"autoresolver_battle_result_accuracy_moderate_prediction_variation": [
+[
+"14015a676",
+"[+0] lea ecx, [rip + 0x3c9efe4]"
+]
+],
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement": [
+[
+"14015ab82",
+"[+0] lea ecx, [rip + 0x3ca0ab8]"
+],
+[
+"144ed1ae1",
+"[+41] lea eax, [rip - 0x10d6466]"
+]
+],
+"autoresolver_flying_unit_melee_damage_dealt_modifier": [
+[
+"14015ad4a",
+"[+0] lea ecx, [rip + 0x3ca1430]"
+],
+[
+"146c7ef7d",
+"[+20] lea ebx, [rip + 0xbfd17d2]"
+],
+[
+"14b2c6b44",
+"[+19] lea eax, [rip - 0x74ca9b1]"
+]
+],
+"autoresolver_battle_tower_level_2_damage_multiplier": [
+[
+"14015b46a",
+"[+0] lea ecx, [rip + 0x3ca3a10]"
+],
+[
+"145b8fc0c",
+"[+42] lea edx, [rip - 0x1d90d50]"
+]
+],
+"autoresolver_damage_transfer_proportion_of_alliance": [
+[
+"14015b4b6",
+"[+0] lea ecx, [rip + 0x3ca3ba4]"
+]
+],
+"autoresolver_battle_result_battle_complexity_max_units_for_scale": [
+[
+"14015b59a",
+"[+0] lea ecx, [rip + 0x3ca4060]"
+]
+],
+"autoresolver_chase_down_speed_comparison_divider": [
+[
+"14015baa6",
+"[+0] lea ecx, [rip + 0x3ca5b34]"
+]
+],
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee": [
+[
+"14015baf2",
+"[+0] lea ecx, [rip + 0x3ca5cc8]"
+]
+],
+"autoresolver_battle_size_kill_factor": [
+[
+"14015be36",
+"[+0] lea ecx, [rip + 0x3ca6e24]"
+]
+],
+"autoresolver_winner_additional_wall_damage_per_wall_breach": [
+[
+"14015b1ab",
+"[+0] lea ecx, [rip + 0x3ca2b77]"
+],
+[
+"1423b1a87",
+"[+72] lea ecx, [rip + 0x1a4c3]"
+]
+],
+"autoresolver_bound_min_melee_kills_per_second_full_strength": [
+[
+"140159953",
+"[+0] lea ecx, [rip + 0x3c9aa0f]"
+]
+],
+"autoresolver_bound_max_ammo_per_second_mod_unit_size": [
+[
+"14015999f",
+"[+0] lea ecx, [rip + 0x3c9aba3]"
+]
+],
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target": [
+[
+"1401599eb",
+"[+0] lea ecx, [rip + 0x3c9ad37]"
+],
+[
+"14831ea1f",
+"[+49] lea eax, [rip - 0x452a2b4]"
+]
+],
+"autoresolver_winner_kpd_major_win_threshold": [
+[
+"140159a37",
+"[+0] lea ecx, [rip + 0x3c9aecb]"
+]
+],
+"autoresolver_flying_skirmish_units_use_entire_combat_time": [
+[
+"140159a83",
+"[+0] lea ecx, [rip + 0x3c9b05f]"
+]
+],
+"autoresolver_special_ability_damage_damage_minimum": [
+[
+"140159acf",
+"[+0] lea ecx, [rip + 0x3c9b1f3]"
+]
+],
+"autoresolver_special_ability_buff_kps_modifier_maximum": [
+[
+"140159b1b",
+"[+0] lea ecx, [rip + 0x3c9b387]"
+]
+],
+"autoresolver_battle_excess_melee_damage_multiplier": [
+[
+"140159ce3",
+"[+0] lea ecx, [rip + 0x3c9bcff]"
+]
+],
+"autoresolver_winner_additional_building_damage_num_units_percentage": [
+[
+"14015a57f",
+"[+0] lea ecx, [rip + 0x3c9eac3]"
+]
+],
+"autoresolver_battle_result_accuracy_low_prediction_variation": [
+[
+"14015a663",
+"[+0] lea ecx, [rip + 0x3c9ef7f]"
+]
+],
+"autoresolver_battle_naval_ramming_damage_multiplier": [
+[
+"14015a6af",
+"[+0] lea ecx, [rip + 0x3c9f113]"
+]
+],
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat": [
+[
+"14015a82b",
+"[+0] lea ecx, [rip + 0x3c9f8f7]"
+]
+],
+"autoresolver_battle_num_defender_towers_in_fortified_settlement": [
+[
+"14015ab6f",
+"[+0] lea ecx, [rip + 0x3ca0a53]"
+]
+],
+"autoresolver_battle_tower_level_1_damage_multiplier": [
+[
+"14015b457",
+"[+0] lea ecx, [rip + 0x3ca39ab]"
+],
+[
+"1486c1d24",
+"[+22] lea eax, [rip - 0x48c2f00]"
+]
+],
+"autoresolver_damage_transfer_enabled": [
+[
+"14015b4a3",
+"[+0] lea ecx, [rip + 0x3ca3b3f]"
+]
+],
+"autoresolver_damage_transfer_max_diff_from_average_after_transfer": [
+[
+"14015b4ef",
+"[+0] lea ecx, [rip + 0x3ca3cd3]"
+]
+],
+"autoresolver_chase_down_surviver_ratio_multiplier": [
+[
+"14015ba93",
+"[+0] lea ecx, [rip + 0x3ca5acf]"
+]
+],
+"autoresolver_max_attackers_damaging_a_single_target_in_excess_melee": [
+[
+"14015badf",
+"[+0] lea ecx, [rip + 0x3ca5c63]"
+]
+],
+"autoresolver_min_entity_reduction_unary_of_max": [
+[
+"14015bebb",
+"[+0] lea ecx, [rip + 0x3ca70e7]"
+]
+],
+"autoresolver_bound_max_melee_strength_proportion": [
+[
+"140159940",
+"[+0] lea ecx, [rip + 0x3c9a9aa]"
+]
+],
+"autoresolver_bound_min_ranged_kills_per_second": [
+[
+"14015998c",
+"[+0] lea ecx, [rip + 0x3c9ab3e]"
+]
+],
+"autoresolver_wipe_out_army_force_unary_lost": [
+[
+"1401599d8",
+"[+0] lea ecx, [rip + 0x3c9acd2]"
+],
+[
+"14c18b8b6",
+"[+64] lea ecx, [rip - 0x83971a8]"
+]
+],
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat": [
+[
+"140159a24",
+"[+0] lea ecx, [rip + 0x3c9ae66]"
+],
+[
+"142de1eb4",
+"[+2c] mov byte ptr [rip + 0x12a01e6], 1"
+]
+],
+"autoresolver_chase_down_damage_multiplier": [
+[
+"140159a70",
+"[+0] lea ecx, [rip + 0x3c9affa]"
+]
+],
+"autoresolver_special_ability_maximum_strength_proportion": [
+[
+"140159abc",
+"[+0] lea ecx, [rip + 0x3c9b18e]"
+],
+[
+"14743c24f",
+"[+71] lea esi, [rip - 0x3647594]"
+]
+],
+"autoresolver_special_ability_buff_kps_modifier_minimum": [
+[
+"140159b08",
+"[+0] lea ecx, [rip + 0x3c9b322]"
+]
+],
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction": [
+[
+"140159b54",
+"[+0] lea ecx, [rip + 0x3c9b4b6]"
+]
+],
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea": [
+[
+"140159c38",
+"[+0] lea ecx, [rip + 0x3c9b972]"
+]
+],
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold": [
+[
+"140159c84",
+"[+0] lea ecx, [rip + 0x3c9bb06]"
+]
+],
+"autoresolver_building_damage_num_assult_equipment_percentage": [
+[
+"14015a56c",
+"[+0] lea ecx, [rip + 0x3c9ea5e]"
+]
+],
+"autoresolver_building_damage_num_units_percentage": [
+[
+"14015a5b8",
+"[+0] lea ecx, [rip + 0x3c9ebf2]"
+]
+],
+"autoresolver_battle_result_accuracy_very_low_prediction_variation": [
+[
+"14015a650",
+"[+0] lea ecx, [rip + 0x3c9ef1a]"
+],
+[
+"146931163",
+"[+1e] lea edx, [rip - 0x2b37bdb]"
+]
+],
+"autoresolver_battle_naval_ramming_initial_seperation": [
+[
+"14015a69c",
+"[+0] lea ecx, [rip + 0x3c9f0ae]"
+],
+[
+"1491fea4f",
+"[+2f] lea ebx, [rip - 0x54052d6]"
+]
+],
+"autoresolver_min_hp_for_enemy_hp_dps_modifier": [
+[
+"14015ab5c",
+"[+0] lea ecx, [rip + 0x3ca09ee]"
+]
+],
+"autoresolver_battle_tower_level_4_damage_multiplier": [
+[
+"14015b490",
+"[+0] lea ecx, [rip + 0x3ca3ada]"
+]
+],
+"autoresolver_damage_transfer_diff_from_average_to_transfer": [
+[
+"14015b4dc",
+"[+0] lea ecx, [rip + 0x3ca3c6e]"
+]
+],
+"autoresolver_chase_down_loser_modifier": [
+[
+"14015ba80",
+"[+0] lea ecx, [rip + 0x3ca5a6a]"
+]
+],
+"autoresolver_chase_down_maximum_damage_unary": [
+[
+"14015bacc",
+"[+0] lea ecx, [rip + 0x3ca5bfe]"
+]
+],
+"autoresolver_ensured_unit_loss_damage_multiplier": [
+[
+"14015bea8",
+"[+0] lea ecx, [rip + 0x3ca7082]"
+]
+],
+"autoresolver_minimum_morale_loss_per_second": [
+[
+"14015c1ec",
+"[+0] lea ecx, [rip + 0x3ca81de]"
+]
+],
+"autoresolver_bound_max_ranged_kills_per_second": [
+[
+"140159979",
+"[+0] lea ecx, [rip + 0x3c9aad9]"
+]
+],
+"autoresolver_unit_base_retreat_threshold": [
+[
+"1401599c5",
+"[+0] lea ecx, [rip + 0x3c9ac6d]"
+]
+],
+"autoresolver_battle_reinforcement_time": [
+[
+"140159a11",
+"[+0] lea ecx, [rip + 0x3c9ae01]"
+]
+],
+"autoresolver_battle_timestep": [
+[
+"140159a5d",
+"[+0] lea ecx, [rip + 0x3c9af95]"
+]
+],
+"autoresolver_special_ability_minimum_strength_proportion": [
+[
+"140159aa9",
+"[+0] lea ecx, [rip + 0x3c9b129]"
+]
+],
+"autoresolver_special_ability_damage_range": [
+[
+"140159af5",
+"[+0] lea ecx, [rip + 0x3c9b2bd]"
+]
+],
+"autoresolver_special_ability_debuff_kps_modifier_maximum": [
+[
+"140159b41",
+"[+0] lea ecx, [rip + 0x3c9b451]"
+]
+],
+"autoresolver_battle_damage_modifier_full_naval_units_at_sea": [
+[
+"140159c25",
+"[+0] lea ecx, [rip + 0x3c9b90d]"
+]
+],
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple": [
+[
+"140159c71",
+"[+0] lea ecx, [rip + 0x3c9baa1]"
+]
+],
+"autoresolver_wall_damage_num_artillery_units_percentage": [
+[
+"14015a5a5",
+"[+0] lea ecx, [rip + 0x3c9eb8d]"
+]
+],
+"autoresolver_battle_result_accuracy_very_high_prediction_variation": [
+[
+"14015a63d",
+"[+0] lea ecx, [rip + 0x3c9eeb5]"
+]
+],
+"autoresolver_battle_result_accuracy_high_prediction_variation": [
+[
+"14015a689",
+"[+0] lea ecx, [rip + 0x3c9f049]"
+]
+],
+"autoresolver_max_hp_for_enemy_hp_dps_modifier": [
+[
+"14015ab49",
+"[+0] lea ecx, [rip + 0x3ca0989]"
+]
+],
+"autoresolver_battle_tower_base_kps": [
+[
+"14015ab95",
+"[+0] lea ecx, [rip + 0x3ca0b1d]"
+],
+[
+"1492bad9c",
+"[+34] lea eax, [rip - 0x54bf6b6]"
+],
+[
+"14cdbc173",
+"[+4d] lea ecx, [rip - 0x8fc0a74]"
+]
+],
+"autoresolver_flying_unit_melee_damage_received_modifier": [
+[
+"14015ad5d",
+"[+0] lea ecx, [rip + 0x3ca1495]"
+]
+],
+"autoresolver_battle_excess_melee_damage_received_from_single_entity_target_multiplier": [
+[
+"14015b431",
+"[+0] lea ecx, [rip + 0x3ca38e1]"
+]
+],
+"autoresolver_battle_tower_level_3_damage_multiplier": [
+[
+"14015b47d",
+"[+0] lea ecx, [rip + 0x3ca3a75]"
+]
+],
+"autoresolver_damage_transfer_min_health_remaining": [
+[
+"14015b4c9",
+"[+0] lea ecx, [rip + 0x3ca3c09]"
+]
+],
+"autoresolver_chase_down_winner_modifier": [
+[
+"14015ba6d",
+"[+0] lea ecx, [rip + 0x3ca5a05]"
+]
+],
+"autoresolver_chase_down_speed_comparison_cap": [
+[
+"14015bab9",
+"[+0] lea ecx, [rip + 0x3ca5b99]"
+]
+],
+"autoresolver_siege_attack_kill_multiplier": [
+[
+"14015be49",
+"[+0] lea ecx, [rip + 0x3ca6e89]"
+]
+],
+"autoresolver_ensured_unit_loss_cp_weight": [
+[
+"14015be95",
+"[+0] lea ecx, [rip + 0x3ca701d]"
+]
+],
+"autoresolver_minimum_morale_loss": [
+[
+"14015c1d9",
+"[+0] lea ecx, [rip + 0x3ca8179]"
+]
+]
+}

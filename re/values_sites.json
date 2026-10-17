@@ -1,0 +1,158 @@
+[
+[
+"140553fa3",
+"140552fa0",
+"lea rcx, [rsi + 0x5be8]",
+null
+],
+[
+"140611ad9",
+"140610ad0",
+"lea rcx, [rdi + 0x5be8]",
+null
+],
+[
+"1414a0658",
+"14149f650",
+"lea rcx, [rbx + 0x5be8]",
+null
+],
+[
+"1414fe5c8",
+"1414fe55c",
+"lea rdx, [rdi + 0x5be8]",
+null
+],
+[
+"141e64ace",
+"141e64aa0",
+"movss xmm0, dword ptr [rcx + rdx*4 + 0x5be8]",
+"(computed: mov edx, eax)"
+],
+[
+"1423f2e48",
+"1423f2d3c",
+"cvttss2si r15, dword ptr [rdx + 0x5be8]",
+null
+],
+[
+"14255b3de",
+"14255a3d0",
+"movss xmm1, dword ptr [r12 + rax*4 + 0x5be8]",
+null
+],
+[
+"14255b56b",
+"14255b1c8",
+"mulss xmm0, dword ptr [r13 + rax*4 + 0x5be8]",
+"(computed: mov eax, dword ptr [rbp + r8*4 - 0x58])"
+],
+[
+"14255b589",
+"14255b1c8",
+"mulss xmm1, dword ptr [r13 + rax*4 + 0x5be8]",
+"(computed: mov eax, dword ptr [rbp + r8*4 - 0x30])"
+],
+[
+"142652b0e",
+"142651b00",
+"lea rsi, [rdi + 0x5be8]",
+null
+],
+[
+"142656cfb",
+"142655cf0",
+"lea rcx, [rbx + 0x5be8]",
+null
+],
+[
+"142657385",
+"142656380",
+"lea rcx, [rbx + 0x5be8]",
+null
+],
+[
+"1426a5c7b",
+"1426a4c70",
+"movss xmm0, dword ptr [rdx + rax*4 + 0x5be8]",
+null
+],
+[
+"1426a5c8f",
+"1426a4c80",
+"movss xmm0, dword ptr [rdx + rcx*4 + 0x5be8]",
+null
+],
+[
+"1426a5ca2",
+"1426a5bec",
+"movss xmm0, dword ptr [rdx + rcx*4 + 0x5be8]",
+"(computed: mov ecx, edi)"
+],
+[
+"1426d95bc",
+"1426d9530",
+"lea rbx, [rsi + 0x5be8]",
+null
+],
+[
+"14279c9cd",
+"14279c980",
+"movss xmm0, dword ptr [rcx + rax*4 + 0x5be8]",
+"(computed: mov eax, eax)"
+],
+[
+"142853099",
+"142852090",
+"movss xmm0, dword ptr [rax + rbx*4 + 0x5be8]",
+null
+],
+[
+"14285311d",
+"1428530b0",
+"movss xmm0, dword ptr [rax + rbx*4 + 0x5be8]",
+"character_follow_camera_follow_angle_cinematic"
+],
+[
+"1429613f8",
+"1429613cc",
+"movss xmm0, dword ptr [r11 + rax*4 + 0x5be8]",
+"(computed: lea eax, [rsi + 2])"
+],
+[
+"14296140d",
+"1429613cc",
+"movss xmm0, dword ptr [r11 + r9*4 + 0x5be8]",
+"(computed: lea r9d, [rsi + 1])"
+],
+[
+"14296141c",
+"1429613cc",
+"movss xmm0, dword ptr [r11 + rsi*4 + 0x5be8]",
+"(computed: mov esi, r8d)"
+],
+[
+"142961447",
+"1429613cc",
+"movss xmm0, dword ptr [r10 + rax*4 + 0x5be8]",
+"(computed: lea eax, [rsi + 6])"
+],
+[
+"14296145c",
+"1429613cc",
+"movss xmm0, dword ptr [r10 + rcx*4 + 0x5be8]",
+"(computed: lea ecx, [rsi + 5])"
+],
+[
+"142961471",
+"1429613cc",
+"movss xmm0, dword ptr [r10 + rcx*4 + 0x5be8]",
+"(computed: lea ecx, [rsi + 4])"
+],
+[
+"142961486",
+"1429613cc",
+"movss xmm0, dword ptr [r10 + rcx*4 + 0x5be8]",
+"(computed: lea ecx, [rsi + 3])"
+]
+]

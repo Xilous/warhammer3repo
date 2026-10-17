@@ -1,0 +1,106 @@
+{
+"140001000": [
+[
+"140001440",
+"background_resource_supply",
+"14000144b",
+"lea r10, [r10 + rdx*4]",
+0
+]
+],
+"1404d5810": [
+[
+"1404d5a26",
+"trade_route_value_combined_gdp_proportion",
+"1404d5ae4",
+"mov r8d, dword ptr [rax + rbp*4]",
+0
+],
+[
+"1404d5a26",
+"trade_route_value_combined_gdp_proportion",
+"1404d5b0d",
+"mov dword ptr [r9 + rbp*4], r10d",
+0
+]
+],
+"140906180": [
+[
+"1409061e4",
+"faction_gdp_other_minor",
+"14090623c",
+"mov ecx, dword ptr [r11 + rax*4 + 0x9078d8]",
+9468120
+]
+],
+"1423872fc": [
+[
+"1423875df",
+"trade_route_value_combined_gdp_proportion",
+"1423875f4",
+"mulss xmm0, dword ptr [rdi + rax*4]",
+0
+],
+[
+"1423875df",
+"trade_route_value_combined_gdp_proportion",
+"1423875f9",
+"movss dword ptr [rdi + rax*4], xmm0",
+0
+]
+],
+"14285302c": [
+[
+"142853085",
+"character_follow_camera_follow_distance_cinematic",
+"142853099",
+"movss xmm0, dword ptr [rax + rbx*4 + 0x5be8]",
+23528
+]
+],
+"1428530b0": [
+[
+"142853109",
+"character_follow_camera_follow_angle_cinematic",
+"14285311d",
+"movss xmm0, dword ptr [rax + rbx*4 + 0x5be8]",
+23528
+]
+],
+"1432db6a8": [
+[
+"1432dbe75",
+"trade_route_value_combined_gdp_proportion",
+"1432dbe8b",
+"lea eax, [rdi*4 - 4]",
+-4
+]
+],
+"14330a644": [
+[
+"14330a71d",
+"trade_route_value_combined_gdp_proportion",
+"14330a73d",
+"movss dword ptr [rax + rdx*4], xmm0",
+0
+]
+],
+"143394698": [
+[
+"143394768",
+"trade_route_value_combined_gdp_proportion",
+"14339476d",
+"movsxd rax, dword ptr [r13 + rbp*4]",
+0
+]
+],
+"143394ac8": [
+[
+"143394b52",
+"trade_route_value_combined_gdp_proportion",
+"143394b57",
+"movsxd rax, dword ptr [r13 + rbp*4]",
+0
+]
+]
+}

@@ -1,0 +1,78 @@
+{
+"accessors": {
+"autoresolver_usages_table": [
+"1405bb524"
+],
+"autoresolver_ai_usage_group_combat_potential_modifiers_table": [
+"1414b29dc"
+],
+"autoresolver_battle_types_table": [
+"1414b2bfc"
+],
+"autoresolver_modifier_group_keys_table": [
+"1414b2e1c"
+],
+"autoresolver_modifier_group_lookups_table": [
+"1414b2e1c"
+],
+"autoresolver_modifier_group_to_modifiers_table": [
+"1414b321c"
+],
+"autoresolver_modifier_targets_table": [
+"1414b3444"
+],
+"autoresolver_player_types_table": [
+"1414b3444"
+],
+"autoresolver_unit_group_categories_enums_table": [
+"1414b3444"
+],
+"autoresolver_unit_record_usage_flags_table": [
+"1414b3444"
+],
+"campaign_autoresolver_skirmish_effectiveness_relative_to_speeds_table": [
+"1414d0c48"
+]
+},
+"consumers": {
+"1405bafe0": [
+"autoresolver_usages_table"
+],
+"1414fa204": [
+"autoresolver_usages_table"
+],
+"1414b29dc": [
+"autoresolver_ai_usage_group_combat_potential_modifiers_table"
+],
+"1414b2bfc": [
+"autoresolver_battle_types_table"
+],
+"1414b2e1c": [
+"autoresolver_battle_types_table",
+"autoresolver_modifier_group_keys_table",
+"autoresolver_modifier_group_lookups_table"
+],
+"1414b321c": [
+"autoresolver_modifier_group_keys_table",
+"autoresolver_modifier_group_lookups_table",
+"autoresolver_modifier_targets_table",
+"autoresolver_player_types_table",
+"autoresolver_unit_group_categories_enums_table",
+"autoresolver_unit_record_usage_flags_table"
+],
+"1414f6838": [
+"autoresolver_modifier_group_keys_table",
+"autoresolver_modifier_group_lookups_table",
+"autoresolver_modifier_targets_table",
+"autoresolver_player_types_table",
+"autoresolver_unit_group_categories_enums_table",
+"autoresolver_unit_record_usage_flags_table"
+],
+"1414b3414": [
+"autoresolver_modifier_group_to_modifiers_table"
+],
+"1414d0c48": [
+"campaign_autoresolver_skirmish_effectiveness_relative_to_speeds_table"
+]
+}
+}

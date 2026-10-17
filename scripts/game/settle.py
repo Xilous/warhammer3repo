@@ -1,4 +1,5 @@
-import json,re,collections
+import json,re,collections,sys
+IN=sys.argv[1] if len(sys.argv)>1 else 'tww/model_units.json'; OUT=sys.argv[2] if len(sys.argv)>2 else 'tww/settlement_tier.json'
 L=lambda t: json.load(open('tww/db/%s.json'%t,encoding='utf-8'))
 loc=json.load(open('tww/loc_en.json',encoding='utf-8'))
 def tr(t):
@@ -20,7 +21,7 @@ def name(b):
     for k,vs in pref.items():
         if k.startswith(b): return tr(vs[0])
     return b
-units=json.load(open('tww/model_units.json',encoding='utf-8'))
+units=json.load(open(IN,encoding='utf-8'))
 out={}
 for u in units:
     cands=[]
@@ -44,7 +45,7 @@ for u in units:
         alt=sorted(set(f'{c[2]} (T{c[1]})' for c in cands if c[0]>pmin and c[1]<best and not any(s in c[3] for s in ['rogue','occupied','encampment','gathering'])))[:3]
         if alt: names.append('faction-specific: '+', '.join(alt))
     out[u['k']]={'stier':best,'sbld':names}
-json.dump(out,open('tww/settlement_tier.json','w',encoding='utf-8'),ensure_ascii=False)
+json.dump(out,open(OUT,'w',encoding='utf-8'),ensure_ascii=False)
 print('no building',sum(1 for v in out.values() if v['stier'] is None),'of',len(out))
 for n in ['Ratling Guns','Stormfiends (Ratling Cannons)','Thunderbarge','Irondrakes','Gyrobombers','Handgunners','Helstorm Rocket Battery','Warplock Jezzails','Quarrellers','Thunderers','Warpfire Throwers']:
     for k in [u['k'] for u in units if u['n']==n]: print(n,out[k])

@@ -1,0 +1,683 @@
+{
+"base": 5368709120,
+"secs": [
+[
+".udata",
+4096,
+54157312,
+1024,
+54157312,
+"XRcode"
+],
+[
+".xcode",
+54161408,
+9699328,
+54158336,
+9699328,
+"Ridata"
+],
+[
+".srdata",
+63860736,
+8081408,
+63857664,
+8081408,
+"RWidata"
+],
+[
+".text",
+71942144,
+2514944,
+71939072,
+512,
+"Ridata"
+],
+[
+".debug",
+74457088,
+4096,
+71939584,
+4096,
+"Ridata"
+],
+[
+".code",
+74461184,
+131072,
+71943680,
+131072,
+"Ridata"
+],
+[
+".data1",
+74592256,
+626688,
+72074752,
+626688,
+"Ridata"
+],
+[
+".rdata",
+75218944,
+638976,
+72701440,
+638976,
+"Ridata"
+],
+[
+".didata",
+75857920,
+156518732,
+73340416,
+156518912,
+"XRWcode"
+],
+[
+".rodata",
+232378368,
+143976,
+229859328,
+144384,
+"Rcode"
+],
+[
+".link",
+232525824,
+408,
+230003712,
+512,
+"RWcode"
+],
+[
+".arch",
+232529920,
+168,
+230004224,
+512,
+"Ridata"
+],
+[
+".xtls",
+232534016,
+2512248,
+230004736,
+2512384,
+"Ridata"
+]
+],
+"strpos": {
+"autoresolver_ai_usage_group_combat_potential_modifiers_table": [
+58037664
+],
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold": [
+58065192
+],
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple": [
+58065256
+],
+"autoresolver_battle_damage_modifier_full_naval_units_at_sea": [
+58064440
+],
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea": [
+58065424
+],
+"autoresolver_battle_excess_melee_damage_multiplier": [
+58065784
+],
+"autoresolver_battle_excess_melee_damage_received_from_single_entity_target_multiplier": [
+58081856
+],
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier": [
+58065712
+],
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat": [
+58073264
+],
+"autoresolver_battle_naval_ramming_damage_multiplier": [
+58071664
+],
+"autoresolver_battle_naval_ramming_initial_seperation": [
+58071720
+],
+"autoresolver_battle_num_defender_towers_in_fortified_settlement": [
+58075152
+],
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement": [
+58075072
+],
+"autoresolver_battle_reinforcement_time": [
+58063208
+],
+"autoresolver_battle_result_accuracy_high_prediction_variation": [
+58071776
+],
+"autoresolver_battle_result_accuracy_low_prediction_variation": [
+58071912
+],
+"autoresolver_battle_result_accuracy_moderate_prediction_variation": [
+58071840
+],
+"autoresolver_battle_result_accuracy_very_high_prediction_variation": [
+58071152
+],
+"autoresolver_battle_result_accuracy_very_low_prediction_variation": [
+58071072
+],
+"autoresolver_battle_result_battle_complexity_max_units_for_scale": [
+58082688
+],
+"autoresolver_battle_size_kill_factor": [
+58089080
+],
+"autoresolver_battle_timestep": [
+58063016
+],
+"autoresolver_battle_tower_base_kps": [
+58075032
+],
+"autoresolver_battle_tower_level_1_damage_multiplier": [
+58081776
+],
+"autoresolver_battle_tower_level_2_damage_multiplier": [
+58081720
+],
+"autoresolver_battle_tower_level_3_damage_multiplier": [
+58081664
+],
+"autoresolver_battle_tower_level_4_damage_multiplier": [
+58081608
+],
+"autoresolver_battle_types_table": [
+58038280
+],
+"autoresolver_bound_max_ammo_per_second_mod_unit_size": [
+58062680
+],
+"autoresolver_bound_max_melee_strength_proportion": [
+58062960
+],
+"autoresolver_bound_max_ranged_kills_per_second": [
+58062784
+],
+"autoresolver_bound_min_melee_kills_per_second_full_strength": [
+58062896
+],
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size": [
+58062832
+],
+"autoresolver_bound_min_ranged_kills_per_second": [
+58062736
+],
+"autoresolver_building_damage_num_assult_equipment_percentage": [
+58070888
+],
+"autoresolver_building_damage_num_units_percentage": [
+58070616
+],
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target": [
+58063248
+],
+"autoresolver_chase_down_damage_multiplier": [
+58063856
+],
+"autoresolver_chase_down_loser_modifier": [
+58085824
+],
+"autoresolver_chase_down_maximum_damage_unary": [
+58086616
+],
+"autoresolver_chase_down_speed_comparison_cap": [
+58086664
+],
+"autoresolver_chase_down_speed_comparison_divider": [
+58086712
+],
+"autoresolver_chase_down_surviver_ratio_multiplier": [
+58086768
+],
+"autoresolver_chase_down_winner_modifier": [
+58085864
+],
+"autoresolver_damage_transfer_diff_from_average_to_transfer": [
+58082392
+],
+"autoresolver_damage_transfer_enabled": [
+58082568
+],
+"autoresolver_damage_transfer_max_diff_from_average_after_transfer": [
+58082320
+],
+"autoresolver_damage_transfer_min_health_remaining": [
+58082456
+],
+"autoresolver_damage_transfer_proportion_of_alliance": [
+58082512
+],
+"autoresolver_ensured_unit_loss_cp_weight": [
+58088840
+],
+"autoresolver_ensured_unit_loss_damage_multiplier": [
+58088784
+],
+"autoresolver_flying_skirmish_units_use_entire_combat_time": [
+58063792
+],
+"autoresolver_flying_unit_melee_damage_dealt_modifier": [
+58076320
+],
+"autoresolver_flying_unit_melee_damage_received_modifier": [
+58076264
+],
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction": [
+58064136
+],
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee": [
+58086464
+],
+"autoresolver_max_attackers_damaging_a_single_target_in_excess_melee": [
+58086544
+],
+"autoresolver_max_hp_for_enemy_hp_dps_modifier": [
+58075264
+],
+"autoresolver_min_battle_time_before_retreat": [
+58064504
+],
+"autoresolver_min_entity_reduction_unary_of_max": [
+58089416
+],
+"autoresolver_min_hp_for_enemy_hp_dps_modifier": [
+58075216
+],
+"autoresolver_minimum_morale_loss": [
+58091152
+],
+"autoresolver_minimum_morale_loss_per_second": [
+58091104
+],
+"autoresolver_modifier_group_keys_table": [
+58038344
+],
+"autoresolver_modifier_group_lookups_table": [
+58038184
+],
+"autoresolver_modifier_group_to_modifiers_table": [
+58038136
+],
+"autoresolver_modifier_targets_table": [
+58038096
+],
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target": [
+58063328
+],
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat": [
+58063144
+],
+"autoresolver_player_types_table": [
+58038312
+],
+"autoresolver_siege_attack_kill_multiplier": [
+58089032
+],
+"autoresolver_special_ability_buff_kps_modifier_maximum": [
+58064328
+],
+"autoresolver_special_ability_buff_kps_modifier_minimum": [
+58064384
+],
+"autoresolver_special_ability_cp_to_strength_divider": [
+58063736
+],
+"autoresolver_special_ability_damage_damage_maximum": [
+58063496
+],
+"autoresolver_special_ability_damage_damage_minimum": [
+58063552
+],
+"autoresolver_special_ability_damage_range": [
+58063448
+],
+"autoresolver_special_ability_debuff_kps_modifier_maximum": [
+58064200
+],
+"autoresolver_special_ability_debuff_kps_modifier_minimum": [
+58064264
+],
+"autoresolver_special_ability_maximum_strength_proportion": [
+58063608
+],
+"autoresolver_special_ability_minimum_strength_proportion": [
+58063672
+],
+"autoresolver_spell_modifier": [
+58019416
+],
+"autoresolver_tower_level": [
+58020504
+],
+"autoresolver_unit_base_retreat_threshold": [
+58062592
+],
+"autoresolver_unit_group_categories_enums_table": [
+60630400
+],
+"autoresolver_unit_record_usage_flags_table": [
+58037144
+],
+"autoresolver_unit_wipe_out_threshold": [
+58062640
+],
+"autoresolver_usages_table": [
+54365128
+],
+"autoresolver_wall_damage_num_artillery_units_percentage": [
+58070672
+],
+"autoresolver_winner_additional_building_damage_num_assult_equipment_percentage": [
+58070736
+],
+"autoresolver_winner_additional_building_damage_num_units_percentage": [
+58070816
+],
+"autoresolver_winner_additional_wall_damage_per_wall_breach": [
+58079920
+],
+"autoresolver_winner_kpd_major_win_threshold": [
+58063096
+],
+"autoresolver_winner_kpd_minor_win_threshold": [
+58063048
+],
+"autoresolver_wipe_out_army_force_unary_lost": [
+58063400
+]
+},
+"xrefs": {
+"autoresolver_spell_modifier": [
+1390204
+],
+"autoresolver_tower_level": [
+1390755
+],
+"autoresolver_bound_max_melee_strength_proportion": [
+1415480
+],
+"autoresolver_bound_min_melee_kills_per_second_full_strength": [
+1415499
+],
+"autoresolver_bound_min_ranged_kills_per_ammo_mod_unit_size": [
+1415518
+],
+"autoresolver_bound_max_ranged_kills_per_second": [
+1415537
+],
+"autoresolver_bound_min_ranged_kills_per_second": [
+1415556
+],
+"autoresolver_bound_max_ammo_per_second_mod_unit_size": [
+1415575
+],
+"autoresolver_unit_wipe_out_threshold": [
+1415594
+],
+"autoresolver_unit_base_retreat_threshold": [
+1415613
+],
+"autoresolver_wipe_out_army_force_unary_lost": [
+1415632
+],
+"autoresolver_num_excess_melee_units_receiving_casualties_from_target": [
+1415651
+],
+"autoresolver_casualty_unary_received_by_excess_melee_units_from_target": [
+1415670
+],
+"autoresolver_battle_reinforcement_time": [
+1415689
+],
+"autoresolver_num_units_multiplier_vs_enemy_to_allow_retreat": [
+1415708
+],
+"autoresolver_winner_kpd_major_win_threshold": [
+1415727
+],
+"autoresolver_winner_kpd_minor_win_threshold": [
+1415746
+],
+"autoresolver_battle_timestep": [
+1415765
+],
+"autoresolver_chase_down_damage_multiplier": [
+1415784
+],
+"autoresolver_flying_skirmish_units_use_entire_combat_time": [
+1415803
+],
+"autoresolver_special_ability_cp_to_strength_divider": [
+1415822
+],
+"autoresolver_special_ability_minimum_strength_proportion": [
+1415841
+],
+"autoresolver_special_ability_maximum_strength_proportion": [
+1415860
+],
+"autoresolver_special_ability_damage_damage_minimum": [
+1415879
+],
+"autoresolver_special_ability_damage_damage_maximum": [
+1415898
+],
+"autoresolver_special_ability_damage_range": [
+1415917
+],
+"autoresolver_special_ability_buff_kps_modifier_minimum": [
+1415936
+],
+"autoresolver_special_ability_buff_kps_modifier_maximum": [
+1415955
+],
+"autoresolver_special_ability_debuff_kps_modifier_minimum": [
+1415974
+],
+"autoresolver_special_ability_debuff_kps_modifier_maximum": [
+1415993
+],
+"autoresolver_mana_pool_per_round_per_mana_cost_reduction": [
+1416012
+],
+"autoresolver_min_battle_time_before_retreat": [
+1416202
+],
+"autoresolver_battle_damage_modifier_full_naval_units_at_sea": [
+1416221
+],
+"autoresolver_battle_damage_modifier_non_naval_units_at_sea": [
+1416240
+],
+"autoresolver_alliance_wipe_out_winner_loser_strength_multiple": [
+1416297
+],
+"autoresolver_alliance_wipe_out_loser_strength_of_max_threshold": [
+1416316
+],
+"autoresolver_battle_excess_melee_damage_multiplier": [
+1416411
+],
+"autoresolver_battle_excess_melee_damage_received_from_target_multiplier": [
+1416430
+],
+"autoresolver_building_damage_num_assult_equipment_percentage": [
+1418596
+],
+"autoresolver_winner_additional_building_damage_num_units_percentage": [
+1418615
+],
+"autoresolver_winner_additional_building_damage_num_assult_equipment_percentage": [
+1418634
+],
+"autoresolver_wall_damage_num_artillery_units_percentage": [
+1418653
+],
+"autoresolver_building_damage_num_units_percentage": [
+1418672
+],
+"autoresolver_battle_result_accuracy_very_high_prediction_variation": [
+1418805
+],
+"autoresolver_battle_result_accuracy_very_low_prediction_variation": [
+1418824
+],
+"autoresolver_battle_result_accuracy_low_prediction_variation": [
+1418843
+],
+"autoresolver_battle_result_accuracy_moderate_prediction_variation": [
+1418862
+],
+"autoresolver_battle_result_accuracy_high_prediction_variation": [
+1418881
+],
+"autoresolver_battle_naval_ramming_initial_seperation": [
+1418900
+],
+"autoresolver_battle_naval_ramming_damage_multiplier": [
+1418919
+],
+"autoresolver_battle_missile_range_modifier_used_in_ranged_combat": [
+1419299
+],
+"autoresolver_max_hp_for_enemy_hp_dps_modifier": [
+1420097
+],
+"autoresolver_min_hp_for_enemy_hp_dps_modifier": [
+1420116
+],
+"autoresolver_battle_num_defender_towers_in_fortified_settlement": [
+1420135
+],
+"autoresolver_battle_num_defender_towers_in_unfortified_settlement": [
+1420154
+],
+"autoresolver_battle_tower_base_kps": [
+1420173
+],
+"autoresolver_flying_unit_melee_damage_dealt_modifier": [
+1420610
+],
+"autoresolver_flying_unit_melee_damage_received_modifier": [
+1420629
+],
+"autoresolver_winner_additional_wall_damage_per_wall_breach": [
+1421731
+],
+"autoresolver_battle_excess_melee_damage_received_from_single_entity_target_multiplier": [
+1422377
+],
+"autoresolver_battle_tower_level_1_damage_multiplier": [
+1422415
+],
+"autoresolver_battle_tower_level_2_damage_multiplier": [
+1422434
+],
+"autoresolver_battle_tower_level_3_damage_multiplier": [
+1422453
+],
+"autoresolver_battle_tower_level_4_damage_multiplier": [
+1422472
+],
+"autoresolver_damage_transfer_enabled": [
+1422491
+],
+"autoresolver_damage_transfer_proportion_of_alliance": [
+1422510
+],
+"autoresolver_damage_transfer_min_health_remaining": [
+1422529
+],
+"autoresolver_damage_transfer_diff_from_average_to_transfer": [
+1422548
+],
+"autoresolver_damage_transfer_max_diff_from_average_after_transfer": [
+1422567
+],
+"autoresolver_battle_result_battle_complexity_max_units_for_scale": [
+1422738
+],
+"autoresolver_chase_down_winner_modifier": [
+1423973
+],
+"autoresolver_chase_down_loser_modifier": [
+1423992
+],
+"autoresolver_chase_down_surviver_ratio_multiplier": [
+1424011
+],
+"autoresolver_chase_down_speed_comparison_divider": [
+1424030
+],
+"autoresolver_chase_down_speed_comparison_cap": [
+1424049
+],
+"autoresolver_chase_down_maximum_damage_unary": [
+1424068
+],
+"autoresolver_max_attackers_damaging_a_single_target_in_excess_melee": [
+1424087
+],
+"autoresolver_max_attackers_damaging_a_flanked_single_target_in_excess_melee": [
+1424106
+],
+"autoresolver_battle_size_kill_factor": [
+1424942
+],
+"autoresolver_siege_attack_kill_multiplier": [
+1424961
+],
+"autoresolver_ensured_unit_loss_cp_weight": [
+1425037
+],
+"autoresolver_ensured_unit_loss_damage_multiplier": [
+1425056
+],
+"autoresolver_min_entity_reduction_unary_of_max": [
+1425075
+],
+"autoresolver_minimum_morale_loss": [
+1425873
+],
+"autoresolver_minimum_morale_loss_per_second": [
+1425892
+],
+"autoresolver_usages_table": [
+6011587
+],
+"autoresolver_ai_usage_group_combat_potential_modifiers_table": [
+21703311
+],
+"autoresolver_battle_types_table": [
+21703855
+],
+"autoresolver_modifier_group_keys_table": [
+21704399
+],
+"autoresolver_modifier_group_lookups_table": [
+21704848
+],
+"autoresolver_modifier_group_to_modifiers_table": [
+21705413
+],
+"autoresolver_modifier_targets_table": [
+21705975
+],
+"autoresolver_player_types_table": [
+21706455
+],
+"autoresolver_unit_group_categories_enums_table": [
+21706919
+],
+"autoresolver_unit_record_usage_flags_table": [
+21707363
+]
+}
+}

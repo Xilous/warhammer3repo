@@ -12,3 +12,6 @@ honga/
 ranged_doomstack_research.html
 Ranged_Doomstack_Research_offline.html
 __pycache__/
+
+# building icons extracted from the game (regenerate with automated-jay/tools/extract_icons.py); never published
+automated-jay/assist/templates/
