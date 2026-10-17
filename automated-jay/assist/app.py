@@ -52,11 +52,12 @@ def last_logged_turn() -> list[str]:
 
 
 class App:
-    def __init__(self, on_pause, on_run_now, on_ignore=None) -> None:
+    def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None) -> None:
         self.q: queue.Queue = queue.Queue()
         self.on_pause = on_pause
         self.on_run_now = on_run_now
         self.on_ignore = on_ignore
+        self.on_end_turn = on_end_turn
         self._world = None                         # one sensor for every refresh (bot/sensor/world.py World)
         self._refreshing = threading.Lock()
         self.root = tk.Tk()
@@ -78,6 +79,8 @@ class App:
         self.pause_btn = ttk.Button(top, text="Pause", command=self._pause)
         self.pause_btn.pack(side="right", padx=4)
         ttk.Button(top, text="Run now", command=self._run_now).pack(side="right", padx=4)
+        if on_end_turn is not None:                # buildings + army, then the game's End Turn (runner.end_turn_now)
+            ttk.Button(top, text="Build & End Turn", command=self._end_turn).pack(side="right", padx=4)
         self.info_lbl = tk.Label(self.root, text="", font=("Segoe UI", 10), bg="#1d1f1d", fg="#c8c8c8", anchor="w", padx=12)
         self.info_lbl.pack(fill="x")
         self.ignore_frame = tk.Frame(self.root, bg="#1d1f1d", padx=10)     # "Ignore <id>" buttons while waiting
@@ -142,6 +145,9 @@ class App:
 
     def _run_now(self) -> None:
         threading.Thread(target=self.on_run_now, daemon=True).start()
+
+    def _end_turn(self) -> None:
+        threading.Thread(target=self.on_end_turn, daemon=True).start()
 
     def _overlay_ready(self) -> None:
         self.ov_hwnd = int(self.overlay.wm_frame(), 16)

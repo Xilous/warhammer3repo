@@ -5,6 +5,11 @@
     "When every automation for the turn is finished, a small always-on-top widget switches to 'your turn' (player's choice over a sound)."
   ],
   "trigger": "turn_start",
+  "schedule": {
+    "turn_start": ["tech", "skills"],
+    "end_turn": ["buildings", "army"],
+    "_doc": "turn_start runs when your turn starts. end_turn runs when you press Build & End Turn in the app, right before it presses End Turn, so settlements taken during the turn are built on the same turn (player decision, 2026-10-16). Buildings stay before the army step: buildings take precedence for the gold. If a turn is ended in the game instead, the next turn start runs the end_turn steps too. Step names: tech, skills, buildings, army."
+  },
   "never_during_battle": true,
   "tech": {
     "order": "beeline then cheapest",

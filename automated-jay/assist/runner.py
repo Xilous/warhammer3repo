@@ -45,12 +45,33 @@ IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alo
 LOST_AFTER = 2                # polls in a row without a campaign before the turn bookkeeping starts over
 STATE_FILE = config.RUNS_DIR / "state.json"
 
-STEPS = [
-    ("tech", tech.run),
-    ("skills", skills.run),
-    ("buildings", build.run),            # player rule: building upgrades take precedence over refilling armies
-    ("army", army_builder.run),          # recruits with whatever gold the building step left
-]
+STEP_FNS = {
+    "tech": tech.run,
+    "skills": skills.run,
+    "buildings": build.run,              # player rule: building upgrades take precedence over refilling armies
+    "army": army_builder.run,            # recruits with whatever gold the building step left
+}
+# Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
+# settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
+# that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
+DEFAULT_SCHEDULE = {"turn_start": ["tech", "skills"], "end_turn": ["buildings", "army"]}
+AUTOMATION = config.ROOT / "strategy" / "automation.json"
+
+
+def schedule() -> dict[str, list[str]]:
+    """Which steps run at turn start and which at "Build & End Turn" (automation.json "schedule", read every time so
+    an edit applies at once; unknown step names are dropped)."""
+    try:
+        sch = json.load(open(AUTOMATION, encoding="utf-8")).get("schedule") or {}
+    except Exception:
+        sch = {}
+    return {k: [n for n in sch.get(k, v) if n in STEP_FNS] for k, v in DEFAULT_SCHEDULE.items()}
+
+
+def all_steps() -> list[str]:
+    """Every scheduled step in pass order: turn-start steps, then end-of-turn steps (--once and the test harness)."""
+    sch = schedule()
+    return sch["turn_start"] + [n for n in sch["end_turn"] if n not in sch["turn_start"]]
 
 
 def write_state(state: str, headline: str, detail: str, turn: int | None) -> None:
@@ -148,6 +169,8 @@ class Runner:
         self.model: str | None = None         # campaign model last seen (a new one = a save was loaded)
         self.pending: int | None = None       # turn whose pass is still to do
         self.done_turn: int | None = None     # turn whose pass is done (by the loop or Run now)
+        self.end_done = None                  # (model, turn) ended with "Build & End Turn" (else the next turn start
+                                              # catches up on the end-of-turn steps)
         self.no_campaign = 0
         self.campaign_lost = False            # no campaign was seen: the next one is a "campaign change"
         self.gate_since: float | None = None
@@ -220,6 +243,73 @@ class Runner:
         finally:
             self.busy.release()
 
+    def end_turn_now(self) -> None:
+        """The app's "Build & End Turn": the end-of-turn steps (by default buildings, then the army builder), then
+        the game's End Turn button. The player asked for it, so there is no idle wait; everything else is checked as
+        for a turn-start pass, and End Turn is pressed only when every step ran (an interruption, a failure to raise
+        the game or a decision that came up leaves the turn open)."""
+        if not self.busy.acquire(blocking=False):
+            print("Build & End Turn: a pass is already running", flush=True)
+            return
+        turn = self.last_turn
+        try:
+            s = self.mem.read()
+            if not s.ok:
+                self.post("waiting", "WAITING", "Build & End Turn: no campaign loaded")
+                return
+            turn = s.turn
+            ok, why = players_turn(self.ui)
+            if not ok:
+                self.post("waiting", f"WAITING (turn {turn})", f"Build & End Turn: not your turn ({why})", turn=turn)
+                return
+            pre, need = self.check_popups()
+            if need:
+                self.post_decisions(turn, need, prefix="Build & End Turn: ")
+                return
+            sch = schedule()
+            names = self.start_steps(turn) if (self.pending == turn and self.done_turn != turn) else []
+            names += [n for n in sch["end_turn"] if n not in names]
+            self.offer_ignore([])
+            done = self.automate(turn, pre, names=names, label="end_turn")
+            if self.pending == turn:                       # the turn-start steps ran too
+                self.pending, self.done_turn = None, turn
+            if any(line.startswith("could not bring the game") for line in done):
+                self.post("error", f"TURN {turn} NOT ENDED", "\n".join(done), turn=turn)
+                return
+            _pre, need = self.check_popups()
+            if need:
+                self.post_decisions(turn, need, prefix="steps done, turn not ended: ")
+                return
+            ended = self.press_end_turn(turn)
+            if ended:
+                self.end_done = (self.model, turn)
+            self.post("waiting" if ended else "error", f"TURN {turn} ENDED" if ended else f"TURN {turn} NOT ENDED",
+                      "\n".join(done + ["End Turn pressed: the other factions are moving" if ended else
+                                        "End Turn was pressed but the turn did not end: a warning may need you"]),
+                      turn=turn)
+        except InputAborted as ex:
+            self.post("error", f"INTERRUPTED (turn {turn})",
+                      f"interrupted: {ex}\nthe turn was not ended; Build & End Turn again to redo it", turn=turn)
+        except Exception as ex:
+            traceback.print_exc()
+            self.post("error", "ERROR", f"Build & End Turn failed: {ex}\nthe turn was not ended", turn=turn)
+        finally:
+            self.busy.release()
+
+    def press_end_turn(self, turn) -> bool:
+        """Click the game's End Turn button and wait until the turn really ends (the AI phase starts or the turn
+        counter moves). False when the game did not end it (e.g. it asks the player about something first)."""
+        from bot.focus import game_focus
+        from tools import wait
+        from tools.ui import click
+        with game_focus():
+            b = self.ui.cached("button_end_turn", under="hud_campaign")
+            if b is None:
+                return False
+            click(self.ui, b)
+            return bool(wait.wait_until(lambda: self.mem.read().turn != turn or not players_turn(self.ui)[0], 3.0,
+                                        "the turn ends", must=False))
+
     def wait_idle(self, turn, cancel) -> bool:
         """Wait until the player has left mouse and keyboard alone for IDLE_SECONDS. False when cancelled."""
         while not self.stop.is_set():
@@ -252,17 +342,26 @@ class Runner:
                   + ("\nharmless? 'Ignore' in the assistant window" if can else ""), turn=turn)
         self.offer_ignore(can)
 
+    def start_steps(self, turn) -> list[str]:
+        """The turn-start pass: the turn-start steps, plus the end-of-turn steps when the previous turn was ended
+        without "Build & End Turn" (the player pressed End Turn in the game), so nothing waits a whole turn."""
+        sch = schedule()
+        names = list(sch["turn_start"])
+        if self.end_done != (self.model, (turn or 0) - 1):
+            names += [n for n in sch["end_turn"] if n not in names]
+        return names
+
     def do_pass(self, turn, pre: list[str], phases: dict | None = None) -> None:
-        """One full pass (busy must be held). InputAborted propagates to the caller."""
+        """One turn-start pass (busy must be held). InputAborted propagates to the caller."""
         self.offer_ignore([])
-        done = self.automate(turn, pre, phases=phases)
+        done = self.automate(turn, pre, phases=phases, names=self.start_steps(turn))
         self.done_turn = turn
         if self.pending == turn:
             self.pending = None
         self.post("your turn", f"YOUR TURN {turn}", "\n".join(done), turn=turn)
 
     def automate(self, turn: int | None, pre: list[str] | None = None, phases: dict | None = None,
-                 label: str = "pass") -> list[str]:
+                 label: str = "pass", names: list[str] | None = None) -> list[str]:
         """All steps run inside one game_focus: the game is raised once for the whole pass and focus goes
         back to the terminal (or this app) only when every step is done. Timed into runs/timing-*.jsonl."""
         from bot.focus import game_focus
@@ -278,16 +377,16 @@ class Runner:
             self.post("automating", f"AUTOMATING turn {turn}", "", turn=turn)
             try:
                 with game_focus():
-                    return self._automate(turn, list(pre))
+                    return self._automate(turn, list(pre), all_steps() if names is None else names)
             except RuntimeError as ex:
                 return list(pre) + [f"could not bring the game to the front: {ex}"]
 
-    def _automate(self, turn, done: list[str]) -> list[str]:
+    def _automate(self, turn, done: list[str], names: list[str]) -> list[str]:
         try:
-            for name, fn in STEPS:
+            for name in names:
                 with timing.step(name):
                     try:
-                        result = fn(log=lambda m: None)
+                        result = STEP_FNS[name](log=lambda m: None)
                     except Exception as ex:
                         result = f"ERROR {ex}"
                         traceback.print_exc()
@@ -429,7 +528,7 @@ def main() -> int:
     from .app import App
     holder: dict = {}
     app = App(on_pause=lambda: holder["r"].toggle_pause(), on_run_now=lambda: holder["r"].run_now(),
-              on_ignore=lambda cid: holder["r"].ignore(cid))
+              on_ignore=lambda cid: holder["r"].ignore(cid), on_end_turn=lambda: holder["r"].end_turn_now())
     r = Runner(widget=app)
     holder["r"] = r
     threading.Thread(target=r.loop, daemon=True).start()
