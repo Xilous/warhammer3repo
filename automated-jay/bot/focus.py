@@ -27,7 +27,9 @@ import pydirectinput
 import win32con
 import win32gui
 
-from . import config
+from . import config, killswitch
+
+killswitch.install()          # Shift+Esc ends any process that can send input (bot/killswitch.py)
 
 TERMINAL_CLASSES = ("CASCADIA_HOSTING_WINDOW_CLASS", "ConsoleWindowClass")
 HWND_FILE = config.RUNS_DIR / "terminal_hwnd"

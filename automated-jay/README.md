@@ -33,6 +33,14 @@ To stop, close the assistant window.
 `run_assistant_once.bat` does a single pass right now, without the window, after asking you to confirm. It makes
 the same checks as **Run now** (your turn, 3 s idle, no open decision). While the assistant is running, use **Run now** instead.
 
+### Emergency stop: Shift+Esc
+
+Press **Shift+Esc** at any time, in any window, to end the assistant immediately (and any test driver or test
+script of this project that is running). Every process that can send input to the game watches the keyboard for
+it (bot/killswitch.py, armed by bot/focus.py): it lets go of the mouse buttons and any held keys and exits on the
+spot, mid-click. Only a key press you make counts (the automation cannot trigger it), and the game does not see
+that Escape. Start the assistant again with run_assistant.bat.
+
 ### What happens each turn
 
 1. The assistant sees the turn counter go up. It waits until it really is your turn (End Turn button shown and

@@ -61,7 +61,7 @@ class App:
         self._world = None                         # one sensor for every refresh (bot/sensor/world.py World)
         self._refreshing = threading.Lock()
         self.root = tk.Tk()
-        self.root.title("automated-jay")
+        self.root.title("automated-jay   (Shift+Esc = emergency stop)")
         self.root.geometry("640x720+60+60")
         self.root.configure(bg="#1d1f1d")
         style = ttk.Style(self.root)
