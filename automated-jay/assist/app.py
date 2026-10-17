@@ -64,13 +64,14 @@ def last_logged_turn() -> list[str]:
 
 
 class App:
-    def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None, on_restart=None) -> None:
+    def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None, on_restart=None, on_exit=None) -> None:
         self.q: queue.Queue = queue.Queue()
         self.on_pause = on_pause
         self.on_run_now = on_run_now
         self.on_ignore = on_ignore
         self.on_end_turn = on_end_turn
         self.on_restart = on_restart
+        self.on_exit = on_exit
         self._world = None                         # one sensor for every refresh (bot/sensor/world.py World)
         self._refreshing = threading.Lock()
         self.root = tk.Tk()
@@ -125,8 +126,21 @@ class App:
         from .rail import TurnRail
         self.rail = TurnRail(self.root, on_pause=self._pause,
                              on_end_turn=self._end_turn if on_end_turn is not None else None,
-                             on_run_now=self._run_now)
+                             on_run_now=self._run_now,
+                             on_restart=self._restart if on_restart is not None else None,
+                             on_exit=self._exit if on_exit is not None else None)
         self.overlay = self.rail.win
+        # everything else lives in the rail's fold-out panel (player request 2026-10-17: no alt-tab needed); the
+        # full window is hidden and can be shown from the panel; closing it only hides it again
+        from .railpanel import RailPanel
+        self.panel = RailPanel(self.root, self.rail, on_run_now=self._run_now, on_pause=self._pause,
+                               on_restart=self._restart, on_ignore=self._ignore, on_full_window=self._show_full,
+                               on_exit=self._exit if on_exit is not None else None)
+        self.rail.on_toggle_panel = self.panel.toggle
+        self.rail.on_moved = self.panel.place
+        self.rail.draw()
+        self.root.protocol("WM_DELETE_WINDOW", self.root.withdraw)
+        self.root.withdraw()
         self.ov_hwnd = 0
         self.root.after(100, self._overlay_ready)
 
@@ -156,6 +170,13 @@ class App:
 
     def _run_now(self) -> None:
         threading.Thread(target=self.on_run_now, daemon=True).start()
+
+    def _show_full(self) -> None:
+        self.root.deiconify()
+        self.root.lift()
+
+    def _exit(self) -> None:
+        threading.Thread(target=self.on_exit, daemon=True).start()
 
     def _restart(self) -> None:
         threading.Thread(target=self.on_restart, daemon=True).start()
@@ -194,16 +215,21 @@ class App:
                     bg, fg = COLORS.get(state, COLORS["waiting"])
                     self.state_lbl.configure(text=headline, fg=fg)
                     self.rail.set_status(state, headline, nice(detail))
+                    self.panel.suppress(state == "automating")
                 elif kind == "steps":
                     self.rail.set_steps(msg[1])
                 elif kind == "log":
                     self._show_log(msg[1])
+                    self.panel.show_log(msg[1])
                 elif kind == "paused":
                     self.pause_btn.configure(text="Resume" if msg[1] else "Pause")
+                    self.panel.set_paused(msg[1])
                 elif kind == "world":
                     self._show_world(*msg[1:])
+                    self.panel.show_world(*msg[1:])
                 elif kind == "ignorable":
                     self._show_ignorable(msg[1])
+                    self.panel.show_ignorable(msg[1])
         except queue.Empty:
             pass
         self.root.after(150, self._poll)

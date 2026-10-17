@@ -20,7 +20,7 @@ import tkinter.font as tkfont
 from bot import config
 
 FULL = (1000, 76)
-COMPACT = (420, 54)
+COMPACT = (494, 54)
 HOME = (10, 72)                 # default top-left corner (where the first overlay sat)
 POS_FILE = config.RUNS_DIR / "rail.json"
 DRAG_PX = 4                     # a press that moves further than this is a drag, not a click
@@ -53,8 +53,13 @@ def _font(families, size, weight="normal"):
 
 
 class TurnRail:
-    def __init__(self, root: tk.Tk, on_pause, on_end_turn=None, on_run_now=None) -> None:
+    def __init__(self, root: tk.Tk, on_pause, on_end_turn=None, on_run_now=None, on_restart=None, on_exit=None) -> None:
         self.on_pause, self.on_end_turn, self.on_run_now = on_pause, on_end_turn, on_run_now
+        self.on_restart, self.on_exit = on_restart, on_exit
+        self.on_toggle_panel = None                   # set by the app (assist/railpanel.py)
+        self.on_moved = None
+        self.panel_open = False
+        self._icons: list[tuple[tuple, object]] = []   # (box, callback) of the small buttons on the compact bar
         self.win = tk.Toplevel(root)
         self.win.overrideredirect(True)
         self.win.attributes("-topmost", True)
@@ -191,9 +196,34 @@ class TurnRail:
         if self.btn:
             self._btn_box = box
 
+    def _draw_icons(self, W: int) -> None:
+        """Expand (the fold-out panel), restart (a fresh copy with the latest code), exit: right on the bar."""
+        cv = self.cv
+        self._icons = []
+        col, cy = "#aeb7a8", 27
+        specs = [("panel", self.on_toggle_panel), ("restart", self.on_restart), ("exit", self.on_exit)]
+        x = 426
+        for kind, fn in specs:
+            box = (x - 11, cy - 11, x + 11, cy + 11)
+            cv.create_rectangle(*box, outline="#2b2f29", fill="#171a15")
+            if kind == "panel":
+                d = -1 if self.panel_open else 1                       # chevron down (open) / up (close)
+                cv.create_line(x - 5, cy - 2 * d, x, cy + 3 * d, x + 5, cy - 2 * d, fill=col, width=2,
+                               capstyle="round", joinstyle="round")
+            elif kind == "restart":
+                cv.create_arc(x - 6, cy - 6, x + 6, cy + 6, start=60, extent=280, style="arc", outline=col, width=2)
+                cv.create_line(x + 3, cy - 8, x + 6, cy - 4, x + 1, cy - 3, fill=col, width=2, capstyle="round")
+            else:
+                cv.create_line(x - 5, cy - 5, x + 5, cy + 5, fill="#d99a92", width=2, capstyle="round")
+                cv.create_line(x + 5, cy - 5, x - 5, cy + 5, fill="#d99a92", width=2, capstyle="round")
+            if fn is not None:
+                self._icons.append((box, fn))
+            x += 24
+
     def draw(self) -> None:
         cv = self.cv
         cv.delete("all")
+        self._icons = []
         border, title_fg = STATE.get(self.state, STATE["waiting"])
         if self.full:
             W, H = FULL
@@ -210,7 +240,8 @@ class TurnRail:
             cv.create_text(14, 18, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title_s)
             cv.create_text(14, 38, text=self.sub, anchor="w", fill=MUTED, font=self.f_sub_s, width=150)
             self._rail(180, 300, 27, 5, labels=False)
-            self._button((314, 11, W - 10, H - 11), small=True)
+            self._button((314, 11, 408, H - 11), small=True)
+            self._draw_icons(W)
 
     # ---------------------------------------------------------------- input
     def _set_hover(self, on: bool) -> None:
@@ -232,6 +263,8 @@ class TurnRail:
             self.pos = (px + dx, py + dy)
             self._press = (x0, y0, (px, py), True)
             self.win.geometry(f"+{max(0, self.pos[0])}+{max(0, self.pos[1])}")
+            if self.on_moved:
+                self.on_moved()
 
     def _on_release(self, e) -> None:
         press, self._press = self._press, None
@@ -241,6 +274,10 @@ class TurnRail:
             self.pos = (max(0, self.pos[0]), max(0, self.pos[1]))
             self._save_pos()
             return
+        for (x0, y0, x1, y1), fn in self._icons:
+            if x0 <= e.x <= x1 and y0 <= e.y <= y1:
+                fn()
+                return
         if self._btn_box and self._btn_box[0] <= e.x <= self._btn_box[2] and self._btn_box[1] <= e.y <= self._btn_box[3]:
             fn = self.on_end_turn if self.btn == "end" else self.on_run_now
             if fn:

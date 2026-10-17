@@ -246,6 +246,15 @@ class Runner:
         subprocess.Popen(cmd, cwd=str(config.ROOT), creationflags=subprocess.CREATE_NEW_CONSOLE)
         os._exit(0)
 
+    def exit_now(self) -> None:
+        """The widget's Exit: close the assistant. Never while a pass runs."""
+        import os
+        if not self.busy.acquire(blocking=False):
+            self.post("waiting", "EXIT LATER", "a pass is running: press Exit again when it is done")
+            return
+        print(f"[{datetime.now():%H:%M:%S}] EXIT", flush=True)
+        os._exit(0)
+
     def toggle_pause(self) -> None:
         self.paused = not self.paused
         if self.widget and hasattr(self.widget, "post_paused"):
@@ -763,7 +772,7 @@ def main() -> int:
     holder: dict = {}
     app = App(on_pause=lambda: holder["r"].toggle_pause(), on_run_now=lambda: holder["r"].run_now(),
               on_ignore=lambda cid: holder["r"].ignore(cid), on_end_turn=lambda: holder["r"].end_turn_now(),
-              on_restart=lambda: holder["r"].restart())
+              on_restart=lambda: holder["r"].restart(), on_exit=lambda: holder["r"].exit_now())
     r = Runner(widget=app)
     holder["r"] = r
     threading.Thread(target=r.loop, daemon=True).start()

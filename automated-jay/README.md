@@ -115,6 +115,15 @@ redo it. The assistant never fights a battle, and ends a turn only when you pres
 Overlay colours: grey WAITING, amber AUTOMATING, green YOUR TURN, pink PAUSED and DECISION NEEDED, red ERROR and
 INTERRUPTED. Clicking the overlay toggles pause, except while automating (then clicks go through to the game).
 
+### The widget (everything without alt-tab)
+
+The bar over the game (the Turn rail, compact while you play, full while a pass runs) has three small buttons
+at its right end: **expand** (fold-out panel), **restart** (a fresh copy with the latest code) and **exit**.
+The panel holds what the full window has: Run now, Pause/Resume, Restart, Exit, turn and treasury, this turn's
+results, the armies with their army-builder tick boxes, Ignore buttons for blocking popups, the frontline
+provinces, and a "full window" link. Neither takes focus, so the game stays in front; the panel hides itself
+while a pass runs. Drag the bar to move both. Restart and Exit are refused while a pass runs.
+
 ### The assistant window
 
 | Part | What it does |
