@@ -118,6 +118,9 @@ class Comp:
     def center(self) -> tuple[int, int]:
         return int(self.x + self.w / 2), int(self.y + self.h / 2)
 
+
+CINEMATIC_IDS = ("fullscreen_movie", "cinematic_bars", "scripted_movie_panel")
+
 
 class UI:
     def __init__(self, s: MemorySensor | None = None) -> None:
@@ -517,6 +520,16 @@ class UI:
             if raw[O_VIS]:
                 out.append((c, self._id_raw(c, raw) or "?"))
         return out
+
+    def cinematic(self) -> str | None:
+        """The id of the root panel of a cinematic being shown, or None (game data, ui3.pack, 2026-10-17): a
+        pre-rendered movie (cm:register_instant_movie, e.g. the Chaos Invasion intro) plays in fullscreen_movie, whose
+        layout skips the movie on Escape; an in-engine cutscene puts up cinematic_bars (seen on turn 1); scripted
+        movies use movie_overlay_<name> or scripted_movie_panel. Player rule 2026-10-17: no input while one plays."""
+        for _c, cid in self.root_children():
+            if cid in CINEMATIC_IDS or cid.startswith("movie_overlay"):
+                return cid
+        return None
 
     def root_child(self, cid: str) -> int | None:
         """The visible root child with this id (panels and popups live here), or None."""

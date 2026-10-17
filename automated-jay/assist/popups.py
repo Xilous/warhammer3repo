@@ -29,6 +29,8 @@ NORMAL = {
     # panels the assistant itself opens
     "settlement_panel", "character_details_panel", "technology_panel", "units_recruitment",
     "recruitment_docker", "diplomacy_dropdown_hidden",
+    # cinematics are not popups: while one plays nothing is sent at all (bot/sensor/ui.py UI.cinematic)
+    "fullscreen_movie", "cinematic_bars", "scripted_movie_panel",
 }
 DECISION_HINTS = {
     "diplomacy_dropdown": "an AI diplomacy offer",
@@ -37,7 +39,15 @@ DECISION_HINTS = {
     "dilemma": "a dilemma",
     "popup_message_box": "a confirmation box",
     "esc_menu": "the game menu",
+    # significant global events: left for the player to read and close (player rule 2026-10-17), never ignorable
+    "endgame": "a global event to read",               # dlc29_endgame_crisis_scenarios (the Chaos Invasion)
+    "event_movie_panel": "a global event to read",     # an event with a movie window
 }
+# event notices about significant global events, never closed by the assistant: the endgame chain (its incidents are
+# keyed *_episode_*, e.g. wh3_dlc29_chaos_invasion_episode_foreshadow_1 "Chaos Stirs"), by component id, and by what
+# the notice says. ("movie" is no sign: the ordinary events layout has a dy_movie_frame too.)
+SIGNIFICANT = ("episode", "endgame", "end_times")
+SIGNIFICANT_TEXT = ("chaos invasion", "end times", "endgame", "archaon")
 NAMES = {"agent_options": "a Hero Actions panel"}      # known panels that are not decisions (they can be ignored)
 CLOSE_BUTTONS = ("button_accept", "button_tick", "button_close", "button_ok", "button_dismiss")
 MAX_NOTICES = 24              # notices closed per check at most (they stack at turn start)
@@ -81,6 +91,19 @@ def needs_choice(ui: UI, c: int) -> bool:
     return False
 
 
+def significant(ui: UI, c: int) -> bool:
+    """An event notice about a significant global event (SIGNIFICANT): the player reads and closes it."""
+    for b, n, _r in ui.nodes(c):
+        t = (ui.text(b) or "").lower()
+        if any(k in n.lower() for k in SIGNIFICANT) or any(k in t for k in SIGNIFICANT_TEXT):
+            return True
+    return False
+
+
+def title(ui: UI, c: int) -> str:
+    return next((t for b, _n, _r in ui.nodes(c) if (t := (ui.text(b) or "").strip()) and len(t) < 80), "")
+
+
 def known(cid: str) -> bool:
     return any(k in cid for k in DECISION_HINTS)
 
@@ -108,7 +131,7 @@ def _close_button(ui: UI, c: int) -> int | None:
 def _closable(ui: UI) -> list[tuple[int, str, int]]:
     out = []
     for c, cid in scan(ui):
-        if not is_event(cid) or needs_choice(ui, c):
+        if not is_event(cid) or needs_choice(ui, c) or significant(ui, c):
             continue
         btn = _close_button(ui, c)
         if btn is not None:
@@ -164,7 +187,7 @@ def log_open(ui: UI, turn, where: str) -> None:
     import time as _t
     rows = []
     for c, cid in scan(ui):
-        rows.append({"id": cid, "event": is_event(cid), "choice": needs_choice(ui, c),
+        rows.append({"id": cid, "event": is_event(cid), "choice": needs_choice(ui, c), "significant": significant(ui, c),
                      "buttons": sorted({n for _b, n, _r in ui.nodes(c) if n.startswith("button")})[:20],
                      "texts": [t for b, _n, _r in ui.nodes(c) if (t := ui.text(b)) and len(t) < 120][:8]})
     if not rows:
@@ -183,9 +206,14 @@ def open_decisions(ui: UI | None = None) -> list[tuple[str, str, bool]]:
     out = []
     for c, cid in scan(ui):
         if not is_event(cid):
-            out.append((cid, describe(cid), not known(cid)))
+            d = describe(cid)
+            if d.startswith("a global event") and (t := title(ui, c)):
+                d = f"a global event to read: {t}"
+            out.append((cid, d, not known(cid)))
         elif needs_choice(ui, c):
             out.append((cid, f"a dilemma (choice event, {cid})", False))
+        elif significant(ui, c):
+            out.append((cid, f"a global event to read: {title(ui, c) or cid}", False))
     return out
 
 

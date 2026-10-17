@@ -18,6 +18,15 @@ echo.
 %PY% -X utf8 -m assist.runner %*
 set "RC=%ERRORLEVEL%"
 if "%RC%"=="0" goto :end
+if "%RC%"=="130" (
+    echo Stopped with the kill switch ^(Shift+Esc^).
+    goto :end
+)
+if "%RC%"=="3" (
+    echo The assistant is already running: use its widget over the game. This window closes.
+    timeout /t 5 >nul
+    goto :end
+)
 echo.
 echo The assistant stopped with an error, exit code %RC%. The messages above say why.
 echo If a module is missing, install the requirements once:  %PY% -m pip install -r requirements.txt

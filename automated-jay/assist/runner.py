@@ -28,7 +28,7 @@ from datetime import datetime
 from pathlib import Path
 
 from bot import config
-from bot.focus import InputAborted, idle_seconds, return_to_terminal
+from bot.focus import CinematicPlaying, InputAborted, idle_seconds, return_to_terminal
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
 from tools import timing
@@ -131,6 +131,8 @@ def players_turn(ui: UI) -> tuple[bool, str]:
     if ui.find_root() is None:
         return False, "game UI not found"
     top = dict((cid, c) for c, cid in reversed(ui.root_children()))      # visible root panels, first wins
+    if (cin := ui.cinematic()):
+        return False, f"a cinematic is playing ({cin}); nothing is clicked until it is over"
     if "hud_campaign" not in top:
         return False, "campaign map not shown"
     if "ai_turns" in top:
@@ -478,8 +480,10 @@ class Runner:
 
     def post_decisions(self, turn, need, prefix: str = "") -> None:
         can = [cid for cid, _d, ig in need if ig]
-        self.post("paused", f"DECISION NEEDED (turn {turn})",
-                  prefix + "waiting for you: " + ", ".join(d for _cid, d, _ig in need) + "\nautomations run when it is closed"
+        news = all(d.startswith("a global event") for _cid, d, _ig in need)
+        self.post("paused", f"{'GLOBAL EVENT' if news else 'DECISION NEEDED'} (turn {turn})",
+                  prefix + ("take your time to read it; " if news else "") + "waiting for you: "
+                  + ", ".join(d for _cid, d, _ig in need) + "\nautomations run when it is closed"
                   + ("\nharmless? 'Ignore' in the assistant window" if can else ""), turn=turn)
         self.offer_ignore(can)
 
@@ -708,7 +712,8 @@ class Runner:
         from bot.sensor import turn as turn_mem
         from . import popups
         try:
-            if turn_mem.players_turn(self.mem)[0] is not True or not popups._closable(self.ui):
+            if (turn_mem.players_turn(self.mem)[0] is not True or self.ui.cinematic()
+                    or not popups._closable(self.ui)):
                 return False
             if not have_busy and not self.busy.acquire(blocking=False):
                 return False
@@ -739,6 +744,8 @@ class Runner:
             if not json.load(open(AUTOMATION, encoding="utf-8")).get("close_notices_during_turn", True):
                 return
             if self.paused or self.busy.locked() or win32gui.GetForegroundWindow() != game_hwnd():
+                return
+            if self.ui.cinematic():                 # never during a cinematic (a click would skip it)
                 return
             if not popups._closable(self.ui):
                 ids = tuple(sorted(cid for _c, cid in popups.scan(self.ui)))
@@ -823,6 +830,9 @@ class Runner:
                 self.post_decisions(turn, need)
                 return
             self.do_pass(turn, pre, phases=dict(self.phases))
+        except CinematicPlaying as ex:                      # the pass stays pending: it runs again after the cinematic
+            self.gate_since = None
+            self.post("waiting", f"WAITING (turn {turn})", f"{ex}: the pass goes on once it is over", turn=turn)
         except InputAborted as ex:
             self.pending = None
             self.post("error", f"INTERRUPTED (turn {turn})", f"interrupted: {ex}\nRun now redoes the pass", turn=turn)
@@ -830,10 +840,31 @@ class Runner:
             self.busy.release()
 
 
+ALREADY_RUNNING = 3                 # exit code: another copy has the game (run_assistant.bat says so)
+_instance = None
+
+
+def single_instance(wait_s: float = 8.0) -> bool:
+    """One assistant at a time (2026-10-17: two launcher windows were open and looked like two copies). A named
+    mutex, held for the life of the process; a Restart starts the new copy just before the old one exits, so the
+    new one waits a few seconds for it."""
+    global _instance
+    import win32event
+    h = win32event.CreateMutex(None, False, "Local\\automated-jay-assistant")
+    r = win32event.WaitForSingleObject(h, int(wait_s * 1000))
+    if r in (win32event.WAIT_OBJECT_0, win32event.WAIT_ABANDONED):
+        _instance = h
+        return True
+    return False
+
+
 def main() -> int:
     if "--once" in sys.argv:
         Runner().run_now()          # same checks as the app's Run now: your turn, 3 s idle, no open decision
         return 0
+    if not single_instance():
+        print("automated-jay is already running (its widget is over the game); this copy stops.", flush=True)
+        return ALREADY_RUNNING
     from .app import App
     holder: dict = {}
     app = App(on_pause=lambda: holder["r"].toggle_pause(), on_run_now=lambda: holder["r"].run_now(),

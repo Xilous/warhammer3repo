@@ -46,6 +46,22 @@ class InputAborted(BaseException):
     still run (and their own input raises this again instead of landing in the player's window)."""
 
 
+class CinematicPlaying(InputAborted):
+    """A cinematic started: no click or key may land on it (player rule 2026-10-17, "the assistant shouldnt try to
+    force the user to have to skip the cinematic"; a pass kept clicking while the Chaos Invasion movie played, and a
+    click or Escape skips it). The turn-start pass waits for the cinematic to end and runs again."""
+
+
+def _no_cinematic() -> None:
+    try:
+        from tools.wait import _ui
+        cid = _ui().cinematic()
+    except Exception:                      # (an unreadable UI is not a cinematic: the other checks stand)
+        cid = None
+    if cid:
+        raise CinematicPlaying(f"a cinematic is playing ({cid})")
+
+
 def game_hwnd() -> int:
     return win32gui.FindWindow(None, config.WINDOW_TITLE)
 
@@ -61,6 +77,7 @@ def require_game_front(at: tuple[int, int] | None = None) -> None:
         raise InputAborted("the game window is gone")
     if win32gui.GetForegroundWindow() != g:
         raise InputAborted("the game is not in front (you switched windows)")
+    _no_cinematic()
     if at is not None:
         h = win32gui.WindowFromPoint((int(at[0]), int(at[1])))
         top = win32gui.GetAncestor(h, win32con.GA_ROOT) if h else 0
