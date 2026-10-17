@@ -82,6 +82,10 @@ walk orders are not issued twice.
 2. **Popups.** Event notices are closed. Anything that needs a decision is **always left to you**: diplomacy
    offers, battles, dilemmas, confirmation boxes, the game menu, and any panel it does not recognise. The overlay
    says **DECISION NEEDED** and nothing is clicked. Once you close the popup, the pass starts (it checks every 2 s).
+   Popups about significant global events (the endgame) and story panels that only have "Continue" (Thanquol's
+   story chapters) are left for you to read: **GLOBAL EVENT**. A guided tour of a panel: **GUIDED TOUR**.
+   **While a cinematic plays** (a movie or an in-game cut-scene) nothing is clicked or pressed at all; a pass that
+   a cinematic interrupts waits and runs again when it is over.
 3. **The pass**, in this order. Each step is independent: one that fails is reported and the next still runs.
    Which steps run at turn start and which at **Build & End Turn** is set in `strategy/automation.json`
    (`schedule`). By default Rites, Tech and Skills run at turn start; Rites, Tech, Skills, Buildings and Army run when you press
@@ -97,7 +101,7 @@ walk orders are not issued twice.
       Verminlord choice is answered with **A Verminlord Warpseer** (that dilemma only). Cooldowns and commandments
       are read from memory (assist/rites.py).
    1. **Tech**: if research is idle, start the next tech on the bee-line, after that the cheapest remaining one.
-   2. **Skills**: spend skill points on Ikit Claw, Verminlord Warpseers and Warlock Engineers in your order.
+   2. **Skills**: spend skill points on Ikit Claw, Thanquol, Verminlord Warpseers and Warlock Engineers in your order.
       Other characters are left alone.
    3. **Buildings**: first every damaged building is repaired, then upgrades and constructions from your
       settlement priority list. Provinces where an enemy you are at war with holds a region, or that border one,
@@ -114,6 +118,25 @@ redo it. The assistant never fights a battle, and ends a turn only when you pres
 
 Overlay colours: grey WAITING, amber AUTOMATING, green YOUR TURN, pink PAUSED and DECISION NEEDED, red ERROR and
 INTERRUPTED. Clicking the overlay toggles pause, except while automating (then clicks go through to the game).
+
+### Playing Thanquol (Clan Scruten), the backup faction
+
+The assistant finds out from memory which faction you play (the human faction that is Ikit's Clan Skryre or
+Thanquol's Clan Scruten); there is nothing to set. What is different with Thanquol:
+- **Masterplans are yours.** The assistant never touches the Masterplans panel during your turn; Run now and Build
+  & End Turn close it (and its guided tour) before they start. Underlings are not armies to it: they are never
+  listed for ticking and the army builder ignores them.
+- **Skills** (`strategy/skills.json`, "thanquol"): Ikit's order on Thanquol's tree, with Blessings of the Horned
+  Rat, Replaceable Fodder (-50% recruitment cost in his army) and Hasty Redirection worked in early (his unique row
+  unlocks at rank 11); Boneripper with **Warpfire Projectors** as soon as rank 15 allows, Warpfire Braziers never.
+- **Buildings**: the same settlement list. His Grey Seer Lair in Karag Dromar is kept and upgraded as a landmark;
+  the Morskittar Engine is Zhufbar's landmark (once his story unlocks it). Frontline provinces stay yours, as with
+  Ikit (Black Water is one while Zhufbar is an enemy's).
+- **No Forbidden Workshop**: the Shop step does nothing.
+- Rites, tech tree and the army template are the same (Thanquol is an allowed lord); Ferocious Plans comes
+  researched.
+- **Not built for him**: a Construction Cavern. Warlock Engineers need one somewhere; until you build one the
+  army builder says so.
 
 ### The widget (everything without alt-tab)
 
