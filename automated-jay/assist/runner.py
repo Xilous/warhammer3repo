@@ -300,6 +300,8 @@ class Runner:
                 self.post("waiting", "WAITING", "Run now: no campaign loaded")
                 return
             ok, why = players_turn(self.ui)
+            if not ok and why == "campaign map not shown" and self._put_away_panels():
+                ok, why = players_turn(self.ui)
             if not ok and why.startswith("End Turn button is") and self._clear_notices_first(have_busy=True):
                 ok, why = players_turn(self.ui)
             if not ok:
@@ -334,6 +336,8 @@ class Runner:
                 return
             turn = s.turn
             ok, why = players_turn(self.ui)
+            if not ok and why == "campaign map not shown" and self._put_away_panels():
+                ok, why = players_turn(self.ui)
             if not ok and why.startswith("End Turn button is") and self._clear_notices_first(have_busy=True):
                 ok, why = players_turn(self.ui)
             if not ok:
@@ -724,6 +728,26 @@ class Runner:
             from bot.sensor import turn as turn_mem
             if self.my_turn or turn_mem.players_turn(self.mem)[0] is True:
                 self._close_notices()
+
+    FULL_SCREEN = ("dlc29_skv_chaotic_plans", "character_details_panel", "technology_panel")
+
+    def _put_away_panels(self) -> bool:
+        """The player pressed Run now / Build & End Turn with a full-screen panel open (2026-10-17: Thanquol's
+        Masterplans panel hides the campaign HUD, and the pass refused with "campaign map not shown"): when memory
+        says it is the player's turn, close it (close_panels) so the checks see the map. True when one was closed."""
+        from bot.sensor import turn as turn_mem
+        from bot.focus import game_focus
+        if turn_mem.players_turn(self.mem)[0] is not True:
+            return False
+        if not any(self.ui.root_child(p) for p in self.FULL_SCREEN):
+            return False
+        from tools import wait
+        with game_focus():
+            self.close_panels()
+        # the Masterplans panel animates out for a while: the campaign HUD is back once it is gone
+        return bool(wait.wait_until(lambda: self.ui.root_child("hud_campaign")
+                                    and not any(self.ui.root_child(p) for p in self.FULL_SCREEN), 3.0,
+                                    "campaign map back", must=False))
 
     def _clear_notices_first(self, have_busy: bool = False) -> bool:
         """It is the player's turn by memory, but End Turn is greyed out: the game does that while an event notice is
