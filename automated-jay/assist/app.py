@@ -116,9 +116,15 @@ class App:
         self.ov_title.pack(fill="x")
         self.ov_detail = tk.Label(self.ov_frame, font=("Segoe UI", 9), anchor="w", justify="left", wraplength=320)
         self.ov_detail.pack(fill="x")
+        self.ov_end = None
+        if on_end_turn is not None:                    # reachable without leaving the game (the overlay never takes
+            self.ov_end = tk.Button(self.ov_frame, text="Build & End Turn", command=self._end_turn,   # focus)
+                                    font=("Segoe UI", 9, "bold"), relief="raised", bd=1, padx=8, pady=1,
+                                    bg="#3b3b3b", fg="#f0f0f0", activebackground="#5a5a5a", cursor="hand2")
+            self.ov_end.pack(anchor="w", pady=(4, 0))
         # a binding on the toplevel already fires for every widget in it (bindtags): binding the children as well
-        # toggled pause twice per click, i.e. not at all
-        self.overlay.bind("<Button-1>", lambda e: self._pause())
+        # toggled pause twice per click, i.e. not at all. Clicks on the End Turn button are not a pause.
+        self.overlay.bind("<Button-1>", lambda e: None if e.widget is self.ov_end else self._pause())
         self.ov_hwnd = 0
         self.root.after(100, self._overlay_ready)
 
@@ -183,6 +189,8 @@ class App:
                         wdg.configure(bg=bg)
                     self.ov_title.configure(text=headline, fg=fg)
                     self.ov_detail.configure(text=nice(detail), fg="#e8e8e8")
+                    if self.ov_end is not None:        # not while a pass is clicking (the overlay lets clicks through)
+                        self.ov_end.configure(state="disabled" if state == "automating" else "normal")
                 elif kind == "log":
                     self._show_log(msg[1])
                 elif kind == "paused":
