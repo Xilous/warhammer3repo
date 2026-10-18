@@ -298,12 +298,12 @@ class App:
                                                   if getattr(self, "template_needs", None) else ""))
                         self.rail.set_template(ok, short)
                 elif kind == "finance":
-                    _, verdict, ok, can, why_not, lines = msg
-                    self._can_raise = can
-                    self.verdict_lbl.configure(text=verdict, fg="#9fd9a6" if ok else "#e0a070")
-                    self.finance_lbl.configure(text="\n".join(lines))
-                    self.raise_btn.configure(state="normal" if can else "disabled")
-                    self.panel.show_finance(verdict, ok, can, why_not, lines)
+                    f = msg[1]
+                    self._can_raise = f["can"]
+                    self.verdict_lbl.configure(text=f["verdict"], fg="#b8d98a" if f["ok"] else "#f0b49f")
+                    self.finance_lbl.configure(text="\n".join(f["lines"] + ([f["why_not"]] if f["why_not"] else [])))
+                    self.raise_btn.configure(state="normal" if f["can"] else "disabled")
+                    self.panel.show_finance(f)
                 elif kind == "ignorable":
                     self._show_ignorable(msg[1])
                     self.panel.show_ignorable(msg[1])
@@ -372,12 +372,21 @@ class App:
             self.template_needs = template_needs(src)
             self.q.put(("world", st, rows, blocked, heroes))
             try:
-                from .army_finance import compute, readiness
+                from .army_finance import checks, compute
                 f = compute(w, F)
-                can, why_not = readiness(w, F, f)
-                self.q.put(("finance", f.verdict(), f.after_next >= 0, can, why_not, f.lines()))
+                cs = checks(w, F)
+                ws = None
+                if (w.faction_name(F) or "") == "wh3_dlc29_skv_clan_scruten":
+                    from bot.sensor import masterplans as mp
+                    ws = mp.Reader(w).pooled(F).get(mp.WARPSTONE_KEY)
+                self.q.put(("finance", {"fin": f, "verdict": f.verdict(), "ok": f.after_next >= 0,
+                                        "can": all(ok for _l, ok, _w in cs), "checks": cs, "warpstone": ws,
+                                        "lines": f.lines(),
+                                        "why_not": "; ".join(f"{lb}: {why}" for lb, ok, why in cs if not ok)}))
             except Exception as ex:                       # noqa: BLE001  (the dashboard says why)
-                self.q.put(("finance", f"army finances unreadable: {ex}", False, False, str(ex), []))
+                self.q.put(("finance", {"fin": None, "verdict": f"army finances unreadable: {ex}", "ok": False,
+                                        "can": False, "checks": [], "warpstone": None, "lines": [],
+                                        "why_not": str(ex)}))
         except Exception as ex:
             self.q.put(("world", None, [], {"error": str(ex)}, []))
 

@@ -142,24 +142,31 @@ def pool_subtypes(w, F) -> list[str]:
     return out
 
 
-def readiness(w, F, fin: Finance | None = None) -> tuple[bool, str]:
-    """(a new playbook army can be created now, what is missing): a Verminlord Warpseer in the Recruit Lord pool, a
-    Warlock Engineer for it (one free, or the engineer cap has room) and a province that recruits the whole template.
-    Affordability is shown, not required: the player decides."""
+def checks(w, F) -> list[tuple[str, bool, str]]:
+    """(label, met, what to do when not) for each thing a new playbook army needs: a Verminlord Warpseer in the
+    Recruit Lord pool, a Warlock Engineer for it (one free, or the engineer cap has room) and a province that
+    recruits the whole template. Affordability is shown, not required: the player decides."""
     from .army_builder import ENGINEER, _load_claims, eligible, free_engineer_slots
     from .army import load_automation
     from .new_army import WARPSEER
     from bot.sensor.world import characters
     t = load_automation()["army_builder"]["template"]
-    missing = []
-    if WARPSEER not in pool_subtypes(w, F):
-        missing.append("no Verminlord Warpseer in the Recruit Lord pool (the Dominating Scheme brings one)")
     claims = _load_claims()
     free = [c for c in characters(w, F) if c.embedded_force == 0 and c.subtype == ENGINEER
             and w.u32(c.ptr + 0x110) not in claims]
     slots = free_engineer_slots(w, F)
-    if not free and slots is not None and slots <= 0:
-        missing.append("no Warlock Engineer (none free, engineer cap full)")
-    if not eligible(w, F, set(t["units"])):
-        missing.append("no province recruits Stormvermin and Stormfiend Ratling Cannons yet")
+    eng = bool(free) or slots is None or slots > 0
+    return [
+        ("Verminlord Warpseer in the Recruit Lord pool", WARPSEER in pool_subtypes(w, F),
+         "the Dominating Scheme brings one"),
+        ("Warlock Engineer free" if free else "Warlock Engineer (cap has room)", eng, "none free, engineer cap full"),
+        ("Province recruiting Stormvermin + Ratling Cannons", bool(eligible(w, F, set(t["units"]))),
+         "none yet"),
+    ]
+
+
+def readiness(w, F, fin: Finance | None = None) -> tuple[bool, str]:
+    """(a new playbook army can be created now, what is missing)."""
+    cs = checks(w, F)
+    missing = [f"{label}: {why}" for label, ok, why in cs if not ok]
     return not missing, "; ".join(missing)

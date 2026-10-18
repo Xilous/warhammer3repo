@@ -9,8 +9,8 @@ It can be dragged anywhere; the spot is remembered (runs/rail.json). A click (no
 button under it. Drawn on a Tk canvas; the window's corners are cut out with a transparent colour key. While a pass
 runs it lets clicks through and never takes focus (assist/app.py sets the window styles).
 
-Node states: done (green tick), active (amber ring), pending (grey ring), later (dashed: runs at Build & End Turn),
-failed (red cross).
+Steps are bars (Clan Brass, 2026-10-18, assist/theme.py): done brass, active amber, pending dim, later (dashed: runs at Build & End Turn),
+failed red.
 """
 from __future__ import annotations
 import json
@@ -25,26 +25,22 @@ HOME = (10, 72)                 # default top-left corner (where the first overl
 POS_FILE = config.RUNS_DIR / "rail.json"
 DRAG_PX = 4                     # a press that moves further than this is a drag, not a click
 KEY = "#010203"                 # transparent colour key (the cut-out corners)
-RADIUS = 10
 NODES = [("events", "Events"), ("rites", "Rites"), ("workshop", "Shop"), ("tech", "Tech"), ("skills", "Skills"),
          ("masterplans", "Plans"), None,
          ("buildings", "Build"), ("army", "Army"), ("end", "End")]
 
-BG = "#10120f"
-INK = "#c9d0c4"
-MUTED = "#8e978a"
-LINE = "#3b4238"
-RING = "#4e564b"
-GREEN, GREEN_DARK = "#5fc94a", "#0e1a0b"
-AMBER, AMBER_DIM = "#ffce54", "#5c4c22"
-RED = "#ff685c"
-STATE = {            # state -> (border, title colour)
-    "waiting": ("#2b2f29", "#c9d0c4"),
-    "automating": ("#6b5a2a", AMBER),
-    "your turn": ("#3d6b33", "#8fe678"),
-    "paused": ("#7a5326", "#ffb877"),
-    "error": ("#7a3029", "#ff8b80"),
-}
+from . import theme as T
+
+BG = T.PANEL
+INK = T.INK
+MUTED = T.MUTED
+LINE = T.LINE
+RING = T.LINE
+GREEN, GREEN_DARK = T.BRASS, T.ON_BRASS
+AMBER, AMBER_DIM = T.AMBER, "#5c4c22"
+RED = T.RED
+STATE = {s: (c, T.TITLE) for s, c in T.STATE.items()}      # state -> (stripe, title colour)
+RADIUS = 4
 
 
 def _font(families, size, weight="normal"):
@@ -141,46 +137,39 @@ class TurnRail:
                x0, y1 - r, x0, y0 + r, x0, y0]
         return self.cv.create_polygon(pts, smooth=True, **kw)
 
-    def _node(self, cx, cy, status, r=11):
+    def _segment(self, x0, x1, cy, status, h):
+        """One step as a flat bar (Clan Brass): done brass, running amber, failed red, later outlined, pending dim."""
         cv = self.cv
+        y0, y1 = cy - h / 2, cy + h / 2
         if status == "done":
-            cv.create_oval(cx - r, cy - r, cx + r, cy + r, fill=GREEN, outline=GREEN)
-            if r >= 8:
-                cv.create_line(cx - r * .45, cy, cx - r * .1, cy + r * .36, cx + r * .55, cy - r * .36,
-                               fill=GREEN_DARK, width=2.6, capstyle="round", joinstyle="round")
+            cv.create_rectangle(x0, y0, x1, y1, fill=T.BRASS, outline=T.BRASS)
         elif status == "active":
-            cv.create_oval(cx - r - 4, cy - r - 4, cx + r + 4, cy + r + 4, outline=AMBER_DIM, width=3)
-            cv.create_oval(cx - r + 1, cy - r + 1, cx + r - 1, cy + r - 1, outline=AMBER, width=3 if r >= 8 else 2)
+            cv.create_rectangle(x0, y0, x1, y1, fill=T.AMBER, outline=T.AMBER)
         elif status == "failed":
-            cv.create_oval(cx - r + 1, cy - r + 1, cx + r - 1, cy + r - 1, outline=RED, width=2)
-            k = r * .36
-            cv.create_line(cx - k, cy - k, cx + k, cy + k, fill=RED, width=2)
-            cv.create_line(cx + k, cy - k, cx - k, cy + k, fill=RED, width=2)
+            cv.create_rectangle(x0, y0, x1, y1, fill=T.RED, outline=T.RED)
         elif status == "later":
-            cv.create_oval(cx - r + 1, cy - r + 1, cx + r - 1, cy + r - 1, outline="#5d6659", width=2, dash=(3, 3))
+            cv.create_rectangle(x0 + 0.5, y0 + 0.5, x1 - 0.5, y1 - 0.5, fill="", outline=T.DIM, dash=(2, 2))
         else:
-            cv.create_oval(cx - r + 1, cy - r + 1, cx + r - 1, cy + r - 1, outline=RING, width=2)
+            cv.create_rectangle(x0, y0, x1, y1, fill=T.LINE, outline=T.LINE)
 
-    def _rail(self, x0, x1, cy, r, labels: bool):
-        slots = len(NODES)
-        xs = [x0 + (x1 - x0) * i / (slots - 1) for i in range(slots)]
-        prev = None
-        for node, x in zip(NODES, xs):
+    def _rail(self, x0, x1, cy, h, labels: bool):
+        """The steps as a row of bars, a gap between turn start and end of turn (NODES' None)."""
+        steps = [n for n in NODES if n is not None]
+        gap = 10 if labels else 6
+        space = 3 if not labels else 6
+        seg = (x1 - x0 - gap - space * (len(steps) - 1)) / len(steps)
+        x = x0
+        for node in NODES:
             if node is None:
-                self.cv.create_line(x, cy - r - 6, x, cy + r + (22 if labels else 6), fill="#2f342d", width=1)
-                prev = None
+                x += gap - space
                 continue
             key, label = node
             st = self.steps.get(key, "pending")
-            if prev is not None:
-                px, pst = prev
-                col = GREEN if (pst == "done" and st in ("done", "active")) else LINE
-                self.cv.create_line(px + r + 3, cy, x - r - 3, cy, fill=col, width=2)
-            self._node(x, cy, st, r)
+            self._segment(x, x + seg, cy, st, h)
             if labels:
-                col = {"done": INK, "active": AMBER, "failed": RED}.get(st, "#6f786b")
-                self.cv.create_text(x, cy + r + 13, text=label.upper(), fill=col, font=self.f_node)
-            prev = (x, st)
+                col = {"done": T.INK, "active": T.AMBER, "failed": T.RED}.get(st, T.DIM)
+                self.cv.create_text(x + seg / 2, cy + h / 2 + 11, text=label.upper(), fill=col, font=self.f_node)
+            x += seg + space
 
     def _button(self, box, small: bool):
         cv = self.cv
@@ -188,18 +177,18 @@ class TurnRail:
         self.btn, self._btn_box = None, None
         f = self.f_btn_s if small else self.f_btn
         if self.state == "automating":
-            cv.create_text((bx0 + bx1) / 2, by0 + (by1 - by0) * .35, text="MOUSE HELD", fill=AMBER, font=self.f_node)
+            cv.create_text((bx0 + bx1) / 2, by0 + (by1 - by0) * .35, text="MOUSE HELD", fill=T.AMBER, font=self.f_node)
             cv.create_text((bx0 + bx1) / 2, by0 + (by1 - by0) * .72, text="Shift+Esc stops", fill=MUTED,
                            font=self.f_sub_s)
         elif self.state == "error" and self.on_run_now is not None:
             self.btn = "run"
-            self._round_rect(bx0, by0, bx1, by1, 8, fill=BG, outline="#6b6f69", width=1.5)
-            cv.create_text((bx0 + bx1) / 2, (by0 + by1) / 2, text="RUN NOW", fill="#eef1ea", font=f)
+            self._round_rect(bx0, by0, bx1, by1, 3, fill=T.PANEL, outline=T.BRASS, width=1.5)
+            cv.create_text((bx0 + bx1) / 2, (by0 + by1) / 2, text="RUN NOW", fill=T.BRASS, font=f)
         elif self.on_end_turn is not None:
             self.btn = "end"
-            self._round_rect(bx0, by0, bx1, by1, 8, fill="#7fdc66", outline="#7fdc66")
+            self._round_rect(bx0, by0, bx1, by1, 3, fill=T.BRASS, outline=T.BRASS)
             cv.create_text((bx0 + bx1) / 2, (by0 + by1) / 2, text="BUILD & END TURN" if not small else "END TURN",
-                           fill="#0d1d09", font=f)
+                           fill=T.ON_BRASS, font=f)
         if self.btn:
             self._btn_box = box
 
@@ -207,12 +196,12 @@ class TurnRail:
         """Expand (the fold-out panel), restart (a fresh copy with the latest code), exit: right on the bar."""
         cv = self.cv
         self._icons = []
-        col, cy = "#aeb7a8", 27
+        col, cy = T.MUTED, 27
         specs = [("panel", self.on_toggle_panel), ("restart", self.on_restart), ("exit", self.on_exit)]
         x = 426
         for kind, fn in specs:
             box = (x - 11, cy - 11, x + 11, cy + 11)
-            cv.create_rectangle(*box, outline="#2b2f29", fill="#171a15")
+            cv.create_rectangle(*box, outline=T.LINE, fill=T.PANEL2)
             if kind == "panel":
                 d = -1 if self.panel_open else 1                       # chevron down (open) / up (close)
                 cv.create_line(x - 5, cy - 2 * d, x, cy + 3 * d, x + 5, cy - 2 * d, fill=col, width=2,
@@ -221,43 +210,48 @@ class TurnRail:
                 cv.create_arc(x - 6, cy - 6, x + 6, cy + 6, start=60, extent=280, style="arc", outline=col, width=2)
                 cv.create_line(x + 3, cy - 8, x + 6, cy - 4, x + 1, cy - 3, fill=col, width=2, capstyle="round")
             else:
-                cv.create_line(x - 5, cy - 5, x + 5, cy + 5, fill="#d99a92", width=2, capstyle="round")
-                cv.create_line(x + 5, cy - 5, x - 5, cy + 5, fill="#d99a92", width=2, capstyle="round")
+                cv.create_line(x - 5, cy - 5, x + 5, cy + 5, fill=T.WARN, width=2, capstyle="round")
+                cv.create_line(x + 5, cy - 5, x - 5, cy + 5, fill=T.WARN, width=2, capstyle="round")
             if fn is not None:
                 self._icons.append((box, fn))
             x += 24
+
+    def _frame(self, W, H, stripe):
+        """Clan Brass: a flat dark plate with a 3 px stripe on top in the state's colour."""
+        self._round_rect(1, 1, W - 1, H - 1, RADIUS, fill=T.PANEL, outline=T.BASE, width=1)
+        self.cv.create_rectangle(2, 1, W - 2, 4, fill=stripe, outline=stripe)
 
     def draw(self) -> None:
         cv = self.cv
         cv.delete("all")
         self._icons = []
-        border, title_fg = STATE.get(self.state, STATE["waiting"])
+        stripe, title_fg = STATE.get(self.state, STATE["waiting"])
         if self.full:
             W, H = FULL
             self._place(W, H)
-            self._round_rect(1, 1, W - 1, H - 1, RADIUS, fill=BG, outline=border, width=1.5)
-            cv.create_text(18, 26, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title)
-            cv.create_text(18, 50, text=self.sub, anchor="w", fill=MUTED, font=self.f_sub, width=190)
-            self._rail(232, 812, 30, 11, labels=True)
-            self._button((836, 14, W - 12, H - 14), small=False)
+            self._frame(W, H, stripe)
+            cv.create_text(18, 27, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title)
+            cv.create_text(18, 51, text=self.sub, anchor="w", fill=T.MUTED, font=self.f_sub, width=190)
+            self._rail(232, 812, 28, 6, labels=True)
+            self._button((836, 16, W - 12, H - 14), small=False)
         else:
             W, H = COMPACT
             self._place(W, H)
-            self._round_rect(1, 1, W - 1, H - 1, RADIUS, fill=BG, outline=border, width=1.5)
-            cv.create_text(14, 18, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title_s)
-            cv.create_text(14, 38, text=self.sub, anchor="w", fill=MUTED, font=self.f_sub_s, width=150)
-            self._rail(180, 300, 27, 5, labels=False)
-            self._button((314, 11, 408, 43), small=True)
+            self._frame(W, H, stripe)
+            cv.create_text(14, 20, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title_s)
+            cv.create_text(14, 39, text=self.sub, anchor="w", fill=T.MUTED, font=self.f_sub_s, width=150)
+            self._rail(176, 302, 28, 6, labels=False)
+            self._button((314, 13, 408, 43), small=True)
             self._draw_icons(W)
             # bottom strip, always visible: can any province recruit the whole army template?
-            cv.create_line(12, 53, W - 12, 53, fill="#23271f")
+            cv.create_line(12, 53, W - 12, 53, fill=T.LINE)
             if self.template is not None:
                 ok, text = self.template
                 cv.create_text(14, 61, anchor="w", font=self.f_sub_s, width=W - 28,
                                text=("TEMPLATE ✓ " if ok else "TEMPLATE: ") + text,
-                               fill="#8fe678" if ok else "#ffb877")
+                               fill=T.GOOD if ok else T.WARN)
             else:
-                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, text="TEMPLATE: checking...", fill=MUTED)
+                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, text="TEMPLATE: checking...", fill=T.MUTED)
 
     # ---------------------------------------------------------------- input
     def _set_hover(self, on: bool) -> None:
