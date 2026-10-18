@@ -32,7 +32,7 @@ from bot.focus import CinematicPlaying, InputAborted, idle_seconds, return_to_te
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
 from tools import timing
-from . import army_builder, build, rites, skills, tech, workshop
+from . import army_builder, build, masterplans, rites, skills, tech, workshop
 
 # Turn-start settle, by condition (was a fixed 4 s): the pass starts once the turn-start camera pan has finished (the
 # map point at the screen centre moves less than SETTLE_CAMERA_PX per frame for SETTLE_CAMERA_MS) AND no root panel
@@ -47,6 +47,7 @@ POLL_NOTICES = 0.5            # during the player's turn: how often to look for 
 POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
 END_TURN_WAIT_S = 8.0         # after Shift+Enter, until the game runs another faction's turn (took ~2.3 s in the logs)
 END_TURN_TRIES = 2            # a key the game did not take is pressed once more
+MP_PENDING_WAIT_S = 180.0     # multiplayer: how long End Turn waits out another player's battle ("pending action")
 VERIFY_ROUNDS = 2            # verification runs per step (each one that had to redo something is followed by another)
 IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alone this long before a pass
 LOST_AFTER = 2                # polls in a row without a campaign before the turn bookkeeping starts over
@@ -59,14 +60,17 @@ STEP_FNS = {
     "workshop": workshop.run,            # the Stormfiend Ratling Cannon upgrades, as soon as they can be bought
     "tech": tech.run,
     "skills": skills.run,
-    "buildings": build.run,              # player rule: building upgrades take precedence over refilling armies
+    "masterplans": masterplans.run,      # Thanquol: Steal-Takes and Clan Scruten Secrets (end of turn only, 2026-10-18)
+    "buildings": build.run,             # player rule: building upgrades take precedence over refilling armies
     "army": army_builder.run,            # recruits with whatever gold the building step left
 }
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
 DEFAULT_SCHEDULE = {"turn_start": ["rites", "workshop", "tech", "skills"],
-                    "end_turn": ["rites", "workshop", "tech", "skills", "buildings", "army"]}
+                    "end_turn": ["rites", "workshop", "tech", "skills", "masterplans", "buildings", "army"]}
+# masterplans at the end of the turn only (player decision, 2026-10-18): Underlings the player sends on a Kill-Stab during
+# the turn are never taken for a Steal-Take first; before buildings, so a completed Steal-Take's gold is spent this turn
 # tech and skills at both: a campaign's first turn has no turn start to act on (2026-10-17), and unspent skill points
 # make End Turn stop at the game's warning; with nothing to do they send no input
 AUTOMATION = config.STRATEGY_DIR / "automation.json"
@@ -121,6 +125,34 @@ def read_state() -> dict:
     return {}
 
 
+# Simultaneous multiplayer (2026-10-18, Ikit Claw with a friend): every human faction stays in the "whose turn" list
+# until all of them have ended the turn, so memory alone cannot tell "ended, waiting for the others" from "still
+# moving". The player list at the top left (mp_player_list) shows a ready tick (icon_ready) beside each player who
+# ended. Its rows do not say which one is local: it is the one whose tick came on when the assistant pressed End Turn.
+MP_ME = {"name": None}
+
+
+def mp_ready(ui: UI) -> dict[str, bool]:
+    """Multiplayer: each player's name in the player list -> their ready tick (ended the turn, waiting for the
+    others). Empty outside multiplayer (no player list shown)."""
+    lst = ui.cached("mp_player_list", under="hud_campaign")
+    out = {}
+    if lst is None:
+        return out
+    for row in ui.children(lst):
+        lab = ui.child(row, "label_player")
+        if lab is None or not ui.effective_visible(row):    # (template_entry: the hidden row the game copies)
+            continue
+        icon = ui.child(row, "icon_ready")
+        out[ui.text(lab) or ""] = bool(icon is not None and ui.effective_visible(icon))
+    return out
+
+
+def mp_waiting(ui: UI) -> bool:
+    """The player ended the turn and the other players have not yet (multiplayer)."""
+    return bool(MP_ME["name"]) and mp_ready(ui).get(MP_ME["name"]) is True
+
+
 def players_turn(ui: UI) -> tuple[bool, str]:
     """(True, "") when the player can act on the campaign map now, else (False, why). Root panels plus one cached
     lookup: cheap enough to poll."""
@@ -137,10 +169,14 @@ def players_turn(ui: UI) -> tuple[bool, str]:
         return False, "campaign map not shown"
     if "ai_turns" in top:
         return False, "other factions are moving"
+    if mp_waiting(ui):
+        return False, "you ended the turn: waiting for the other players"
     end = ui.cached("button_end_turn", under="hud_campaign")
     if end is None:
         return False, "End Turn button not shown"
     st = ui.state(end) or ""
+    if st.startswith("selected"):                  # multiplayer: pressed, waiting for the others (watched 2026-10-18)
+        return False, "you ended the turn: waiting for the other players"
     if st.startswith(("inactive", "disabled")):
         return False, f"End Turn button is {st}"
     return True, ""
@@ -227,7 +263,8 @@ class Runner:
         if reset:
             end = set(schedule()["end_turn"]) - set(schedule()["turn_start"]) | {"end"}
             self.rail_steps = {k: ("later" if k in end else "pending")
-                               for k in ("events", "rites", "workshop", "tech", "skills", "buildings", "army", "end")}
+                               for k in ("events", "rites", "workshop", "tech", "skills", "masterplans", "buildings",
+                                         "army", "end")}
         self.rail_steps.update(changes)
         if self.widget and hasattr(self.widget, "post_steps"):
             self.widget.post_steps(dict(self.rail_steps))
@@ -372,7 +409,7 @@ class Runner:
                 self.end_done = (self.model, turn)
                 self.rail(end="done")
             self.post("waiting" if ended else "error", f"TURN {turn} ENDED" if ended else f"TURN {turn} NOT ENDED",
-                      "\n".join(done + ["End Turn pressed: the other factions are moving" if ended else
+                      "\n".join(done + [f"End Turn pressed: {self.end_turn_note}" if ended else
                                         f"turn not ended: {getattr(self, 'end_turn_problem', '')}"]),
                       turn=turn)
         except InputAborted as ex:
@@ -406,19 +443,48 @@ class Runner:
                 self.end_turn_problem = "the End Turn button is not shown"
                 return False
             from bot.sensor import turn as turn_mem
+            self.end_turn_note = "the other factions are moving"
 
             def ended() -> bool:
-                # memory only: the game runs another faction's turn, or the counter moved. (2026-10-17: the UI checks
+                # memory: the game runs another faction's turn, or the counter moved. (2026-10-17: the UI checks
                 # flickered right after the key, the End Turn button among them, and a turn that never ended was
                 # reported ended. The switch to the next faction took ~2.3 s in the logs, so wait well beyond that.)
-                return self.mem.read().turn != turn or turn_mem.players_turn(self.mem)[0] is False
+                if self.mem.read().turn != turn or turn_mem.players_turn(self.mem)[0] is False:
+                    return True
+                # multiplayer: the player's ready tick came on (MP_ME). 2026-10-18: without this the turn ended,
+                # memory still listed the player's faction while the friend moved, and a second Shift+Enter went in.
+                ready = mp_ready(self.ui)
+                new = [n for n, r in ready.items() if r and not ready0.get(n)]
+                if MP_ME["name"] is None and len(new) == 1:
+                    MP_ME["name"] = new[0]
+                    print(f"multiplayer: you are {new[0]!r} in the player list", flush=True)
+                b = self.ui.cached("button_end_turn", under="hud_campaign")
+                waiting = bool(b) and (self.ui.state(b) or "").startswith("selected")     # (the tick's twin)
+                if (MP_ME["name"] is not None and ready.get(MP_ME["name"])) or (ready and waiting):
+                    others = [n for n, r in ready.items() if not r and n != MP_ME["name"]]
+                    self.end_turn_note = f"waiting for {', '.join(others) or 'the other players'} to end their turn"
+                    return True
+                return False
             opened: list[str] = []
             for attempt in range(END_TURN_TRIES):
                 before = {cid for _c, cid in self.ui.root_children()}
+                ready0 = mp_ready(self.ui)
                 with held("shift"):
                     press("enter")
                 if wait.wait_until(ended, END_TURN_WAIT_S, "another faction's turn", must=False):
                     return True
+                # multiplayer: another player's battle or other pending action holds the turn end ("Involved
+                # players: ..."). It has no buttons and goes when that player is done: wait for it, never press past it
+                if self.ui.root_child("mp_pending_action_blocking_msg"):
+                    self.post("waiting", f"ENDING TURN {turn}", "another player has a battle or other action pending:"
+                              " the turn ends when they are done", turn=turn)
+                    wait.wait_until(lambda: not self.ui.root_child("mp_pending_action_blocking_msg"),
+                                    MP_PENDING_WAIT_S, "the other player's pending action", must=False)
+                    if wait.wait_until(ended, END_TURN_WAIT_S, "another faction's turn", must=False):
+                        return True
+                    if self.ui.root_child("mp_pending_action_blocking_msg"):
+                        self.end_turn_problem = "another player's action is still pending; Build & End Turn again later"
+                        return False
                 # not ended: a warning panel the game opened anyway, or the key went unnoticed: clear and press again
                 opened = sorted({cid for _c, cid in self.ui.root_children()} - before) or opened
                 if self.close_panels():

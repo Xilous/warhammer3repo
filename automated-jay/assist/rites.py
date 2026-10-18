@@ -116,6 +116,30 @@ def wanted_commandments(provs: list[dict], cooldowns: dict[str, int]) -> dict[st
     return want
 
 
+def rite_waits(provs: list[dict], cooldowns: dict[str, int]) -> str | None:
+    """Why the Dominating Scheme cannot be cast yet, from memory, or None when it can be tried. Player report
+    2026-10-18 (Thanquol, turn 1, no complete province): the Rites panel showed Perform Rite active although the rite
+    was still locked, and the click did nothing. The game's scripts unlock it once Expansionist Planning has been in
+    effect over a province (a commandment needs a complete province; a pick takes effect a turn later). The rite's
+    entry carries no lock flag, so: unlocked = Expansionist Planning in effect somewhere, or the rite was cast before
+    (its cooldown runs, or a province is on Exploitative Planning, which wanted_commandments only allows after the
+    first cast)."""
+    complete = [p for p in provs if p["complete"]]
+    if not complete:
+        return "Dominating Scheme waits: no complete province yet (it unlocks through a commandment)"
+    if any(cooldowns.get(k, 0) > 0 for k in RITES):
+        return None
+    if any(p["active"] == EXPANSIONIST for p in complete):
+        return None
+    if any(EXPLOITATIVE in (p["picked"], p["active"]) for p in complete):
+        return None
+    on = next((p for p in complete if p["picked"] == EXPANSIONIST), None)
+    if on:
+        place = gd.loc().get(f"provinces_onscreen_{on['province']}", on["province"])
+        return f"Dominating Scheme waits: Expansionist Planning in {place} takes effect next turn"
+    return "Dominating Scheme waits: Expansionist Planning has to be in effect over a province first"
+
+
 def fingerprint(w: World, F: int) -> tuple:
     """What this step changes (for the runner's verification run)."""
     cd = rite_cooldowns(w, F)
@@ -215,6 +239,9 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
         return "the Dominating Scheme is not in your rites"
     if any(cd[k] > 0 for k in have):
         return f"Dominating Scheme on cooldown ({max(cd[k] for k in have)} turns)"
+    why = rite_waits(provinces(w, F), cd)              # memory first: no panel opened for a rite still locked
+    if why:
+        return why
     b = ui.cached("button_rituals", under="hud_campaign") or ui.first("button_rituals")
     if b is None:
         return "Rites button not found"

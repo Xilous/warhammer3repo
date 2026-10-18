@@ -26,7 +26,8 @@ POS_FILE = config.RUNS_DIR / "rail.json"
 DRAG_PX = 4                     # a press that moves further than this is a drag, not a click
 KEY = "#010203"                 # transparent colour key (the cut-out corners)
 RADIUS = 10
-NODES = [("events", "Events"), ("rites", "Rites"), ("workshop", "Shop"), ("tech", "Tech"), ("skills", "Skills"), None,
+NODES = [("events", "Events"), ("rites", "Rites"), ("workshop", "Shop"), ("tech", "Tech"), ("skills", "Skills"),
+         ("masterplans", "Plans"), None,
          ("buildings", "Build"), ("army", "Army"), ("end", "End")]
 
 BG = "#10120f"

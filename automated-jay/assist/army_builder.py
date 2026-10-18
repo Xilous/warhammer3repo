@@ -1,4 +1,9 @@
-"""Army builder: make each ticked army match the template, one turn-start pass at a time.
+"""Army builder: refill each ticked army to the template, and raise new armies (assist/new_army.py).
+
+A tick means "refill once" (player rule 2026-10-18): only an army missing template units can be ticked, and only
+while the refill is possible (refill_check: a province recruits the whole template, an engineer is free or the
+engineer cap has room); it is cleared once the army matches again (untick_refilled). A new army is raised first in a
+pass and ticked, so it is recruited in the same pass.
 
 A tick counts only while the army's general is the one that was ticked (assist/army.py tick_for: cqis repeat
 between campaigns). Per ticked army, in order:
@@ -49,12 +54,13 @@ from bot.sensor.world import World, armies, characters, find_player_faction, reg
 from tools import wait
 from tools.ui import click, held, move_to as move_cursor, press, wheel
 from . import gamedata as gd
-from .army import delta, enabled_armies, load_automation, tick_for, unit_name
+from .army import delta, enabled_armies, load_automation, set_enabled, tick_for, unit_name
 from .heroes import (bring_into_view, hero_movement, in_safe, jump_row, lords_row, map_label, move_into_army, park,
                      province_row, row_selected, wait_until_stopped)
 
 ENGINEER = "wh2_main_skv_warlock_engineer"
 CLAIMS = config.RUNS_DIR / "engineer_claims.json"     # engineer character id -> army cqi it walks to
+CAPS = config.RUNS_DIR / "caps.json"                  # faction -> caps the game shows only in its panels
 FULL = 20                                             # units per army, lord and heroes included
 
 
@@ -553,6 +559,12 @@ def recruit_engineer(ui: UI, w: World, F: int, region: str):
                 x.strip() for x in text.splitlines()[1:] if x.strip()), None
         return "cap", "engineer tab inactive", None
     click(ui, tab)
+    # the panel's "<fielded> / <cap>" is the selected hero type's: kept for the tick boxes (refill_check)
+    if wait.wait_until(lambda: (ui.state(tab) or "").startswith("selected"), 1.0, "engineer tab selected", must=False):
+        shown = first(ui, "dy_agent_cap", under="character_panel")
+        m = re.search(r"(\d+)\s*/\s*(\d+)", (ui.text(shown) or "") if shown else "")
+        if m:
+            save_caps(engineer_cap=int(m.group(2)))
     got = wait.wait_until(lambda: (lambda a, b: (a, b) if a and b else None)(
         first(ui, "button_wh3", under="general_candidate_0_"), first(ui, "button_confirm")), 2.0,
         "Engineer candidate offered", must=False)
@@ -585,10 +597,13 @@ def engineer_candidates(w: World, F: int, army) -> list[str]:
     Verminlord Warpseer with Inscrutable Genius stands in (the army's own lord included)."""
     from .recruit import sources
     own = {w.region_key(r) for r in w.faction_regions(F)}
+    prov, _ = region_provinces()
     regions = {r for _, r, _ in sources(w).get(ENGINEER, [])}
     for a in armies(w, F):
         if a.general_ptr and a.region in own and INSCRUTABLE_GENIUS in character_skills(w, a.general_ptr):
-            regions.add(a.region)
+            # the skill opens the whole province, not only his settlement: 2026-10-18, Chant in Karak Ziflin (a minor
+            # settlement without a garrison commander, so no map position) left Blackstone Post untried
+            regions |= {r for r in own if prov.get(r) == prov.get(a.region)}
     if not regions or not army.region_obj:
         return sorted(regions)
     pos = settlement_pos(w, F)
@@ -612,6 +627,7 @@ def get_engineer(ui: UI, w: World, F: int, army):
             return msg, new
         if status == "cap":
             n = engineers_fielded(w, F)
+            save_caps(engineer_cap=n)
             return f"no Warlock Engineer yet: cap {n}/{n} (raised by the Verminlord Warpseer skill Inscrutable Genius)", None
         tried.append(msg)
         if status == "failed":
@@ -619,6 +635,61 @@ def get_engineer(ui: UI, w: World, F: int, army):
     if not tried:
         return "no Warlock Engineer yet: no province can recruit one (needs a Construction Cavern)", None
     return "no Warlock Engineer yet: " + "; ".join(tried), None
+
+# ------------------------------------------------------------------ caps the game only shows in its panels
+
+def load_caps() -> dict:
+    """What the panels last showed, for this campaign's faction: {"engineer_cap": n, "supply_lines_pct": p}."""
+    from .army import _faction
+    try:
+        return json.loads(CAPS.read_text(encoding="utf-8")).get(_faction(), {})
+    except (OSError, ValueError, AttributeError):
+        return {}
+
+
+def save_caps(**values) -> None:
+    from .army import _faction
+    try:
+        d = json.loads(CAPS.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        d = {}
+    d.setdefault(_faction(), {}).update(values)
+    tmp = CAPS.with_suffix(".tmp")
+    tmp.write_text(json.dumps(d, indent=1), encoding="utf-8")
+    tmp.replace(CAPS)
+
+
+def free_engineer_slots(w: World, F: int) -> int | None:
+    """Engineers the cap still allows (the cap as the Recruit Hero panel last showed it); None: never read yet."""
+    cap = load_caps().get("engineer_cap")
+    return None if cap is None else cap - engineers_fielded(w, F)
+
+
+def refill_check(w: World, F: int, army, d, elig_any: bool | None = None, slots: int | None | str = "read",
+                 claims: dict[int, int] | None = None) -> tuple[bool, str]:
+    """(the army can be ticked for a refill, why not). Player rule 2026-10-18: only an army missing template units
+    (troops or its Warlock Engineer) can be ticked, and only while the refill is possible: a province recruits the
+    whole template (for missing troops), and an engineer is free or the engineer cap has room (for a missing
+    engineer; a cap never read yet does not block). elig_any / slots / claims: precomputed for many armies."""
+    from .army import load_automation
+    troops = bool(d.missing)
+    eng = d.heroes_missing.get(ENGINEER, 0) > 0
+    if not troops and not eng:
+        return False, "nothing missing: tick an army once it has lost units"
+    if troops:
+        if elig_any is None:
+            elig_any = bool(eligible(w, F, set(load_automation()["army_builder"]["template"]["units"])))
+        if not elig_any:
+            return False, "cannot refill: no province can recruit the whole template yet"
+    if eng:
+        claims = _load_claims() if claims is None else claims
+        free = any(c.embedded_force == 0 and c.subtype == ENGINEER and claims.get(w.u32(c.ptr + 0x110), army.cqi)
+                   == army.cqi for c in characters(w, F))
+        slots = free_engineer_slots(w, F) if slots == "read" else slots
+        if not free and slots is not None and slots <= 0:
+            return False, "cannot refill: no Warlock Engineer free and the engineer cap is full"
+    return True, ""
+
 
 def _load_claims() -> dict[int, int]:
     try:
@@ -760,8 +831,6 @@ def run(log=print, verify: bool = False) -> str:
     """verify: the runner's verification run (assist/runner.py): only disbands, recruitment and engineer recruitment
     are redone if they did not happen; march and walk orders are not issued again."""
     ticked = enabled_armies()
-    if not ticked:
-        return "no army ticked"
     w = World()
     F = find_player_faction(w)
     if F is None:
@@ -779,10 +848,22 @@ def run(log=print, verify: bool = False) -> str:
     gone = [e.get("name") or str(cqi) for cqi, e in ticked.items() if cqi not in {a.cqi for a in present}]
     if gone:
         out.append("ticked army not in this campaign: " + ", ".join(gone))
-    if not acting:
-        return "; ".join(out) or "no ticked army here"
-    mine = assign_engineers(w, F, acting)
     with game_focus():
+        # a new army first (player rule 2026-10-18), so it is recruited in this same pass; never on a verification run
+        if not verify:
+            from .new_army import create
+            try:
+                lines, new = create(ui, w, F, log)
+            except Exception as ex:
+                import traceback
+                traceback.print_exc()
+                lines, new = [f"new army: ERROR {ex}"], None
+            out += lines
+            if new is not None:
+                acting.append(new)
+        if not acting:
+            return "; ".join(out) or "no ticked army here"
+        mine = assign_engineers(w, F, acting)
         for a in acting:
             try:
                 lines, _new = build_one(ui, w, F, a, mine.get(a.cqi, []), log, verify=verify)
@@ -791,4 +872,19 @@ def run(log=print, verify: bool = False) -> str:
                 traceback.print_exc()
                 lines = [f"{a.general_name}: ERROR {ex}"]
             out += lines
+    out += untick_refilled(w, F, acting)
     return "; ".join(out)
+
+
+def untick_refilled(w: World, F: int, acting: list) -> list[str]:
+    """A tick means "refill once" (player rule 2026-10-18): it is cleared once the army has every template unit
+    (queued ones count) and its engineer has joined."""
+    out = []
+    now = {a.cqi: a for a in armies(w, F)}
+    for a in acting:
+        a2 = now.get(a.cqi)
+        d = delta(a2, []) if a2 else None
+        if d is not None and not d.missing and not d.heroes_missing and not d.disband:
+            set_enabled(a2.cqi, a2.general_name, False, a2.general_id)
+            out.append(f"{a2.general_name}: refilled, tick cleared")
+    return out

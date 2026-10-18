@@ -72,7 +72,7 @@ class RailPanel:
                             wraplength=WIDTH - 40, padx=8, pady=6)
         self.log.pack(fill="x")
 
-        self._heading("ARMIES  (tick: build to the template)")
+        self._heading("ARMIES  (tick: refill to the template)")
         self.armies = tk.Frame(self.body, bg=BG)
         self.armies.pack(fill="x")
         self.army_vars: dict[int, tk.BooleanVar] = {}
@@ -168,14 +168,16 @@ class RailPanel:
         enabled = enabled_armies()
         if not rows:
             tk.Label(self.armies, text="no field armies", bg=BG, fg=MUTED, font=FONT).pack(anchor="w")
-        for a, d in rows:
+        for a, d, (can, why_not) in rows:
             var = self.army_vars.setdefault(a.cqi, tk.BooleanVar())
             on, why = tick_for(a, enabled)
             var.set(on)
+            locked = not on and not can                 # a refill that cannot happen cannot be ticked; a tick can go
             row = tk.Frame(self.armies, bg=BG)
             row.pack(fill="x", pady=(2, 0))
             tk.Checkbutton(row, variable=var, bg=BG, activebackground=BG, selectcolor=BG2, fg=INK,
-                           highlightthickness=0, bd=0, cursor="hand2",
+                           highlightthickness=0, bd=0, cursor="arrow" if locked else "hand2",
+                           state="disabled" if locked else "normal",
                            command=lambda a=a, var=var: set_enabled(a.cqi, a.general_name, var.get(), a.general_id)
                            ).pack(side="left")
             size = f"{len(a.units)}" + (f"+{len(a.queued)}" if a.queued else "")
@@ -184,6 +186,9 @@ class RailPanel:
             note = why or d.summary()
             tk.Label(self.armies, text=note, bg=BG, fg=(RED if why else GREEN if d.matches else MUTED), font=FONT,
                      anchor="w", justify="left", wraplength=WIDTH - 60, padx=26).pack(fill="x")
+            if locked and (d.missing or d.heroes_missing):
+                tk.Label(self.armies, text=why_not, bg=BG, fg=ORANGE, font=FONT, anchor="w", justify="left",
+                         wraplength=WIDTH - 60, padx=26).pack(fill="x")
         if "error" in blocked:
             self.front.configure(text="could not read the campaign: " + blocked["error"], fg=RED)
         else:

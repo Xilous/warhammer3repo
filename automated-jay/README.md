@@ -129,12 +129,23 @@ INTERRUPTED. Clicking the overlay toggles pause, except while automating (then c
 
 The assistant finds out from memory which faction you play (the human faction that is Ikit's Clan Skryre or
 Thanquol's Clan Scruten); there is nothing to set. What is different with Thanquol:
-- **Masterplans are yours.** The assistant never touches the Masterplans panel during your turn; Run now and Build
-  & End Turn close it (and its guided tour) before they start. Underlings are not armies to it: they are never
-  listed for ticking and the army builder ignores them.
-- **Skills** (`strategy/skills.json`, "thanquol"): Ikit's order on Thanquol's tree, with Blessings of the Horned
-  Rat, Replaceable Fodder (-50% recruitment cost in his army) and Hasty Redirection worked in early (his unique row
-  unlocks at rank 11); Boneripper with **Warpfire Projectors** as soon as rank 15 allows, Warpfire Braziers never.
+- **Masterplans** (`assist/masterplans.py`, `strategy/masterplans.json`), at Build & End Turn only: every free
+  Underling is sent on a Steal-Take (the best foreign settlement on screen: highest settlement level, factions you
+  are not at war with first, none on a Masterplans cooldown, none in one of your provinces or a province bordering
+  one); each running Steal-Take is completed once waiting
+  another turn is worth less than completing (Risk x the chance one Complication maxes the Alarm, against the loot
+  the next turn adds over the loot gathered; at maximum Alarm a plan pays 25%), and Clan Scruten Secrets are bought
+  in the file's `shop.order`, keeping 50 Warpstone for a Kill-Stab. **Kill-Stab plans stay yours**: the assistant
+  never starts, completes or abandons one. Single player and multiplayer work the same: what is unlocked (the
+  Masterplans, each Underling, each Secrets line) is read from the game every time, never from the mode, the turn or
+  the story, so whatever unlocks later is used from that turn on. Every board it reads is logged to
+  `runs/masterplans.jsonl`. Run now and
+  Build & End Turn close the panel (and its guided tour) before they start. Underlings are not armies to it: they
+  are never listed for ticking and the army builder ignores them.
+- **Skills** (`strategy/skills.json`, "thanquol"): Route Marcher, Inspiring Presence, then his unique Blessings of
+  the Horned Rat (required by the next three), Hasty Redirection, Insatiable Greed and Replaceable Fodder (his
+  unique row unlocks at rank 11), then Ikit's army and campaign skills, Mentor last; Boneripper with **Warpfire
+  Projectors** as soon as rank 15 allows, Warpfire Braziers never.
 - **Buildings**: the same settlement list. His Grey Seer Lair in Karag Dromar is kept and upgraded as a landmark;
   the Morskittar Engine is Zhufbar's landmark (once his story unlocks it). Frontline provinces stay yours, as with
   Ikit (Black Water is one while Zhufbar is an enemy's).

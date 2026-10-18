@@ -84,7 +84,17 @@ def scan(ui: UI | None = None) -> list[tuple[int, str]]:
         raise RuntimeError("game UI not found in memory")
     skip = NORMAL | ignored()
     return [(c, cid) for c, cid in ui.root_children()
-            if cid not in skip and not "tooltip" in cid.lower()]          # hover tooltips are never popups
+            if cid not in skip and not "tooltip" in cid.lower()           # hover tooltips are never popups
+            and not feed_preview(ui, c, cid)]
+
+
+def feed_preview(ui: UI, c: int, cid: str) -> bool:
+    """The Event Messages feed's hover preview: an "events" panel with a link_arrow pointing at the feed entry.
+    It fades out when the mouse leaves but stays flagged visible (2026-10-18: a faded "Technology Researched"
+    preview held Build & End Turn on "GLOBAL EVENT" with nothing on screen). Never a popup. A notice with a close
+    button is a real one, arrow or not."""
+    return (cid == "events" and ui.child(c, "link_arrow", visible_only=True) is not None
+            and _close_button(ui, c) is None and not needs_choice(ui, c))
 
 
 def needs_choice(ui: UI, c: int) -> bool:

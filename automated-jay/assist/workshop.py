@@ -204,7 +204,12 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
 UPGRADES = ["wh3_dlc29_ikit_workshop_stormfiend_ranged_type_0",
             "wh3_dlc29_ikit_workshop_stormfiend_ranged_type_1",
             "wh3_dlc29_ikit_workshop_stormfiend_ranged_type_2"]
-LEVEL_NEEDED = {"wh3_dlc29_ikit_workshop_stormfiend_ranged_type_2": 2}   # (the panel shows it "locked_level" below)
+# (the panel shows type_2 "locked_level" below level 2). At workshop level 0 none of them is listed: the 2026-10-18
+# campaign opened the panel every pass and waited 1.5 s for each, twice per pass ("not shown"); at level 1 the first
+# two were found and bought (2026-10-17)
+LEVEL_NEEDED = {"wh3_dlc29_ikit_workshop_stormfiend_ranged_type_0": 1,
+                "wh3_dlc29_ikit_workshop_stormfiend_ranged_type_1": 1,
+                "wh3_dlc29_ikit_workshop_stormfiend_ranged_type_2": 2}
 
 
 def run(log=print) -> str:
@@ -227,7 +232,8 @@ def run(log=print) -> str:
     level = workshop_level(w, F)                           # memory first: no panel opened for a part still locked
     todo = [k for k in todo if level >= LEVEL_NEEDED.get(k, 0)]
     if not todo:
-        return f"Stormfiend Ratling Cannon upgrades: the rest waits for workshop level 2 (now {level})"
+        need = min(LEVEL_NEEDED.get(k, 0) for k in UPGRADES if k not in owned)
+        return f"Stormfiend Ratling Cannon upgrades: the rest waits for workshop level {need} (now {level})"
     ui = UI(w.s)
     ui.find_root()
     out = []

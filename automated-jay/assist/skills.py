@@ -72,7 +72,7 @@ def _tables():
 
 
 def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
-    """The player's order (mounts to take first, they unlock by rank), then the rest of the tree:
+    """The player's order (mounts and "asap" skills first, they unlock by rank), then the rest of the tree:
     passive skills first, active-ability skills last."""
     o = orders()
     c = o["characters"][char_key]
@@ -89,7 +89,7 @@ def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
     for n in mounts.get("take", []):
         out.append((name_of(n), 1, nodes[n]["character_skill_key"]))
     listed = set()
-    for item in c["order"]:
+    for item in sorted(c["order"], key=lambda i: not i.get("asap")):   # stable: the order is kept within each group
         out.append((item["skill"], item["ranks"], nodes[item["node"]]["character_skill_key"]))
         listed.add(item["node"])
     skip = set(mounts.get("skip", [])) | set(mounts.get("take", [])) | listed

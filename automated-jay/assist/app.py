@@ -150,7 +150,7 @@ class App:
         self.log.pack(fill="x")
         self.root.after(200, lambda: self._show_log(last_logged_turn()))
 
-        af = ttk.LabelFrame(self.root, text="Armies  (tick to make the army match the template)", padding=6)
+        af = ttk.LabelFrame(self.root, text="Armies  (tick to refill the army to the template)", padding=6)
         af.pack(fill="both", expand=True, padx=10, pady=6)
         self.army_frame = tk.Frame(af, bg="#1d1f1d")
         self.army_frame.pack(fill="both", expand=True)
@@ -329,9 +329,13 @@ class App:
             if F is None:
                 self.q.put(("world", st, [], {}, []))
                 return
-            heroes = [c for c in characters(w, F) if c.embedded_force == 0 and c.subtype in
-                      load_automation()["army_builder"]["template"]["heroes"]]
-            rows = [(a, delta(a, heroes)) for a in armies(w, F)]
+            from .army_builder import _load_claims, eligible, free_engineer_slots, refill_check
+            t = load_automation()["army_builder"]["template"]
+            heroes = [c for c in characters(w, F) if c.embedded_force == 0 and c.subtype in t["heroes"]]
+            # can each army be ticked for a refill (player rule 2026-10-18)? one province / cap / claims read for all
+            elig_any, slots, claims = bool(eligible(w, F, set(t["units"]))), free_engineer_slots(w, F), _load_claims()
+            rows = [(a, d, refill_check(w, F, a, d, elig_any, slots, claims))
+                    for a in armies(w, F) for d in [delta(a, heroes)]]
             snap = snapshot(w)
             blocked = dict(snap.blocked_provinces) if snap else {}
             from .recruit import report, sources
@@ -353,7 +357,7 @@ class App:
             child.destroy()
         if not rows:
             tk.Label(self.army_frame, text="no field armies found", bg="#1d1f1d", fg="#9a9a9a").pack(anchor="w")
-        for a, d in rows:
+        for a, d, (can, why_not) in rows:
             var = self.army_vars.setdefault(a.cqi, tk.BooleanVar())
             on, why = tick_for(a, enabled)          # a tick set for another general (another campaign) is off
             var.set(on)
@@ -362,6 +366,8 @@ class App:
             # the tick stores the general's character id and name with the cqi (cqis repeat between campaigns)
             cb = ttk.Checkbutton(row, variable=var, command=lambda a=a, var=var: set_enabled(
                 a.cqi, a.general_name, var.get(), a.general_id))
+            if not on and not can:                  # a refill that cannot happen cannot be ticked; a tick can go
+                cb.state(["disabled"])
             cb.pack(side="left")
             where = nice(a.region or "")
             size = f"{len(a.units)} units" + (f" + {len(a.queued)} recruiting" if a.queued else "")
@@ -373,6 +379,9 @@ class App:
             tk.Label(self.army_frame, text=d.summary(), bg="#1d1f1d",
                      fg="#8dff9c" if d.matches else "#c8c8c8", font=("Segoe UI", 9), wraplength=540,
                      justify="left", anchor="w", padx=28).pack(fill="x", anchor="w")
+            if not on and not can and (d.missing or d.heroes_missing):
+                tk.Label(self.army_frame, text=why_not, bg="#1d1f1d", fg="#ffd27a", font=("Segoe UI", 9),
+                         wraplength=540, justify="left", anchor="w", padx=28).pack(fill="x", anchor="w")
         if st is not None:                    # always shown, so "none" is visible rather than a missing line
             tk.Label(self.army_frame, text="Heroes on their own: " + (", ".join(
                 f"{c.name} ({nice(c.region or '')})" for c in heroes) or "none"),

@@ -1,0 +1,668 @@
+{
+  "_doc": [
+    "Thanquol's Masterplans (assist/masterplans.py), player request 2026-10-18: the assistant runs Steal-Take plans on every free Underling and buys Clan Scruten Secrets for Kill-Stab and Steal-Take, in shop_order. Kill-Stab plans are the player's: never started, completed or abandoned by the assistant.",
+    "Runs at Build & End Turn only (automation.json schedule), so Underlings you send on a Kill-Stab during your turn are never taken first.",
+    "Single player and multiplayer are played the same (player rule, 2026-10-18): nothing here depends on the mode, a turn number or a story mission. What is unlocked is read from the game each time: the Masterplans button, which Underlings are unlocked, free or resting, whether Steal-Take is offered, and which Secrets shops and lines are open. Whatever unlocks later (by story in single player, by turn in multiplayer) is used from the turn it appears."
+  ],
+  "steal_take": {
+    "enabled": true,
+    "gold_per_warpstone": 10,
+    "_gold_per_warpstone": "Loot is weighed in Warpstone: this many gold count as 1 Warpstone (food is not counted).",
+    "q_by_alarm": [
+      0.0,
+      0.0,
+      0.15,
+      0.99
+    ],
+    "_q_by_alarm": "Chance that one Complication raises Alarm to its maximum (4), by the current Alarm; from the Steal-Take Complication pools (game tables, 9.0.4).",
+    "max_alarm_pay": 0.25,
+    "_max_alarm_pay": "chaotic_plans_failed_economic_plan_rewards_pct: a plan completed at maximum Alarm pays 25%.",
+    "at_max_alarm": "complete",
+    "_at_max_alarm": "complete: take the 25% now. abandon: the loot is hidden and a mission gives all of it if you conquer the region within 10 turns.",
+    "_rule": "Wait while Risk x q(Alarm) < G / (G + (1 - max_alarm_pay) x V), where V is the loot gathered and G the loot the next turn is expected to add (draws x the sum of each remaining card's draw chance x its value); complete once it is not.",
+    "skip_near_provinces": true,
+    "_skip_near_provinces": "Never a Steal-Take on a settlement in one of your provinces (any region of it held) or in a province bordering one (player rule, 2026-10-18).",
+    "prefer_not_at_war": true,
+    "_prefer_not_at_war": "Targets owned by factions you are not at war with come first: a Steal-Take is abandoned if you conquer its region."
+  },
+  "shop": {
+    "enabled": true,
+    "keep_warpstone": 50,
+    "_keep_warpstone": "Never spends below this, so one Kill-Stab (50 Warpstone) can always be started by you.",
+    "_order": "Bought top to bottom: the first entry that can be bought but not yet afforded is saved for (nothing below it is bought). Locked entries (their shop has too few purchases yet) are skipped. levels = how many of the chain's levels to own. Great-Smart (Verminlord Study, Hasten Ritual) and Final Battle Support are left out (player scope, 2026-10-18).",
+    "order": [
+      {
+        "chain": "wh3_dlc29_shop_military_green_skryre_warpfire_throwers",
+        "levels": 1,
+        "tab": "warlock",
+        "tier": "warpstone",
+        "_what": "Warpfire Equipment Racks",
+        "_warpstone": [
+          300
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_green_skryre_warpstone",
+        "levels": 3,
+        "tab": "warlock",
+        "tier": "warpstone",
+        "_what": "Clan Skryre Drillers / Clan Skryre Veteran Drillers / Clan Skryre Elite Drillers",
+        "_warpstone": [
+          300,
+          300,
+          300
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_upgrade_basic_warpstone_gdp",
+        "levels": 4,
+        "tab": "thanquol",
+        "tier": "warpstone",
+        "_what": "Training: Warp-Finding I / Training: Warp-Finding II / Training: Warp-Finding III / Training: Warp-Finding IV",
+        "_warpstone": [
+          600,
+          600,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_military_mod_pool_clanrats_grey_seer",
+        "levels": 2,
+        "tab": "grey_seer",
+        "tier": "warpstone",
+        "_what": "Warlord Clan's Tunnel I / Warlord Clan's Tunnel II",
+        "_warpstone": [
+          300,
+          400
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_skill_grey_seer_draw_units",
+        "levels": 1,
+        "tab": "grey_seer",
+        "tier": "warpstone",
+        "_what": "Superior Rats!",
+        "_warpstone": [
+          200
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_green_rictus_warpstone",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "warpstone",
+        "_what": "Rictus Miners' Holes / Rictus Diggers' Quarters / Rictus Foreman's Tower",
+        "_warpstone": [
+          600,
+          300,
+          300
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_military_mod_pool_stormfiends_warlock",
+        "levels": 3,
+        "tab": "warlock",
+        "tier": "kill_stab_core",
+        "_what": "Heavy Weapons Facility I / Heavy Weapons Facility II / Heavy Weapons Facility III",
+        "_warpstone": [
+          600,
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_rank_up_monsters",
+        "levels": 3,
+        "tab": "thanquol",
+        "tier": "kill_stab_core",
+        "_what": "Training: Monsters I / Training: Monsters II / Training: Monsters III",
+        "_warpstone": [
+          400,
+          500,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_mod_pool_remove_skavenslaves",
+        "levels": 1,
+        "tab": "warlord",
+        "tier": "kill_stab_core",
+        "_what": "\"Training\" Warrens",
+        "_warpstone": [
+          200
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_rictus_stormvermin",
+        "levels": 4,
+        "tab": "warlord",
+        "tier": "kill_stab_core",
+        "_what": "Clan Rictus Quarters I / Clan Rictus Quarters II / Clan Rictus Quarters III / Clan Rictus Quarters IV",
+        "_warpstone": [
+          600,
+          600,
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_rank_up_weapon_teams",
+        "levels": 3,
+        "tab": "thanquol",
+        "tier": "kill_stab_core",
+        "_what": "Training: Weapon Teams I / Training: Weapon Teams II / Training: Weapon Teams III",
+        "_warpstone": [
+          400,
+          500,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_rank_up_melee_infantry",
+        "levels": 3,
+        "tab": "thanquol",
+        "tier": "kill_stab_core",
+        "_what": "Training: Infantry I / Training: Infantry II / Training: Infantry III",
+        "_warpstone": [
+          200,
+          300,
+          400
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_military_mod_pool_stormfiends_warlord",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "kill_stab_core",
+        "_what": "Stormfiend Equipment Lab I / Stormfiend Equipment Lab II / Stormfiend Equipment Lab III",
+        "_warpstone": [
+          1000,
+          1000,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_mod_pool_stormvermin_rank_9",
+        "levels": 1,
+        "tab": "assassin",
+        "tier": "kill_stab_core",
+        "_what": "Clan Rictus Elite Warren",
+        "_warpstone": [
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_upgrade_basic_treasury_gdp",
+        "levels": 4,
+        "tab": "thanquol",
+        "tier": "gold",
+        "_what": "Training: Thievery I / Training: Thievery II / Training: Thievery III / Training: Thievery IV",
+        "_warpstone": [
+          600,
+          600,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_green_skryre_treasury",
+        "levels": 3,
+        "tab": "warlock",
+        "tier": "gold",
+        "_what": "Clan Skryre Engineers / Clan Skryre Veteran Engineers / Clan Skryre Elite Engineers",
+        "_warpstone": [
+          600,
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_green_eshin_all",
+        "levels": 3,
+        "tab": "assassin",
+        "tier": "gold",
+        "_what": "Clan Eshin Thieves / Clan Eshin Veteran Thieves / Clan Eshin Elite Thieves",
+        "_warpstone": [
+          1000,
+          300,
+          300
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_mod_pool_grey_seer_treasury_large",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "gold",
+        "_what": "Trinket Trade Network I / Trinket Trade Network II / Trinket Trade Network III",
+        "_warpstone": [
+          600,
+          500,
+          500
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_skryre_ratling_guns_dlc",
+        "levels": 3,
+        "tab": "warlock",
+        "tier": "kill_stab_more",
+        "_what": "Ratling Guns / Warplock Jezzails / Doom-Flayers",
+        "_warpstone": [
+          500,
+          800,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_poison_wind_globadiers",
+        "levels": 2,
+        "tab": "warlock",
+        "tier": "kill_stab_more",
+        "_what": "Poisoned Wind Globadiers / Death Globe Bombardiers",
+        "_warpstone": [
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_warp_grinders_dlc",
+        "levels": 2,
+        "tab": "warlock",
+        "tier": "kill_stab_more",
+        "_what": "Warp-Grinders / Poisoned Wind Mortars",
+        "_warpstone": [
+          200,
+          800
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_military_mod_pool_cannons_warlock",
+        "levels": 2,
+        "tab": "warlock",
+        "tier": "kill_stab_more",
+        "_what": "Skryre Balistics Range I / Skryre Balistics Range II",
+        "_warpstone": [
+          600,
+          800
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_military_upgrade_double_units_warlock",
+        "levels": 1,
+        "tab": "warlock",
+        "tier": "kill_stab_more",
+        "_what": "Mass Production Lines",
+        "_warpstone": [
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_military_mod_pool_clanrats_grey_seer",
+        "levels": 4,
+        "tab": "grey_seer",
+        "tier": "kill_stab_more",
+        "_what": "Warlord Clan's Tunnel I / Warlord Clan's Tunnel II / Warlord Clan's Tunnel III / Warlord Clan's Tunnel IV",
+        "_warpstone": [
+          300,
+          400,
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_mod_pool_plagueclaw_catapult",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "kill_stab_more",
+        "_what": "Catapult Workshop / Catapult Workshop II / Catapult Workshop III",
+        "_warpstone": [
+          400,
+          500,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_basic_pusbags",
+        "levels": 2,
+        "tab": "grey_seer",
+        "tier": "kill_stab_more",
+        "_what": "Clan Pestilens Testing Grounds / Clan Pestilens Conclaves",
+        "_warpstone": [
+          300,
+          400
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_mod_pool_moulder_wolf_rats_dlc",
+        "levels": 2,
+        "tab": "grey_seer",
+        "tier": "kill_stab_more",
+        "_what": "Clan Moulder Pup Pens I / Clan Moulder Pup Pens II",
+        "_warpstone": [
+          300,
+          400
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_rank_up_missile_infantry",
+        "levels": 3,
+        "tab": "thanquol",
+        "tier": "kill_stab_more",
+        "_what": "Training: Missile I / Training: Missile II / Training: Missile III",
+        "_warpstone": [
+          300,
+          400,
+          500
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_rank_up_artillery",
+        "levels": 3,
+        "tab": "thanquol",
+        "tier": "kill_stab_more",
+        "_what": "Training: Artillery I / Training: Artillery II / Training: Artillery III",
+        "_warpstone": [
+          600,
+          600,
+          800
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_plague_monks",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "kill_stab_more",
+        "_what": "Clan Pestilens Fighting Pits I / Clan Pestilens Fighting Pits II / Clan Pestilens Fighting Pits III",
+        "_warpstone": [
+          500,
+          500,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_mutant_dlc",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "kill_stab_more",
+        "_what": "Clan Moulder Breeding Lab I / Clan Moulder Breeding Lab II / Clan Moulder Breeding Lab III",
+        "_warpstone": [
+          600,
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_warp_lightning_cannon_warlord",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "kill_stab_more",
+        "_what": "Skryre Weapons Shipment I / Skryre Weapons Shipment II / Skryre Weapons Shipment III",
+        "_warpstone": [
+          800,
+          800,
+          800
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_death_runners",
+        "levels": 3,
+        "tab": "assassin",
+        "tier": "kill_stab_more",
+        "_what": "Den of Death I / Den of Death II / Den of Death III",
+        "_warpstone": [
+          600,
+          300,
+          300
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_eshin_runners",
+        "levels": 3,
+        "tab": "assassin",
+        "tier": "kill_stab_more",
+        "_what": "Eshin Warrens I / Eshin Warrens II / Eshin Warrens III",
+        "_warpstone": [
+          300,
+          500,
+          500
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_mod_pool_basic_infantry_spears",
+        "levels": 2,
+        "tab": "assassin",
+        "tier": "kill_stab_more",
+        "_what": "Clan Pits I / Clan Pits II",
+        "_warpstone": [
+          300,
+          500
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_eshin_triads_dlc",
+        "levels": 1,
+        "tab": "assassin",
+        "tier": "kill_stab_more",
+        "_what": "Guandao Training",
+        "_warpstone": [
+          400
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economy_mod_pool_basic_food_small",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "food",
+        "_what": "Food-Finders I / Food-Finders II / Food-Finders III",
+        "_warpstone": [
+          200,
+          200,
+          200
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economy_mod_pool_basic_food_mid",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "food",
+        "_what": "Guarded Meat-Pile I / Guarded Meat-Pile II / Guarded Meat-Pile III",
+        "_warpstone": [
+          300,
+          400,
+          400
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_skill_grey_seer_draw_units",
+        "levels": 4,
+        "tab": "grey_seer",
+        "tier": "tricks",
+        "_what": "Superior Rats! / Finest Rats! / Supreme Rats! / Best-Best Rats!",
+        "_warpstone": [
+          200,
+          300,
+          400,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_action_instant_warpstone",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "tricks",
+        "_what": "Grey Seer Deals I / Grey Seer Deals II / Grey Seer Deals III",
+        "_warpstone": [
+          300,
+          200,
+          200
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_action_any_remove_red",
+        "levels": 2,
+        "tab": "assassin",
+        "tier": "tricks",
+        "_what": "Versatile Approach II / Versatile Approach III",
+        "_warpstone": [
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_economic_action_draw_warlock",
+        "levels": 1,
+        "tab": "warlock",
+        "tier": "tricks",
+        "_what": "\"Excavation\" Device",
+        "_warpstone": [
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economy_action_assassin_draw",
+        "levels": 1,
+        "tab": "assassin",
+        "tier": "tricks",
+        "_what": "Seek-Find Valuables",
+        "_warpstone": [
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_any_action_assassin_sell_instant",
+        "levels": 1,
+        "tab": "assassin",
+        "tier": "tricks",
+        "_what": "The Surest Revenue",
+        "_warpstone": [
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_skill_spawn_warp_doom_magma_cannon",
+        "levels": 1,
+        "tab": "warlock",
+        "tier": "tricks",
+        "_what": "Warp-Doom Magma Cannon",
+        "_warpstone": [
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_skill_spawn_hell_pit_abomination",
+        "levels": 2,
+        "tab": "grey_seer",
+        "tier": "tricks",
+        "_what": "Feeding I / Feeding II",
+        "_warpstone": [
+          600,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_skill_spawn_cauldron_poxes",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "tricks",
+        "_what": "Pox-Cauldron Offering / Pox-Cauldron Offering II / Pox-Cauldron Offering III",
+        "_warpstone": [
+          500,
+          500,
+          500
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_warlock_engineer",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "tricks",
+        "_what": "Warlock Engineer / Veteran Warlock Engineer / Elite Warlock Engineer",
+        "_warpstone": [
+          500,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_chieftain",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "tricks",
+        "_what": "Chieftain / Veteran Chieftain / Elite Chieftain",
+        "_warpstone": [
+          500,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_plague_priest",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "tricks",
+        "_what": "Plague Priest / Veteran Plague Priest / Elite Plague Priest",
+        "_warpstone": [
+          500,
+          500,
+          500
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_packmaster",
+        "levels": 3,
+        "tab": "warlord",
+        "tier": "tricks",
+        "_what": "Packmaster / Veteran Packmaster / Elite Packmaster",
+        "_warpstone": [
+          500,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_eshin_sorcerer",
+        "levels": 3,
+        "tab": "assassin",
+        "tier": "tricks",
+        "_what": "Eshin Sorcerer / Veteran Eshin Sorcerer / Elite Eshin Sorcerer",
+        "_warpstone": [
+          500,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_assassin",
+        "levels": 3,
+        "tab": "assassin",
+        "tier": "tricks",
+        "_what": "Assassin / Veteran Assassin / Elite Assassin",
+        "_warpstone": [
+          500,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_action_assassin_draw",
+        "levels": 1,
+        "tab": "assassin",
+        "tier": "tricks",
+        "_what": "Seek-Find Recruits",
+        "_warpstone": [
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_any_action_experience",
+        "levels": 1,
+        "tab": "thanquol",
+        "tier": "tricks",
+        "_what": "\"Subsidised\" Progress",
+        "_warpstone": [
+          300
+        ]
+      }
+    ]
+  }
+}
