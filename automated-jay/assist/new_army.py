@@ -3,7 +3,8 @@
   2. the new army can have its Warlock Engineer: one is free (unclaimed) or the engineer cap has room (the cap as the
      Recruit Hero panel last showed it, runs/caps.json; never read yet = not a reason to wait);
   3. income pays for the whole army: projected income (HUD treasury_holder/dy_income, the "(-8)" next to the treasury)
-     minus the upkeep still to come from the units ticked armies are missing, minus the new army's upkeep with Supply
+     minus the upkeep still to come from the troops and engineers ticked armies are missing (queued ones included:
+     they pay nothing until recruited), with Supply Lines, minus the new army's upkeep with Supply
      Lines on it, minus the Supply Lines increase on the armies already fielded, stays at or above
      army_builder.income_reserve;
   4. a Verminlord Warpseer is in the Recruit Lord pool (its Verminlords tab) and the Raise button is active (Lord cap).
@@ -50,11 +51,22 @@ def template_upkeep() -> int:
 
 
 def pending_upkeep(w: World, F: int) -> int:
-    """Upkeep the ticked armies will add once their missing units are recruited (not in the income yet)."""
+    """Base upkeep the ticked armies will add once their missing troops and Warlock Engineers are recruited: none of
+    it is in the income yet. Units in the recruitment queue count as missing here (2026-10-18: Ikit's ticked army
+    had its refill queued, delta() counts queued units as present, so the budget saw no upkeep to come and a
+    Warpseer army was raised on top; queued units pay no upkeep until they are recruited)."""
+    from dataclasses import replace
     up = upkeep_of()
+    hero_unit = {"wh2_main_skv_warlock_engineer": ENGINEER_UNIT}
     ticked = enabled_armies()
-    return sum(up.get(k, 0) * n for a in armies(w, F) if tick_for(a, ticked)[0]
-               for k, n in delta(a, []).missing.items())
+    total = 0
+    for a in armies(w, F):
+        if not tick_for(a, ticked)[0]:
+            continue
+        d = delta(replace(a, queued=[]), [])
+        total += sum(up.get(k, 0) * n for k, n in d.missing.items())
+        total += sum(up.get(hero_unit.get(h, h), 0) * n for h, n in d.heroes_missing.items())
+    return total
 
 
 def _number(text: str | None) -> int | None:
@@ -79,8 +91,9 @@ def budget(ui: UI, w: World, F: int, pct: float, increase: int | None = None) ->
     fielded = armies(w, F)
     if increase is None:
         increase = round(pct / 100 * sum(up.get(u.key, 0) for a in fielded for u in a.units))
-    new = round(template_upkeep() * (1 + pct / 100 * len(fielded)))
-    pend = pending_upkeep(w, F)
+    supply = 1 + pct / 100 * len(fielded)               # Supply Lines on every unit once the new army is fielded
+    new = round(template_upkeep() * supply)
+    pend = round(pending_upkeep(w, F) * supply)
     reserve = int(load_automation()["army_builder"].get("income_reserve", 0))
     left = inc - pend - new - increase - reserve
     return left, (f"income {inc:+d}, still to recruit for ticked armies -{pend}, new army -{new}, Supply Lines "
