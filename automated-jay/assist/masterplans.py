@@ -169,7 +169,9 @@ def decide(board: dict, cfg: dict) -> tuple[str, str]:
     q = qs[min(board["alarm"], len(qs) - 1)]
     rq = board["risk"] / 100.0 * q
     if V <= 0:
-        return "wait", "nothing gathered yet"
+        # nothing to lose by waiting: completing now pays nothing (or costs, when a Complication took more than was
+        # gathered: 2026-10-18, Essen at Alarm 3 held 25 gold and -4 Warpstone)
+        return "wait", f"the loot so far is worth {V:.1f} Warpstone: nothing to lose by waiting"
     limit = G / (G + (1 - pay) * V) if G > 0 else 0.0
     why = f"Risk {board['risk']:.0f}% x q {q:.2f} = {rq:.2f} vs {limit:.2f} (loot {V:.0f}, next turn +{G:.0f})"
     return ("wait" if rq < limit else "complete"), why
