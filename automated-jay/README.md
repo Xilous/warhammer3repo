@@ -136,7 +136,9 @@ Thanquol's Clan Scruten); there is nothing to set. What is different with Thanqu
   another turn is worth less than completing (Risk x the chance one Complication maxes the Alarm, against the loot
   the next turn adds over the loot gathered; at maximum Alarm a plan pays 25%), and Clan Scruten Secrets are bought
   in the file's `shop.order`, keeping 50 Warpstone for a Kill-Stab. **Kill-Stab plans stay yours**: the assistant
-  never starts, completes or abandons one. Single player and multiplayer work the same: what is unlocked (the
+  never starts, completes or abandons one. Everything it decides on is read from memory (`bot/sensor/masterplans.py`:
+  plans, Risk, Alarm, loot, cards, Underlings, cooldowns, Warpstone, Secrets owned); the panel is opened only to click,
+  and every action is confirmed in memory. Single player and multiplayer work the same: what is unlocked (the
   Masterplans, each Underling, each Secrets line) is read from the game every time, never from the mode, the turn or
   the story, so whatever unlocks later is used from that turn on. Every board it reads is logged to
   `runs/masterplans.jsonl`. Run now and

@@ -76,6 +76,27 @@ def test_shop_order_is_known_to_the_game():
 
 
 
+def test_income_from_memory_wins_over_card_text():
+    assert abs(M.expected_gain(board(income=160.0, effects=[]), CFG) - 13.248) < 0.01
+
+
+def test_alarm_max_from_memory():
+    assert M.decide(board(alarm=3, alarm_max=3), CFG)[0] == "complete"
+
+
+def test_shop_plan_strict_order_and_locks():
+    objs = M.shop_objects()
+    racks = "wh3_dlc29_shop_military_green_skryre_warpfire_throwers"          # Warlock Master's tab, 300
+    assert objs[racks][0]["cost"] == 300
+    cfg = {"keep_warpstone": 50, "order": [{"chain": racks, "levels": 1, "_what": "Racks"}]}
+    warlock = {"wh3_dlc29_skv_schemer_warlock_master"}
+    assert M.shop_plan(cfg, 1000, set(), set())[0] == []                       # Underling locked: skipped
+    buys, _why = M.shop_plan(cfg, 1000, set(), warlock)
+    assert [(c, lv, cost) for c, lv, cost, _n in buys] == [(racks, 0, 300)]
+    assert M.shop_plan(cfg, 340, set(), warlock)[1].startswith("saving for Racks")   # 340 - 300 < 50
+    assert M.shop_plan(cfg, 1000, {objs[racks][0]["token"]}, warlock)[0] == []         # owned already
+
+
 def test_near_provinces():
     prov = {"a1": "A", "a2": "A", "b1": "B", "c1": "C", "d1": "D"}
     nbrs = {"a1": ["a2", "b1"], "a2": ["a1", "c1"], "b1": ["a1", "d1"], "c1": ["a2"]}

@@ -4,8 +4,13 @@ Every free Underling is sent on a Steal-Take; each running Steal-Take is complet
 less than completing now; Secrets are bought in strategy/masterplans.json "shop" "order". Kill-Stab plans are the
 player's: the step never starts, completes or abandons one. It runs at Build & End Turn only, so an Underling the
 player sends on a Kill-Stab during the turn is never taken first.
-Single player and multiplayer are the same to it: unlocks (story in single player, turns in multiplayer) are never
-assumed; the panel shows what is open each time (HUD button, locked/free/resting Underlings, inactive shop lines).
+
+Everything it decides on is read from memory (bot/sensor/masterplans.py; player rule 2026-10-18, CLAUDE.md): the
+plans and their Risk, Alarm, loot, card pool and draws, the region's income, which Underlings are unlocked, free,
+resting or besieging, settlement cooldowns, which plan types are unlocked, Warpstone and the Secrets owned. Single
+player and multiplayer are the same to it: unlocks (story in single player, turns in multiplayer) are read, never
+assumed. The panel is opened only when there is something to click, and the UI tree only finds what to click and
+confirms the click took; each action's result is confirmed in memory (plan gone, plan started, Warpstone spent).
 
 When to complete a Steal-Take (the game's numbers, 9.0.4):
   - At maximum Alarm (4, campaign variable chaotic_plans_alarm_plan_fail_threshold) the plan pays 25% of its loot
@@ -16,26 +21,24 @@ When to complete a Steal-Take (the game's numbers, 9.0.4):
   - With V the loot so far and G the loot the next turn adds on average, waiting is worth
     (1 - R q)(V + G) + R q 0.25 V against V for completing: wait while R q < G / (G + 0.75 V). Risk only rises and
     the pot only grows, so this one-turn test is the optimal rule.
-  Loot is weighed in Warpstone (gold divided by steal_take.gold_per_warpstone, food not counted). G is read from the
-  board: the draws next turn times the sum, over the cards still in the bag, of each card's draw chance times its
-  value (game tables; a card worth a share of the region's income is valued with the income the drawn cards show).
+  Loot is weighed in Warpstone (gold divided by steal_take.gold_per_warpstone, food not counted). G = the draws next
+  turn times the sum, over the cards still drawable, of each card's draw chance times its value (game tables; a card
+  worth a share of the region's income is valued with the region's income, region:gdp()).
 
-UI (9.0.4, found 2026-10-18 with a live plan): panel dlc29_skv_chaotic_plans; main page schemers_list (one card per
-Underling, a locked one has a "locked" child, a busy one a holder/plan_type child) with new_plan_button (free) or
-view_plan_button (busy) under it for the selected card; active_plans_list holds
-CcoCampaignChaoticPlan<plan key><faction><region> per running plan (a click opens its board). Setup:
-economy_plan_button, then a settlement's name label on the map (3d_ui_parent label_settlement:<region>) is the target
-(dy_settlement_target shows it), establish_plan_button starts it (50 Warpstone). Board: red_token_counter "60%" (Risk),
-bar_fill_elite (Alarm: its height over the 197 px bar, hidden at 0), treasury_counter / warpstone_counter dy_value
-(loot), token_draw_counter (draws next turn), bag chips CcoChaoticPlanTokenRecord<token> with dy_chance,
-trigger_plan_button (Complete) and abandon_button. Shop: shop_button_toggle; tabs
-CcoChaoticPlanShopCategoryRecordwh3_dlc29_skv_shop_<tab>; lines CcoCampaignChaoticPlanShopObjectChain<chain> (state
-"inactive" while locked); the selected line's next level is described on the right, with upgrades_list naming the
-levels after it, and button_purchase buys it. button_close goes back one page (from the main page it closes the panel).
+UI, for the clicks only (9.0.4, found 2026-10-18 with a live plan): panel dlc29_skv_chaotic_plans; main page
+schemers_list (one card per Underling; the selected one's name in schemer_details dy_name) with new_plan_button
+under it; active_plans_list holds CcoCampaignChaoticPlan<plan key><faction><region> per running plan (a click opens
+its board). Setup: economy_plan_button, then a settlement's name label on the map (3d_ui_parent
+label_settlement:<region>) is the target (dy_settlement_target shows it), establish_plan_button starts it (50
+Warpstone). Board: trigger_plan_button (Complete) and abandon_button. Shop: shop_button_toggle; tabs
+CcoChaoticPlanShopCategoryRecordwh3_dlc29_skv_shop_<tab>; lines CcoCampaignChaoticPlanShopObjectChain<chain>;
+button_purchase buys the selected line's next level. button_close goes back one page (from the main page it closes
+the panel).
 """
 from __future__ import annotations
 import json
 import re
+import struct
 import time
 from collections import defaultdict
 from datetime import datetime
@@ -48,8 +51,7 @@ PANEL = "dlc29_skv_chaotic_plans"
 HUD_BUTTON = "button_chaotic_plans"
 ECONOMIC = "wh3_dlc29_economic_plan"
 PLAN_ID = "CcoCampaignChaoticPlan"
-ALARM_BAR_PX = 197.0          # bar_fill_elite's full height (dlc29_skv_chaotic_plans_economy_board.twui.xml)
-ALARM_MAX = 4
+ALARM_MAX = 4                 # campaign variable chaotic_plans_alarm_plan_fail_threshold (memory gives it per plan)
 STRATEGY = config.STRATEGY_DIR / "masterplans.json"
 LOG = config.RUNS_DIR / "masterplans.jsonl"
 
@@ -142,7 +144,7 @@ def card_worth(token: str, income: float | None, gold_per_warpstone: float) -> f
 def expected_gain(board: dict, cfg: dict) -> float:
     """G: the loot the next turn adds on average, in Warpstone."""
     gpw = cfg.get("gold_per_warpstone", 10)
-    income = region_income(board.get("effects", []))
+    income = board["income"] if board.get("income") is not None else region_income(board.get("effects", []))
     pot = board["warpstone"] + board["gold"] / gpw
     per_card_avg = pot / board["drawn"] if board.get("drawn") else 0.0
     g = 0.0
@@ -158,7 +160,7 @@ def decide(board: dict, cfg: dict) -> tuple[str, str]:
         return "wait", "not ready to complete yet"
     gpw = cfg.get("gold_per_warpstone", 10)
     pay = cfg.get("max_alarm_pay", 0.25)
-    if board["alarm"] >= ALARM_MAX:
+    if board["alarm"] >= board.get("alarm_max", ALARM_MAX):
         how = cfg.get("at_max_alarm", "complete")
         return ("abandon" if how == "abandon" else "complete"), "Alarm is at its maximum"
     V = board["warpstone"] + board["gold"] / gpw
@@ -220,20 +222,21 @@ def open_main(ui) -> bool:
 def close_panel(ui) -> None:
     from tools import wait
     from tools.ui import click
+    # One click per page, each confirmed: from the main page the X closes the panel. 2026-10-18: the main page still
+    # read as shown while the panel faded out, so a second and third X went in, and the runner's Escape for the
+    # fading panel then opened the game menu and End Turn stopped there.
     for _ in range(5):
         if not ui.root_child(PANEL):
             return
         x = _under(ui, "button_close", PANEL)
         if x is None:
-            return
+            break
+        if _main_page(ui):
+            click(ui, x)
+            break
         click(ui, x)
         wait.wait_until(lambda: not ui.root_child(PANEL) or _main_page(ui), 2.0, "page back", must=False)
     wait.wait_until(lambda: not ui.root_child(PANEL), 3.0, "Masterplans panel closed", must=False)
-
-
-def warpstone(ui) -> int:
-    c = _under(ui, "warpstone_effect", PANEL)
-    return int(_num(_txt(ui, c))) if c else 0
 
 
 def active_plans(ui) -> list[tuple[int, str, str]]:
@@ -249,35 +252,6 @@ def active_plans(ui) -> list[tuple[int, str, str]]:
         region = rest.split(SCRUTEN)[-1] if SCRUTEN in rest else ""
         out.append((c, plan, region))
     return out
-
-
-def read_board(ui) -> dict | None:
-    board = _under(ui, "chaotic_plans_plan_board", PANEL)
-    if board is None:
-        return None
-    risk = _num(_txt(ui, _under(ui, "red_token_counter", board)))
-    fill = _under(ui, "bar_fill_elite", board)
-    alarm = int(round(ui.comp(fill).h / ALARM_BAR_PX * ALARM_MAX)) if fill and ui.visible(fill) else 0
-    tc, wc = _under(ui, "treasury_counter", board), _under(ui, "warpstone_counter", board)
-    gold = _num(_txt(ui, ui.child(tc, "dy_value"))) if tc else 0.0
-    ws = _num(_txt(ui, ui.child(wc, "dy_value"))) if wc else 0.0
-    draws = int(_num(_txt(ui, _under(ui, "token_draw_counter", board))) or 2)
-    bag = []
-    chips = _under(ui, "bag_content_subpanel", board)
-    for c, i, _raw in ui.nodes(chips) if chips else ():
-        if i.startswith("CcoChaoticPlanTokenRecord"):
-            ch = _under(ui, "dy_chance", c)
-            bag.append((i[len("CcoChaoticPlanTokenRecord"):], _num(_txt(ui, ch))))
-    drawn = sum(1 for _c, i, _r in ui.nodes(_under(ui, "chips_holder", board) or board)
-                if i.startswith("CcoCampaignChaoticPlanToken"))
-    effects = []
-    el = _under(ui, "chip_effects_list", board)
-    for c, i, _raw in ui.nodes(el) if el else ():
-        if i.startswith("CcoCampaignPayloadInfoEntry"):
-            effects.append(_txt(ui, c))
-    trig = _under(ui, "trigger_plan_button", board)
-    return {"risk": risk, "alarm": alarm, "gold": gold, "warpstone": ws, "draws": draws, "bag": bag, "drawn": drawn,
-            "effects": effects, "can_complete": bool(trig) and (ui.state(trig) or "").startswith("active")}
 
 
 def _log(entry: dict) -> None:
@@ -304,38 +278,127 @@ def _confirm(ui) -> None:
             return
 
 
+# ------------------------------------------------------------------ memory: the boards, the shop
+def board_from(plan, w) -> dict:
+    """The decision inputs of a running plan, from memory (bot/sensor/masterplans.Plan); the region's income is
+    region:gdp(), i32 at the region object +0x10C (decompiled binding 0x1427C3750, 9.0.4)."""
+    from bot.sensor.masterplans import WARPSTONE_KEY
+    tot = sum(wt for _t, wt in plan.pool) or 1
+    try:
+        income = float(struct.unpack("<i", w.pm.read_bytes(plan.region_obj + 0x10C, 4))[0])
+    except Exception:
+        income = None
+    return {"risk": plan.risk, "alarm": plan.alarm, "alarm_max": plan.alarm_max, "gold": float(plan.treasury),
+            "warpstone": float(plan.resources.get(WARPSTONE_KEY, 0)), "draws": plan.draws_next,
+            "bag": [(t, wt * 100.0 / tot) for t, wt in plan.pool], "drawn": len(plan.drawn), "income": income,
+            "can_complete": plan.can_complete, "resources": plan.resources}
+
+
+@lru_cache(maxsize=1)
+def shop_objects() -> dict[str, list[dict]]:
+    """shop chain -> [{"token", "cost", "needed"} per level, in order] (cost in Warpstone; needed = purchases in
+    that tab before the level can be bought)."""
+    from . import gamedata as gd
+    price = defaultdict(int)
+    for r in gd._load("resource_cost_pooled_resource_junctions_tables"):
+        if "warpstone" in r["pooled_resource_factor"]:
+            price[r["resource_cost"]] += -int(r["amount"])
+    objs = {r["key"]: r for r in gd._load("chaotic_plan_shop_category_objects_tables")}
+    ch = defaultdict(list)
+    for r in gd._load("chaotic_plan_shop_category_chain_to_object_junctions_tables"):
+        o = objs.get(r["category_object"])
+        if o:
+            ch[r["category_chain"]].append((r["order"], {"token": o["token"], "cost": price.get(o["shop_price"], 0),
+                                                         "needed": int(o.get("amount_needed_to_unlock") or 0)}))
+    return {c: [x for _o, x in sorted(v, key=lambda t: t[0])] for c, v in ch.items()}
+
+
+TAB_UNDERLING = {"wh3_dlc29_skv_shop_grey_seer": "wh3_dlc29_skv_schemer_grey_seer",
+                 "wh3_dlc29_skv_shop_warlord": "wh3_dlc29_skv_schemer_warlord",
+                 "wh3_dlc29_skv_shop_assassin": "wh3_dlc29_skv_schemer_master_assassin",
+                 "wh3_dlc29_skv_shop_warlock": "wh3_dlc29_skv_schemer_warlock_master"}   # thanquol's tab: always open
+
+
+def owned_levels(chain: str, inventory: set[str]) -> int:
+    """Levels of a shop line owned: one past the highest level whose token is in the Secrets inventory."""
+    lv = shop_objects().get(chain, [])
+    return max((i + 1 for i, o in enumerate(lv) if o["token"] in inventory), default=0)
+
+
+def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str]) -> tuple[list, str]:
+    """([(chain, level index, cost, name)] to buy now, in order; why it stops), from memory. Strict order: the first
+    entry that can be bought but not afforded is saved for and nothing below it is bought. Locked entries (the tab's
+    Underling not unlocked, or too few purchases in that tab yet) are skipped."""
+    keep = int(cfg.get("keep_warpstone", 50))
+    tabs = shop_tabs()
+    per_tab = defaultdict(int)
+    for c in shop_objects():
+        per_tab[tabs.get(c)] += owned_levels(c, inventory)
+    have, buys, owned_now = warpstone, [], {}
+    for entry in cfg.get("order", []):
+        chain, want = entry["chain"], int(entry.get("levels", 1))
+        lv, tab = shop_objects().get(chain), tabs.get(chain)
+        if not lv or tab is None:
+            continue
+        if tab in TAB_UNDERLING and TAB_UNDERLING[tab] not in unlocked:
+            continue
+        names = entry.get("_what", chain).split(" / ")
+        owned = owned_now.get(chain, owned_levels(chain, inventory))
+        while owned < min(want, len(lv)):
+            o = lv[owned]
+            name = names[owned] if owned < len(names) else names[0]
+            if per_tab[tab] < o["needed"]:
+                break                                  # locked: too few purchases in that tab yet
+            if have - o["cost"] < keep:
+                return buys, f"saving for {name} ({o['cost']} Warpstone, have {have}, keeping {keep})"
+            buys.append((chain, owned, o["cost"], name))
+            have -= o["cost"]
+            per_tab[tab] += 1
+            owned += 1
+            owned_now[chain] = owned
+    return buys, "" if buys else "nothing on the list left to buy"
+
+
 # ------------------------------------------------------------------ 1. running Steal-Takes
-def manage_plans(ui, cfg: dict, turn) -> list[str]:
+def _open_plan(ui, region: str) -> bool:
     from tools import wait
     from tools.ui import click
+    if not open_main(ui):
+        return False
+    item = next((c for c, p, r in active_plans(ui) if p == ECONOMIC and r == region), None)
+    if item is None:
+        return False
+    click(ui, item)
+    return bool(wait.wait_until(lambda: _under(ui, "trigger_plan_button", PANEL), 3.0, "plan board", must=False))
+
+
+def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
+    """Every running Steal-Take decided from memory; its board is opened only to press Complete / Abandon, and the
+    plan's end is confirmed in memory."""
+    from tools import wait
+    from tools.ui import click
+    from bot.sensor import masterplans as mem
     from . import gamedata as gd
     out = []
-    for _c, plan, region in [p for p in active_plans(ui) if p[1] == ECONOMIC]:
-        place = gd.place_name(region)
-        item = next((c for c, p, r in active_plans(ui) if p == plan and r == region), None)
-        if item is None:
-            continue
-        click(ui, item)
-        if not wait.wait_until(lambda: read_board(ui), 3.0, f"{place} board", must=False):
-            out.append(f"{place}: its plan did not open")
-            open_main(ui)
-            continue
-        time.sleep(0.4)
-        b = read_board(ui)
+    for plan in [p for p in state.plans if p.type == "economic"]:
+        place = gd.place_name(plan.region)
+        b = board_from(plan, w)
         act, why = decide(b, cfg)
-        _log({"turn": turn, "region": region, "board": b, "decision": act, "why": why})
+        _log({"turn": turn, "region": plan.region, "board": b, "decision": act, "why": why, "source": "memory"})
         if act == "wait":
             out.append(f"Steal-Take {place}: wait ({why})")
-        else:
-            btn = _under(ui, "trigger_plan_button" if act == "complete" else "abandon_button", PANEL)
-            before = len(active_plans(ui))
-            click(ui, btn)
-            _confirm(ui)
-            gone = wait.wait_until(lambda: len(active_plans(ui)) < before, 6.0, "plan finished", must=False)
-            _confirm(ui)
-            loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
-            out.append(f"Steal-Take {place}: {'completed' if act == 'complete' else 'abandoned'} ({loot}; {why})"
-                       + ("" if gone else " - NOT confirmed, check the plan"))
+            continue
+        if not _open_plan(ui, plan.region):
+            out.append(f"Steal-Take {place}: {act} decided, but its board did not open")
+            continue
+        click(ui, _under(ui, "trigger_plan_button" if act == "complete" else "abandon_button", PANEL))
+        _confirm(ui)
+        running = lambda: any(p.region == plan.region and p.type == "economic" for p in (mem.read(w) or state).plans)
+        gone = wait.wait_until(lambda: not running(), 6.0, "plan finished (memory)", must=False)
+        _confirm(ui)
+        loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
+        out.append(f"Steal-Take {place}: {'completed' if act == 'complete' else 'abandoned'} ({loot}; {why})"
+                   + ("" if gone else " - NOT confirmed, check the plan"))
         open_main(ui)
     return out
 
@@ -378,36 +441,44 @@ def _near_provinces(w, F: int) -> set[str]:
     return near_provinces(snap.province_of, snap.neighbours_of, set(snap.own))
 
 
-def _targets(ui, w, F: int, busy: set[str], cfg: dict, avoid_rects) -> list[tuple[float, str, int]]:
-    """(score, region, label) of every foreign settlement whose label is on screen, best first: higher settlement
+def target_scores(w, F: int, state, cfg: dict) -> dict[str, float]:
+    """region key -> score for every foreign settlement a Steal-Take may target, from memory: higher settlement
     level first (loot is a share of the region's income), major settlements before minor ones, and (by default)
-    factions we are not at war with first. Settlements on a Masterplans cooldown or already targeted are left out,
-    and (skip_near_provinces) so is every settlement in one of our provinces or a province bordering one."""
+    factions we are not at war with first. Left out: settlements on a Masterplans cooldown, already targeted, without
+    a main building, and (skip_near_provinces) every settlement in one of our provinces or a province bordering one."""
+    from bot.sensor.world import region_provinces
     regs = _region_objects(w, F)
     near = _near_provinces(w, F) if cfg.get("skip_near_provinces", True) else set()
-    if near:
-        from bot.sensor.world import region_provinces
-        prov = region_provinces()[0]
+    prov = region_provinces()[0]
+    busy = {p.region for p in state.plans}
     wars = set(w.wars(F))
+    out = {}
+    for region, r in regs.items():
+        if region in busy or region in state.region_cooldowns or prov.get(region, region) in near:
+            continue
+        owner = w.region_owner(r)
+        if not owner or owner == F:
+            continue
+        slots = w.slots(r)
+        main = slots[0] if slots else None
+        if not main or not main.building:
+            continue
+        score = (main.level or 0) * 10 + (5 if "major" in main.building else 0)
+        if cfg.get("prefer_not_at_war", True) and owner not in wars:
+            score += 100
+        out[region] = score
+    return out
+
+
+def _labels_on_screen(ui, avoid_rects) -> dict[str, int]:
+    """region key -> its clickable name label, for the settlement labels on screen (click targets only)."""
     parent = ui.root_child("3d_ui_parent")
-    out = []
+    out = {}
     for c in ui.children(parent) if parent else []:
         i = ui.id(c) or ""
         if not i.startswith("label_settlement:") or not ui.visible(c):
             continue
-        region = i.split(":", 1)[1]
-        r = regs.get(region)
-        if r is None or region in busy:
-            continue
-        if near and prov.get(region, region) in near:
-            continue                                           # our province or one bordering ours
-        owner = w.region_owner(r)
-        if not owner or owner == F:
-            continue
-        ids = {ii: x for x, ii, _r in ui.nodes(c)}           # visible components only
-        if "dlc29_chaotic_plans_cooldown_counter" in ids:
-            continue                                           # on high alert after a recent Masterplan
-        name = ids.get("dy_name")
+        name = next((x for x, ii, _r in ui.nodes(c) if ii == "dy_name"), None)
         if name is None:
             continue
         k = ui.comp(name)
@@ -416,85 +487,90 @@ def _targets(ui, w, F: int, busy: set[str], cfg: dict, avoid_rects) -> list[tupl
         cx, cy = k.x + k.w / 2, k.y + k.h / 2
         if any(a.x <= cx <= a.x + a.w and a.y <= cy <= a.y + a.h for a in avoid_rects):
             continue
-        slots = w.slots(r)
-        main = slots[0] if slots else None
-        level = (main.level or 0) if main else 0
-        major = bool(main and main.building and "major" in main.building)
-        score = level * 10 + (5 if major else 0)
-        if cfg.get("prefer_not_at_war", True) and owner not in wars:
-            score += 100
-        out.append((score, region, name))
-    return sorted(out, key=lambda t: -t[0])
+        out[i.split(":", 1)[1]] = name
+    return out
 
 
-def start_plans(ui, cfg: dict, dry_run: bool = False) -> list[str]:
-    """dry_run: pick the Underling and the target, then back out without starting (for testing)."""
+def _select_underling(ui, name: str) -> bool:
+    """Click Underling cards until the one named is selected (the card is confirmed on screen by its name)."""
+    from tools import wait
+    from tools.ui import click
+    if _txt(ui, _under(ui, "dy_name", "schemer_details")) == name:
+        return True
+    lst = _under(ui, "schemers_list", PANEL)
+    for card in list(ui.children(lst)) if lst else []:
+        click(ui, card)
+        if wait.wait_until(lambda: _txt(ui, _under(ui, "dy_name", "schemer_details")) == name, 1.0,
+                           f"{name} selected", must=False):
+            return True
+    return False
+
+
+def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[str]:
+    """Free Underlings (memory) on Steal-Takes against the best-scored settlement (memory) whose label is on screen;
+    each start confirmed in memory. dry_run: pick the Underling and the target, then back out without starting."""
     from tools import wait
     from tools.ui import click, click_at, move_to
-    from bot.sensor.world import World, find_player_faction
+    from bot.sensor import masterplans as mem
     from . import gamedata as gd
-    w = World(ui.s)
-    F = find_player_faction(w)
-    out = []
-    lst = _under(ui, "schemers_list", PANEL)
-    cards = list(ui.children(lst)) if lst else []
-    for idx in range(len(cards)):
-        if not open_main(ui):
+    free = [u for u in state.underlings if u.free]
+    if not free:
+        return []
+    if "economic" not in state.unlocked_types:
+        return [f"{', '.join(u.name for u in free)}: Steal-Take is not unlocked yet"]
+    scores = target_scores(w, F, state, cfg)
+    warpstone, taken, out = state.warpstone, set(), []
+    for u in free:
+        if warpstone < 50:
+            out.append(f"{u.name}: no Steal-Take started (needs 50 Warpstone, have {warpstone})")
             break
-        lst = _under(ui, "schemers_list", PANEL)
-        cards = list(ui.children(lst)) if lst else []
-        if idx >= len(cards):
-            break
-        card = cards[idx]
-        if ui.child(card, "locked") is not None and ui.visible(ui.child(card, "locked")):
+        if not open_main(ui) or not _select_underling(ui, u.name):
+            out.append(f"{u.name}: could not select the Underling")
             continue
-        hold = ui.child(card, "holder")
-        if hold is not None and ui.child(hold, "plan_type", visible_only=True) is not None:
-            continue                                           # on a plan
-        click(ui, card)
-        time.sleep(0.5)
-        who = _txt(ui, _under(ui, "dy_name", "schemer_details")) or f"Underling {idx + 1}"
         new = wait.wait_until(lambda: _under(ui, "new_plan_button", PANEL), 1.5, "New Masterplan", must=False)
-        if new is None or not (ui.state(new) or "").startswith("active"):
-            continue                                           # busy, or resting after a plan
-        if warpstone(ui) < 50:
-            out.append(f"{who}: no Steal-Take started (needs 50 Warpstone)")
-            break
+        if new is None:
+            out.append(f"{u.name}: no New Masterplan button")
+            continue
         click(ui, new)
         eco = wait.wait_until(lambda: _under(ui, "economy_plan_button", PANEL), 3.0, "plan types", must=False)
-        if eco is None or (ui.state(eco) or "").startswith("inactive"):
-            out.append(f"{who}: Steal-Take is not available")
+        if eco is None:
+            out.append(f"{u.name}: no Steal-Take button")
             continue
         click(ui, eco)
         time.sleep(0.8)
         avoid = [ui.comp(x) for x in (_under(ui, n, PANEL) for n in
                                       ("plan_type_holder", "target_holder", "bottom_bar", "lord_info")) if x]
-        busy = {r for _c, _p, r in active_plans(ui)}
+        labels = _labels_on_screen(ui, avoid)
+        ranked = sorted((r for r in labels if r in scores and r not in taken), key=lambda r: -scores[r])
         started = False
-        for score, region, label in _targets(ui, w, F, busy, cfg, avoid)[:6]:
-            k = ui.comp(label)
+        for region in ranked[:6]:
+            k = ui.comp(labels[region])
             click_at(int(k.x + k.w / 2), int(k.y + k.h / 2))
             place = gd.place_name(region)
             shown = wait.wait_until(lambda: place in _txt(ui, _under(ui, "dy_settlement_target", PANEL)), 1.5,
                                     f"{place} targeted", must=False)
             est = _under(ui, "establish_plan_button", PANEL)
-            if not shown or est is None or not (ui.state(est) or "").startswith("active"):
+            if not shown or est is None:
                 continue
             if dry_run:
-                out.append(f"{who}: would start a Steal-Take on {place} (score {score})")
+                out.append(f"{u.name}: would start a Steal-Take on {place} (score {scores[region]})")
                 started = True
                 break
-            before = warpstone(ui)
             click(ui, est)
             _confirm(ui)
-            if wait.wait_until(lambda: _under(ui, "chaotic_plans_plan_board", PANEL) or warpstone(ui) < before, 4.0,
-                               "plan started", must=False):
-                out.append(f"{who}: Steal-Take started on {place}")
-                _log({"started": region, "underling": who})
-                started = True
+            ok = wait.wait_until(lambda: any(p.region == region for p in (mem.read(w) or state).plans), 4.0,
+                                 "plan started (memory)", must=False)
+            out.append(f"{u.name}: Steal-Take started on {place}" if ok else
+                       f"{u.name}: Steal-Take on {place} NOT confirmed")
+            if ok:
+                _log({"started": region, "underling": u.name, "score": scores[region]})
+                warpstone -= 50
+                taken.add(region)
+            started = True
             break
         if not started:
-            out.append(f"{who}: no Steal-Take target found on screen")
+            out.append(f"{u.name}: no Steal-Take target on screen ({len(scores)} eligible settlements, "
+                       f"{sum(1 for r in labels if r in scores)} of them on screen)")
         move_to(960, 1070)
     return out
 
@@ -514,81 +590,59 @@ def _open_shop(ui) -> bool:
     return bool(wait.wait_until(lambda: _under(ui, "dlc29_skv_token_shop", PANEL), 3.0, "Secrets shop", must=False))
 
 
-def _line_status(ui, chain: str) -> tuple[int | None, int | None]:
-    """(levels owned, cost of the next) of the selected shop line, from the description on the right: the next level
-    is described, upgrades_list names the levels after it. (None, None) when it cannot be read."""
-    levels = shop_chains().get(chain, [])
-    info = _under(ui, "info_container", PANEL)
-    if not levels or info is None:
-        return None, None
-    after = [i for _c, i, _r in ui.nodes(_under(ui, "upgrades_list", info) or info)
-             if i.startswith("CcoChaoticPlanTokenRecord")] if _under(ui, "upgrades_list", info) else []
-    btn = _under(ui, "button_purchase", info)
-    cost = _num(_txt(ui, _under(ui, "dy_text", btn))) if btn else 0
-    owned = len(levels) - 1 - len(after)
-    if btn is None or not ui.visible(btn):
-        return len(levels), None                     # nothing left to buy
-    return max(0, owned), int(cost) if cost else None
 
 
-def buy_secrets(ui, cfg: dict) -> list[str]:
+def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
+    """Buy what shop_plan picked (memory): one click per level, each confirmed by the Warpstone spent (memory)."""
     from tools import wait
     from tools.ui import click
+    from bot.sensor import masterplans as mem
     from .build import _scroll_into_clip
-    keep = int(cfg.get("keep_warpstone", 50))
+    rd = mem.Reader(w)
+    ws = lambda: rd.pooled(F).get(mem.WARPSTONE_KEY, 0)
     out = []
     if not _open_shop(ui):
         return ["the Secrets shop did not open"]
-    for entry in cfg.get("order", []):
-        chain, want = entry["chain"], int(entry.get("levels", 1))
-        name = entry.get("_what", chain).split(" / ")[0]
-        tab_key = shop_tabs().get(chain)
-        if tab_key is None:
-            continue
-        for _ in range(want):                        # one level per round
-            tab = _under(ui, f"CcoChaoticPlanShopCategoryRecord{tab_key}", PANEL)
-            if tab is None or (ui.state(tab) or "").startswith("inactive"):
-                break                                # that Underling is not unlocked
-            if not (ui.state(tab) or "").startswith("selected"):
-                click(ui, tab)
-                wait.wait_until(lambda: (ui.state(tab) or "").startswith("selected"), 2.0, "shop tab", must=False)
-            line = wait.wait_until(lambda: _under(ui, f"CcoCampaignChaoticPlanShopObjectChain{chain}", PANEL), 2.0,
-                                   f"{chain} listed", must=False)
-            if line is None or (ui.state(line) or "").startswith("inactive"):
-                break                                # locked: too few purchases in that shop yet
-            if not _scroll_into_clip(ui, line, "Secrets list"):
-                break
-            if not (ui.state(line) or "").startswith("selected"):
-                click(ui, ui.child(line, "button_wh3") or line)
-                wait.wait_until(lambda: (ui.state(line) or "").startswith("selected"), 2.0, "line selected", must=False)
-                time.sleep(0.3)
-            owned, cost = _line_status(ui, chain)
-            if owned is None or owned >= want:
-                break
-            names = entry.get("_what", chain).split(" / ")
-            level = names[owned] if owned < len(names) else name
-            have = warpstone(ui)
-            if cost is None or have - cost < keep:
-                out.append(f"saving for {level} ({cost} Warpstone, have {have}, keeping {keep})")
-                return out                           # strict order: nothing below is bought before it
-            click(ui, _under(ui, "button_purchase", PANEL))
-            _confirm(ui)
-            if not wait.wait_until(lambda: warpstone(ui) <= have - cost, 3.0, "purchase registered", must=False):
-                out.append(f"{level}: the purchase did not register")
-                return out
-            out.append(f"bought {level} ({cost} Warpstone)")
-            _log({"bought": chain, "level": owned + 1, "cost": cost})
-            time.sleep(0.4)
-    if not out:
-        out.append("nothing on the list left to buy")
+    for chain, level, cost, name in buys:
+        tab = _under(ui, f"CcoChaoticPlanShopCategoryRecord{shop_tabs().get(chain)}", PANEL)
+        if tab is None:
+            out.append(f"{name}: its shop tab is not shown")
+            break
+        if not (ui.state(tab) or "").startswith("selected"):
+            click(ui, tab)
+            wait.wait_until(lambda: (ui.state(tab) or "").startswith("selected"), 2.0, "shop tab", must=False)
+        line = wait.wait_until(lambda: _under(ui, f"CcoCampaignChaoticPlanShopObjectChain{chain}", PANEL), 2.0,
+                               f"{chain} listed", must=False)
+        if line is None or not _scroll_into_clip(ui, line, "Secrets list"):
+            out.append(f"{name}: its line is not shown")
+            break
+        if not (ui.state(line) or "").startswith("selected"):
+            click(ui, ui.child(line, "button_wh3") or line)
+            wait.wait_until(lambda: (ui.state(line) or "").startswith("selected"), 2.0, "line selected", must=False)
+            time.sleep(0.3)
+        btn = _under(ui, "button_purchase", PANEL)
+        if btn is None or not ui.visible(btn):
+            out.append(f"{name}: no Purchase button (memory and the shop disagree)")
+            break
+        have = ws()
+        click(ui, btn)
+        _confirm(ui)
+        if not wait.wait_until(lambda: ws() <= have - cost, 3.0, "purchase registered (memory)", must=False):
+            out.append(f"{name}: the purchase did not register")
+            break
+        out.append(f"bought {name} ({cost} Warpstone)")
+        _log({"bought": chain, "level": level + 1, "cost": cost})
+        time.sleep(0.4)
     return out
 
 
 # ------------------------------------------------------------------ the step
 def run(log=print, verify: bool = False) -> str:
     from bot.focus import game_focus
+    from bot.sensor import masterplans as mem
     from bot.sensor.ui import UI
     from bot.sensor.world import World, find_player_faction
+    from . import gamedata as gd
     w = World()
     F = find_player_faction(w)
     if F is None:
@@ -596,27 +650,50 @@ def run(log=print, verify: bool = False) -> str:
     if w.faction_name(F) != SCRUTEN:
         return "no Masterplans (Thanquol's Clan Scruten only)"
     if verify:
-        return "nothing to verify"                   # every action is confirmed on screen as it happens
+        return "nothing to verify"                   # every action is confirmed in memory as it happens
     cfg = settings()
     st, shop = cfg.get("steal_take", {}), cfg.get("shop", {})
-    if not st.get("enabled", True) and not shop.get("enabled", True):
+    st_on, shop_on = st.get("enabled", True), shop.get("enabled", True)
+    if not st_on and not shop_on:
         return "off (strategy/masterplans.json)"
-    ui = UI(w.s)
-    ui.find_root()
-    b = ui.cached(HUD_BUTTON) or ui.first(HUD_BUTTON)
-    if b is None or not (ui.state(b) or "").startswith("active"):
+    state = mem.read(w)
+    if state is None:
+        return "Masterplans not found in memory"
+    if not state.unlocked_types:
         return "Masterplans are not unlocked yet"
     turn = w.s.read().turn
+    # everything is decided from memory first; the panel is opened only when there is something to click
+    plans = [(p, board_from(p, w)) for p in state.plans if p.type == "economic"] if st_on else []
+    acting = any(decide(b, st)[0] != "wait" for _p, b in plans)
+    starting = st_on and "economic" in state.unlocked_types and any(u.free for u in state.underlings)
+    buys, why = [], ""
+    if shop_on:
+        unlocked = {u.subtype for u in state.underlings if u.unlocked}
+        buys, why = shop_plan(shop, state.warpstone - (50 if starting else 0), set(state.inventory), unlocked)
     out = []
+    if not acting:
+        for p, b in plans:
+            act, reason = decide(b, st)
+            _log({"turn": turn, "region": p.region, "board": b, "decision": act, "why": reason, "source": "memory"})
+            out.append(f"Steal-Take {gd.place_name(p.region)}: wait ({reason})")
+    if st_on and not starting and any(u.free for u in state.underlings):
+        out.append("Steal-Take is not unlocked yet")
+    if not (acting or starting or buys):
+        return "; ".join(out + ([why] if why else [])) or "nothing to do"
+    ui = UI(w.s)
+    ui.find_root()
     with game_focus():
         try:
             if not open_main(ui):
-                return "the Masterplans panel did not open"
-            if st.get("enabled", True):
-                out += manage_plans(ui, st, turn)
-                out += start_plans(ui, st)
-            if shop.get("enabled", True):
-                out += buy_secrets(ui, shop)
+                return "; ".join(out + ["the Masterplans panel did not open"])
+            if acting:
+                out += manage_plans(ui, st, turn, state, w)
+            if starting:
+                out += start_plans(ui, st, mem.read(w) or state, w, F)
+            if buys:
+                out += buy_secrets(ui, buys, w, F)
+            if why:
+                out.append(why)
         finally:
             close_panel(ui)
     return "; ".join(out) or "nothing to do"

@@ -53,6 +53,20 @@ def selftest() -> int:
         check("building plan", lambda: build.planned_actions())
         check("recruitment sources", lambda: recruit.sources())
         check("skill orders", lambda: sorted(skills.orders()["characters"]))
+
+        def plans():
+            from bot.sensor import masterplans as mem
+            m = mem.read()
+            if m is None:
+                return "not found in memory"
+            return (f"types {sorted(m.unlocked_types)}, Warpstone {m.warpstone}, plans "
+                    f"{[(p.type, p.region, p.risk, p.alarm) for p in m.plans]}, Underlings "
+                    f"{[(u.name, 'free' if u.free else 'unlocked' if u.unlocked else 'locked') for u in m.underlings]}, "
+                    f"{len(m.inventory)} Secrets, {len(m.region_cooldowns)} settlements on cooldown")
+        from bot.sensor.world import World, find_player_faction
+        _w = World(s)
+        if (_w.faction_name(find_player_faction(_w) or 0) or "") == "wh3_dlc29_skv_clan_scruten":
+            check("masterplans (memory)", plans)
     text = "\n".join(lines)
     config.RUNS_DIR.mkdir(parents=True, exist_ok=True)
     (config.RUNS_DIR / "selftest.txt").write_text(text + "\n", encoding="utf-8")

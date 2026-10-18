@@ -521,6 +521,20 @@ class Runner:
         if x is not None:
             click(self.ui, x)
             wait.gone(self.ui, hero, timeout=1.0, must=False, what="Hero Actions closed")
+        # the Masterplans panel closes with its X only; one already closing (its X clicked) is waited out, never
+        # given an Escape: Escape with the panel half gone opens the game menu (2026-10-18, End Turn stuck there)
+        for _ in range(4):                            # (the X goes back one page from a board or the shop)
+            plans = self.ui.root_child("dlc29_skv_chaotic_plans")
+            if not plans:
+                break
+            x = self.ui.first("button_close", under=plans)
+            if x is not None and self.ui.effective_visible(x):
+                wait.stable_rect(self.ui, x, n=3, timeout=1.0, must=False, what="Masterplans X still")
+                click(self.ui, x)
+            if not wait.wait_until(lambda: not self.ui.root_child("dlc29_skv_chaotic_plans")
+                                   or self.ui.first("button_close", under="dlc29_skv_chaotic_plans") != x, 3.0,
+                                   "Masterplans panel closed", must=False):
+                break
         from .army_builder import _resume
         for _ in range(6):
             now = open_()

@@ -229,6 +229,11 @@ def open_decisions(ui: UI | None = None) -> list[tuple[str, str, bool]]:
             out.append((cid, f"a dilemma (choice event, {cid})", False))
         elif significant(ui, c):
             out.append((cid, f"a global event to read: {title(ui, c) or cid}", False))
+        elif not any(n.startswith("button") for _b, n, _r in ui.nodes(c)):
+            # a passing notice: no button at all, it fades out by itself after a few seconds (2026-10-18, turn 2:
+            # "Oakenhammer has been taken" held Build & End Turn on "GLOBAL EVENT"; also "Enemy Killed In Battle").
+            # Story and world-event panels always have at least their Continue button (button_txt).
+            continue
         elif _close_button(ui, c) is None:
             # a notice with no close button the assistant knows: story and world-event panels have only "Continue"
             # (2026-10-17, Thanquol's turn 2: "Act I - Favoured by the Horned Rat", a modal incident_large panel,
