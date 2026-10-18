@@ -73,7 +73,7 @@
       "A tick means 'refill once' (player rule 2026-10-18): only an army missing template units (troops or its Warlock Engineer) can be ticked, and only while the refill is possible (a province recruits the whole template; an engineer is free or the engineer cap has room). The tick clears itself once the army matches the template again.",
       "A ticked army must match the template: units not in it are disbanded once it stands in a recruiting province,",
       "missing units are recruited, and the army is moved to the province that can recruit them.",
-      "auto_create: the builder raises a new Verminlord Warpseer army by itself, at most one per turn, when a province recruits the whole template, an engineer is free or the engineer cap has room, a Warpseer is in the Recruit Lord pool, and the projected income minus the upkeep still to come for ticked armies, the new army's upkeep and the Supply Lines increase stays at or above income_reserve (gold per turn).",
+      "auto_create: false (player rule 2026-10-18): the player decides when a new army is raised. The dashboard's Army finances show what every army costs now, what a refill would make it cost (units not in the template are disbanded and stop costing) and what the next army would cost with Supply Lines, and whether it is affordable; 'Create new playbook army' (greyed out while a Warpseer, a lord slot or a province recruiting the whole template is missing) raises a Verminlord Warpseer army at once. true: the builder raises one by itself whenever that holds and the income after the ticked refills and the new army stays at or above income_reserve.",
       "Before Stormfiends (Ratling Cannons) can be recruited, their slots stay empty.",
       "Heroes are separate characters on the map: a recruited Warlock Engineer spawns outside the town that recruited it and must be moved into the lord's army. A free Warlock Engineer counts as available for an army that lacks one (player note, 2026-10-16).",
       "The army only goes to a province for actual units; the engineer never decides where it goes. If it has no engineer and none is free, one is recruited as soon as the faction cap allows (the cap rises +2 per Verminlord Warpseer with Inscrutable Genius), at the settlement nearest the army that can recruit one, and it walks to wherever the army is (player decision, 2026-10-16).",
@@ -95,7 +95,7 @@
     },
     "disband_off_template": true,
     "move_army_to_recruit": true,
-    "auto_create": true,
+    "auto_create": false,
     "income_reserve": 0
   },
   "done_indicator": "widget",

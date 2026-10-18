@@ -1,15 +1,17 @@
-"""New armies (player rule 2026-10-18): the army builder raises a new doomstack by itself, at most one per turn, when
+"""New armies, raised when the player asks (player rule 2026-10-18, replacing the builder's own decision): the
+dashboard shows what every army costs, what a refill would make it cost and what the next army would cost
+(assist/army_finance.py); the player decides. "Raise next army" on the dashboard asks for one, and the next army pass
+raises it when
   1. a province can recruit the whole template (assist/army_builder.eligible, the builder's own test);
   2. the new army can have its Warlock Engineer: one is free (unclaimed) or the engineer cap has room (the cap as the
-     Recruit Hero panel last showed it, runs/caps.json; never read yet = not a reason to wait);
-  3. income pays for the whole army: projected income (HUD treasury_holder/dy_income, the "(-8)" next to the treasury)
-     minus the upkeep still to come from the troops and engineers ticked armies are missing (queued ones included:
-     they pay nothing until recruited), with Supply Lines, minus the new army's upkeep with Supply
-     Lines on it, minus the Supply Lines increase on the armies already fielded, stays at or above
-     army_builder.income_reserve;
+     Recruit Hero panel last showed it, runs/caps.json; UI stop-gap, memory reader pending; never read yet = not a
+     reason to wait);
+  3. income pays for it: the projected income (memory, bot/sensor/economy.py) minus what the ticked refills will add
+     minus the next army's upkeep and Supply Lines (army_finance) stays at or above army_builder.income_reserve;
   4. a Verminlord Warpseer is in the Recruit Lord pool (its Verminlords tab) and the Raise button is active (Lord cap).
 The Warpseer is raised at a settlement of an eligible province that no other army of ours stands in, and the new army
 is ticked: the builder recruits the template there in the same pass, and unticks it once it matches (army_builder).
+army_builder.auto_create true brings back the old behaviour (raised by itself whenever 1-4 hold).
 
 Supply Lines (game script wh_campaign_setup.lua, apply_upkeep_penalty): every army with a general after the first
 adds 1% (normal), 2% (hard) or 4% (very hard, legendary) to the upkeep of every unit. The Recruit Lord panel states
@@ -21,7 +23,6 @@ tabs lord_parent/list_box/<type> (wh3_skv_verminlord = Verminlords); candidates 
 "<name>\\n<subtype>", child button_wh3), footer/button_raise.
 """
 from __future__ import annotations
-import re
 
 from bot.sensor.ui import UI
 from bot.sensor.world import World, armies, characters, region_provinces
@@ -34,7 +35,6 @@ WARPSEER = "wh3_dlc29_skv_verminlord_warpseer"
 WARPSEER_UNIT = "wh3_dlc29_skv_cha_verminlord_warpseer"         # the lord's own unit card (main_units key)
 ENGINEER_UNIT = "wh2_main_skv_cha_warlock_engineer"
 VERMINLORD_TAB = "wh3_skv_verminlord"
-SUPPLY_LINES_DEFAULT = 4                                         # % per army: the hardest difficulties' value
 
 
 def upkeep_of() -> dict[str, int]:
@@ -69,36 +69,39 @@ def pending_upkeep(w: World, F: int) -> int:
     return total
 
 
-def _number(text: str | None) -> int | None:
-    m = re.search(r"[-+]?[\d,]+", re.sub(r"\[\[.*?\]\]", "", text or ""))
-    return int(m.group(0).replace(",", "")) if m else None
-
-
-def income(ui: UI) -> int | None:
-    """Projected income per turn, as the HUD shows it in brackets next to the treasury."""
-    c = ui.first("dy_income", under="treasury_holder")
-    return _number(ui.text(c)) if c else None
-
-
-def budget(ui: UI, w: World, F: int, pct: float, increase: int | None = None) -> tuple[int, str] | None:
-    """(gold per turn left after the new army, how it was worked out) or None when the income cannot be read.
-    increase: the game's estimate of the Supply Lines increase on the armies already fielded; without it, pct of the
-    fielded armies' base upkeep."""
-    inc = income(ui)
-    if inc is None:
-        return None
-    up = upkeep_of()
-    fielded = armies(w, F)
-    if increase is None:
-        increase = round(pct / 100 * sum(up.get(u.key, 0) for a in fielded for u in a.units))
-    supply = 1 + pct / 100 * len(fielded)               # Supply Lines on every unit once the new army is fielded
-    new = round(template_upkeep() * supply)
-    pend = round(pending_upkeep(w, F) * supply)
+def budget(w: World, F: int) -> tuple[int, str]:
+    """(gold per turn left after the ticked refills and the next army, how it was worked out), from memory."""
+    from .army_finance import compute
+    f = compute(w, F)
     reserve = int(load_automation()["army_builder"].get("income_reserve", 0))
-    left = inc - pend - new - increase - reserve
-    return left, (f"income {inc:+d}, still to recruit for ticked armies -{pend}, new army -{new}, Supply Lines "
-                  f"{pct:g}% on the fielded armies -{increase}" + (f", reserve -{reserve}" if reserve else "")
-                  + f" = {left:+d}")
+    left = f.after_next - reserve
+    return left, (f"income {f.income:+d}, ticked refills {-f.ticked_extra:+d}, next army {-f.next_army:+d} "
+                  f"({f.supply_pct}% Supply Lines)" + (f", reserve -{reserve}" if reserve else "") + f" = {left:+d}")
+
+
+def _request_file():
+    from bot import config
+    return config.RUNS_DIR / "raise_army.request"
+
+
+def request_raise() -> None:
+    """The dashboard's "Raise next army": the next army pass raises one (if it can)."""
+    try:
+        _request_file().parent.mkdir(parents=True, exist_ok=True)
+        _request_file().write_text("1", encoding="utf-8")
+    except OSError:
+        pass
+
+
+def take_request() -> bool:
+    f = _request_file()
+    if f.exists():
+        try:
+            f.unlink()
+        except OSError:
+            pass
+        return True
+    return False
 
 
 def raise_site(w: World, F: int, elig: dict) -> str | None:
@@ -109,14 +112,6 @@ def raise_site(w: World, F: int, elig: dict) -> str | None:
     taken = held_settlements(w, F, pos, except_cqi=-1)
     sites = [r for r in pos if prov.get(r) in elig and r not in taken]
     return min(sites, key=lambda r: (not cap.get(r), r)) if sites else None
-
-
-def _alert(ui: UI) -> tuple[float | None, int | None]:
-    """(Supply Lines % per army, gold increase on the fielded armies) from the Recruit Lord panel."""
-    l1 = ui.first("tx_line1", under="upkeep_alert")
-    l2 = ui.first("tx_line2", under="upkeep_alert")
-    m = re.search(r"(\d+(?:\.\d+)?)\s*%", ui.text(l1) or "") if l1 else None
-    return (float(m.group(1)) if m else None), (_number((ui.text(l2) or "").split(":")[-1]) if l2 else None)
 
 
 def warpseer_card(ui: UI):
@@ -131,11 +126,11 @@ def warpseer_card(ui: UI):
 
 def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
     """Raise one new Warpseer army if every condition holds. -> (log lines, the new army or None)."""
-    from .army_builder import (ENGINEER, clear, eligible, free_engineer_slots, load_caps, region_name, save_caps,
+    from .army_builder import (ENGINEER, clear, eligible, free_engineer_slots, region_name,
                                select_settlement, settlement_pos, _load_claims)
     from .heroes import park
     ab = load_automation()["army_builder"]
-    if not ab.get("auto_create", True):
+    if not ab.get("auto_create", False) and not take_request():
         return [], None
     t = ab["template"]
     elig = eligible(w, F, set(t["units"]))
@@ -147,12 +142,11 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
     slots = free_engineer_slots(w, F)
     if not free and slots is not None and slots <= 0:
         return ["new army: no Warlock Engineer for it (none free, engineer cap full)"], None
-    caps = load_caps()
-    pct = caps.get("supply_lines_pct") or SUPPLY_LINES_DEFAULT
-    b = budget(ui, w, F, pct)
-    if b is None:
-        return ["new army: the income on the HUD could not be read"], None
-    if b[0] < 0:
+    from .army_finance import pool_subtypes
+    if WARPSEER not in pool_subtypes(w, F):
+        return ["new army: no Verminlord Warpseer in the Recruit Lord pool (the Dominating Scheme brings one)"], None
+    b = budget(w, F)
+    if b[0] < 0 and ab.get("auto_create", False):          # raised by itself: only when it pays; asked for: shown
         return [f"new army: not affordable yet ({b[1]})"], None
     site = raise_site(w, F, elig)
     if site is None:
@@ -169,15 +163,6 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
         clear(ui)
         return ["new army: the Recruit Lord panel did not open"], None
     lines = []
-    pct2, increase = _alert(ui)
-    if pct2 is not None:
-        save_caps(supply_lines_pct=pct2)
-        pct = pct2
-    b = budget(ui, w, F, pct, increase)
-    if b is None or b[0] < 0:
-        clear(ui)
-        park()
-        return [f"new army: not affordable yet ({b[1] if b else 'income unreadable'})"], None
     tab = wait.appears(ui, VERMINLORD_TAB, under="lord_parent", timeout=2.0, must=False)
     if tab is None:
         clear(ui)

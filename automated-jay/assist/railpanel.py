@@ -29,7 +29,7 @@ def _nice(text: str) -> str:
 
 class RailPanel:
     def __init__(self, root: tk.Tk, rail, on_run_now, on_pause, on_restart, on_ignore, on_full_window,
-                 on_exit=None) -> None:
+                 on_exit=None, on_raise_army=None) -> None:
         self.rail = rail
         self.on_run_now, self.on_pause, self.on_restart = on_run_now, on_pause, on_restart
         self.on_ignore, self.on_full_window = on_ignore, on_full_window
@@ -76,6 +76,22 @@ class RailPanel:
         self.armies = tk.Frame(self.body, bg=BG)
         self.armies.pack(fill="x")
         self.army_vars: dict[int, tk.BooleanVar] = {}
+
+        self._heading("ARMY FINANCES  (you decide when a new army is raised)")
+        self.verdict = tk.Label(self.body, text="", bg=BG, fg=MUTED, font=FONT_B, anchor="w", justify="left",
+                                wraplength=WIDTH - 30)
+        self.verdict.pack(fill="x")
+        self.finance = tk.Label(self.body, text="", bg=BG2, fg=INK, font=("Consolas", 8), anchor="nw",
+                                justify="left", wraplength=WIDTH - 40, padx=8, pady=6)
+        self.finance.pack(fill="x")
+        self.on_raise_army = on_raise_army
+        self.can_raise = False
+        self.raise_btn = self._button(self.body, "CREATE NEW PLAYBOOK ARMY", self._raise)
+        self.raise_why = tk.Label(self.body, text="", bg=BG, fg=MUTED, font=FONT, anchor="w", justify="left",
+                                  wraplength=WIDTH - 30)
+        if on_raise_army is not None:
+            self.raise_btn.pack(anchor="w", pady=(4, 0))
+            self.raise_why.pack(fill="x")
 
         self._heading("FRONTLINE  (you build there)")
         self.front = tk.Label(self.body, text="", bg=BG, fg=ORANGE, font=FONT, anchor="w", justify="left",
@@ -140,6 +156,18 @@ class RailPanel:
 
     def show_log(self, lines: list[str]) -> None:
         self.log.configure(text="\n".join(_nice(x) for x in lines[-12:]) or "nothing yet")
+        self.place()
+
+    def _raise(self) -> None:
+        if self.can_raise and self.on_raise_army is not None:
+            self.on_raise_army()
+
+    def show_finance(self, verdict: str, ok: bool, can: bool, why_not: str, lines: list[str]) -> None:
+        self.verdict.configure(text=verdict, fg=GREEN if ok else ORANGE)
+        self.finance.configure(text="\n".join(_nice(x) for x in lines))
+        self.can_raise = can
+        self.raise_btn.configure(fg=INK if can else DIM, cursor="hand2" if can else "arrow")
+        self.raise_why.configure(text="" if can else why_not)
         self.place()
 
     def show_template(self, status) -> None:

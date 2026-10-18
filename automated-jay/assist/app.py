@@ -106,7 +106,8 @@ def last_logged_turn() -> list[str]:
 
 
 class App:
-    def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None, on_restart=None, on_exit=None) -> None:
+    def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None, on_restart=None, on_exit=None,
+                 on_raise_army=None) -> None:
         self.q: queue.Queue = queue.Queue()
         self.on_pause = on_pause
         self.on_run_now = on_run_now
@@ -114,6 +115,7 @@ class App:
         self.on_end_turn = on_end_turn
         self.on_restart = on_restart
         self.on_exit = on_exit
+        self.on_raise_army = on_raise_army
         self._world = None                         # one sensor for every refresh (bot/sensor/world.py World)
         self._refreshing = threading.Lock()
         self.root = tk.Tk()
@@ -156,6 +158,19 @@ class App:
         self.army_frame.pack(fill="both", expand=True)
         self.army_vars: dict[int, tk.BooleanVar] = {}
 
+        ff = ttk.LabelFrame(self.root, text="Army finances  (you decide when a new army is raised)", padding=6)
+        ff.pack(fill="x", padx=10, pady=6)
+        self.verdict_lbl = tk.Label(ff, text="", justify="left", anchor="w", bg="#1d1f1d", fg="#c8c8c8",
+                                    font=("Segoe UI", 10, "bold"), wraplength=600)
+        self.verdict_lbl.pack(fill="x")
+        self.finance_lbl = tk.Label(ff, text="", justify="left", anchor="w", bg="#1d1f1d", fg="#c8c8c8",
+                                    font=("Consolas", 9), wraplength=600)
+        self.finance_lbl.pack(fill="x")
+        self.raise_btn = ttk.Button(ff, text="Create new playbook army", command=self._raise_army,
+                                    state="disabled")
+        if on_raise_army is not None:
+            self.raise_btn.pack(anchor="w", pady=(4, 0))
+
         pf = ttk.LabelFrame(self.root, text="Provinces where nothing is built", padding=6)
         pf.pack(fill="x", padx=10, pady=6)
         self.prov_lbl = tk.Label(pf, text="", justify="left", anchor="w", bg="#1d1f1d", fg="#d8b0b0",
@@ -177,7 +192,8 @@ class App:
         from .railpanel import RailPanel
         self.panel = RailPanel(self.root, self.rail, on_run_now=self._run_now, on_pause=self._pause,
                                on_restart=self._restart, on_ignore=self._ignore, on_full_window=self._show_full,
-                               on_exit=self._exit if on_exit is not None else None)
+                               on_exit=self._exit if on_exit is not None else None,
+                               on_raise_army=self._raise_army if on_raise_army is not None else None)
         self.rail.on_toggle_panel = self.panel.toggle
         self.rail.on_moved = self.panel.place
         self.rail.draw()
@@ -219,6 +235,10 @@ class App:
 
     def _exit(self) -> None:
         threading.Thread(target=self.on_exit, daemon=True).start()
+
+    def _raise_army(self) -> None:
+        if getattr(self, "_can_raise", False):
+            threading.Thread(target=self.on_raise_army, daemon=True).start()
 
     def _restart(self) -> None:
         threading.Thread(target=self.on_restart, daemon=True).start()
@@ -277,6 +297,13 @@ class App:
                             "no province yet" + (f" (needs {', '.join(n for n in self.template_needs)})"
                                                   if getattr(self, "template_needs", None) else ""))
                         self.rail.set_template(ok, short)
+                elif kind == "finance":
+                    _, verdict, ok, can, why_not, lines = msg
+                    self._can_raise = can
+                    self.verdict_lbl.configure(text=verdict, fg="#9fd9a6" if ok else "#e0a070")
+                    self.finance_lbl.configure(text="\n".join(lines))
+                    self.raise_btn.configure(state="normal" if can else "disabled")
+                    self.panel.show_finance(verdict, ok, can, why_not, lines)
                 elif kind == "ignorable":
                     self._show_ignorable(msg[1])
                     self.panel.show_ignorable(msg[1])
@@ -344,6 +371,13 @@ class App:
             self.template_status = template_status(w, F, src)
             self.template_needs = template_needs(src)
             self.q.put(("world", st, rows, blocked, heroes))
+            try:
+                from .army_finance import compute, readiness
+                f = compute(w, F)
+                can, why_not = readiness(w, F, f)
+                self.q.put(("finance", f.verdict(), f.after_next >= 0, can, why_not, f.lines()))
+            except Exception as ex:                       # noqa: BLE001  (the dashboard says why)
+                self.q.put(("finance", f"army finances unreadable: {ex}", False, False, str(ex), []))
         except Exception as ex:
             self.q.put(("world", None, [], {"error": str(ex)}, []))
 

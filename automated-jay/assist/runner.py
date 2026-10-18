@@ -357,6 +357,35 @@ class Runner:
         finally:
             self.busy.release()
 
+    def raise_army(self) -> None:
+        """The dashboard's "Create new playbook army" (player rule 2026-10-18: the player decides when an army is
+        raised; the dashboard shows what it would cost and greys the button out while it cannot be done): the army
+        step runs now with a one-shot request and raises a Verminlord Warpseer army (assist/new_army.py)."""
+        from . import new_army
+        new_army.request_raise()
+        if not self.busy.acquire(blocking=False):
+            self.post("waiting", "NEW ARMY LATER", "a pass is running: its army step raises the army")
+            return
+        try:
+            s = self.mem.read()
+            if not s.ok:
+                self.post("waiting", "WAITING", "New army: no campaign loaded")
+                return
+            ok, why = players_turn(self.ui)
+            if not ok:
+                self.post("waiting", f"WAITING (turn {s.turn})", f"New army: not your turn ({why})", turn=s.turn)
+                return
+            done = self.automate(s.turn, [], label="new army", names=["army"])
+            self.post("your turn", f"YOUR TURN {s.turn}", "\n".join(done), turn=s.turn)
+        except InputAborted as ex:
+            self.post("error", f"INTERRUPTED (turn {self.last_turn})", f"interrupted: {ex}")
+        except Exception as ex:
+            traceback.print_exc()
+            self.post("error", "ERROR", f"New army failed: {ex}")
+        finally:
+            new_army.take_request()                     # one press, one try
+            self.busy.release()
+
     def end_turn_now(self) -> None:
         """The app's "Build & End Turn": the end-of-turn steps (by default buildings, then the army builder), then
         the game's End Turn button. The player asked for it, so there is no idle wait; everything else is checked as
@@ -996,7 +1025,8 @@ def main() -> int:
     holder: dict = {}
     app = App(on_pause=lambda: holder["r"].toggle_pause(), on_run_now=lambda: holder["r"].run_now(),
               on_ignore=lambda cid: holder["r"].ignore(cid), on_end_turn=lambda: holder["r"].end_turn_now(),
-              on_restart=lambda: holder["r"].restart(), on_exit=lambda: holder["r"].exit_now())
+              on_restart=lambda: holder["r"].restart(), on_exit=lambda: holder["r"].exit_now(),
+              on_raise_army=lambda: holder["r"].raise_army())
     r = Runner(widget=app)
     holder["r"] = r
     threading.Thread(target=r.loop, daemon=True).start()
