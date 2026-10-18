@@ -39,7 +39,9 @@ pooled res.: faction manager [F+0x1B80]: count u32 +0x14, array [+0x18], stride 
              (key: char* at [[rec+8]+8]), value i32 e+0x20
 script state [m+0x6D38] +0xD0 is a hash map like H keyed u64 (family id | 5 << 32): value at node+0x18 = {count u32
              +4, array [+8] of {interned name, value byte +8}}; "schemer_unlocked" says an Underling is unlocked
-character:   family-member id u32 [[C+0x3F0]+8]+8; Underling subtypes wh3_dlc29_skv_schemer_*
+character:   family-member id u32 [[C+0x3F0]+8]+8; Underling subtypes wh3_dlc29_skv_schemer_*; wounded turns u32
+             [C+0x3F0]+0x510 and army [[C+0x3B0]] (both checked by is_schemer_available_for_plans; 2026-10-18: the
+             Grey Seer after a lost Kill-Stab battle read 4 and no army, and his card had no New Masterplan button)
 """
 from __future__ import annotations
 import struct
@@ -80,10 +82,15 @@ class Underling:
     on_plan: bool
     cooldown: int                # turns left
     besieging: bool
+    wounded: int = 0             # turns until he recovers (his army was lost, e.g. in a Kill-Stab battle)
+    has_army: bool = True
 
     @property
     def free(self) -> bool:
-        return self.unlocked and not self.on_plan and not self.besieging and self.cooldown == 0
+        """As is_schemer_available_for_plans (0x1428CCC38): unlocked, no cooldown, not wounded, his one-unit army
+        alive, not on a plan and not besieging."""
+        return (self.unlocked and not self.on_plan and not self.besieging and self.cooldown == 0
+                and self.wounded == 0 and self.has_army)
 
 
 @dataclass
@@ -173,8 +180,10 @@ class Reader:
         cds = {w.u32(n + 0x10): w.u32(n + 0x14) for n in self.nodes(M + 0x188)}
         unlocked = self._unlocked_families(m)
         for fam, (C, sub) in chars.items():
+            force = w.q(C + 0x3B0)
             st.underlings.append(Underling(C, fam, sub, character_name(w, C), unlocked.get(fam, False),
-                                           fam in busy, max(0, cds.get(fam, 0) - turn), fam in besieging))
+                                           fam in busy, max(0, cds.get(fam, 0) - turn), fam in besieging,
+                                           w.u32(w.q(C + 0x3F0) + 0x510), bool(force and w.q(force))))
         rid = self._region_ids(F)
         for n in self.nodes(M + 0x248):
             left = w.u32(n + 0x14) - turn
