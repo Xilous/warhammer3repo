@@ -22,6 +22,8 @@
     "_rule": "Wait while Risk x q(Alarm) < G / (G + (1 - max_alarm_pay) x V), where V is the loot gathered and G the loot the next turn is expected to add (draws x the sum of each remaining card's draw chance x its value); complete once it is not.",
     "skip_near_provinces": true,
     "_skip_near_provinces": "Never a Steal-Take on a settlement in one of your provinces (any region of it held) or in a province bordering one (player rule, 2026-10-18).",
+    "max_pan": 60,
+    "_max_pan": "A target off screen is panned to (WASD, steered from memory) when it is within this many map units of the screen centre; the best-scored such settlement is taken.",
     "prefer_not_at_war": true,
     "_prefer_not_at_war": "Targets owned by factions you are not at war with come first: a Steal-Take is abandoned if you conquer its region."
   },

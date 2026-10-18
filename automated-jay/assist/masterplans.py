@@ -491,19 +491,84 @@ def _labels_on_screen(ui, avoid_rects) -> dict[str, int]:
     return out
 
 
-def _select_underling(ui, name: str) -> bool:
-    """Click Underling cards until the one named is selected (the card is confirmed on screen by its name)."""
+@lru_cache(maxsize=1)
+def underling_cards() -> dict[str, str]:
+    """Underling subtype -> the start-position id its card is named after
+    (CcoChaoticPlanSchemersSpecialInfoRecord<id>special_info_record; the shop tab of that Underling has the same id)."""
+    from . import gamedata as gd
+    pos = {r["key"]: r["character_start_pos_id"] for r in gd._load("chaotic_plan_shop_categories_tables")}
+    return {sub: pos[tab] for tab, sub in TAB_UNDERLING.items() if pos.get(tab)}
+
+
+def _select_underling(ui, subtype: str) -> bool:
+    """Click the Underling's card (found by its id, 2026-10-18: the details show "Grey Seer Underling", not his name)
+    and wait until it is selected."""
     from tools import wait
     from tools.ui import click
-    if _txt(ui, _under(ui, "dy_name", "schemer_details")) == name:
-        return True
+    pid = underling_cards().get(subtype)
     lst = _under(ui, "schemers_list", PANEL)
-    for card in list(ui.children(lst)) if lst else []:
+    card = next((c for c in (ui.children(lst) if lst else [])
+                 if pid and (ui.id(c) or "").startswith(f"CcoChaoticPlanSchemersSpecialInfoRecord{pid}")), None)
+    if card is None:
+        return False
+    if not (ui.state(card) or "").startswith("selected"):
         click(ui, card)
-        if wait.wait_until(lambda: _txt(ui, _under(ui, "dy_name", "schemer_details")) == name, 1.0,
-                           f"{name} selected", must=False):
-            return True
-    return False
+    return bool(wait.wait_until(lambda: (ui.state(card) or "").startswith("selected"), 1.5, "Underling selected",
+                                must=False))
+
+
+def settlement_xy(w, region_obj: int, cache: dict) -> tuple[float, float] | None:
+    """A settlement's map position, from memory: where its owner's garrison commander stands."""
+    from bot.sensor.camera import character_pos
+    from bot.sensor.world import armies
+    owner = w.region_owner(region_obj)
+    if not owner:
+        return None
+    if owner not in cache:
+        cache[owner] = {a.region_obj: character_pos(w.pm, a.general_ptr)
+                        for a in armies(w, owner, include_garrisons=True) if a.garrison and a.general_ptr}
+    return cache[owner].get(region_obj)
+
+
+def _reachable_targets(ui, w, scores: dict, taken: set, labels: dict, avoid_rects, cfg: dict):
+    """(region, its label) best score first, for the settlements on screen or within max_pan map units of the screen
+    centre; one off screen is brought into view (camera panned with WASD from memory, assist/heroes.py) only when its
+    turn comes. Yields at most 4 candidates."""
+    from bot.sensor.camera import read_camera
+    from .heroes import bring_into_view, in_safe
+    regs = _region_objects(w, find_player(w))
+    cache: dict = {}
+    try:
+        cx, cy = read_camera(w.s).ground_at_center()
+    except Exception:
+        cx = cy = None
+    cands = []
+    for region, score in scores.items():
+        if region in taken:
+            continue
+        if region in labels:
+            cands.append((-score, 0.0, region, None))
+            continue
+        xy = settlement_xy(w, regs.get(region, 0), cache) if regs.get(region) else None
+        if xy is None or cx is None:
+            continue
+        d = ((xy[0] - cx) ** 2 + (xy[1] - cy) ** 2) ** 0.5
+        if d <= cfg.get("max_pan", 60):
+            cands.append((-score, d, region, xy))
+    for _s, _d, region, xy in sorted(cands)[:4]:
+        lab = f"label_settlement:{region}"
+        if xy is not None:
+            k, _jumped = bring_into_view(w, ui, xy[0], xy[1], lab)
+            if k is None or not in_safe(k):
+                continue
+        now = _labels_on_screen(ui, avoid_rects)
+        if region in now:
+            yield region, now[region]
+
+
+def find_player(w) -> int | None:
+    from bot.sensor.world import find_player_faction
+    return find_player_faction(w)
 
 
 def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[str]:
@@ -524,7 +589,7 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
         if warpstone < 50:
             out.append(f"{u.name}: no Steal-Take started (needs 50 Warpstone, have {warpstone})")
             break
-        if not open_main(ui) or not _select_underling(ui, u.name):
+        if not open_main(ui) or not _select_underling(ui, u.subtype):
             out.append(f"{u.name}: could not select the Underling")
             continue
         new = wait.wait_until(lambda: _under(ui, "new_plan_button", PANEL), 1.5, "New Masterplan", must=False)
@@ -541,10 +606,9 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
         avoid = [ui.comp(x) for x in (_under(ui, n, PANEL) for n in
                                       ("plan_type_holder", "target_holder", "bottom_bar", "lord_info")) if x]
         labels = _labels_on_screen(ui, avoid)
-        ranked = sorted((r for r in labels if r in scores and r not in taken), key=lambda r: -scores[r])
         started = False
-        for region in ranked[:6]:
-            k = ui.comp(labels[region])
+        for region, label in _reachable_targets(ui, w, scores, taken, labels, avoid, cfg):
+            k = ui.comp(label)
             click_at(int(k.x + k.w / 2), int(k.y + k.h / 2))
             place = gd.place_name(region)
             shown = wait.wait_until(lambda: place in _txt(ui, _under(ui, "dy_settlement_target", PANEL)), 1.5,
@@ -569,8 +633,8 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
             started = True
             break
         if not started:
-            out.append(f"{u.name}: no Steal-Take target on screen ({len(scores)} eligible settlements, "
-                       f"{sum(1 for r in labels if r in scores)} of them on screen)")
+            out.append(f"{u.name}: no Steal-Take target could be brought on screen ({len(scores)} eligible "
+                       f"settlements, none within {cfg.get('max_pan', 60)} map units)")
         move_to(960, 1070)
     return out
 
