@@ -1,7 +1,7 @@
 # Stormfiends (Ratling Cannons) mono-unit campaign guide
 
 Total War: Warhammer III, Update 9.0 line. Every number below is read from the game's own database and English text
-packs, not from the wiki. Rebuild notes and scripts: `C:\Users\jaymi\OneDrive\Documents\warhammer3repo`.
+packs, not from the wiki. Rebuild notes and scripts: `C:\Users\jaymi\Documents\warhammer3repo`.
 
 ## 1. What you are building
 
@@ -108,26 +108,51 @@ Verminlord Warpseer only (unique line):
 |---|---|
 | Purest Warpstone | +15% missile strength, +10% ammunition for Skryre units (Stormfiends count) |
 
-How to get a Verminlord Warpseer: Verminlords become recruitable after the Dominating Scheme rite is used, or via the
-Great-Smart Masterplan that unlocks "Summon Verminlord". Clan Skryre is permitted all four Verminlord types.
-Thanquol's unique Replaceable Fodder (−10% upkeep) only applies when Thanquol himself leads.
+How to get a Verminlord Warpseer:
+
+- **Every Skaven faction:** the Dominating Scheme rite, once the tech Horned One's Approval is researched (one
+  Verminlord per 15-turn rite cooldown; see `GUIDE_Skryre_Tech_Beeline.md`). Clan Skryre is permitted all four
+  Verminlord types.
+- **Clan Scruten (Thanquol) only, in addition:** the Great-Smart Masterplan "Summon Verminlord", run by the Grey Seer
+  Underling. It is unlocked by buying Verminlord Study I (800 Warpstone) in the Clan Scruten Secrets shop, single
+  player and multiplayer alike. Verminlord Study II to V (600 each) raise the summoned Verminlord's starting rank from
+  1 to 3, 5, 7 and 10, and it arrives with an army. See `GUIDE_Thanquol_Masterplans.md`.
+
+Thanquol's unique Replaceable Fodder (−50% recruitment cost and −10% upkeep for his own army, −2 turns global
+recruitment duration) only matters when Thanquol himself leads.
 
 ### 4d. Unit veterancy (makes Warp-Smart live)
 
 Warp-Smart's bonuses need the unit at rank 7. Draftmaster and Renowned & Feared start them two ranks up; the rest
 is battle experience. Treat the Warp-Smart numbers as a late-campaign bonus, not a baseline.
 
-### 4e. Landmark (Clan Scruten only, listed for the fallback path)
+### 4e. Landmark (Clan Scruten only, single player only)
 
-The Morskittar Engine, a five-step landmark chain in Zhufbar (1500 / 3000 / 6000 / 8000 / 10000 gold, settlement
-tiers 1 to 5), unlocked by Thanquol's fourth narrative mission. Its final level gives +10% missile strength
-faction-wide for artillery and monstrous missile infantry, which includes Stormfiends. Not available to Clan Skryre.
+The Morskittar Engine, a five-step landmark chain in Zhufbar (1500 / 3000 / 6000 / 8000 / 10000 gold, 1 to 5 turns,
+settlement tiers 1 to 5). Its final level gives +10% missile strength faction-wide for artillery and monstrous
+missile infantry, which includes Stormfiends. Not available to Clan Skryre.
+
+- **It hits both halves of the bullet.** The effect carries both `missile_damage_mod_mult` and
+  `missile_damage_ap_mod_mult`, like the techs and Purest Warpstone. The Workshop's +15% carries only the base half.
+  On a 2 base + 7 armour-piercing bullet, the Engine's +10% is worth about 7% more damage per bullet; the Workshop's
+  +15% about 2.4%.
+- **Unlock: Thanquol's story missions 4 and 5.** `wh_campaign_setup.lua` locks all five levels for Clan Scruten at
+  the start of every new Immortal Empires campaign (tooltip: "Complete Missions: Steal the Plan-Prints and Remind
+  Them of Their Place"). Only mission 5's scripted reward removes the lock. Mission 4 is a Steal-Take Masterplan on
+  Skavenblight; mission 5 needs Thanquol at rank 13 and the "Death From Within" quest battle.
+- **Multiplayer: never.** The story registers itself only when the game is not multiplayer
+  (`episode_narrative_thanquol.is_available_this_game` returns false for `cm:is_multiplayer()`), and no other game
+  script removes the lock. Doing the same deeds in a multiplayer campaign unlocks nothing.
+- The levels also add research points (+10 to +50 per turn), income (+100 to +500), Skaven diplomacy, and recruit
+  rank and range for Warp Lightning Cannons, Warp-Doom Magma-Cannons and Doomwheels.
 
 ### 4f. Things that look relevant but do not apply
 
 - Refined Punching Power, Moulder Knowledge, Mutagenic Elixirs: melee Stormfiends only (Grinderfists, Doomflayer
   Gauntlets, Shock Gauntlets).
 - Throt's Flesh Lab augments: Clan Moulder only, and you cannot have the Lab and the Workshop in the same faction.
+  (Clan Moulder can buy 33 of them for Ratling Cannon Stormfiends, upkeep reductions and a ward save among them; not
+  evaluated here.)
 - Ikit Claw's lord trait: Warplock Jezzails, Warpfire Throwers and Ratling Guns only.
 - Warp-Smart's bonus-vs-infantry line: Doomwheel, Doom-Flayers and Warp-Grinders only.
 - Buildings, items, banners and hero skills: not counted here. The only building-level effect in the tables that
@@ -140,12 +165,38 @@ Missile strength multiplies base and AP separately: techs 20% + Workshop 15% + W
 (Blastmaster) + 10 (Workshop) = 18, so the 5 s reload becomes 4.1 s. Ammunition 588 × (1 + 0.20 + 0.25 + 0.10) = 911
 shots, 21 volleys, about 89 s of continuous fire. Armour 70 + 5 + 25 = 100. Upkeep 338 × 0.82 = 277.
 
-## 6. Fallback without The Prophet & The Warlock
+Clan Scruten, single player (Morskittar Engine instead of the Workshop): techs 20% + Engine 10% + Warpseer 15% = +45%
+on both base and AP. Reload skill 8, so 4.6 s. Ammunition 588 × 1.30 = 764 shots, 18 volleys. Armour 75. In
+multiplayer, or in any other Skaven faction, drop the Engine: +35% on both.
 
-Play **Clan Scruten (Thanquol)** with the Thanquol pack only. Mid game becomes Warpfire Throwers (tier 2) then
-Poisoned Wind Globadiers or Warplock-less weapon teams until tier 5. You lose the Workshop (reload 10, armour 25,
-missile resistance 10%, ammunition 25%, missile strength 15%) and Ratling Guns. You keep every tech, the full red
-line, a Verminlord Warpseer if you recruit one, and gain the Morskittar Engine's +10% missile strength.
+## 6. Playing it as Clan Scruten (Thanquol)
+
+Clan Scruten is the backup campaign, and the way to play this build without The Prophet & The Warlock. Same techs,
+same red line, same Warpseer. What changes for one unit of 12 at full stack, against armoured elite infantry
+(the same target and model as the table in section 1):
+
+| | Clan Skryre (Ikit) | Clan Scruten, single player | Clan Scruten in multiplayer, or any other Skaven faction |
+|---|---|---|---|
+| Missile strength, base / AP | +50% / +35% | +45% / +45% | +35% / +35% |
+| Damage per bullet against 100 armour | 10.2 | **10.9** | 10.1 |
+| Reload | 4.1 s | 4.6 s | 4.6 s |
+| Ammunition per model | 911 (21 volleys) | 764 (18 volleys) | 764 (18 volleys) |
+| Armour / missile resistance | 100 / 10% | 75 / 0% | 75 / 0% |
+| DPS | 564 | 536 (−5%) | 499 (−11%) |
+| Battle damage, one unit | 50.2k | 44.9k (−11%) | 41.8k (−17%) |
+
+Against unarmoured targets the gaps are a little wider: −7% and −13% DPS, −12% and −18% battle damage.
+
+- Per bullet, single-player Thanquol hits hardest, because the Morskittar Engine's +10% reaches the armour-piercing
+  part and the Workshop's +15% does not. The Workshop wins everything else: reload, ammunition, armour and missile
+  resistance.
+- In multiplayer the Engine stays locked (section 4e), so the army is no stronger than any Skaven faction's.
+- Without The Prophet & The Warlock, the mid game becomes Warpfire Throwers (tier 2), then Poisoned Wind Globadiers
+  or other weapon teams until tier 5. With it, Clan Scruten recruits Ratling Guns from the same buildings as
+  Clan Skryre (the recruitment rows carry no faction), without Ikit's halved upkeep or the Endless Drum.
+- What Clan Scruten adds is campaign-side, through Masterplans: rank-10 Warpseers on top of the rite's one per 15
+  turns, free one-siege armies that can carry Ratling Cannon Stormfiends, and Warpstone income. That strategy is in
+  `GUIDE_Thanquol_Masterplans.md`.
 
 ## 7. Battlefield notes from the stat model
 
