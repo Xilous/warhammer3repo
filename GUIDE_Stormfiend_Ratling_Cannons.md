@@ -195,8 +195,8 @@ Against unarmoured targets the gaps are a little wider: −7% and −13% DPS, �
   or other weapon teams until tier 5. With it, Clan Scruten recruits Ratling Guns from the same buildings as
   Clan Skryre (the recruitment rows carry no faction), without Ikit's halved upkeep or the Endless Drum.
 - What Clan Scruten adds is campaign-side, through Masterplans: rank-10 Warpseers on top of the rite's one per 15
-  turns, free one-siege armies that can carry Ratling Cannon Stormfiends, and Warpstone income. That strategy is in
-  `GUIDE_Thanquol_Masterplans.md`.
+  turns, free one-siege armies that can carry Ratling Cannon Stormfiends, and Warpstone income. Every unlock and
+  upgrade, start to endgame, is in `GUIDE_Thanquol_Masterplans.md`.
 
 ## 7. Battlefield notes from the stat model
 
