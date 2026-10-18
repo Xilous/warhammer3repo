@@ -12,8 +12,9 @@ model m:     plans manager M = [m+0x6DC8]; turn index u32 [[m+0x6CB0]+8] (the va
 hash map H:  count u32 H+0; node list sentinel at H+8 ([H+8] first, node+0 next); node +0x10 u32 key,
              +0x14 u32 value (cooldowns) or +0x18 the value object (plans, inventories)
 M:           active plans M+0x118 (key region id u32 R+8; value = plan P at node+0x18)
-             Secrets inventory M+0xE8 (key faction id u32 F+8; value V: token list sentinel V+0x10, first [V+0x18],
-             node next +8, token record [node+0x18])
+             Secrets inventory M+0xE8 (key faction id u32 F+8; value V: four hash maps like H at V+0x10, V+0x40,
+             V+0x70, V+0xA0, token record [node+0x18]; bought Secrets land in them, checked 2026-10-18: Warpfire
+             Equipment Racks bought -> wh3_dlc29_military_mod_pool_skryre_warpfire_throwers_1 in V+0x70)
              Underling cooldowns M+0x188 (key family-member id; value = turn index it ends)
              settlement cooldowns M+0x248 (key region id; value = turn index it ends)
              Underlings besieging after a Kill-Stab M+0x1B8 (key family-member id)
@@ -184,7 +185,11 @@ class Reader:
         for n in self.nodes(M + 0xE8):
             if w.u32(n + 0x10) == fid:
                 V = n + 0x18
-                st.inventory = self.tokens(V + 0x10, w.q(V + 0x18), 0x18)
+                for H in (V + 0x10, V + 0x40, V + 0x70, V + 0xA0):      # (the four GetOwnedTokensCount... walks)
+                    for t in self.nodes(H, limit=500):
+                        k = string_object(w.pm, w.q(t + 0x18) + 0x48) if w.q(t + 0x18) else None
+                        if k and k.startswith("wh3_"):
+                            st.inventory.append(k)
         st.unlocked_types = self.unlocked_types(F)
         return st
 

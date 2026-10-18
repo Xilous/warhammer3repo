@@ -189,8 +189,23 @@ def _under(ui, cid: str, under) -> int | None:
     return ui.first(cid, under=under)
 
 
+def page(ui) -> str | None:
+    """Which page of the panel shows: None (closed), "shop", "board", "setup", "main" or "other". The shop and the
+    boards open over the main page, whose Underlings list stays visible under them (2026-10-18: the shop read as the
+    main page, so closing took one X for it and the panel stayed open over End Turn)."""
+    if not ui.root_child(PANEL):
+        return None
+    if _under(ui, "dlc29_skv_token_shop", PANEL):
+        return "shop"
+    if _under(ui, "chaotic_plans_plan_board", PANEL) or _under(ui, "trigger_plan_button", PANEL):
+        return "board"
+    if _under(ui, "establish_plan_button", PANEL) or _under(ui, "economy_plan_button", PANEL):
+        return "setup"
+    return "main" if _under(ui, "schemers_list", PANEL) else "other"
+
+
 def _main_page(ui) -> bool:
-    return bool(ui.root_child(PANEL) and _under(ui, "schemers_list", PANEL))
+    return page(ui) == "main"
 
 
 def open_main(ui) -> bool:
@@ -219,24 +234,25 @@ def open_main(ui) -> bool:
     return _main_page(ui)
 
 
-def close_panel(ui) -> None:
+def close_panel(ui) -> bool:
+    """Close the panel with its X, one click per page, each confirmed: a sub-page (shop, board, setup) goes back a
+    page, the main page closes the panel, and that is waited out (it fades). Never Escape: with the panel half gone
+    it opens the game menu (2026-10-18). True when the panel is gone."""
     from tools import wait
     from tools.ui import click
-    # One click per page, each confirmed: from the main page the X closes the panel. 2026-10-18: the main page still
-    # read as shown while the panel faded out, so a second and third X went in, and the runner's Escape for the
-    # fading panel then opened the game menu and End Turn stopped there.
-    for _ in range(5):
-        if not ui.root_child(PANEL):
-            return
+    for _ in range(6):
+        p = page(ui)
+        if p is None:
+            return True
         x = _under(ui, "button_close", PANEL)
         if x is None:
             break
-        if _main_page(ui):
-            click(ui, x)
-            break
+        wait.stable_rect(ui, x, n=3, timeout=1.0, must=False, what="Masterplans X still")
         click(ui, x)
-        wait.wait_until(lambda: not ui.root_child(PANEL) or _main_page(ui), 2.0, "page back", must=False)
-    wait.wait_until(lambda: not ui.root_child(PANEL), 3.0, "Masterplans panel closed", must=False)
+        if p == "main":
+            break
+        wait.wait_until(lambda: page(ui) != p, 2.0, f"back from the {p} page", must=False)
+    return bool(wait.wait_until(lambda: not ui.root_child(PANEL), 3.0, "Masterplans panel closed", must=False))
 
 
 def active_plans(ui) -> list[tuple[int, str, str]]:
@@ -651,7 +667,11 @@ def _open_shop(ui) -> bool:
     if b is None:
         return False
     click(ui, b)
-    return bool(wait.wait_until(lambda: _under(ui, "dlc29_skv_token_shop", PANEL), 3.0, "Secrets shop", must=False))
+    if not wait.wait_until(lambda: _under(ui, "dlc29_skv_token_shop", PANEL), 3.0, "Secrets shop", must=False):
+        return False
+    # the tabs fill in a moment after the shop shows (2026-10-18: a tab looked for at once was "not shown")
+    return bool(wait.wait_until(lambda: _under(ui, "CcoChaoticPlanShopCategoryRecordwh3_dlc29_skv_shop_thanquol",
+                                               PANEL), 2.0, "shop tabs", must=False))
 
 
 
@@ -668,7 +688,8 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
     if not _open_shop(ui):
         return ["the Secrets shop did not open"]
     for chain, level, cost, name in buys:
-        tab = _under(ui, f"CcoChaoticPlanShopCategoryRecord{shop_tabs().get(chain)}", PANEL)
+        tab = wait.wait_until(lambda: _under(ui, f"CcoChaoticPlanShopCategoryRecord{shop_tabs().get(chain)}", PANEL),
+                              2.0, "shop tab shown", must=False)
         if tab is None:
             out.append(f"{name}: its shop tab is not shown")
             break
@@ -759,5 +780,6 @@ def run(log=print, verify: bool = False) -> str:
             if why:
                 out.append(why)
         finally:
-            close_panel(ui)
+            if not close_panel(ui):
+                out.append("the Masterplans panel did not close")
     return "; ".join(out) or "nothing to do"
