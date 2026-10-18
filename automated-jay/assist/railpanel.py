@@ -287,11 +287,20 @@ class RailPanel:
         self.place()
 
     def _render_armies(self) -> None:
+        """Rebuilt only when what it shows changed (2026-10-18: rebuilt on every refresh, a new tick box flashed
+        white for a frame before its colours applied)."""
         from .army import enabled_armies, set_enabled, tick_for
-        for c in self.armies.winfo_children():
-            c.destroy()
         enabled = enabled_armies()
         cost = {a.cqi: a for a in (self.fin.armies if self.fin else [])}
+        sig = tuple((a.cqi, a.general_name, len(a.units), len(a.queued), a.region, tick_for(a, enabled), can, why_not,
+                     d.summary(), d.matches, bool(d.missing or d.heroes_missing),
+                     (cost[a.cqi].now, cost[a.cqi].refilled, cost[a.cqi].removed) if a.cqi in cost else None)
+                    for a, d, (can, why_not) in self.rows)
+        if sig == getattr(self, "_armies_sig", None):
+            return
+        self._armies_sig = sig
+        for c in self.armies.winfo_children():
+            c.destroy()
         if not self.rows:
             tk.Label(self.armies, text="no field armies", bg=T.PANEL, fg=T.MUTED, font=self.f_body).pack(anchor="w")
         for a, d, (can, why_not) in self.rows:
