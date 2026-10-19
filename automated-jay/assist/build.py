@@ -602,6 +602,39 @@ def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = Fa
     return out
 
 
+def development_points(w: World, region_obj: int, F: int) -> int | None:
+    """The province's development points for faction F, from memory (binding region:development_points,
+    FUN_1427ae080, 9.0.4 2026-10-19): province P = [[R+0x3A8]+0x10]; its faction entries [P+0xA0] (count u32
+    P+0x9C), the entry whose faction [[FP+0xD8]+0x10] has id u32 +8 == F's; u32 FP+0x3D8. Checked live: Black Water
+    2, as the province panel showed."""
+    try:
+        P = w.q(w.q(region_obj + 0x3A8) + 0x10)
+        fid = w.u32(F + 8)
+        n, arr = w.u32(P + 0x9C), w.q(P + 0xA0)
+        for i in range(min(n, 32)):
+            FP = w.q(arr + 8 * i)
+            o = w.q(FP + 0xD8)
+            fac = w.q(o + 0x10) if o else 0
+            if fac and w.u32(fac + 8) == fid:
+                return w.u32(FP + 0x3D8)
+    except Exception:
+        pass
+    return None
+
+
+def dev_cost(level_key: str | None) -> int:
+    """A building level's development point cost (building_levels_tables): main building upgrades need them."""
+    if not level_key:
+        return 0
+    if not _DEV:
+        _DEV.update({r["level_name"]: int(r.get("development_point_cost") or 0)
+                     for r in gd._load("building_levels_tables")})
+    return _DEV.get(level_key, 0)
+
+
+_DEV: dict = {}
+
+
 def treasury(w: World, F: int) -> int:
     """The faction's treasury: int at faction + 0xD58."""
     return struct.unpack("<i", w.pm.read_bytes(F + 0xD58, 4))[0]
@@ -638,6 +671,9 @@ def missed(w: World | None = None) -> list[str]:
         why = FAILED.get((o.region, a.item))
         if why is None:                           # not tried: only a reason from memory excuses it
             if a.cost > gold or (o.region, idx) in PROTECTED:
+                continue
+            need = dev_cost(a.level_key)
+            if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
                 continue
             if S and a.kind not in ("construct", "replace") and damaged(w, S):
                 continue
@@ -744,6 +780,10 @@ def run(log=print, override_blocked: bool = False) -> str:
                 continue                          # being built, upgraded or repaired
             if a.cost > gold:
                 problems.append(f"{o.region}: {a.item} needs {a.cost} gold")
+                continue
+            need = dev_cost(a.level_key)
+            if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
+                problems.append(f"{o.region}: {a.item} needs {need} development points (the province has {have})")
                 continue
             if idx is None or not a.level_key:
                 _failed(problems, o, a, f"{o.region}: no slot for {a.item}")

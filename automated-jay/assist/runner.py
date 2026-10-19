@@ -84,6 +84,17 @@ DEFAULT_SCHEDULE = {"turn_start": ["rites", "workshop", "tech", "skills"],
 AUTOMATION = config.STRATEGY_DIR / "automation.json"
 
 
+def auto_end_turn() -> bool:
+    """automation.json "auto_end_turn": true ends every turn on its own once the turn-start pass is done (Build &
+    End Turn pressed for the player). For a 2-player test campaign's second PC (player plan 2026-10-19): with an empty
+    "schedule" it only ends turns, whatever faction that PC plays (the turn check reads the local faction from
+    memory). Off by default."""
+    try:
+        return bool(json.load(open(AUTOMATION, encoding="utf-8")).get("auto_end_turn", False))
+    except Exception:
+        return False
+
+
 def schedule() -> dict[str, list[str]]:
     """Which steps run at turn start and which at "Build & End Turn" (automation.json "schedule", read every time so
     an edit applies at once; unknown step names are dropped)."""
@@ -682,6 +693,8 @@ class Runner:
         if self.pending == turn:
             self.pending = None
         self.post("your turn", f"YOUR TURN {turn}", "\n".join(done), turn=turn)
+        if auto_end_turn():
+            self.auto_end = turn                       # pressed by _tick once this pass has let go of busy
 
     def automate(self, turn: int | None, pre: list[str] | None = None, phases: dict | None = None,
                  label: str = "pass", names: list[str] | None = None) -> list[str]:
@@ -916,11 +929,34 @@ class Runner:
                 self.pending = s.turn
         if self.pending is not None:
             self._try_pass(self.pending)
+        elif getattr(self, "auto_end", None) == s.turn:
+            self.auto_end = None
+            self.end_turn_now()                        # automation.json auto_end_turn (a test partner's PC)
         else:
             self.my_turn = players_turn(self.ui)[0]
             from bot.sensor import turn as turn_mem
             if self.my_turn or turn_mem.players_turn(self.mem)[0] is True:
                 self._close_notices()
+            else:
+                self._held_by_decision(s.turn)
+
+    def _held_by_decision(self, turn) -> None:
+        """While other factions move: an AI diplomacy offer or a dilemma that came up holds the whole game until the
+        player answers it (2026-10-19, turn 13: the Dwarfs' peace offer stopped the AI turns). Never answered by the
+        assistant; the widget says so, once per popup. A UI read (which panel is open), every few seconds."""
+        now = time.monotonic()
+        if now - getattr(self, "_held_check_t", 0) < 3.0:
+            return
+        self._held_check_t = now
+        from . import popups
+        try:
+            need = [(cid, d, ig) for cid, d, ig in popups.open_decisions(self.ui) if not ig]
+        except Exception:
+            return
+        ids = tuple(cid for cid, _d, _ig in need)
+        if ids and ids != getattr(self, "_held_ids", ()):
+            self.post_decisions(turn, need, prefix="the other factions' turns are held until you answer: ")
+        self._held_ids = ids
 
     FULL_SCREEN = ("dlc29_skv_chaotic_plans", "character_details_panel", "technology_panel")
 

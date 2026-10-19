@@ -24,6 +24,21 @@ happens to display.
 - **Verify against the live game** before relying on a new offset (compare with what the game shows), and keep
   that check repeatable (a test or a `--selftest` line where possible).
 
+## Pacing and verification come from memory too (player rule, 2026-10-19)
+
+The assistant goes exactly as fast as the game: never at a pace tuned per mode (single player / multiplayer).
+
+- **A click is an action only when the game wrote a command for it.** `bot/sensor/commands.py` watches the game's
+  outgoing command stream. `commands.act(pm, click, effect)`: no command within `MISS_S` = the click missed (safe to
+  click again, `act_retry`); a command = wait for its effect in memory, up to `EFFECT_CAP_S`, and never click it
+  again (in multiplayer a second click can undo the first). Every new action goes through it.
+- **No fixed timeouts for effects.** A wait for an effect reads memory and ends the moment memory shows it.
+- **Every step has a memory check** (`missed()` in its module, `runner.MISSED_FNS`): after the step, the plan is made
+  again from memory and anything not done is reported MISSED (the step turns red), or apart when the run gave a
+  reason ("refused by the game", "not possible"). "verified" alone only means a second run changed nothing.
+- **The player's faction is the game's local faction** (`world.local_faction`, `[[G+0x2F60]+0x1C8]`), never a HUD
+  value.
+
 ## Single player is played as multiplayer (player rule, 2026-10-18)
 
 The player uses single-player campaigns to practise multiplayer with the assistant on. So the assistant plays a

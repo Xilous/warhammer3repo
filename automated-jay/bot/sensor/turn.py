@@ -83,7 +83,7 @@ def players_turn(s) -> tuple[bool | None, str]:
     """Is the campaign running the player's faction's turn now? (MemorySensor s; the player's faction is the one
     world.find_player_faction finds, matched by name so no faction pointer has to be cached across saves.)
     -> (True, ""), (False, "<faction key> is moving"), or (None, why) when it cannot be read."""
-    from .world import World, player_faction_key
+    from .world import World, local_faction, player_faction_key
     model = s.model
     if model is None:
         return None, "no campaign loaded"
@@ -91,7 +91,8 @@ def players_turn(s) -> tuple[bool | None, str]:
     if who is None:
         return None, "whose turn it is cannot be read"
     w = World(s)
-    want = player_faction_key(w)
+    lf = local_faction(w)                      # this PC's faction, any faction (world.local_faction, 2026-10-19)
+    want = w.faction_name(lf) if lf else player_faction_key(w)
     if want is None:
         return None, "the player's faction cannot be read"
     names = [w.faction_name(f) or hex(f) for f in who]
