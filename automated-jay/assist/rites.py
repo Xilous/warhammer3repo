@@ -54,6 +54,20 @@ def _q(w: World, a: int) -> int:
         return 0
 
 
+def _observe(w, F: int, key: str, **fields) -> None:
+    """What the Rites panel showed next to what memory held, each time the Dominating Scheme's card is read or it is
+    cast (2026-10-19: the data to replace the card's cost and lock with memory reads): runs/rites_observe.jsonl."""
+    import json
+    from bot import config
+    try:
+        line = {"t": round(time.time(), 1), "turn": w.s.read().turn, "rite": key,
+                "treasury": w.s.read().treasury, "cooldowns": rite_cooldowns(w, F), **fields}
+        with open(config.RUNS_DIR / "rites_observe.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps(line) + "\n")
+    except Exception:
+        pass
+
+
 def rite_cooldowns(w: World, F: int) -> dict[str, int]:
     """Cooldown left (turns) of every rite the faction has, by ritual key."""
     out = {}
@@ -261,15 +275,18 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
         if cost and gold < cost:
             return f"Dominating Scheme needs {cost} gold (have {gold})"
         btn = ui.first("button_perform", under=card)
+        req = ui.first("dy_unlock_requirements", under=card)
+        req_text = re.sub(r"\[\[[^\]]*\]\]", "", ui.text(req) or "").strip().replace("\n", " ") if req else ""
+        _observe(w, F, key, card_cost=cost, button=(ui.state(btn) if btn else None), requirements=req_text,
+                 gold=gold, when="card read")
         if btn is None or (ui.state(btn) or "") != "active":
-            req = ui.first("dy_unlock_requirements", under=card)
-            text = re.sub(r"\[\[[^\]]*\]\]", "", ui.text(req) or "").strip().replace("\n", " ") if req else ""
-            return f"Dominating Scheme cannot be cast: {text or 'requirements not met'}"
+            return f"Dominating Scheme cannot be cast: {req_text or 'requirements not met'}"
         from bot.sensor import commands         # paced by the game: the command, then the cooldown in memory
         st, _v = commands.act(w.pm, lambda: click(ui, btn) and None, lambda: rite_cooldowns(w, F).get(key, 0) > 0)
         if st != "done":
             return f"Perform Rite did not register ({commands.WHY.get(st) or st})"
         spent = gold - (w.s.read().treasury or 0)
+        _observe(w, F, key, card_cost=cost, spent=spent, cooldown=rite_cooldowns(w, F).get(key), when="cast")
         out = f"cast the Dominating Scheme ({spent} gold)"
         if key == RITE_VERMINLORD:
             how = answer_verminlord_dilemma(ui)
