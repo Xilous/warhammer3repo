@@ -761,8 +761,11 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
             click(ui, ui.child(line, "button_wh3") or line)
             wait.wait_until(lambda: (ui.state(line) or "").startswith("selected"), 2.0, "line selected", must=False)
             time.sleep(0.3)
-        btn = _under(ui, "button_purchase", PANEL)
-        if btn is None or not ui.visible(btn):
+        # the details on the right fill in a moment after the line is selected (2026-10-18, turn 23: looked for
+        # 0.3 s after, the button was not there yet and the purchase was dropped as "memory and the shop disagree")
+        btn = wait.wait_until(lambda: (lambda b: b if b is not None and ui.visible(b) else None)(
+            _under(ui, "button_purchase", PANEL)), 1.5, "Purchase button", must=False)
+        if btn is None:
             out.append(f"{name}: no Purchase button (memory and the shop disagree)")
             break
         have = ws()
