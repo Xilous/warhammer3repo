@@ -256,11 +256,16 @@ def close_panel(ui) -> bool:
         x = ui.first("cancel_button", under=TRIGGER) if p == "trigger" else _under(ui, "button_close", PANEL)
         if x is None:
             break
+        board = _under(ui, "chaotic_plans_plan_board", PANEL) if p == "board" else None
+        if board is not None:                      # a plan just started opens its board: let it finish sliding in
+            wait.stable_rect(ui, board, n=4, timeout=1.5, must=False, what="plan board still")
         wait.stable_rect(ui, x, n=3, timeout=1.0, must=False, what="Masterplans X still")
         click(ui, x)
         if p == "main":
             break
-        wait.wait_until(lambda: page(ui) != p, 2.0, f"back from the {p} page", must=False)
+        # 2026-10-18: an X clicked while a new board slid in was ignored and cost a 2 s wait; 1 s, then it is
+        # clicked again (the retry took 0.4 s)
+        wait.wait_until(lambda: page(ui) != p, 1.0, f"back from the {p} page", must=False)
     return bool(wait.wait_until(lambda: not ui.root_child(PANEL), 3.0, "Masterplans panel closed", must=False))
 
 
