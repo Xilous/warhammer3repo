@@ -66,12 +66,20 @@ def game_hwnd() -> int:
     return win32gui.FindWindow(None, config.WINDOW_TITLE)
 
 
+BEFORE_INPUT: list = []     # callables run before every click, key and move (assist/app.py: the overlay steps aside)
+
+
 def require_game_front(at: tuple[int, int] | None = None) -> None:
     """Raise InputAborted unless the game is the foreground window. Called before every click, key and move.
     With `at`, the window under that point must be the game too: a mouse button or wheel event goes to the window
     under the cursor, and a topmost window (a notification, a chat overlay, another app the player is bringing up)
     can cover the game while the game still has the focus. Our own overlay lets clicks through while automating,
-    so it is not in the way."""
+    so it is not in the way; outside a pass, BEFORE_INPUT makes it step aside first."""
+    for fn in BEFORE_INPUT:
+        try:
+            fn()
+        except Exception:                    # noqa: BLE001  (the overlay must never stop a click)
+            pass
     g = game_hwnd()
     if not g:
         raise InputAborted("the game window is gone")

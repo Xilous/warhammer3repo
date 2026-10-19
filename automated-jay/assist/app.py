@@ -13,6 +13,7 @@ long-lived sensor (it re-attaches by itself when the game is restarted).
 from __future__ import annotations
 import queue
 import threading
+import time
 import tkinter as tk
 from tkinter import ttk
 
@@ -226,7 +227,8 @@ class App:
 
     # ---------------------------------------------------------------- thread-safe API for the runner
     def post(self, state: str, headline: str, detail: str = "") -> None:
-        self._overlay_style(click_through=state == "automating")     # now, not at the next poll: clicks follow
+        self.state = state
+        self._overlay_style(click_through=state == "automating" or self._stepping_aside())  # now: clicks follow
         self.q.put(("status", state, headline, detail))
 
     def post_steps(self, steps: dict[str, str]) -> None:
@@ -268,6 +270,28 @@ class App:
     def _overlay_ready(self) -> None:
         self.ov_hwnd = int(self.overlay.wm_frame(), 16)
         self._overlay_style(click_through=False)
+        from bot import focus
+        focus.BEFORE_INPUT.append(self._step_aside)
+
+    STEP_ASIDE_S = 1.5            # the assistant's input idle this long (outside a pass): the overlay is solid again
+
+    def _stepping_aside(self) -> bool:
+        return time.monotonic() - getattr(self, "_input_t", -1e9) < self.STEP_ASIDE_S
+
+    def _step_aside(self) -> None:
+        """bot/focus.BEFORE_INPUT, on the runner's thread, before every click, key and move (player question
+        2026-10-19: can the widget get in the way?). During a pass the overlay already lets the mouse through and
+        the panel is hidden; outside one (notices closed at turn start, during the player's turn, the ones that
+        keep End Turn greyed out) the rail was solid: a click under it landed on it (and toggled pause), a hover
+        never reached the game. So the rail lets the mouse through and the panel hides until the input has been
+        idle for STEP_ASIDE_S."""
+        self._input_t = time.monotonic()
+        if not getattr(self, "_click_through", False):
+            self._overlay_style(click_through=True)
+        if self.panel.open and not self.panel.suppressed:
+            done = threading.Event()
+            self.q.put(("step_aside", done))
+            done.wait(0.5)                       # the Tk thread hides it (its next poll, 150 ms at most)
 
     def _overlay_style(self, click_through: bool) -> None:
         """The overlay sits over the game's top-left corner. It never takes focus (a click on it pauses without
@@ -285,6 +309,7 @@ class App:
         ex = user32.GetWindowLongW(self.ov_hwnd, win32con.GWL_EXSTYLE) | win32con.WS_EX_NOACTIVATE
         ex = ex | win32con.WS_EX_TRANSPARENT if click_through else ex & ~win32con.WS_EX_TRANSPARENT
         user32.SetWindowLongW(self.ov_hwnd, win32con.GWL_EXSTYLE, ex)
+        self._click_through = click_through
 
     def _poll(self) -> None:
         try:
@@ -296,7 +321,10 @@ class App:
                     bg, fg = COLORS.get(state, COLORS["waiting"])
                     self.state_lbl.configure(text=headline, fg=fg)
                     self.rail.set_status(state, headline, nice(detail))
-                    self.panel.suppress(state == "automating")
+                    self.panel.suppress(state == "automating" or self._stepping_aside())
+                elif kind == "step_aside":
+                    self.panel.suppress(True)
+                    msg[1].set()
                 elif kind == "steps":
                     self.rail.set_steps(msg[1])
                 elif kind == "log":
@@ -330,6 +358,11 @@ class App:
                     self.panel.show_ignorable(msg[1])
         except queue.Empty:
             pass
+        if getattr(self, "state", "") != "automating" and not self._stepping_aside():   # back once input is idle
+            if getattr(self, "_click_through", False):
+                self._overlay_style(click_through=False)
+            if self.panel.suppressed:
+                self.panel.suppress(False)
         self.root.after(150, self._poll)
 
     def _show_log(self, lines: list[str]) -> None:
