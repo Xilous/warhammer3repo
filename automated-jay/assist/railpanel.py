@@ -331,7 +331,7 @@ class RailPanel:
                 inc = c.income_if_refilled
                 verdict = "✓ affordable" if inc >= 0 else "✗ not affordable"
                 state = ("ticked" if on else "you can tick it now" if can else
-                         "can be ticked once " + (why_not.replace("cannot refill: ", "") if why_not else "possible"))
+                         "can't be ticked yet: " + (why_not.replace("cannot refill: ", "") if why_not else "not possible"))
                 word = "rebuilt into the playbook army" if c.removed else "refilled"     # units disbanded: rebuilt
                 tk.Label(self.armies, text=f"if {word}: {c.now:,} → {c.refilled:,}/turn · income after {inc:+,}/turn"
                          f"  {verdict} · {state}", bg=T.PANEL, fg=T.GOOD if inc >= 0 else T.WARN, font=self.f_body,
