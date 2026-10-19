@@ -1,5 +1,8 @@
 # automated-jay: rules for working on the assistant
 
+**At the start of every session, read `TODO.md` and remind the player of its open items, saying which need a
+multiplayer session.** Tick items off there as they are done.
+
 ## State and detection come from memory (player rule, 2026-10-18)
 
 Every piece of game state the assistant decides on is read from the game's memory: the campaign model and the
