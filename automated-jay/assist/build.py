@@ -606,7 +606,9 @@ def development_points(w: World, region_obj: int, F: int) -> int | None:
     """The province's development points for faction F, from memory (binding region:development_points,
     FUN_1427ae080, 9.0.4 2026-10-19): province P = [[R+0x3A8]+0x10]; its faction entries [P+0xA0] (count u32
     P+0x9C), the entry whose faction [[FP+0xD8]+0x10] has id u32 +8 == F's; u32 FP+0x3D8. Checked live: Black Water
-    2, as the province panel showed."""
+    2, as the province panel showed; an upgrade takes its points the moment it starts (Southern Sylvania 1 -> 0) and
+    a cancel gives them back, so a second upgrade in the same province reads 0 (the cards the game greyed out on
+    2026-10-18, Eschen and Swartzhafen after Castle Drakenhof)."""
     try:
         P = w.q(w.q(region_obj + 0x3A8) + 0x10)
         fid = w.u32(F + 8)
