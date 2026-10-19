@@ -614,6 +614,20 @@ def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = Fa
     return out
 
 
+def main_level_short(w: World, o, a) -> int | None:
+    """The main building level the action's level needs, when the settlement's main building is below it (memory:
+    the level record's requirement and the main slot's level), else None."""
+    from bot.sensor.buildings import level_info
+    info = level_info(w, a.level_key) if a.level_key and a.kind != "upgrade_main" else None
+    if not info or not info["main_level"]:
+        return None
+    try:
+        main = w.slots(o.region_obj)[0].level
+    except Exception:
+        return None
+    return info["main_level"] if main is not None and main < info["main_level"] else None
+
+
 def locked(w: World, F: int, a) -> bool:
     """The action's level or chain is locked for F by the game's scripts (bot/sensor/buildings.restricted)."""
     from bot.sensor.buildings import restricted
@@ -653,10 +667,16 @@ def development_points(w: World, region_obj: int, F: int) -> int | None:
     return None
 
 
-def dev_cost(level_key: str | None) -> int:
-    """A building level's development point cost (building_levels_tables): main building upgrades need them."""
+def dev_cost(level_key: str | None, w: World | None = None) -> int:
+    """A building level's development point cost: from the running game's level record (bot/sensor/buildings.
+    level_info), building_levels_tables only when it cannot be read. Main building upgrades need them."""
     if not level_key:
         return 0
+    if w is not None:
+        from bot.sensor.buildings import level_info
+        info = level_info(w, level_key)
+        if info is not None:
+            return info["dev_points"]
     if not _DEV:
         _DEV.update({r["level_name"]: int(r.get("development_point_cost") or 0)
                      for r in gd._load("building_levels_tables")})
@@ -701,9 +721,10 @@ def missed(w: World | None = None) -> list[str]:
             continue
         why = FAILED.get((o.region, a.item))
         if why is None:                           # not tried: only a reason from memory excuses it
-            if real_cost(w, snap.faction, a) > gold or (o.region, idx) in PROTECTED or locked(w, snap.faction, a):
+            if (real_cost(w, snap.faction, a) > gold or (o.region, idx) in PROTECTED or locked(w, snap.faction, a)
+                    or main_level_short(w, o, a) is not None):
                 continue
-            need = dev_cost(a.level_key)
+            need = dev_cost(a.level_key, w)
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
                 continue
             if S and a.kind not in ("construct", "replace") and damaged(w, S):
@@ -823,11 +844,14 @@ def run(log=print, override_blocked: bool = False) -> str:
             if locked(w, snap.faction, a):
                 problems.append(f"{o.region}: {a.item} is locked by the game (a story or event lock, from memory)")
                 continue
+            if (lvl := main_level_short(w, o, a)) is not None:
+                problems.append(f"{o.region}: {a.item} needs main building level {lvl}")
+                continue
             cost = real_cost(w, snap.faction, a)
             if cost > gold:
                 problems.append(f"{o.region}: {a.item} needs {cost} gold")
                 continue
-            need = dev_cost(a.level_key)
+            need = dev_cost(a.level_key, w)
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
                 problems.append(f"{o.region}: {a.item} needs {need} development points (the province has {have})")
                 continue

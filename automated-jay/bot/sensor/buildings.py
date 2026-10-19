@@ -167,3 +167,33 @@ def restricted(w, F: int) -> set[str]:
     except Exception:
         pass
     return out
+
+
+# level record fields (9.0.4, 2026-10-19, each matched against building_levels_tables for nine levels of five chains)
+LV_INDEX, LV_DEV_POINTS, LV_MAIN_LEVEL, LV_TURNS, LV_BASE_COST = 0x1F0, 0x1F4, 0x1F8, 0x204, 0x208
+
+
+def level_info(w, level_key: str) -> dict | None:
+    """A building level as the running game has it: index in its chain, main building level it needs, development
+    point cost, build turns, base cost."""
+    rec = level_record(w, level_key)
+    if not rec:
+        return None
+    u = w.u32
+    return {"key": level_key, "index": u(rec + LV_INDEX), "main_level": u(rec + LV_MAIN_LEVEL),
+            "dev_points": u(rec + LV_DEV_POINTS), "turns": u(rec + LV_TURNS), "base_cost": u(rec + LV_BASE_COST)}
+
+
+def progression(w, chain: str) -> list[str]:
+    """The chain's level keys in upgrade order (by level index), as the running game has them."""
+    ch = chains(w).get(chain)
+    if not ch:
+        return []
+    n, arr = w.u32(ch + 0x84), w.q(ch + 0x88)
+    lv = []
+    for i in range(min(n, 32)):
+        rec = w.q(arr + 8 * i)
+        k = _key(w, rec)
+        if k:
+            lv.append((w.u32(rec + LV_INDEX), k))
+    return [k for _i, k in sorted(lv)]
