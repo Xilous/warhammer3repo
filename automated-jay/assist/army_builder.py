@@ -623,14 +623,21 @@ def get_engineer(ui: UI, w: World, F: int, army):
     """Recruit this army's Warlock Engineer at the nearest settlement that can, wherever the army is.
     Returns (log line, the new Character or None). Nothing is recruited while the faction cap is full."""
     tried = []
-    for region in engineer_candidates(w, F, army):
+    # memory first (player rule 2026-10-19): the cap from memory (world.agent_cap) decides; the panel's Recruit
+    # button only when memory cannot be read
+    from bot.sensor.world import agent_cap
+    cap, n = agent_cap(w, F, "engineer"), engineers_fielded(w, F)
+    if cap is not None and n >= cap:
+        return f"no Warlock Engineer yet: cap {n}/{cap} (raised by the Verminlord Warpseer skill Inscrutable Genius)", None
+    for region in engineer_candidates(w, F, army):        # (provinces whose buildings enable one: memory)
         status, msg, new = recruit_engineer(ui, w, F, region)
         if status == "ok":
             return msg, new
-        if status == "cap":
-            n = engineers_fielded(w, F)
-            save_caps(engineer_cap=n)
-            return f"no Warlock Engineer yet: cap {n}/{n} (raised by the Verminlord Warpseer skill Inscrutable Genius)", None
+        if status == "cap":                                # UI fallback: memory said there was room
+            if cap is None:
+                save_caps(engineer_cap=n)
+            return (f"no Warlock Engineer yet: the game refused at cap {n}/{cap if cap is not None else n}"
+                    + (" (memory said there was room: reported)" if cap is not None else "")), None
         tried.append(msg)
         if status == "failed":
             break

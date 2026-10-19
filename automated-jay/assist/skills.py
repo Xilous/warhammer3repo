@@ -310,6 +310,51 @@ class _Tree:
         return self.inside(card)
 
 
+@lru_cache(maxsize=1)
+def _links():
+    """child node -> [(parent node, link type)] (character_skill_node_links_tables)."""
+    out: dict[str, list] = {}
+    for r in gd._load("character_skill_node_links_tables"):
+        out.setdefault(r["child_key"], []).append((r["parent_key"], r["link_type"]))
+    return out
+
+
+def memory_state(w, ptr: int, sk: str, ranks: int) -> str:
+    """A skill's state from memory (player rule 2026-10-19: memory first): "taken" (at its planned rank: the
+    character's skill list, army_builder.character_skills), "rank" (unlocks above the character's rank), "locked"
+    (its node's REQUIRED parents not all taken, or fewer SUBSET_REQUIRED parents taken than required_num_parents),
+    else "open". Taken and rank checked live; the node links are DB data and wait for their live check (_spend logs
+    every disagreement with the card)."""
+    from .army_builder import character_skills
+    taken = character_skills(w, ptr)
+    if taken.get(sk, 0) >= ranks:
+        return "taken"
+    rank = _rank(w, ptr)
+    if rank is not None and _unlock_ranks().get(sk, 0) > rank:
+        return "rank"
+    nodes = _tables()[0]
+    node = next((k for k, n in nodes.items() if n["character_skill_key"] == sk), None)
+    if node:
+        links = _links().get(node, [])
+        tk = lambda p: taken.get(nodes[p]["character_skill_key"], 0) if p in nodes else 0
+        if any(tk(p) < 1 for p, t in links if t == "REQUIRED"):
+            return "locked"
+        sub = [p for p, t in links if t == "SUBSET_REQUIRED"]
+        need = nodes[node].get("required_num_parents") or 0
+        if sub and sum(1 for p in sub if tk(p) >= 1) < max(1, need):
+            return "locked"
+    return "open"
+
+
+def _log_check(**fields) -> None:
+    import json, time
+    try:
+        with open(config.RUNS_DIR / "skills_check.jsonl", "a", encoding="utf-8") as f:
+            f.write(json.dumps({"t": round(time.time(), 1), **fields}) + "\n")
+    except Exception:
+        pass
+
+
 def _spend(ui, w, ptr: int, plan) -> list[str]:
     tree = _Tree(ui)
     if tree.clip is None:
@@ -321,8 +366,13 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
         card = tree.card(sk)
         if card is None:
             continue
-        if (ui.state(card) or "") in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card)):
-            LOCKED_UI.setdefault((ptr, _turn(w)), set()).add(sk)
+        mem = memory_state(w, ptr, sk, ranks)
+        ui_locked = (ui.state(card) or "") in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card))
+        if (mem != "open") != ui_locked:               # the data for the switch to memory only: see memory_state
+            _log_check(skill=sk, memory=mem, card=ui.state(card), points=_points(w, ptr))
+        if mem != "open" or ui_locked:
+            if ui_locked:
+                LOCKED_UI.setdefault((ptr, _turn(w)), set()).add(sk)
             continue
         if (ptr, sk, _turn(w)) in NOT_TAKEN:
             continue
