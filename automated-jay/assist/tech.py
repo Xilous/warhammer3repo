@@ -487,6 +487,21 @@ def run(log=print) -> str:
     return result
 
 
+def missed() -> list[str]:
+    """The memory check after the step (player request 2026-10-19): research must be running ([T+0x28] in state
+    researching) while the click order still has a tech left (researched ones and those not in the live tree
+    removed)."""
+    from bot.sensor.world import World
+    w = World()
+    T = tech_manager(w)
+    if not T or researching(w, T):
+        return []
+    left = candidates(tech_entries(w, T))
+    if not left:
+        return []
+    return [f"no research running, {len(left)} techs left on the list (next: {_name(left[0], nodes())})"]
+
+
 def status() -> str:
     from bot.sensor.world import World
     w = World()

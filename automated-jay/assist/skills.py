@@ -48,6 +48,8 @@ SKILLS_PANEL = "character_details_panel_skills"
 SKIP_STATES = frozenset({"maxed", "locked", "locked_rank"})   # card states a click does not change (2026-10-16)
 TREE_TIMEOUT_S = 1.5      # the new character's tree is normally built 130-210 ms after the switch
 NOT_TAKEN: set = set()    # (character, skill, turn) a click did not take: not clicked again that turn
+LOCKED_UI: dict = {}      # (character, turn) -> skills whose card read locked/maxed (UI stop-gap: the skill tree's
+                          # prerequisite locks are not read from memory yet; ranks and rank locks are)
 
 
 # ------------------------------------------------------------------ orders
@@ -320,6 +322,7 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
         if card is None:
             continue
         if (ui.state(card) or "") in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card)):
+            LOCKED_UI.setdefault((ptr, _turn(w)), set()).add(sk)
             continue
         if (ptr, sk, _turn(w)) in NOT_TAKEN:
             continue
@@ -387,6 +390,29 @@ def run(log=print) -> str:
             if ui.root_child(DETAILS):
                 _close(ui)
     return "; ".join(done) if done else "no points could be spent"
+
+
+def missed() -> list[str]:
+    """The memory check after the step (player request 2026-10-19). A character the orders cover that still has
+    points after the step must have none of its planned skills left takeable in memory: every one taken to its
+    planned rank ([C+0x3F0]+0x200, army_builder.character_skills), or above the character's rank. A planned skill the
+    game refused (a click that wrote no command or took no point: NOT_TAKEN; a card read locked: LOCKED_UI) is
+    reported as refused; anything else is missed."""
+    from .army_builder import character_skills
+    targets, w = _skill_targets()
+    turn, out = _turn(w), []
+    for ptr, key, _cid, pts, name in targets:
+        taken, rank = character_skills(w, ptr), _rank(w, ptr)
+        open_ = [(sname, sk) for sname, ranks, sk in attempt_list(key)
+                 if taken.get(sk, 0) < ranks and not (rank is not None and _unlock_ranks().get(sk, 0) > rank)]
+        refused = [s for s, sk in open_ if (ptr, sk, turn) in NOT_TAKEN or sk in LOCKED_UI.get((ptr, turn), ())]
+        left = [s for s, _sk in open_ if s not in refused]
+        if left:
+            out.append(f"{name}: {pts} skill point{'s' if pts > 1 else ''} unspent, {left[0]} can still be taken")
+        elif refused:
+            out.append(f"{name}: {pts} skill point{'s' if pts > 1 else ''} unspent (refused by the game: "
+                       f"{', '.join(refused[:3])})")
+    return out
 
 
 def main() -> int:

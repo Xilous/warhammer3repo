@@ -842,6 +842,51 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
 
 
 # ------------------------------------------------------------------ the step
+LAST_NOTES: list = []     # the last run's result lines (the reasons it gave for what it could not do)
+
+
+def missed() -> list[str]:
+    """The memory check after the step (player request 2026-10-19), everything decided again from memory after the
+    run: a Steal-Take the rules complete (or abandon) now must be gone from the plans; a free Underling, with Steal-
+    Takes unlocked and 50 Warpstone, must have started one; the Secrets the shop order buys now must be owned. A
+    thing the run explained (no target came on screen, a button not there: UI, or the game refused) is reported as
+    not possible; anything else is missed. Kill-Stabs are the player's and never checked."""
+    from bot.sensor import masterplans as mem
+    from bot.sensor.world import World, find_player_faction
+    from . import gamedata as gd
+    w = World()
+    F = find_player_faction(w)
+    if F is None or w.faction_name(F) != SCRUTEN:
+        return []
+    cfg = settings()
+    st, shop = cfg.get("steal_take", {}), cfg.get("shop", {})
+    state = mem.read(w)
+    if state is None or not state.unlocked_types:
+        return []
+    notes = "; ".join(LAST_NOTES)
+    out = []
+    if st.get("enabled", True):
+        for p in state.plans:
+            if p.type == "economic":
+                act, why = decide(board_from(p, w), st)
+                if act != "wait":
+                    place = gd.place_name(p.region)
+                    out.append(f"Steal-Take {place}: should be {act}d ({why})"
+                               + (" (not possible: the run reported it)" if place in notes else ""))
+        free = [u for u in state.underlings if u.free and u.unlocked]
+        if "economic" in state.unlocked_types and free and state.warpstone >= 50:
+            names = ", ".join(u.name for u in free)
+            hit = [n for n in (u.name for u in free) if n in notes]
+            out.append(f"{names}: free, no Steal-Take started"
+                       + (f" (not possible: {notes})" if hit else ""))
+    if shop.get("enabled", True):
+        unlocked = {u.subtype for u in state.underlings if u.unlocked}
+        buys, _why = shop_plan(shop, state.warpstone, set(state.inventory), unlocked)
+        if buys:
+            out.append("Secrets not bought: " + ", ".join(b[3] for b in buys))
+    return out
+
+
 def run(log=print, verify: bool = False) -> str:
     from bot.focus import game_focus
     from bot.sensor import masterplans as mem
@@ -902,4 +947,5 @@ def run(log=print, verify: bool = False) -> str:
         finally:
             if not close_panel(ui):
                 out.append("the Masterplans panel did not close")
+    LAST_NOTES[:] = out
     return "; ".join(out) or "nothing to do"

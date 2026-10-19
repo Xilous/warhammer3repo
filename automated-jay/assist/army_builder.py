@@ -831,6 +831,41 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
     return ([f"{name}: {x}" for x in out] if out else [f"{name}: matches template"]), recruited
 
 
+LAST_NOTES: list = []     # the last run's result lines (its reasons for what it could not do)
+
+
+def missed() -> list[str]:
+    """The memory check after the step (player request 2026-10-19), from memory after the run. A ticked army that
+    stands in a province able to recruit every unit it is missing must have them queued ([MF+0x6EC] queue, counted
+    as present by delta) and no off-template troops left; anything else is missed, unless the run gave a reason
+    (recruitment capacity or gold, not read from memory yet: "not possible"). Armies away from a recruiting province
+    are the march's business and are not checked here."""
+    w = World()
+    F = find_player_faction(w)
+    if F is None:
+        return []
+    ticked, out = enabled_armies(), []
+    prov, _ = region_provinces()
+    own = {w.region_key(r) for r in w.faction_regions(F)}
+    for a in armies(w, F):
+        if not tick_for(a, ticked)[0]:
+            continue
+        d = delta(a, [])
+        here = prov.get(a.region or "") if a.region in own else None
+        if not d.missing or here not in eligible(w, F, set(d.missing)):
+            continue
+        name = a.general_name
+        notes = "; ".join(n for n in LAST_NOTES if n.startswith(f"{name}:"))
+        left = ", ".join(f"{n} {unit_name(k)}" for k, n in d.missing.items())
+        why = next((x.strip() for x in notes.split(";") if "left for later turns" in x or "could not" in x
+                    or "not taken" in x), "")
+        out.append(f"{name}: {left} not queued at a recruiting province"
+                   + (f" (not possible: {why})" if why else ""))
+        if d.disband:
+            out.append(f"{name}: off-template units still in the army at a recruiting province")
+    return out
+
+
 def run(log=print, verify: bool = False) -> str:
     """verify: the runner's verification run (assist/runner.py): only disbands, recruitment and engineer recruitment
     are redone if they did not happen; march and walk orders are not issued again."""
@@ -877,6 +912,7 @@ def run(log=print, verify: bool = False) -> str:
                 lines = [f"{a.general_name}: ERROR {ex}"]
             out += lines
     out += untick_refilled(w, F, acting)
+    LAST_NOTES[:] = out
     return "; ".join(out)
 
 

@@ -67,6 +67,10 @@ STEP_FNS = {
 # Memory checks run after a step and its verification run: what the step planned that memory shows is not done.
 MISSED_FNS = {
     "buildings": build.missed,
+    "tech": tech.missed,
+    "skills": skills.missed,
+    "masterplans": masterplans.missed,
+    "army": army_builder.missed,
 }
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
@@ -784,13 +788,13 @@ class Runner:
         except Exception as ex:
             traceback.print_exc()
             return f"MISSED? memory check failed ({ex})"
-        refused = [i for i in items if "greyed out" in i]
+        refused = [i for i in items if "greyed out" in i or "refused by the game" in i or "not possible" in i]
         lost = [i for i in items if i not in refused]
         parts = []
         if lost:
             parts.append("MISSED (memory check): " + "; ".join(lost))
         if refused:
-            parts.append("refused by the game: " + "; ".join(refused))
+            parts.append("not done, with a reason: " + "; ".join(refused))
         return " | ".join(parts)
 
     def _automate(self, turn, done: list[str], names: list[str]) -> list[str]:
