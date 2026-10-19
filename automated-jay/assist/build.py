@@ -295,15 +295,23 @@ def _settled(ui, ptr: int, what: str):
     return ui.comp(ptr) if got is not None else None
 
 
+REASON = {"last": ""}          # why the last construct / upgrade was not started (for the step's result line)
+
+
 def _press(ui, ptr: int, what: str, settled: bool = False) -> bool:
     """Click a popup item only once the game shows the cursor over THAT item (its hover state), never on a guess:
     in a building popup the Repair button sits next to Abandon (2026-10-16: a click aimed while the popup was still
     being laid out landed on Abandon). False, without a click, when the hover does not register."""
     k = ui.comp(ptr) if settled else _settled(ui, ptr, what)
     if k is None or not ui.effective_visible(ptr):
+        REASON["last"] = "its card is not shown"
         return False
     probe = ui.hover_probe(ptr)
     if probe is None:
+        # the part of the card that shows the hover is in a state without one: the game does not take the click
+        # (2026-10-18: the Morskittar Engine's card at Zhufbar, shown but locked by the story)
+        btn = ui.child(ptr, "square_building_button")
+        REASON["last"] = f"the game does not take a click on it (card {ui.state(btn) if btn else ui.state(ptr)})"
         return False
     x, y = k.center
     hovered = lambda: ui.state_ptr(probe[0]) in probe[1]
@@ -313,12 +321,12 @@ def _press(ui, ptr: int, what: str, settled: bool = False) -> bool:
         wait.next_frame(1, ui)
         move_to(x, y)
         if not wait.wait_until(hovered, 0.15, f"hover on {what} (nudged)", must=False):
+            REASON["last"] = "the cursor did not register on its card"
             return False
     click(ui, ptr)                                # hovered already: the button goes down at once
     return True
 
 
-REASON = {"last": ""}          # why the last construct / upgrade was not started (for the step's result line)
 NOT_OFFERED: set = set()       # (region, chain) no category of the slot offered, this session (2026-10-18: the
                                # Morskittar Engine's Crude Scaffolding before story mission 5: every category was
                                # hovered and waited on, twice a turn)
