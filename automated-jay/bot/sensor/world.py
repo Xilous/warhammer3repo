@@ -282,7 +282,6 @@ HUMAN = 0x1BC4                    # faction:is_human(): byte < 2 (the Lua bindin
 DEFAULT_FACTION = "wh2_main_skv_clan_skryre"
 PLAYER = {"key": None}            # the player's faction key, as last found (modules that need it: current_faction())
 _found: dict = {}                 # model -> (faction object, key): the search runs once per loaded campaign
-_confirmed: dict = {}             # model -> the local faction's key, once confirmed (HUD treasury, or the only one)
 
 
 def is_human(w: World, f: int) -> bool:
@@ -297,52 +296,58 @@ def current_faction() -> str:
     return PLAYER["key"] or DEFAULT_FACTION
 
 
+GAME_ROOT = 0x144480D38          # the campaign game root (0 while no campaign is loaded); A = [G + 0x2F60]
+LOCAL_FACTION = 0x1C8            # [A + 0x1C8]: the local player's faction; [A + 0x90]: the campaign model
+LOCAL_MODEL = 0x90
+
+
+def local_faction(w: World) -> int | None:
+    """The faction the player at this PC controls, from memory: [[G + 0x2F60] + 0x1C8]. Decoded on 9.0.4, 2026-10-19,
+    from the UI context function IsLocalPlayersTurn (FUN_141e84054: is_factions_turn([[[A+0x90]+0x6CA0]+0x310],
+    [A+0x1C8])), the game's own "is it the local player's turn" test, so in multiplayer it is this PC's player by
+    construction. Checked live: Clan Scruten in a single-player Thanquol campaign. None when unreadable or when A's
+    model is not the campaign being read."""
+    try:
+        G = w.q(GAME_ROOT)
+        A = w.q(G + 0x2F60) if G else 0
+        if not A or w.q(A + LOCAL_MODEL) != w.s.model:
+            return None
+        F = w.q(A + LOCAL_FACTION)
+        return F if F and w.faction_name(F) else None
+    except Exception:
+        return None
+
+
 def find_player_faction(w: World) -> int | None:
-    """Follow the candidate pointer paths from the campaign model; accept the first that resolves to a human faction
-    the assistant plays (anchors.json player_factions: Ikit's Clan Skryre, and since 2026-10-17 Thanquol's Clan
-    Scruten). Not every path is the player's: in an Ikit campaign one resolved to an AI faction (the Chaos
-    invasion's), hence the human test. Kept per campaign model; re-checked by name on every call."""
+    """The player's faction: the local faction from memory (local_faction), accepted when it is a faction the
+    assistant plays (anchors.json player_factions: Ikit's Clan Skryre, Thanquol's Clan Scruten). Player rule
+    2026-10-19: from memory, never from the HUD (it was the faction whose treasury the HUD showed). 2026-10-18,
+    multiplayer: a pass once acted as Ikit, a friend's faction; the local faction cannot be another player's. When the
+    pointer cannot be read, the old model paths are used only if exactly one human faction the assistant plays is in
+    the campaign; otherwise None (the pass waits)."""
     a = _anchors()
     model = w.s.model
-    hit = _found.get(model)
-    if hit:
-        try:
-            if w.faction_name(hit[0]) == hit[1]:
-                return hit[0]
-        except Exception:
-            pass
     want = a.get("player_factions") or [a.get("player_faction_key") or DEFAULT_FACTION]
-    found: list[tuple[int, str]] = []
-    for path in a.get("faction_paths", []):
-        try:
-            p = model
-            for off in path:
-                p = w.q(p + off)
-            name = w.faction_name(p) if p else None
-            if name in want and is_human(w, p) and all(p != q for q, _n in found):
-                found.append((p, name))
-        except Exception:
-            continue
-    if not found:
-        return None
-    # 2026-10-18, multiplayer (Thanquol with friends on Ikit and Slaanesh): one pass read Thanquol's path and failed,
-    # Ikit's faction was the only candidate and the pass acted as Ikit. The faction confirmed against the HUD is kept
-    # for the campaign; a read without it, or a HUD that matches no candidate, gives None (the pass waits).
-    sure = _confirmed.get(model)
-    if sure is not None:
-        hit = next(((p, n) for p, n in found if n == sure), None)
-        if hit is None:
-            return None
-        p, name = hit
-    elif len(found) == 1 and not _other_assistant_humans(w, found[0][0], want):
-        p, name = found[0]
-        _confirmed[model] = name
+    p = local_faction(w)
+    if p is not None:
+        name = w.faction_name(p)
+        if name not in want:
+            return None                            # this PC plays a faction the assistant does not
     else:
-        got = _local_of(w, found)
-        if got is None:
+        found: list[tuple[int, str]] = []
+        for path in a.get("faction_paths", []):
+            try:
+                q = model
+                for off in path:
+                    q = w.q(q + off)
+                n = w.faction_name(q) if q else None
+                if n in want and is_human(w, q) and all(q != f for f, _n in found):
+                    found.append((q, n))
+            except Exception:
+                continue
+        if len(found) != 1 or _other_assistant_humans(w, found[0][0], want):
             return None
-        p, name = got
-        _confirmed[model] = name
+        p, name = found[0]
     _found.clear()
     _found[model] = (p, name)
     if PLAYER["key"] != name:
@@ -353,25 +358,6 @@ def find_player_faction(w: World) -> int | None:
         except Exception:
             pass
     return p
-
-
-def _local_of(w: World, found: list[tuple[int, str]]) -> tuple[int, str]:
-    """More than one human faction the assistant plays (multiplayer, a friend on the other Skaven clan): the local one
-    is the faction whose treasury the HUD shows (resources_bar/.../dy_treasury; faction treasury = int at F + 0xD58).
-    Every human faction's is_human byte is 0 (1 = idle human, the is_idle_human binding), so it cannot tell them
-    apart. Falls back to the first candidate path."""
-    try:
-        from .ui import UI
-        ui = UI(w.s)
-        ui.find_root()
-        t = ui.first("dy_treasury", under="hud_campaign")
-        shown = int("".join(ch for ch in (ui.text(t) or "") if ch.isdigit() or ch == "-") or "x") if t else None
-        mine = [(p, n) for p, n in found if struct.unpack("<i", w.pm.read_bytes(p + 0xD58, 4))[0] == shown]
-        if len(mine) == 1:
-            return mine[0]
-    except Exception:
-        pass
-    return None                                    # not a guess (it was found[0]: another player's faction)
 
 
 def _other_assistant_humans(w: World, F: int, want: list[str]) -> bool:
@@ -671,3 +657,89 @@ def multiplayer(w: World | None = None) -> bool:
     _MP_CACHE.clear()
     _MP_CACHE[m] = hit
     return hit
+
+
+# ------------------------------------------------------------------ hero caps
+_AGENT_RECORDS: dict = {}        # model -> {agent type key: agent record}
+
+
+def agent_record(w: World, F: int, agent: str) -> int | None:
+    """The agent type's DB record ([C + 0x330] of any character of that type, its +8 the key string object), found
+    among F's and its known factions' characters once per campaign."""
+    recs = _AGENT_RECORDS.setdefault(w.s.model, {})
+    if agent in recs:
+        return recs[agent]
+    fs = [F]
+    try:
+        rel = w.q(F + 0xDB8)
+        n, base = w.u32(rel + 4), w.q(rel + 8)
+        fs += [w.q(base + 0x78 * i + 0x28) for i in range(min(n, 4000))]
+    except Exception:
+        pass
+    for f in fs:
+        try:
+            for c in characters(w, f):
+                recs.setdefault(c.agent, w.q(c.ptr + 0x330))
+        except Exception:
+            continue
+        if agent in recs:
+            break
+    return recs.get(agent)
+
+
+def _effect_value(w: World, F: int, kind: int, R: int) -> int:
+    """F's cached effect value for an agent type: the sorted table at F + 0x1A8 (count u32 +4, entries [+8], 0x20
+    bytes: u64 key = ((1 << 16 | kind) << 40) | agent id u32 R + 0xD0, record +0x10 == R, f32 value +0x18), rounded
+    as the game does (FUN_141515c24)."""
+    E = F + 0x1A8
+    n, arr = w.u32(E + 4), w.q(E + 8)
+    key = (((1 << 16) | kind) << 40) | w.u32(R + 0xD0)
+    lo, hi = 0, n
+    while lo < hi:
+        m = (lo + hi) // 2
+        if w.q(arr + 0x20 * m) < key:
+            lo = m + 1
+        else:
+            hi = m
+    if lo < n and w.q(arr + 0x20 * lo) == key and w.q(arr + 0x20 * lo + 0x10) == R:
+        f = struct.unpack("<f", w.pm.read_bytes(arr + 0x20 * lo + 0x18, 4))[0]
+        return int(f + 0.5) if f > 0 else int(f - 0.5)
+    return 0
+
+
+def agent_cap(w: World, F: int, agent: str) -> int | None:
+    """The faction's cap for a hero type, computed as the game's faction:agent_cap (binding FUN_142792210 ->
+    FUN_14268cf88, decompiled 9.0.4 2026-10-19): min(max cap, base + effects + extra), where
+      base     the model's cap table [[[F+0x3A8]+0x90]+0x6FB0] (sorted list of entries by i32 +0x10; the entry for
+               u32 F + 0x1440), its map at entry + 0x70: node +0x10 == R -> i32 +0x18
+      effects  _effect_value(kind 0); max cap = max(0, _effect_value(kind 6) + i32 R + 0x88)
+      extra    F's list at F + 0x1BB0 (count u32 F + 0x1BAC) of {R, i32 +8}
+    None when the agent type has no cap (u32 R + 0x30 < 3: lords) or cannot be read. Checked live 2026-10-19 on a
+    turn-12 Thanquol save: 1 for every hero type (base 1, no bonus yet); bonuses not yet compared with the panel."""
+    try:
+        R = agent_record(w, F, agent)
+        if not R or w.u32(R + 0x30) < 3:
+            return None
+        i32 = lambda a: struct.unpack("<i", w.pm.read_bytes(a, 4))[0]
+        T = w.q(w.q(w.q(F + 0x3A8) + 0x90) + 0x6FB0)
+        n, arr = w.u32(T + 4), w.q(T + 8)
+        want = w.u32(F + 0x1440)
+        ent = next((w.q(arr + 8 * i) for i in range(n) if i32(w.q(arr + 8 * i) + 0x10) >= want), w.q(arr + 8 * (n - 1)))
+        M, base = ent + 0x70, 0
+        if w.u32(M + 0x1C) != 1:
+            head = M + 8
+            node, k = w.q(head), 0
+            while node and node != head and k < 4000:
+                if w.q(node + 0x10) == R:
+                    base = i32(node + 0x18)
+                    break
+                node, k = w.q(node), k + 1
+        extra = 0
+        for i in range(min(w.u32(F + 0x1BAC), 64)):
+            a = w.q(F + 0x1BB0) + 16 * i
+            if w.q(a) == R:
+                extra = i32(a + 8)
+        mx = max(0, _effect_value(w, F, 6, R) + i32(R + 0x88))
+        return min(mx, base + _effect_value(w, F, 0, R) + extra)
+    except Exception:
+        return None

@@ -663,8 +663,13 @@ def save_caps(**values) -> None:
 
 
 def free_engineer_slots(w: World, F: int) -> int | None:
-    """Engineers the cap still allows (the cap as the Recruit Hero panel last showed it); None: never read yet."""
-    cap = load_caps().get("engineer_cap")
+    """Engineers the cap still allows: the faction's engineer cap from memory (bot/sensor/world.agent_cap, player
+    rule 2026-10-19) minus those fielded. Only when memory cannot be read: the cap the Recruit Hero panel last showed
+    (UI stop-gap, runs/caps.json); None: neither."""
+    from bot.sensor.world import agent_cap
+    cap = agent_cap(w, F, "engineer")
+    if cap is None:
+        cap = load_caps().get("engineer_cap")
     return None if cap is None else cap - engineers_fielded(w, F)
 
 
