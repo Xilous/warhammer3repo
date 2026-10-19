@@ -33,7 +33,7 @@ label_settlement:<region>) is the target (dy_settlement_target shows it), establ
 Warpstone). Board: trigger_plan_button (Complete) opens the plan-complete screen
 dlc29_skv_chaotic_plans_trigger_animation (loot summary, its own trigger_plan_button completes, cancel_button backs out); abandon_button. Shop: shop_button_toggle; tabs
 CcoChaoticPlanShopCategoryRecordwh3_dlc29_skv_shop_<tab>; lines CcoCampaignChaoticPlanShopObjectChain<chain>;
-button_purchase buys the selected line's next level. button_close goes back one page (from the main page it closes
+button_purchase buys the selected line's first level, button_upgrade its next ones. button_close goes back one page (from the main page it closes
 the panel).
 """
 from __future__ import annotations
@@ -775,10 +775,17 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
             time.sleep(0.3)
         # the details on the right fill in a moment after the line is selected (2026-10-18, turn 23: looked for
         # 0.3 s after, the button was not there yet and the purchase was dropped as "memory and the shop disagree")
-        btn = wait.wait_until(lambda: (lambda b: b if b is not None and ui.visible(b) else None)(
-            _under(ui, "button_purchase", PANEL)), 1.5, "Purchase button", must=False)
+        # a line's first level is bought with button_purchase, its next levels with button_upgrade ("Upgrade";
+        # 2026-10-18, turn 25: Veteran Drillers was dropped for want of a Purchase button)
+        def buy_button():
+            for bid in ("button_purchase", "button_upgrade"):
+                b = _under(ui, bid, PANEL)
+                if b is not None and ui.visible(b):
+                    return b
+            return None
+        btn = wait.wait_until(buy_button, 1.5, "Purchase / Upgrade button", must=False)
         if btn is None:
-            out.append(f"{name}: no Purchase button (memory and the shop disagree)")
+            out.append(f"{name}: no Purchase or Upgrade button (memory and the shop disagree)")
             break
         have = ws()
         click(ui, btn)
