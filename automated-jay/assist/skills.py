@@ -129,6 +129,25 @@ def _skill_targets():
     return out, w
 
 
+@lru_cache(maxsize=1)
+def _unlock_ranks() -> dict[str, int]:
+    """skill key -> the rank its first level unlocks at (character_skill_level_details_tables)."""
+    out: dict[str, int] = {}
+    for r in gd._load("character_skill_level_details_tables"):
+        k, lv, at = r.get("skill_key"), r.get("level"), r.get("unlocked_at_rank") or 0
+        if k and lv == 1 and (k not in out or at < out[k]):
+            out[k] = int(at)
+    return out
+
+
+def _rank(w, ptr: int) -> int | None:
+    """The character's rank from memory: [C+0x3F0]+0x244 plus one (decompiled character:rank(), FUN_142466F8C)."""
+    try:
+        return w.u32(w.q(ptr + 0x3F0) + 0x244) + 1
+    except Exception:
+        return None
+
+
 def _turn(w) -> int | None:
     try:
         return w.s.read().turn
@@ -305,6 +324,10 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
             continue
         if (ptr, sk, _turn(w)) in NOT_TAKEN:
             continue
+        rank = _rank(w, ptr)
+        if rank is not None and _unlock_ranks().get(sk, 0) > rank:
+            continue                             # not unlocked at this rank yet (a mount at rank 15): no click
+                                                 # (2026-10-18: 2.5 s lost on it every multiplayer turn)
         if not tree.inside(card) and not tree.scroll_to(card):
             continue
         n = 0

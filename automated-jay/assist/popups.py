@@ -25,6 +25,8 @@ NORMAL = {
     "hud_campaign", "menu_bar", "panel_manager", "under_advisor_docker", "tooltip_default", "black_fade",
     "tutorial_halo_group",  # tutorial highlight around a HUD element: never a decision (seen 2026-10-16)
     "mp_start_turn_popup",  # multiplayer "Your Turn" banner: no buttons, fades by itself (held a pass 2026-10-18)
+    "mp_pending_action_blocking_msg",   # another player's battle or decision: waited out by runner.players_turn and
+                                        # tools.ui.wait_for_other_players, never the player's decision
     "highlight_dummy", "text_pointer_parent",   # parts of a scripted tour (fullscreen_highlight is the one reported)
     "advice_interface", "help_panel", "saving_icon", "qa_console", "campaign_space_bar_options",
     "targeting_interface_dimming", "character_map_path_icons", "units_panel", "resources_bar",
@@ -120,6 +122,13 @@ def significant(ui: UI, c: int) -> bool:
     return False
 
 
+def _sig(ui: UI, cid: str, c: int) -> tuple:
+    """A notice's identity for the re-click guard: its id and first texts (2026-10-18: stacked notices share a title,
+    "Enemy Killed In Battle", one per enemy, and the title alone left the next one open)."""
+    texts = tuple(t for b, _n, _r in ui.nodes(c) if (t := (ui.text(b) or "").strip()) and len(t) < 120)[:4]
+    return (cid,) + texts
+
+
 def title(ui: UI, c: int) -> str:
     return next((t for b, _n, _r in ui.nodes(c) if (t := (ui.text(b) or "").strip()) and len(t) < 80), "")
 
@@ -189,12 +198,12 @@ def dismiss_events(ui: UI | None = None) -> list[str]:
             if focus is None:
                 focus = game_focus()
                 focus.__enter__()
-            todo = [t for t in todo if _time.time() - _CLICKED.get((t[1], title(ui, t[0])), 0) > RECLICK_S]
+            todo = [t for t in todo if _time.time() - _CLICKED.get(_sig(ui, t[1], t[0]), 0) > RECLICK_S]
             if not todo:
                 break
             c, cid, btn = todo[0]
             before = _shows(ui, c)
-            _CLICKED[(cid, title(ui, c))] = _time.time()
+            _CLICKED[_sig(ui, cid, c)] = _time.time()
             click(ui, btn)
             # multiplayer (2026-10-18): a notice closes some seconds after its button, once the game has synced
             # with the other players; a slow close is not a failure, and the notice is not clicked again meanwhile
