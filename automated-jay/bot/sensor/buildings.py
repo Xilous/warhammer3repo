@@ -116,3 +116,54 @@ def construction_cost(w, F: int, level_key: str) -> int | None:
         return max(0, int(c + 0.5))
     except Exception:
         return None
+
+
+RESTRICTIONS = 0x6D10            # model -> the building restrictions manager R (the cm:add_*restricted_building* bindings)
+
+
+def _rec_keys(w, arr: int, n: int, stride: int, at: int) -> set[str]:
+    out = set()
+    for i in range(min(n, 4000)):
+        try:
+            rec = w.q(arr + stride * i + at)
+            k = _key(w, rec) if rec else None
+            if k:
+                out.add(k)
+        except Exception:
+            continue
+    return out
+
+
+def restricted(w, F: int) -> set[str]:
+    """Building level and chain keys the game's scripts have locked for faction F (story and event locks: the
+    Morskittar Engine before Thanquol's mission 5, wh_campaign_setup.lua add_event_restricted_building_record_for_
+    faction), from memory. Decoded 2026-10-19 (9.0.4) from the bindings:
+      add_restricted_building_level_record (FUN_14278f62c): every faction, list at R+0x98 (count +4, [+8] level records)
+      add_event_restricted_building_record[_for_faction] (FUN_14278cb10 -> FUN_14278cac4 -> FUN_1427c7df8): R+0x340,
+          entries of 0x58 bytes sorted by faction id u32 +0x50 (0 = every faction), each a list (count +0x24,
+          [+0x28]) of 0x38-byte records, the level record at +0x30
+      add_event_restricted_building_chain_record[_for_faction] (FUN_14278c8ac -> FUN_14278c7bc -> FUN_1427c800c):
+          R+0x350, entries of 0x28 bytes sorted by faction id u32 +0x20, each a list (count +4, [+8]) of 0x38-byte
+          records, the chain record at +0x30
+    Checked live 2026-10-19 (multiplayer, Thanquol): the Morskittar Engine levels 1-5 and the endgame foreign-slot
+    buildings listed, the story lock the building popup used to show only as a missing card."""
+    out: set[str] = set()
+    try:
+        R = w.q(w.s.model + RESTRICTIONS)
+        if not R:
+            return out
+        out |= _rec_keys(w, w.q(R + 0x98 + 8), w.u32(R + 0x98 + 4), 8, 0)
+        fid = w.u32(F + 8)
+        n, arr = w.u32(R + 0x340 + 4), w.q(R + 0x340 + 8)
+        for i in range(min(n, 2000)):
+            e = arr + 0x58 * i
+            if w.u32(e + 0x50) in (0, fid):
+                out |= _rec_keys(w, w.q(e + 0x28), w.u32(e + 0x24), 0x38, 0x30)
+        n, arr = w.u32(R + 0x350 + 4), w.q(R + 0x350 + 8)
+        for i in range(min(n, 2000)):
+            e = arr + 0x28 * i
+            if w.u32(e + 0x20) in (0, fid):
+                out |= _rec_keys(w, w.q(e + 8), w.u32(e + 4), 0x38, 0x30)
+    except Exception:
+        pass
+    return out

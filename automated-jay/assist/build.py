@@ -614,6 +614,15 @@ def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = Fa
     return out
 
 
+def locked(w: World, F: int, a) -> bool:
+    """The action's level or chain is locked for F by the game's scripts (bot/sensor/buildings.restricted)."""
+    from bot.sensor.buildings import restricted
+    if not a.level_key:
+        return False
+    r = restricted(w, F)
+    return a.level_key in r or a.level_key.rsplit("_", 1)[0] in r
+
+
 def real_cost(w: World, F: int, a) -> int:
     """What the game charges for the action's level, from memory (bot/sensor/buildings.construction_cost); the DB
     price only when the record cannot be read."""
@@ -692,7 +701,7 @@ def missed(w: World | None = None) -> list[str]:
             continue
         why = FAILED.get((o.region, a.item))
         if why is None:                           # not tried: only a reason from memory excuses it
-            if real_cost(w, snap.faction, a) > gold or (o.region, idx) in PROTECTED:
+            if real_cost(w, snap.faction, a) > gold or (o.region, idx) in PROTECTED or locked(w, snap.faction, a):
                 continue
             need = dev_cost(a.level_key)
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
@@ -811,6 +820,9 @@ def run(log=print, override_blocked: bool = False) -> str:
                 if a.kind == "replace":           # the game offers no Demolish on a slot with work under way
                     problems.append(f"{o.region}: {a.detail} once the work under way in that slot is done")
                 continue                          # being built, upgraded or repaired
+            if locked(w, snap.faction, a):
+                problems.append(f"{o.region}: {a.item} is locked by the game (a story or event lock, from memory)")
+                continue
             cost = real_cost(w, snap.faction, a)
             if cost > gold:
                 problems.append(f"{o.region}: {a.item} needs {cost} gold")
