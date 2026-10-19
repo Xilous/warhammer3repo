@@ -46,7 +46,7 @@ POLL_SECONDS = 2.0            # loop period while nothing is about to happen
 POLL_NOTICES = 0.5            # during the player's turn: how often to look for event notices to close
 POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
 END_TURN_WAIT_S = 8.0         # after Shift+Enter, until the game runs another faction's turn (took ~2.3 s in the logs)
-END_TURN_TRIES = 3            # a key the game did not take is pressed again, each time once End Turn is allowed
+END_TURN_TRIES = 2            # a key the game did not take is pressed again, each time once End Turn is allowed
 MP_PENDING_WAIT_S = 180.0     # multiplayer: how long End Turn waits out another player's battle ("pending action")
 VERIFY_ROUNDS = 2            # verification runs per step (each one that had to redo something is followed by another)
 IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alone this long before a pass
@@ -560,6 +560,9 @@ class Runner:
                 bb = self.ui.cached("button_end_turn", under="hud_campaign")
                 return bb is not None and (self.ui.state(bb) or "").startswith("active")
             ready0 = mp_ready(self.ui)                 # (ended() compares the ready ticks with these)
+            # Shift+Enter is the way (player 2026-10-19: it needs no UI target; multiplayer turn 2 took it at once),
+            # each try only once the game allows End Turn; not taken -> the End Turn button (with the notifications
+            # off nothing covers it)
             for attempt in range(END_TURN_TRIES):
                 if ended():
                     return True
@@ -594,8 +597,11 @@ class Runner:
                 opened = sorted({cid for _c, cid in self.ui.root_children()} - before) or opened
                 if self.close_panels():
                     break
-            # the shortcut not taken twice: the End Turn button itself (2026-10-18, multiplayer turn 1: Shift+Enter
-            # did not end the turn twice and the player had to press End Turn)
+            # the shortcut not taken: the End Turn button itself, once the game allows End Turn
+            if not ended() and not allowed():
+                wait.wait_until(lambda: allowed() or ended(), MP_PENDING_WAIT_S, "End Turn allowed", must=False)
+            if ended():
+                return True
             b = self.ui.cached("button_end_turn", under="hud_campaign")
             if b is not None and (self.ui.state(b) or "").startswith("active") and not self.close_panels():
                 ready0 = mp_ready(self.ui)
