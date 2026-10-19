@@ -614,6 +614,14 @@ def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = Fa
     return out
 
 
+def real_cost(w: World, F: int, a) -> int:
+    """What the game charges for the action's level, from memory (bot/sensor/buildings.construction_cost); the DB
+    price only when the record cannot be read."""
+    from bot.sensor.buildings import construction_cost
+    c = construction_cost(w, F, a.level_key) if a.level_key else None
+    return a.cost if c is None else c
+
+
 def development_points(w: World, region_obj: int, F: int) -> int | None:
     """The province's development points for faction F, from memory (binding region:development_points,
     FUN_1427ae080, 9.0.4 2026-10-19): province P = [[R+0x3A8]+0x10]; its faction entries [P+0xA0] (count u32
@@ -684,7 +692,7 @@ def missed(w: World | None = None) -> list[str]:
             continue
         why = FAILED.get((o.region, a.item))
         if why is None:                           # not tried: only a reason from memory excuses it
-            if a.cost > gold or (o.region, idx) in PROTECTED:
+            if real_cost(w, snap.faction, a) > gold or (o.region, idx) in PROTECTED:
                 continue
             need = dev_cost(a.level_key)
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
@@ -803,8 +811,9 @@ def run(log=print, override_blocked: bool = False) -> str:
                 if a.kind == "replace":           # the game offers no Demolish on a slot with work under way
                     problems.append(f"{o.region}: {a.detail} once the work under way in that slot is done")
                 continue                          # being built, upgraded or repaired
-            if a.cost > gold:
-                problems.append(f"{o.region}: {a.item} needs {a.cost} gold")
+            cost = real_cost(w, snap.faction, a)
+            if cost > gold:
+                problems.append(f"{o.region}: {a.item} needs {cost} gold")
                 continue
             need = dev_cost(a.level_key)
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
@@ -849,7 +858,7 @@ def run(log=print, override_blocked: bool = False) -> str:
             else:
                 ok = ui_upgrade(ui, w, S, slot, a.level_key)
             if ok:
-                gold -= a.cost
+                gold = min(w.s.read().treasury or gold, gold - cost)   # (the treasury can lag the slot in MP)
                 done.append(f"{gd.place_name(o.region)}: {a.item} {a.detail}")
                 log(f"build: {done[-1]}")
             else:
