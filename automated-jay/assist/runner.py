@@ -535,6 +535,16 @@ class Runner:
                 opened = sorted({cid for _c, cid in self.ui.root_children()} - before) or opened
                 if self.close_panels():
                     break
+            # the shortcut not taken twice: the End Turn button itself (2026-10-18, multiplayer turn 1: Shift+Enter
+            # did not end the turn twice and the player had to press End Turn)
+            b = self.ui.cached("button_end_turn", under="hud_campaign")
+            if b is not None and (self.ui.state(b) or "").startswith("active") and not self.close_panels():
+                from tools.ui import click
+                ready0 = mp_ready(self.ui)
+                click(self.ui, b)
+                if wait.wait_until(ended, END_TURN_WAIT_S, "another faction's turn (button)", must=False):
+                    self.end_turn_note += " (End Turn button: the shortcut was not taken)"
+                    return True
             self.end_turn_problem = (f"the game did not end the turn after {END_TURN_TRIES} tries"
                                      + (f"; it opened {', '.join(opened)}" if opened else ""))
             return False
