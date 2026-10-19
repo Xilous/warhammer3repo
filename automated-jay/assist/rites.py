@@ -28,6 +28,7 @@ UI:
 """
 from __future__ import annotations
 import re
+import struct
 import time
 
 from bot.focus import game_focus
@@ -66,6 +67,26 @@ def _observe(w, F: int, key: str, **fields) -> None:
             f.write(json.dumps(line) + "\n")
     except Exception:
         pass
+
+
+def rite_cost(w: World, F: int, key: str) -> int | None:
+    """A rite's gold cost from memory: its ritual record's resource transaction [rec+0x80], treasury change i32
+    +0x50 (negative: a cost), the field the UI context TreasuryCost reads (FUN_141ef0f64, 9.0.4, 2026-10-19).
+    Checked: the Dominating Scheme -3000, as resource_costs_tables and as the game charged on turn 24. None when
+    the rite is not found."""
+    R = _q(w, F + 0x1B58)
+    if not R:
+        return None
+    n, arr = w.u32(R + 0xBC), _q(w, R + 0xC0)
+    for i in range(min(n, 400)):
+        rec = _q(w, arr + 0x28 * i + 8)
+        try:
+            if string_object(w.pm, _q(w, rec + 0x60)) == key:
+                T = _q(w, rec + 0x80)
+                return -struct.unpack("<i", w.pm.read_bytes(T + 0x50, 4))[0] if T else None
+        except Exception:
+            continue
+    return None
 
 
 def rite_cooldowns(w: World, F: int) -> dict[str, int]:
@@ -270,15 +291,17 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
             return "the Dominating Scheme is not shown in the Rites panel"
         key = next(k for k in RITES if _rite_card(ui, panel, k) == card)
         cost_c = ui.first("dy_gold_cost", under=card)
-        cost = int(re.sub(r"\D", "", ui.text(cost_c) or "") or 0) if cost_c else 0
+        card_cost = int(re.sub(r"\D", "", ui.text(cost_c) or "") or 0) if cost_c else 0
+        mem_cost = rite_cost(w, F, key)                 # memory first (2026-10-19); the card only as fallback
+        cost = mem_cost if mem_cost is not None else card_cost
         gold = w.s.read().treasury or 0
         if cost and gold < cost:
             return f"Dominating Scheme needs {cost} gold (have {gold})"
         btn = ui.first("button_perform", under=card)
         req = ui.first("dy_unlock_requirements", under=card)
         req_text = re.sub(r"\[\[[^\]]*\]\]", "", ui.text(req) or "").strip().replace("\n", " ") if req else ""
-        _observe(w, F, key, card_cost=cost, button=(ui.state(btn) if btn else None), requirements=req_text,
-                 gold=gold, when="card read")
+        _observe(w, F, key, card_cost=card_cost, memory_cost=mem_cost, button=(ui.state(btn) if btn else None),
+                 requirements=req_text, gold=gold, when="card read")
         if btn is None or (ui.state(btn) or "") != "active":
             return f"Dominating Scheme cannot be cast: {req_text or 'requirements not met'}"
         from bot.sensor import commands         # paced by the game: the command, then the cooldown in memory
@@ -286,7 +309,8 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
         if st != "done":
             return f"Perform Rite did not register ({commands.WHY.get(st) or st})"
         spent = gold - (w.s.read().treasury or 0)
-        _observe(w, F, key, card_cost=cost, spent=spent, cooldown=rite_cooldowns(w, F).get(key), when="cast")
+        _observe(w, F, key, card_cost=card_cost, memory_cost=mem_cost, spent=spent,
+                 cooldown=rite_cooldowns(w, F).get(key), when="cast")
         out = f"cast the Dominating Scheme ({spent} gold)"
         if key == RITE_VERMINLORD:
             how = answer_verminlord_dilemma(ui)
