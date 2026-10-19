@@ -559,6 +559,7 @@ class Runner:
                     return False
                 bb = self.ui.cached("button_end_turn", under="hud_campaign")
                 return bb is not None and (self.ui.state(bb) or "").startswith("active")
+            ready0 = mp_ready(self.ui)                 # (ended() compares the ready ticks with these)
             for attempt in range(END_TURN_TRIES):
                 if ended():
                     return True
