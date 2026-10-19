@@ -24,7 +24,8 @@ reads game memory, and acts only through ordinary mouse and keyboard input. Noth
 Double-click **`run_assistant.bat`**. Start it before or after the game: it finds the game by itself and
 re-attaches when the game is restarted. Three things appear:
 
-- a **console** with the log (if the assistant stops with an error, it stays open so you can read why);
+- no console window: the log goes to `runs\console.log` (`run_assistant_console.bat` starts it with a console
+  that shows the log live, and stays open on an error);
 - the **assistant window**, titled "automated-jay";
 - a small **overlay** in the top-left corner of the game with the current status.
 

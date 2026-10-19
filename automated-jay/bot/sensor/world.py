@@ -131,6 +131,24 @@ class World:
                 continue
         return out
 
+    def met(self, f: int) -> set[int]:
+        """Factions f has met (discovered): its relationship entry's byte +0x74 has bit 4 (decompiled
+        FUN_14269c254, the check behind the Cco DiscoveredProvinceList, 9.0.4, 2026-10-18; 27 of 559 live, the
+        player's neighbours). Unmet factions' lands are mostly under the shroud."""
+        rel = self.q(f + 0xDB8)
+        if not rel:
+            return set()
+        n, base = self.u32(rel + 4), self.q(rel + 8)
+        out = set()
+        for i in range(min(n, 4000)):
+            e = base + 0x78 * i
+            try:
+                if self.pm.read_bytes(e + 0x74, 1)[0] & 4:
+                    out.add(self.q(e + 0x28))
+            except pymem.exception.MemoryReadError:
+                continue
+        return out
+
     def region_key(self, r: int) -> str | None:
         try:
             return _cstr(self.pm, self.q(self.q(r + 0x80) + 0x10))

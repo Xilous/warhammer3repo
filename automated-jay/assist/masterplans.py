@@ -519,13 +519,15 @@ def target_scores(w, F: int, state, cfg: dict) -> dict[str, float]:
     """region key -> score for every foreign settlement a Steal-Take may target, from memory: higher settlement
     level first (loot is a share of the region's income), major settlements before minor ones, and (by default)
     factions we are not at war with first. Left out: settlements on a Masterplans cooldown, already targeted, without
-    a main building, and (skip_near_provinces) every settlement in one of our provinces or a province bordering one."""
+    a main building, of a faction not met yet (under the shroud), and (skip_near_provinces) every settlement in one
+    of our provinces or a province bordering one."""
     from bot.sensor.world import region_provinces
     regs = _region_objects(w, F)
     near = _near_provinces(w, F) if cfg.get("skip_near_provinces", True) else set()
     prov = region_provinces()[0]
     busy = {p.region for p in state.plans}
     wars = set(w.wars(F))
+    met = w.met(F)
     out = {}
     for region, r in regs.items():
         if region in busy or region in state.region_cooldowns or prov.get(region, region) in near:
@@ -533,6 +535,9 @@ def target_scores(w, F: int, state, cfg: dict) -> dict[str, float]:
         owner = w.region_owner(r)
         if not owner or owner == F:
             continue
+        if met and owner not in met:
+            continue                               # a faction not met yet: its lands are under the shroud, and
+                                                   # the camera was panned there for nothing (2026-10-18, turn 28)
         slots = w.slots(r)
         main = slots[0] if slots else None
         if not main or not main.building:

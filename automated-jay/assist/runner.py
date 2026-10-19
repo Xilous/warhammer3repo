@@ -303,19 +303,17 @@ class Runner:
             return
         if config.FROZEN:
             cmd = [sys.executable] + sys.argv[1:]
-        else:
-            cmd = [sys.executable, "-X", "utf8", "-m", "assist.runner"] + sys.argv[1:]
+        else:                                          # no console window (player request 2026-10-18)
+            cmd = [_windowless_python(), "-X", "utf8", "-m", "assist.runner"] + sys.argv[1:]
         print(f"[{datetime.now():%H:%M:%S}] RESTART: starting a fresh copy", flush=True)
         import win32gui
         from bot.focus import game_hwnd
         env = dict(os.environ, AJ_RESTARTED="1")
         if win32gui.GetForegroundWindow() == game_hwnd():
             env["AJ_FOCUS_GAME"] = "1"                 # the new copy hands the front back to the game
-        si = subprocess.STARTUPINFO()                  # its console opens minimized and never takes the front
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        si.wShowWindow = 7                             # SW_SHOWMINNOACTIVE
-        subprocess.Popen(cmd, cwd=str(config.ROOT), creationflags=subprocess.CREATE_NEW_CONSOLE, startupinfo=si,
-                         env=env)
+        # no stdout/stderr handed over: pythonw then has none, and the new copy writes runs/console.log
+        subprocess.Popen(cmd, cwd=str(config.ROOT), env=env,
+                         creationflags=subprocess.DETACHED_PROCESS | subprocess.CREATE_NO_WINDOW)
         os._exit(0)
 
     def exit_now(self) -> None:
@@ -1040,7 +1038,24 @@ def single_instance(wait_s: float = 8.0) -> bool:
     return False
 
 
+def _console_log() -> None:
+    """No console (started with pythonw, player request 2026-10-18: no terminal window in the background): print()
+    and tracebacks go to runs/console.log instead (read by whoever reads the logs)."""
+    if sys.stdout is None or sys.stderr is None:
+        config.RUNS_DIR.mkdir(parents=True, exist_ok=True)
+        log = open(config.RUNS_DIR / "console.log", "a", encoding="utf-8", buffering=1)
+        sys.stdout = sys.stdout or log
+        sys.stderr = sys.stderr or log
+
+
+def _windowless_python() -> str:
+    """pythonw.exe next to this Python (no console window), else this Python."""
+    w = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
+    return w if os.path.exists(w) else sys.executable
+
+
 def main() -> int:
+    _console_log()
     if "--once" in sys.argv:
         Runner().run_now()          # same checks as the app's Run now: your turn, 3 s idle, no open decision
         return 0
