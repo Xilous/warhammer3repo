@@ -349,7 +349,10 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
             # paced by the game (bot/sensor/commands.py): clicked again only when no command reached the game; the
             # point is taken when memory says so, however long the sync takes
             from bot.sensor import commands
-            st, _v = commands.act_retry(w.pm, press, lambda: _points(w, ptr) < before)
+            # no retry: click() presses only once the game shows the cursor over this card, so no command means
+            # the game refused the skill (2026-10-19: the Boneripper mount at rank 15 wrote none; a retry with its
+            # 2.5 s grace cost 6 s every turn)
+            st, _v = commands.act(w.pm, press, lambda: _points(w, ptr) < before)
             if st != "done":
                 NOT_TAKEN.add((ptr, sk, _turn(w)))   # not again this turn (2026-10-18: a locked mount skill was
                 break                                # clicked and waited on in every pass)
