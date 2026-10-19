@@ -63,7 +63,7 @@ class Finance:
         for a in self.armies:
             s = f"{a.name}: {a.now}/turn"
             if a.refilled != a.now or a.removed:
-                s += (f" → {a.refilled} if refilled ({a.refilled - a.now:+d}"
+                s += (f" → {a.refilled} if {'rebuilt' if a.removed else 'refilled'} ({a.refilled - a.now:+d}"
                       + (f"; {a.removed} units disbanded" if a.removed else "") + ")")
             if a.ticked:
                 s += "  [ticked]"

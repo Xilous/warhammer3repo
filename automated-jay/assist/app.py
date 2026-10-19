@@ -115,7 +115,8 @@ def army_signal(rows, fin, checks) -> str | None:
     for a, d, (can, _why) in rows:
         if can and not tick_for(a, enabled)[0] and (d.missing or d.heroes_missing) and a.cqi in cost:
             inc = cost[a.cqi].income_if_refilled
-            return (f"{a.general_name} can be refilled to the playbook: income after {inc:+,}/turn"
+            what = "rebuilt into the playbook army" if cost[a.cqi].removed else "refilled to the playbook"
+            return (f"{a.general_name} can be {what}: income after {inc:+,}/turn"
                     + (" ✓" if inc >= 0 else " ✗"))
     if checks and all(ok for _l, ok, _w in checks) and fin is not None:
         return (f"a new playbook army can be created: income after {fin.after_next:+,}/turn"
