@@ -36,6 +36,11 @@ The assistant goes exactly as fast as the game: never at a pace tuned per mode (
 - **Every step has a memory check** (`missed()` in its module, `runner.MISSED_FNS`): after the step, the plan is made
   again from memory and anything not done is reported MISSED (the step turns red), or apart when the run gave a
   reason ("refused by the game", "not possible"). "verified" alone only means a second run changed nothing.
+- **Memory first, the UI as fallback, everywhere.** Before reading anything from a panel, find it in memory
+  (bindings, Cco context functions, records). `tests/test_memory_first.py` lists every function that reads UI
+  state or text, with why (click / ui-only / fallback); a new one fails the test until it is moved to memory or
+  listed with its reason. Never conclude a game fact from what a panel does not show (a card not found is a UI
+  miss, retried).
 - **The player's faction is the game's local faction** (`world.local_faction`, `[[G+0x2F60]+0x1C8]`), never a HUD
   value.
 
