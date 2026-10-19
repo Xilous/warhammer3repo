@@ -940,6 +940,8 @@ class Runner:
             else:
                 self._held_by_decision(s.turn)
 
+    OWN_MENUS = ("esc_menu", "options_panel", "save_load_panel", "game_menu")
+
     def _held_by_decision(self, turn) -> None:
         """While other factions move: an AI diplomacy offer or a dilemma that came up holds the whole game until the
         player answers it (2026-10-19, turn 13: the Dwarfs' peace offer stopped the AI turns). Never answered by the
@@ -950,7 +952,8 @@ class Runner:
         self._held_check_t = now
         from . import popups
         try:
-            need = [(cid, d, ig) for cid, d, ig in popups.open_decisions(self.ui) if not ig]
+            need = [(cid, d, ig) for cid, d, ig in popups.open_decisions(self.ui)
+                    if not ig and cid not in self.OWN_MENUS]     # the player's own menus hold nobody
         except Exception:
             return
         ids = tuple(cid for cid, _d, _ig in need)
