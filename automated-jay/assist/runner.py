@@ -580,7 +580,7 @@ class Runner:
     def _timeline(self, turn, code: str, why: str) -> None:
         """Each change of the game's phase, with what the turn owes, to runs/timeline.jsonl and the console (player
         idea 2026-10-19: "held: xloth battle 0:45 -> free -> End Turn queued -> ended" readable after the fact)."""
-        key = (turn, code, why if code != "free" else "")
+        key = (turn, code, why if code == "held" else "")      # (not_mine: one line, not one per AI faction)
         if key == getattr(self, "_last_phase", None):
             return
         prev = getattr(self, "_last_phase_t", None)
