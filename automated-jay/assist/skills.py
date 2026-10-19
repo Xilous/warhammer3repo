@@ -48,6 +48,7 @@ SKILLS_PANEL = "character_details_panel_skills"
 SKIP_STATES = frozenset({"maxed", "locked", "locked_rank"})   # card states a click does not change (2026-10-16)
 CLICK_EFFECT_S = 0.35     # a click that has not taken a point by then never will (the old fixed wait after a click)
 TREE_TIMEOUT_S = 1.5      # the new character's tree is normally built 130-210 ms after the switch
+NOT_TAKEN: set = set()    # (character, skill, turn) a click did not take: not clicked again that turn
 
 
 # ------------------------------------------------------------------ orders
@@ -126,6 +127,13 @@ def _skill_targets():
         if pts:
             out.append((c.ptr, k, w.u32(c.ptr + CHAR_ID_OFF), pts, c.name))
     return out, w
+
+
+def _turn(w) -> int | None:
+    try:
+        return w.s.read().turn
+    except Exception:
+        return None
 
 
 def _points(w, ptr) -> int:
@@ -295,6 +303,8 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
             continue
         if (ui.state(card) or "") in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card)):
             continue
+        if (ptr, sk, _turn(w)) in NOT_TAKEN:
+            continue
         if not tree.inside(card) and not tree.scroll_to(card):
             continue
         n = 0
@@ -306,7 +316,8 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
             after = wait.value_changes(lambda: _points(w, ptr), before, timeout=CLICK_EFFECT_S, must=False,
                                        what=f"skill point taken by {sk}")
             if after is None or after >= before:
-                break
+                NOT_TAKEN.add((ptr, sk, _turn(w)))   # not again this turn (2026-10-18: a locked mount skill was
+                break                                # clicked and waited on in every pass)
             n += 1
             if n < ranks:                        # the card shows "maxed" a frame later: no click on a full skill
                 wait.next_frame(1, ui)

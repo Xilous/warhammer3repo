@@ -227,16 +227,19 @@ def open_main(ui) -> bool:
             if not wait.wait_until(lambda: ui.root_child(PANEL), 4.0, "Masterplans panel", must=False):
                 return False
             wait.wait_until(lambda: _under(ui, "button_close", PANEL), 3.0, "Masterplans panel shown", must=False)
-        if wait.wait_until(lambda: _main_page(ui), 1.5, "Masterplans main page", must=False):
+        p = wait.wait_until(lambda: page(ui) not in (None, "other") and page(ui), 1.5, "Masterplans page shown",
+                            must=False)
+        if p == "main":
             # the active plans fill in a moment after the page shows
             wait.stable(lambda: len(active_plans(ui)), n=4, timeout=2.0, what="active plans listed", ui=ui, must=False)
-            time.sleep(0.3)
             return True
-        x = _under(ui, "button_close", PANEL)          # a board, the setup or the shop: one page back
+        # a board, the setup, the shop or the plan-complete screen: one page back, confirmed (2026-10-18: a fixed
+        # 1.5 s wait for the main page, then a 0.6 s sleep, showed as pauses)
+        x = ui.first("cancel_button", under=TRIGGER) if p == "trigger" else _under(ui, "button_close", PANEL)
         if x is None:
             return False
         click(ui, x)
-        time.sleep(0.6)
+        wait.wait_until(lambda: page(ui) != p, 2.0, f"back from the {p} page", must=False)
     return _main_page(ui)
 
 
@@ -285,12 +288,15 @@ def _log(entry: dict) -> None:
         pass
 
 
-def _confirm(ui) -> None:
-    """Accept a confirmation the game may show (a prompt with a tick)."""
+def _confirm(ui, done=None) -> None:
+    """Accept a confirmation the game may show (a prompt with a tick). done: the action's own result (read from
+    memory); once it shows, no prompt is coming, so there is no wait (2026-10-18 timing logs: the game never asked
+    after a start, a purchase or a completion, and each fixed 1.5 s wait showed as a pause)."""
     from tools import wait
     from tools.ui import click
-    box = wait.wait_until(lambda: ui.root_child("dialogue_box"), 1.5, "confirmation", must=False)
-    if not box:
+    box = wait.wait_until(lambda: ui.root_child("dialogue_box") or (done is not None and done()), 1.5,
+                          "confirmation or result", must=False)
+    if not box or not ui.root_child("dialogue_box"):
         return
     for b in ("button_tick", "button_accept", "button_ok"):
         t = ui.first(b, under="dialogue_box")
@@ -437,10 +443,9 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
         click(ui, board_btn)
         if act == "complete":
             _confirm_trigger(ui)
-        _confirm(ui)
         running = lambda: any(p.region == plan.region and p.type == "economic" for p in (mem.read(w) or state).plans)
+        _confirm(ui, done=lambda: not running())
         gone = wait.wait_until(lambda: not running(), 6.0, "plan finished (memory)", must=False)
-        _confirm(ui)
         loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
         out.append(f"Steal-Take {place}: {'completed' if act == 'complete' else 'abandoned'} ({loot}; {why})"
                    + ("" if gone else " - NOT confirmed, check the plan"))
@@ -575,6 +580,9 @@ def settlement_xy(w, region_obj: int, cache: dict) -> tuple[float, float] | None
     return cache[owner].get(region_obj)
 
 
+UNREACHABLE: set[str] = set()      # settlements the camera could not bring on screen, this session
+
+
 def _reachable_targets(ui, w, scores: dict, taken: set, labels: dict, avoid_rects, cfg: dict):
     """(region, its label) best score first, for the settlements on screen or within max_pan map units of the screen
     centre; one off screen is brought into view (camera panned with WASD from memory, assist/heroes.py) only when its
@@ -601,10 +609,13 @@ def _reachable_targets(ui, w, scores: dict, taken: set, labels: dict, avoid_rect
         if d <= cfg.get("max_pan", 60):
             cands.append((-score, d, region, xy))
     for _s, _d, region, xy in sorted(cands)[:4]:
+        if region in UNREACHABLE:
+            continue
         lab = f"label_settlement:{region}"
         if xy is not None:
             k, _jumped = bring_into_view(w, ui, xy[0], xy[1], lab)
             if k is None or not in_safe(k):
+                UNREACHABLE.add(region)                # (2026-10-18: each failed pan cost ~6 s, every turn)
                 continue
         now = _labels_on_screen(ui, avoid_rects)
         if region in now:
@@ -666,7 +677,7 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
                 started = True
                 break
             click(ui, est)
-            _confirm(ui)
+            _confirm(ui, done=lambda: any(p.region == region for p in (mem.read(w) or state).plans))
             ok = wait.wait_until(lambda: any(p.region == region for p in (mem.read(w) or state).plans), 4.0,
                                  "plan started (memory)", must=False)
             out.append(f"{u.name}: Steal-Take started on {place}" if ok else
@@ -740,7 +751,7 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
             break
         have = ws()
         click(ui, btn)
-        _confirm(ui)
+        _confirm(ui, done=lambda: ws() <= have - cost)
         if not wait.wait_until(lambda: ws() <= have - cost, 3.0, "purchase registered (memory)", must=False):
             out.append(f"{name}: the purchase did not register")
             break

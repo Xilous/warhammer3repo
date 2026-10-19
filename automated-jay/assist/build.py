@@ -318,13 +318,39 @@ def _press(ui, ptr: int, what: str, settled: bool = False) -> bool:
     return True
 
 
+REASON = {"last": ""}          # why the last construct / upgrade was not started (for the step's result line)
+NOT_OFFERED: set = set()       # (region, chain) no category of the slot offered, this session (2026-10-18: the
+                               # Morskittar Engine's Crude Scaffolding before story mission 5: every category was
+                               # hovered and waited on, twice a turn)
+
+
+def _why_greyed(ui, card: int) -> str:
+    """The greyed card's tooltip, the lines that say why it cannot be built (the game's own words)."""
+    from .army_builder import card_text
+    btn = ui.child(card, "square_building_button")
+    import re as _re
+    for c in (btn, card):
+        t = card_text(ui, c) if c else ""
+        t = _re.sub(r"\[\[[^\]]*\]\]", "", t).replace("||", "\n")
+        lines = [x.strip() for x in t.splitlines() if x.strip()]
+        bad = [x for x in lines if any(k in x.lower() for k in ("requires", "cannot", "not enough", "already",
+                                                                 "need", "insufficient", "locked", "unavailable"))]
+        if bad or lines:
+            return "; ".join(bad or lines[-1:])[:160]
+    return ""
+
+
 def ui_upgrade(ui, w: World, S: int, slot, level_key: str) -> bool:
+    REASON["last"] = ""
     pop = _slot_popup(ui, slot, "building_construction_popup")
     card = wait.wait_until(lambda: ui.first(level_key, under=pop), 1.0, f"{level_key} card", must=False) if pop else None
     if card is None:
         return False
-    if _settled(ui, card, level_key) is None or _greyed(ui, card):
-        return False                              # the game would ignore the click
+    if _settled(ui, card, level_key) is None:
+        return False
+    if _greyed(ui, card):                         # the game would ignore the click
+        REASON["last"] = "greyed out" + (f": {r}" if (r := _why_greyed(ui, card)) else "")
+        return False
     if not _press(ui, card, level_key, settled=True):
         return False
     return _await_started(w, S, f"{level_key} under construction")
@@ -404,7 +430,11 @@ def _category_tree(ui, under: int, before: tuple):
     return kids, out
 
 
-def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str) -> bool:
+def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region: str = "") -> bool:
+    REASON["last"] = ""
+    if (region, chain) in NOT_OFFERED:
+        REASON["last"] = "not offered by the game (locked, e.g. by the story)"
+        return False
     pop = _slot_popup(ui, slot, "building_categories_popup")
     lst = ui.first("category_list", under=pop) if pop else None
     if lst is None:
@@ -425,11 +455,16 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str) -> bool
         card = ui.first(level_key, under=chains[chain])
         if card is None:
             continue
-        if _settled(ui, card, level_key) is None or _greyed(ui, card):
+        if _settled(ui, card, level_key) is None:
+            return False
+        if _greyed(ui, card):
+            REASON["last"] = "greyed out" + (f": {r}" if (r := _why_greyed(ui, card)) else "")
             return False
         if not _press(ui, card, level_key, settled=True):
             return False
         return _await_started(w, S, f"{level_key} under construction")
+    NOT_OFFERED.add((region, chain))
+    REASON["last"] = "not offered by the game (locked, e.g. by the story)"
     return False
 
 
@@ -651,12 +686,13 @@ def run(log=print, override_blocked: bool = False) -> str:
                 log(f"build: {done[-1]}")
                 slot = ui_slot(ui, w, o, idx)
                 chain = next((t.chain for t in plan_targets(o) if t.item == a.item), None)
-                ok = slot is not None and chain is not None and ui_construct(ui, w, S, slot, a.level_key, chain)
+                ok = slot is not None and chain is not None and ui_construct(ui, w, S, slot, a.level_key, chain,
+                                                                             o.region)
                 a = type(a)(a.settlement, "construct", a.item, f"-> {gd.level_name(a.level_key)}", a.slot, a.cost,
                             a.turns, a.level_key)
             elif a.kind == "construct":
                 chain = next((t.chain for t in plan_targets(o) if t.item == a.item), None)
-                ok = chain is not None and ui_construct(ui, w, S, slot, a.level_key, chain)
+                ok = chain is not None and ui_construct(ui, w, S, slot, a.level_key, chain, o.region)
             else:
                 ok = ui_upgrade(ui, w, S, slot, a.level_key)
             if ok:
@@ -664,7 +700,8 @@ def run(log=print, override_blocked: bool = False) -> str:
                 done.append(f"{gd.place_name(o.region)}: {a.item} {a.detail}")
                 log(f"build: {done[-1]}")
             else:
-                problems.append(f"{o.region}: {a.item} not started")
+                problems.append(f"{o.region}: {a.item} not started"
+                                + (f" ({REASON['last']})" if REASON["last"] else ""))
         move_to(*PARK)
     parts = []
     if done:
