@@ -273,7 +273,9 @@ def close_panel(ui) -> bool:
             break
         # 2026-10-18: an X clicked while a new board slid in was ignored and cost a 2 s wait; 1 s, then it is
         # clicked again (the retry took 0.4 s)
-        wait.wait_until(lambda: page(ui) != p, 1.0, f"back from the {p} page", must=False)
+        # right after a start the first X on the new board backs out of the setup underneath, the second closes the
+        # board (turns 30-32: the first never changed the page, the second did in 0.4 s): retry soon on a board
+        wait.wait_until(lambda: page(ui) != p, 0.5 if p == "board" else 1.0, f"back from the {p} page", must=False)
     return bool(wait.wait_until(lambda: not ui.root_child(PANEL), 3.0, "Masterplans panel closed", must=False))
 
 
