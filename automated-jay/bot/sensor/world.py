@@ -743,3 +743,22 @@ def agent_cap(w: World, F: int, agent: str) -> int | None:
         return min(mx, base + _effect_value(w, F, 0, R) + extra)
     except Exception:
         return None
+
+
+def human_factions(w: World) -> list[str]:
+    """Keys of every human faction in the campaign (is_human), sorted: the local faction and those in its diplomacy
+    list. The same after a reload of the campaign (assist/runner._cid)."""
+    F = local_faction(w) or find_player_faction(w)
+    if not F:
+        return []
+    out = {w.faction_name(F)} if is_human(w, F) else set()
+    rel = w.q(F + 0xDB8)
+    n, base = (w.u32(rel + 4), w.q(rel + 8)) if rel else (0, 0)
+    for i in range(min(n, 4000)):
+        try:
+            o = w.q(base + 0x78 * i + 0x28)
+            if o and is_human(w, o):
+                out.add(w.faction_name(o))
+        except Exception:
+            continue
+    return sorted(k for k in out if k)

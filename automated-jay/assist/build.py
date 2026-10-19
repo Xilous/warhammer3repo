@@ -773,6 +773,17 @@ def run(log=print, override_blocked: bool = False) -> str:
         for o, a, busy in todo:
             idx = slot_index_for(o, a)
             S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
+            # right before the action, from memory: the plan still holds (multiplayer, 2026-10-19: the other players
+            # move while a pass runs; a settlement can be taken, a slot changed)
+            if w.region_owner(o.region_obj) != snap.faction:
+                problems.append(f"{o.region}: no longer yours (taken during the pass)")
+                continue
+            if idx is not None and idx < len(o.slot_states):
+                now = w.slots(o.region_obj)
+                if idx < len(now) and now[idx].building != o.slot_states[idx].building and not now[idx].constructing:
+                    problems.append(f"{o.region}: slot changed since the plan ({o.slot_states[idx].building} -> "
+                                    f"{now[idx].building}); planned again next pass")
+                    continue
             if (o.region, idx) in protected:          # the Cavern's slot (also while it is empty, waiting for it)
                 problems.append(f"{o.region}: Construction Cavern slot kept for the Forbidden Workshop (level 2)")
                 continue

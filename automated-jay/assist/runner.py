@@ -524,9 +524,18 @@ class Runner:
 
     # ---------------------------------------------------------------- the turn's record (assist/turnstate.py)
     def _cid(self) -> str:
-        from . import turnstate
-        from bot.sensor.world import current_faction
-        return turnstate.campaign_id(self.model, current_faction())
+        """The campaign, the same across a reload (multiplayer desync: the model is rebuilt at another address, and
+        a record keyed on the address lost a queued End Turn): the local faction and every human faction."""
+        from bot.sensor.world import World, current_faction, human_factions
+        cache = getattr(self, "_cid_cache", {})
+        if self.model not in cache:
+            try:
+                humans = human_factions(World(self.mem))
+            except Exception:
+                humans = []
+            cache[self.model] = f"{current_faction()}|{','.join(humans)}" if humans else ""
+            self._cid_cache = cache
+        return cache[self.model] or f"{self.model}:{current_faction()}"
 
     def _record(self, turn):
         """This campaign's record for `turn` (a fresh one when the turn or campaign changed)."""
@@ -553,6 +562,29 @@ class Runner:
                 self._mark(self.ts.turn, end_requested=False)
         else:
             self._mark(v[1], end_requested=True)
+
+    TIMELINE = config.RUNS_DIR / "timeline.jsonl"
+
+    def _timeline(self, turn, code: str, why: str) -> None:
+        """Each change of the game's phase, with what the turn owes, to runs/timeline.jsonl and the console (player
+        idea 2026-10-19: "held: xloth battle 0:45 -> free -> End Turn queued -> ended" readable after the fact)."""
+        key = (turn, code, why if code != "free" else "")
+        if key == getattr(self, "_last_phase", None):
+            return
+        prev = getattr(self, "_last_phase_t", None)
+        now = time.time()
+        self._last_phase, self._last_phase_t = key, now
+        owed = self.ts.owes() if self.ts.turn == turn else []
+        line = {"t": round(now, 2), "turn": turn, "phase": code, "why": why,
+                "after_s": round(now - prev, 1) if prev else None, "owed": owed}
+        if owed or code != "held" or "not shown" not in why:   # (panels opened by the player: file only)
+            print(f"[{datetime.now():%H:%M:%S}] phase {code}" + (f" ({why})" if why else "")
+                  + (f", queued: {', '.join(owed)}" if owed else ""), flush=True)
+        try:
+            with open(self.TIMELINE, "a", encoding="utf-8") as f:
+                f.write(json.dumps(line) + "\n")
+        except OSError:
+            pass
 
     def _queue_end(self, turn, why: str) -> None:
         """Build & End Turn pressed while the game does not allow it yet: remembered for this campaign and turn, run
@@ -1032,9 +1064,18 @@ class Runner:
             return
         if model != self.model or (s.turn != self.last_turn and s.turn != self.last_turn + 1):
             # a different campaign or save was loaded: not a turn start, wait for the next one
+            old = self.ts
             self.last_turn, self.model = s.turn, model
             self.pending = self.done_turn = None
             self.offer_ignore([])
+            if old.campaign and old.campaign == self._cid() and old.turn == s.turn:
+                # the same campaign reloaded on the same turn (a multiplayer desync, a reload): what the turn owed
+                # still stands, and an unfinished turn-start pass goes on (2026-10-19)
+                if not old.start_done:
+                    self.pending = s.turn
+                self.post("waiting", f"WAITING (turn {s.turn})", "the campaign was reloaded: carrying on with "
+                          "this turn" + (f" (queued: {', '.join(old.owes())})" if old.owes() else ""), turn=s.turn)
+                return
             self.post("your turn", f"YOUR TURN {s.turn}", "campaign changed; acts from next turn")
             return
         if s.turn == self.last_turn + 1:
@@ -1047,9 +1088,11 @@ class Runner:
                 self.post("paused", f"PAUSED (turn {s.turn})", "skipped this turn's automations")
             elif self.done_turn != s.turn:                  # Run now may already have done it
                 self.pending = s.turn
+        code, why = phase(self.ui)
+        self._timeline(s.turn, code, why)
         st = self._record(s.turn)                      # (a new turn or campaign drops what the old one owed)
         owed = st.owes()
-        if owed and not self.busy.locked() and phase(self.ui)[0] == "free":
+        if owed and not self.busy.locked() and code == "free":
             if owed[0] == "end":
                 self.end_turn_now()                    # the queued Build & End Turn (it runs the turn start too)
             else:

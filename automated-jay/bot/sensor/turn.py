@@ -99,3 +99,26 @@ def players_turn(s) -> tuple[bool | None, str]:
     if want in names:
         return True, ""
     return False, f"{names[0] if names else 'nobody'} is moving"
+
+
+ENDED_COUNT, ENDED_ARRAY = 0x10, 0x18   # record -> factions that have ended this turn (multiplayer)
+
+
+def ended_factions(pm, model: int) -> list[int] | None:
+    """Faction objects that pressed End Turn in the current turn record (simultaneous multiplayer turns: the
+    factions whose turn runs stay listed at R+4/R+8 until everyone has ended). u32 R+0x10 count, [R+0x18] array of
+    faction pointers. Found 2026-10-19 by diffing memory as the player's ready tick came on (R+0x10 0 -> 1, +0x14
+    capacity 0 -> 1, +0x18 the array). None when unreadable."""
+    r = turn_record(pm, model)
+    if r is None:
+        return None
+    try:
+        n = struct.unpack("<I", pm.read_bytes(r + ENDED_COUNT, 4))[0]
+        if n == 0:
+            return []
+        if n > MAX_LIST:
+            return None
+        arr = _q(pm, r + ENDED_ARRAY)
+        return [f for f in struct.unpack(f"<{n}Q", pm.read_bytes(arr, 8 * n))]
+    except Exception:
+        return None

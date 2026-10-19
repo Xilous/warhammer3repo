@@ -52,7 +52,10 @@ class TurnState:
 
 
 def campaign_id(model, faction_key: str | None) -> str:
-    return f"{model:#x}:{faction_key or '?'}" if model else ""
+    if not model:
+        return ""
+    m = f"{model:#x}" if isinstance(model, int) else str(model)    # (the sensor's model id is a string)
+    return f"{m}:{faction_key or '?'}"
 
 
 def load() -> TurnState:
