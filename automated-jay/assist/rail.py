@@ -77,6 +77,8 @@ class TurnRail:
         self.f_btn = _font(["Bahnschrift SemiBold Condensed", "Bahnschrift", "Segoe UI Semibold"], 12, "bold")
         self.f_btn_s = _font(["Bahnschrift SemiBold Condensed", "Bahnschrift", "Segoe UI Semibold"], 10, "bold")
         self.state, self.headline, self.sub = "waiting", "WAITING", ""
+        self.end_wait = False                        # Build & End Turn taken, waiting for the game (spinner)
+        self._spin, self._spinning = 0, False
         self.template: tuple[bool, str] | None = None
         self.signal: str | None = None               # an army decision is open (assist/app.py army_signal)
         self.steps: dict[str, str] = {}
@@ -90,8 +92,18 @@ class TurnRail:
         self.draw()
 
     # ---------------------------------------------------------------- model
+    WAIT_HEADLINES = ("END TURN QUEUED", "ENDING TURN", "RUN NOW QUEUED")
+
     def set_status(self, state: str, headline: str, detail: str = "") -> None:
         self.state, self.headline = state, headline
+        # player request 2026-10-19: the End Turn button shows that the press was taken and the assistant is
+        # waiting for the game (a pending action, End Turn greyed); a pass in progress keeps it too, until the
+        # turn has ended or the request ended otherwise
+        if (headline.startswith(self.WAIT_HEADLINES) or (self.end_wait and state == "automating")
+                or "queued" in (detail or "").lower()[:120]):
+            self.end_wait = True
+        else:
+            self.end_wait = False
         self.sub = next((ln for ln in (detail or "").splitlines() if ln.strip()), "")[:60]
         self.draw()
 
@@ -190,6 +202,16 @@ class TurnRail:
             self.btn = "run"
             self._round_rect(bx0, by0, bx1, by1, 3, fill=T.PANEL, outline=T.BRASS, width=1.5)
             cv.create_text((bx0 + bx1) / 2, (by0 + by1) / 2, text="RUN NOW", fill=T.BRASS, font=f)
+        elif self.on_end_turn is not None and self.end_wait:
+            self.btn = "end"                         # (another press while queued changes nothing)
+            self._round_rect(bx0, by0, bx1, by1, 3, fill=T.PANEL, outline=T.BRASS, width=1.5)
+            r = min(7, (by1 - by0) / 2 - 4)
+            cx, cy = bx0 + 6 + r, (by0 + by1) / 2
+            cv.create_oval(cx - r, cy - r, cx + r, cy + r, outline=T.LINE, width=2)
+            cv.create_arc(cx - r, cy - r, cx + r, cy + r, start=-(self._spin * 30) % 360, extent=100, style="arc",
+                          outline=T.BRASS_HI, width=2)
+            cv.create_text((bx0 + bx1) / 2 + r, cy, text="QUEUED", fill=T.BRASS, font=f)
+            self._spin_later()
         elif self.on_end_turn is not None:
             self.btn = "end"
             self._round_rect(bx0, by0, bx1, by1, 3, fill=T.BRASS, outline=T.BRASS)
@@ -197,6 +219,17 @@ class TurnRail:
                            fill=T.ON_BRASS, font=f)
         if self.btn:
             self._btn_box = box
+
+    def _spin_later(self) -> None:
+        if not self._spinning:
+            self._spinning = True
+            self.cv.after(90, self._spin_step)
+
+    def _spin_step(self) -> None:
+        self._spinning = False
+        if self.end_wait:
+            self._spin += 1
+            self.draw()
 
     def _draw_icons(self, W: int) -> None:
         """Expand (the fold-out panel), restart (a fresh copy with the latest code), exit: right on the bar."""
@@ -300,6 +333,9 @@ class TurnRail:
         if self._btn_box and self._btn_box[0] <= e.x <= self._btn_box[2] and self._btn_box[1] <= e.y <= self._btn_box[3]:
             fn = self.on_end_turn if self.btn == "end" else self.on_run_now
             if fn:
+                if self.btn == "end":
+                    self.end_wait = True             # at once: the press was taken (the runner's status follows)
+                    self.draw()
                 fn()
             return
         self.on_pause()
