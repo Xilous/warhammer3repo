@@ -627,6 +627,7 @@ def missed(w: World | None = None) -> list[str]:
             if S and a.kind not in ("construct", "replace") and damaged(w, S):
                 continue
             why = "not attempted"
+        why = why.removeprefix(f"{a.item} not started ").strip("()") or why
         out.append(f"{gd.place_name(o.region)}: {a.item} ({why})")
     return out
 
