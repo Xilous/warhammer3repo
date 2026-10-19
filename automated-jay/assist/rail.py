@@ -24,6 +24,8 @@ COMPACT = (494, 70)                 # + a strip at the bottom: can any province 
 HOME = (10, 72)                 # default top-left corner (where the first overlay sat)
 POS_FILE = config.RUNS_DIR / "rail.json"
 DRAG_PX = 4                     # a press that moves further than this is a drag, not a click
+_MEASURE: dict = {}              # font description -> tkfont.Font, for _fit
+GRIP_W = 12                     # the drag handle on the left edge (move cursor)
 KEY = "#010203"                 # transparent colour key (the cut-out corners)
 NODES = [("events", "Events"), ("rites", "Rites"), ("workshop", "Shop"), ("tech", "Tech"), ("skills", "Skills"),
          ("masterplans", "Plans"), None,
@@ -89,6 +91,7 @@ class TurnRail:
         self.cv.bind("<ButtonPress-1>", self._on_press)
         self.cv.bind("<B1-Motion>", self._on_drag)
         self.cv.bind("<ButtonRelease-1>", self._on_release)
+        self.cv.bind("<Motion>", lambda e: self.cv.configure(cursor="fleur" if e.x < GRIP_W else ""))
         self.draw()
 
     # ---------------------------------------------------------------- model
@@ -104,7 +107,7 @@ class TurnRail:
             self.end_wait = True
         else:
             self.end_wait = False
-        self.sub = next((ln for ln in (detail or "").splitlines() if ln.strip()), "")[:60]
+        self.sub = next((ln for ln in (detail or "").splitlines() if ln.strip()), "")
         self.draw()
 
     def set_signal(self, text: str | None) -> None:
@@ -269,31 +272,62 @@ class TurnRail:
             W, H = FULL
             self._place(W, H)
             self._frame(W, H, stripe)
+            self._grip(H)
             cv.create_text(18, 27, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title)
-            cv.create_text(18, 51, text=self.sub, anchor="w", fill=T.MUTED, font=self.f_sub, width=190)
+            cv.create_text(18, 39, text=self._fit(self.sub, self.f_sub, 190, 2), anchor="nw", fill=T.MUTED,
+                           font=self.f_sub)
             self._rail(232, 812, 28, 6, labels=True)
             self._button((836, 16, W - 12, H - 14), small=False)
         else:
             W, H = COMPACT
             self._place(W, H)
             self._frame(W, H, stripe)
+            self._grip(H)
             cv.create_text(14, 20, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title_s)
-            cv.create_text(14, 39, text=self.sub, anchor="w", fill=T.MUTED, font=self.f_sub_s, width=150)
+            # (player report 2026-10-19: a long reason wrapped to three lines, centred on y 39, ran into the
+            # headline and the line below: now from the headline down, two lines at most)
+            cv.create_text(14, 28, text=self._fit(self.sub, self.f_sub_s, 152, 2), anchor="nw", fill=T.MUTED,
+                           font=self.f_sub_s)
             self._rail(176, 302, 28, 6, labels=False)
             self._button((314, 13, 408, 43), small=True)
             self._draw_icons(W)
             # bottom strip, always visible: can any province recruit the whole army template?
             cv.create_line(12, 53, W - 12, 53, fill=T.LINE)
             if self.signal:                            # an army decision first: it is something to do
-                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, width=W - 28, text="ARMY ▲ " + self.signal,
-                               fill=T.BRASS_HI)
+                cv.create_text(14, 61, anchor="w", font=self.f_sub_s,
+                               text=self._fit("ARMY ▲ " + self.signal, self.f_sub_s, W - 28, 1), fill=T.BRASS_HI)
             elif self.template is not None:
                 ok, text = self.template
-                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, width=W - 28,
-                               text=("TEMPLATE ✓ " if ok else "TEMPLATE: ") + text,
+                cv.create_text(14, 61, anchor="w", font=self.f_sub_s,
+                               text=self._fit(("TEMPLATE ✓ " if ok else "TEMPLATE: ") + text, self.f_sub_s, W - 28, 1),
                                fill=T.GOOD if ok else T.WARN)
             else:
                 cv.create_text(14, 61, anchor="w", font=self.f_sub_s, text="TEMPLATE: checking...", fill=T.MUTED)
+
+    @staticmethod
+    def _fit(text: str, font, width: int, lines: int) -> str:
+        """text word-wrapped to `width` pixels in `font`, at most `lines` lines; the last one ends in an ellipsis
+        when the text does not fit (the full text stays in the fold-out panel)."""
+        if not hasattr(font, "measure"):            # the rail's fonts are (family, size, ...) descriptions
+            font = _MEASURE.setdefault(font, tkfont.Font(font=font))
+        words, out, cur = (text or "").split(), [], ""
+        for i, wd in enumerate(words):
+            nxt = f"{cur} {wd}".strip()
+            if font.measure(nxt) <= width:
+                cur = nxt
+                continue
+            out.append(cur)
+            cur = wd
+            if len(out) == lines:
+                break
+        else:
+            out.append(cur)
+            return "\n".join(x for x in out if x)
+        last = out[-1]
+        while last and font.measure(last + "…") > width:
+            last = last[:-1]
+        out[-1] = last.rstrip() + "…"
+        return "\n".join(out[:lines])
 
     # ---------------------------------------------------------------- input
     def _set_hover(self, on: bool) -> None:
@@ -302,6 +336,30 @@ class TurnRail:
         if on != self.hover:
             self.hover = on
             self.draw()
+
+    def _grip(self, H: int) -> None:
+        """The drag handle (player report 2026-10-19: nothing showed where to grab the widget): two columns of dots on
+        the left edge; the whole bar still drags, the handle only shows it (and gives the move cursor)."""
+        for col in (4, 8):
+            for y in range(H // 2 - 9, H // 2 + 10, 4):
+                self.cv.create_rectangle(col, y, col + 1.5, y + 1.5, fill=T.MUTED, outline="")
+
+    # moving the rail from elsewhere (the fold-out panel's grip): the same drag as on the bar
+    def drag_start(self, x_root: int, y_root: int) -> None:
+        self._press = (x_root, y_root, self.pos, False)
+
+    def drag_move(self, x_root: int, y_root: int) -> None:
+        class E:
+            pass
+        e = E()
+        e.x_root, e.y_root = x_root, y_root
+        self._on_drag(e)
+
+    def drag_end(self) -> None:
+        press, self._press = self._press, None
+        if press is not None and press[3]:
+            self.pos = (max(0, self.pos[0]), max(0, self.pos[1]))
+            self._save_pos()
 
     def _on_press(self, e) -> None:
         self._press = (e.x_root, e.y_root, self.pos, False)

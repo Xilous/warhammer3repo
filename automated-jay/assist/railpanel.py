@@ -53,6 +53,16 @@ class RailPanel:
         self.win.configure(bg=T.BASE)
         self.win.withdraw()
         tk.Frame(self.win, bg=T.BRASS, height=3).pack(fill="x")       # the brass stripe, as on the rail
+        # a grip strip: the expanded widget moves from here too (player report 2026-10-19: it could not be dragged
+        # while expanded, and nothing showed where to grab it); it moves the rail, and the panel follows
+        grip = tk.Canvas(self.win, bg=T.PANEL2, height=12, highlightthickness=0, cursor="fleur")
+        grip.pack(fill="x")
+        grip.bind("<Configure>", lambda e: (grip.delete("all"), [grip.create_rectangle(
+            x, y, x + 1.5, y + 1.5, fill=T.MUTED, outline="") for x in range(e.width // 2 - 24, e.width // 2 + 25, 4)
+            for y in (4, 8)]))
+        grip.bind("<ButtonPress-1>", lambda e: self.rail.drag_start(e.x_root, e.y_root))
+        grip.bind("<B1-Motion>", lambda e: self.rail.drag_move(e.x_root, e.y_root))
+        grip.bind("<ButtonRelease-1>", lambda e: self.rail.drag_end())
         self.body = tk.Frame(self.win, bg=T.PANEL, padx=18, pady=14)
         self.body.pack(fill="both", expand=True, padx=1, pady=(0, 1))
 
