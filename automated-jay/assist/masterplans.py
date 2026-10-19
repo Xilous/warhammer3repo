@@ -259,6 +259,14 @@ def close_panel(ui) -> bool:
         board = _under(ui, "chaotic_plans_plan_board", PANEL) if p == "board" else None
         if board is not None:                      # a plan just started opens its board: let it finish sliding in
             wait.stable_rect(ui, board, n=4, timeout=1.5, must=False, what="plan board still")
+            # and its X takes input a moment later (turn 24: a click on the still board was ignored, 1 s lost):
+            # the cursor rests on it until it shows the hover
+            from tools.ui import move_to
+            over = lambda: "hover" in (ui.state(x) or "")
+            end = time.time() + 2.0
+            while time.time() < end and not over():
+                move_to(*ui.comp(x).center)
+                wait.wait_until(over, 0.25, "board X takes the hover", must=False)
         wait.stable_rect(ui, x, n=3, timeout=1.0, must=False, what="Masterplans X still")
         click(ui, x)
         if p == "main":
@@ -674,7 +682,11 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
             out.append(f"{u.name}: no Steal-Take button")
             continue
         click(ui, eco)
-        time.sleep(0.8)
+        # the targeting view: its panes in place and the settlement labels shown (was a fixed 0.8 s sleep)
+        wait.wait_until(lambda: _under(ui, "target_holder", PANEL), 1.5, "Steal-Take targeting", must=False)
+        th = _under(ui, "target_holder", PANEL)
+        if th is not None:
+            wait.stable_rect(ui, th, n=3, timeout=1.0, must=False, what="targeting panes still")
         avoid = [ui.comp(x) for x in (_under(ui, n, PANEL) for n in
                                       ("plan_type_holder", "target_holder", "bottom_bar", "lord_info")) if x]
         labels = _labels_on_screen(ui, avoid)
