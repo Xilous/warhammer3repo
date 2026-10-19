@@ -390,21 +390,32 @@ def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str]
 TRIGGER = "dlc29_skv_chaotic_plans_trigger_animation"
 
 
-def _confirm_trigger(ui) -> bool:
+def _confirm_trigger(ui, done=None) -> bool:
     """Complete opens the plan-complete screen (dlc29_skv_chaotic_plans_trigger_animation: the loot summary with its
-    own trigger_plan_button and a cancel_button); its Complete is what completes the plan (2026-10-18: without this
-    click the step waited on that screen and the plan stayed). Clicked once it has stopped moving."""
+    own trigger_plan_button and a cancel_button); its Complete is what completes the plan. The button takes input
+    only once the screen's opening animation is over (2026-10-18: clicked 50 ms after the screen showed, it never
+    took the hover and the click did nothing; its Cancel, 7.5 s later, worked at once): the cursor rests on it until
+    it shows the hover (up to 8 s), then it is clicked; done (the plan gone from memory) confirms, else up to two
+    more clicks."""
     from tools import wait
-    from tools.ui import click
+    from tools.ui import click, move_to
     btn = wait.wait_until(lambda: ui.first("trigger_plan_button", under=TRIGGER), 4.0, "plan-complete screen",
                           must=False)
     if btn is None:
         return False
     wait.stable_rect(ui, btn, n=4, timeout=3.0, must=False, what="plan-complete Complete still")
-    wait.wait_until(lambda: (ui.state(btn) or "").startswith("active"), 3.0, "plan-complete Complete active",
-                    must=False)
-    click(ui, btn)
-    return True
+    hovered = lambda: any(k in (ui.state(btn) or "") for k in ("hover", "down"))
+    end = time.time() + 8.0
+    while time.time() < end and not hovered():
+        move_to(*ui.comp(btn).center)
+        wait.wait_until(hovered, 0.4, "plan-complete Complete takes the hover", must=False)
+    for _ in range(3):
+        click(ui, btn)
+        if done is None or wait.wait_until(done, 2.5, "plan completed (memory)", must=False):
+            return True
+        if not ui.first("trigger_plan_button", under=TRIGGER):
+            return False
+    return False
 
 
 # ------------------------------------------------------------------ 1. running Steal-Takes
@@ -441,9 +452,9 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
             continue
         board_btn = _under(ui, "trigger_plan_button" if act == "complete" else "abandon_button", PANEL)
         click(ui, board_btn)
-        if act == "complete":
-            _confirm_trigger(ui)
         running = lambda: any(p.region == plan.region and p.type == "economic" for p in (mem.read(w) or state).plans)
+        if act == "complete":
+            _confirm_trigger(ui, done=lambda: not running())
         _confirm(ui, done=lambda: not running())
         gone = wait.wait_until(lambda: not running(), 6.0, "plan finished (memory)", must=False)
         loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
