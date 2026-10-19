@@ -171,6 +171,10 @@ def players_turn(ui: UI) -> tuple[bool, str]:
         return False, "other factions are moving"
     if mp_waiting(ui):
         return False, "you ended the turn: waiting for the other players"
+    from tools.ui import other_players_pending
+    who = other_players_pending(ui)
+    if who:                                        # multiplayer: the game is held by another player (2026-10-18)
+        return False, f"waiting: {who} has a battle or decision pending"
     end = ui.cached("button_end_turn", under="hud_campaign")
     if end is None:
         return False, "End Turn button not shown"

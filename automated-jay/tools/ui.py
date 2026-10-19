@@ -291,6 +291,7 @@ def click_at(x: int, y: int, right: bool = False, target=None) -> None:
 def click(ui, target, right: bool = False):
     """Click the centre of a component (pointer or Comp), waiting for its hover state before the button goes down.
     Returns the Comp clicked."""
+    wait_for_other_players(ui)
     ptr = getattr(target, "ptr", target)
     k = ui.comp(ptr)
     if not _on_screen(k.center):             # a panel still sliding in from off screen: wait until it is still
@@ -299,6 +300,41 @@ def click(ui, target, right: bool = False):
             raise RuntimeError(f"{k.id} is off screen at {k.center}")
     click_at(*k.center, right=right, target=ptr)
     return k
+
+
+PENDING = "mp_pending_action_blocking_msg"   # multiplayer: another player's battle, dilemma or event holds the game
+PENDING_WAIT_S = 180.0
+
+
+def other_players_pending(ui) -> str | None:
+    """Multiplayer: the game is held by another player's battle, dilemma or other pending action (its root panel
+    mp_pending_action_blocking_msg, "Involved players: <faction (player)>"): who, or None."""
+    try:
+        c = ui.root_child(PENDING)
+    except Exception:
+        return None
+    if not c:
+        return None
+    texts = [t for b, _n, _r in ui.nodes(c) if (t := (ui.text(b) or "").strip())]
+    who = [t for t in texts if not t.lower().startswith("involved players")]
+    return ", ".join(who) or "another player"
+
+
+def wait_for_other_players(ui) -> None:
+    """Before a click: while another player's pending action holds the game, wait (up to PENDING_WAIT_S) rather
+    than click into it (player note 2026-10-18: it would break the pass's sequence of actions)."""
+    if other_players_pending(ui) is None:
+        return
+    end = time.time() + PENDING_WAIT_S
+    while time.time() < end and other_players_pending(ui) is not None:
+        time.sleep(0.25)
+    if other_players_pending(ui) is not None:
+        from bot.focus import InputAborted
+        raise InputAborted("another player's battle or decision has held the game for 3 minutes")
+    try:
+        wait.next_frame(5, ui, timeout=2.0)      # let the game settle after the other player is done
+    except Exception:
+        pass
 
 
 def _on_screen(p) -> bool:
