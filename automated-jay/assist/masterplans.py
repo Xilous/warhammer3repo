@@ -403,6 +403,27 @@ def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str]
 
 
 TRIGGER = "dlc29_skv_chaotic_plans_trigger_animation"
+SETTLE_S = 1.0          # after a completion: the game must render steadily this long before the next click
+
+
+def _settle_after_completion(ui) -> None:
+    """Hands off after a completion (2026-10-18, turn 34: the game stopped rendering ~50 ms after Karak Hirn's
+    completion, when the step clicked on to the next plan, and crashed): until the plan-complete screen has closed
+    by itself (up to 4 s) and frames have come steadily for SETTLE_S (a frame more than 0.25 s late starts the count
+    again; up to 8 s in all). No input in between."""
+    from tools import wait
+    wait.wait_until(lambda: not ui.first("trigger_plan_button", under=TRIGGER), 4.0, "plan-complete screen gone",
+                    must=False)
+    end = time.time() + 8.0
+    calm = time.time()
+    while time.time() < end and time.time() - calm < SETTLE_S:
+        t = time.time()
+        try:
+            wait.next_frame(1, ui, timeout=1.0)
+        except Exception:
+            pass
+        if time.time() - t > 0.25:                  # a stall: start the count again
+            calm = time.time()
 
 
 def _confirm_trigger(ui, done=None) -> bool:
@@ -472,6 +493,7 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
             _confirm_trigger(ui, done=lambda: not running())
         _confirm(ui, done=lambda: not running())
         gone = wait.wait_until(lambda: not running(), 6.0, "plan finished (memory)", must=False)
+        _settle_after_completion(ui)
         loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
         out.append(f"Steal-Take {place}: {'completed' if act == 'complete' else 'abandoned'} ({loot}; {why})"
                    + ("" if gone else " - NOT confirmed, check the plan"))

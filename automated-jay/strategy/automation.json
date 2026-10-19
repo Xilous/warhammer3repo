@@ -67,6 +67,12 @@
         "cqi": 3231,
         "name": "Schurft",
         "general_id": 5700
+      },
+      {
+        "cqi": 111,
+        "name": "Thanquol",
+        "general_id": 213,
+        "faction": "wh3_dlc29_skv_clan_scruten"
       }
     ],
     "_doc": [
