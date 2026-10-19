@@ -512,6 +512,15 @@ class Runner:
                     return True
                 return False
             opened: list[str] = []
+            from bot.sensor.world import multiplayer
+            from tools.ui import click
+            b = self.ui.cached("button_end_turn", under="hud_campaign")
+            if multiplayer() and b is not None and (self.ui.state(b) or "").startswith("active"):
+                # multiplayer: Shift+Enter is not taken (2026-10-18, turns 1 and 2: twice each), the button is
+                ready0 = mp_ready(self.ui)
+                click(self.ui, b)
+                if wait.wait_until(ended, END_TURN_WAIT_S, "another faction's turn (End Turn button)", must=False):
+                    return True
             for attempt in range(END_TURN_TRIES):
                 before = {cid for _c, cid in self.ui.root_children()}
                 ready0 = mp_ready(self.ui)
@@ -539,7 +548,6 @@ class Runner:
             # did not end the turn twice and the player had to press End Turn)
             b = self.ui.cached("button_end_turn", under="hud_campaign")
             if b is not None and (self.ui.state(b) or "").startswith("active") and not self.close_panels():
-                from tools.ui import click
                 ready0 = mp_ready(self.ui)
                 click(self.ui, b)
                 if wait.wait_until(ended, END_TURN_WAIT_S, "another faction's turn (button)", must=False):
