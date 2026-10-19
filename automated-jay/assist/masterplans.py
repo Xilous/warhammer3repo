@@ -630,7 +630,7 @@ def _reachable_targets(ui, w, scores: dict, taken: set, labels: dict, avoid_rect
         if xy is None or cx is None:
             continue
         d = ((xy[0] - cx) ** 2 + (xy[1] - cy) ** 2) ** 0.5
-        if d <= cfg.get("max_pan", 60):
+        if d <= cfg.get("max_pan", 120):
             cands.append((-score, d, region, xy))
     for _s, _d, region, xy in sorted(cands)[:4]:
         if region in UNREACHABLE:
