@@ -1066,6 +1066,9 @@ class Runner:
             rec = self.ts                     # the saved record (assist/turnstate.py): this turn's pass not done yet
             unfinished = mine is True and (
                 (rec.campaign == self._cid() and rec.turn == s.turn and not rec.start_done)
+                # the record still on the previous turn: this turn started after the old copy's last write, so its
+                # pass has not run (a restart in the moment between the turn change and the pass)
+                or (rec.campaign == self._cid() and rec.turn == s.turn - 1)
                 or (prev.get("turn") == s.turn and prev.get("state") != "your turn")
                 or (prev.get("turn") == s.turn - 1 and str(prev.get("headline", "")).startswith(f"TURN {s.turn - 1} ENDED")))
             if (coming or unfinished) and not self.campaign_lost:
