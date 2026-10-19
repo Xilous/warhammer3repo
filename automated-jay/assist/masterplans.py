@@ -30,7 +30,8 @@ schemers_list (one card per Underling; the selected one's name in schemer_detail
 under it; active_plans_list holds CcoCampaignChaoticPlan<plan key><faction><region> per running plan (a click opens
 its board). Setup: economy_plan_button, then a settlement's name label on the map (3d_ui_parent
 label_settlement:<region>) is the target (dy_settlement_target shows it), establish_plan_button starts it (50
-Warpstone). Board: trigger_plan_button (Complete) and abandon_button. Shop: shop_button_toggle; tabs
+Warpstone). Board: trigger_plan_button (Complete) opens the plan-complete screen
+dlc29_skv_chaotic_plans_trigger_animation (loot summary, its own trigger_plan_button completes, cancel_button backs out); abandon_button. Shop: shop_button_toggle; tabs
 CcoChaoticPlanShopCategoryRecordwh3_dlc29_skv_shop_<tab>; lines CcoCampaignChaoticPlanShopObjectChain<chain>;
 button_purchase buys the selected line's next level. button_close goes back one page (from the main page it closes
 the panel).
@@ -192,11 +193,14 @@ def _under(ui, cid: str, under) -> int | None:
 
 
 def page(ui) -> str | None:
-    """Which page of the panel shows: None (closed), "shop", "board", "setup", "main" or "other". The shop and the
+    """Which page of the panel shows: None (closed), "trigger" (the plan-complete screen), "shop", "board", "setup",
+    "main" or "other". The shop and the
     boards open over the main page, whose Underlings list stays visible under them (2026-10-18: the shop read as the
     main page, so closing took one X for it and the panel stayed open over End Turn)."""
     if not ui.root_child(PANEL):
         return None
+    if ui.first("cancel_button", under=TRIGGER):
+        return "trigger"
     if _under(ui, "dlc29_skv_token_shop", PANEL):
         return "shop"
     if _under(ui, "chaotic_plans_plan_board", PANEL) or _under(ui, "trigger_plan_button", PANEL):
@@ -246,7 +250,7 @@ def close_panel(ui) -> bool:
         p = page(ui)
         if p is None:
             return True
-        x = _under(ui, "button_close", PANEL)
+        x = ui.first("cancel_button", under=TRIGGER) if p == "trigger" else _under(ui, "button_close", PANEL)
         if x is None:
             break
         wait.stable_rect(ui, x, n=3, timeout=1.0, must=False, what="Masterplans X still")
@@ -377,6 +381,26 @@ def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str]
     return buys, "" if buys else "nothing on the list left to buy"
 
 
+TRIGGER = "dlc29_skv_chaotic_plans_trigger_animation"
+
+
+def _confirm_trigger(ui) -> bool:
+    """Complete opens the plan-complete screen (dlc29_skv_chaotic_plans_trigger_animation: the loot summary with its
+    own trigger_plan_button and a cancel_button); its Complete is what completes the plan (2026-10-18: without this
+    click the step waited on that screen and the plan stayed). Clicked once it has stopped moving."""
+    from tools import wait
+    from tools.ui import click
+    btn = wait.wait_until(lambda: ui.first("trigger_plan_button", under=TRIGGER), 4.0, "plan-complete screen",
+                          must=False)
+    if btn is None:
+        return False
+    wait.stable_rect(ui, btn, n=4, timeout=3.0, must=False, what="plan-complete Complete still")
+    wait.wait_until(lambda: (ui.state(btn) or "").startswith("active"), 3.0, "plan-complete Complete active",
+                    must=False)
+    click(ui, btn)
+    return True
+
+
 # ------------------------------------------------------------------ 1. running Steal-Takes
 def _open_plan(ui, region: str) -> bool:
     from tools import wait
@@ -409,7 +433,10 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
         if not _open_plan(ui, plan.region):
             out.append(f"Steal-Take {place}: {act} decided, but its board did not open")
             continue
-        click(ui, _under(ui, "trigger_plan_button" if act == "complete" else "abandon_button", PANEL))
+        board_btn = _under(ui, "trigger_plan_button" if act == "complete" else "abandon_button", PANEL)
+        click(ui, board_btn)
+        if act == "complete":
+            _confirm_trigger(ui)
         _confirm(ui)
         running = lambda: any(p.region == plan.region and p.type == "economic" for p in (mem.read(w) or state).plans)
         gone = wait.wait_until(lambda: not running(), 6.0, "plan finished (memory)", must=False)
