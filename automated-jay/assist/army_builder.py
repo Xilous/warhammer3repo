@@ -656,7 +656,8 @@ def save_caps(**values) -> None:
     d.setdefault(_faction(), {}).update(values)
     tmp = CAPS.with_suffix(".tmp")
     tmp.write_text(json.dumps(d, indent=1), encoding="utf-8")
-    tmp.replace(CAPS)
+    from tools.fileio import replace as _replace
+    _replace(tmp, CAPS)
 
 
 def free_engineer_slots(w: World, F: int) -> int | None:
@@ -701,7 +702,8 @@ def _load_claims() -> dict[int, int]:
 def _save_claims(claims: dict[int, int]) -> None:
     tmp = CLAIMS.with_suffix(".tmp")
     tmp.write_text(json.dumps({str(k): v for k, v in claims.items()}, indent=1), encoding="utf-8")
-    tmp.replace(CLAIMS)
+    from tools.fileio import replace as _replace
+    _replace(tmp, CLAIMS)
 
 
 def assign_engineers(w: World, F: int, acting: list) -> dict[int, list]:

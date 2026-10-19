@@ -31,7 +31,8 @@ def load_automation() -> dict:
 def save_automation(d: dict) -> None:
     tmp = AUTOMATION.with_suffix(".tmp")
     json.dump(d, open(tmp, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
-    tmp.replace(AUTOMATION)
+    from tools.fileio import replace as _replace
+    _replace(tmp, AUTOMATION)
 
 
 def _faction() -> str:

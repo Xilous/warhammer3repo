@@ -82,7 +82,8 @@ def add_ignored(cid: str) -> None:
             "ignore": ids}
     tmp = IGNORE_FILE.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=1), encoding="utf-8")
-    tmp.replace(IGNORE_FILE)
+    from tools.fileio import replace as _replace
+    _replace(tmp, IGNORE_FILE)
 
 
 def scan(ui: UI | None = None) -> list[tuple[int, str]]:
