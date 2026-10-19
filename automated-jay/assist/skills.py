@@ -36,7 +36,7 @@ from pathlib import Path
 from . import gamedata as gd
 from bot.focus import game_focus
 from tools import wait
-from tools.ui import click, drag, wheel
+from tools.ui import click, drag, move_to, wheel
 
 HERE = Path(__file__).resolve().parent
 STRATEGY = config.STRATEGY_DIR / "skills.json"
@@ -313,6 +313,13 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
             if before == 0:
                 break
             click(ui, card)
+            # off the card at once: resting on it brings up its tooltip, which covers the next card to the right
+            # and takes that click (2026-10-18, multiplayer: three skills lost behind a tooltip, 2.5 s each)
+            try:
+                k = ui.comp(tree.clip)
+                move_to(int(k.x + k.w / 2), max(5, int(k.y) - 18))
+            except Exception:
+                move_to(960, 160)
             from bot.sensor.world import effect_timeout
             after = wait.value_changes(lambda: _points(w, ptr), before, timeout=effect_timeout(CLICK_EFFECT_S, 2.5),
                                        must=False,
