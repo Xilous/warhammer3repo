@@ -99,7 +99,10 @@ def build_models(w: World, snap) -> tuple[dict[str, list[OwnedSettlement]], dict
             if not s.active:
                 continue
             if s.constructing and not lv:
-                rest.append(Building("__constructing__", 0))
+                # a new building under construction: what it builds, from memory (2026-10-19: unknown, the Temple at
+                # Zhufbar was planned a second time and the game greyed its card, "built_inactive")
+                tl = level_of(s.target) if s.target else None
+                rest.append(Building(*tl) if tl else Building("__constructing__", 0))
             else:
                 rest.append(Building(*lv) if lv else None)
         if main is None:
@@ -442,15 +445,21 @@ def _category_tree(ui, under: int, before: tuple):
     chains = lambda: _tree_chains(ui, under)
     got = wait.wait_until(lambda: (lambda c: c if c and c != before else None)(chains()), 1.0,
                           "category tree rebuilt", must=False)
-    if got is None:
-        return None
+    stale = got is None
+    if stale:
+        # the tree did not change: the hovered category is the one already shown (2026-10-19, Karag Dromar: four
+        # 1 s timeouts and the Breeding Pit counted unread). The shown tree is used as it is; its cards carry the
+        # level keys, so a card found there is the right one to click. stale: not proof of what it offers.
+        got = chains()
+        if not got:
+            return None
     kids = wait.stable(chains, n=3, timeout=1.0, what="category tree complete", must=False, ui=ui) or got
     out = {}
     for c in kids:
         cid = ui.id(c) or ""
         if cid.startswith("CcoBuildingChainRecord"):
             out[cid[len("CcoBuildingChainRecord"):]] = c
-    return kids, out
+    return kids, out, stale
 
 
 def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region: str = "") -> bool:
@@ -471,7 +480,7 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
     known = _learned().get(chain)
     cats.sort(key=lambda c: ui.id(c) != known)
     before = _tree_chains(ui, slot.ptr)
-    unread = 0
+    unread, stale = 0, False
     for cat in cats:
         got = None
         for nudge in (0, 1):                      # the game re-checks hover only when the mouse moves
@@ -483,8 +492,10 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
         if got is None:
             unread += 1
             continue
-        before, chains = got
-        _learn(list(chains), ui.id(cat) or "")
+        before, chains, was_stale = got
+        stale = stale or was_stale
+        if not was_stale:
+            _learn(list(chains), ui.id(cat) or "")
         if chain not in chains:
             continue
         card = ui.first(level_key, under=chains[chain])
@@ -499,7 +510,8 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
             REASON["last"] = "greyed out" + (f": {r}" if (r := _why_greyed(ui, card)) else "")
             return False
         return _press_started(ui, w, S, card, level_key)
-    if unread:                                    # not every category was seen: not a verdict, tried again next pass
+    if unread or stale:                           # not every category was seen: not a verdict, tried again next pass
+        unread = unread or 1
         REASON["last"] = f"{unread} building categor{'y' if unread == 1 else 'ies'} did not open on hover"
         return False
     NOT_OFFERED.add((region, chain))

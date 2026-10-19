@@ -12,7 +12,7 @@ region R:   DB record [R+0x80] (record +0x10 = char* key); owner [[R+0x120]+0x10
             neighbours count u32 R+0x8C, array [R+0x90]; settlement [R+0x128];
             slots: L = [R+0x148]+0x10: count u32 L+4, array [L+8] of slot*
 slot S:     type string at [S+0x188]+0x10 (string object); active byte S+0x1D8;
-            slot-building record [S+0x190]: building [+0x20], construction [+0x10]
+            slot-building record [S+0x190]: building [+0x20], construction [+0x10] (its level record [C+0xD0])
 building B: level record [B+0x30]: key string object [+8]; level index u32 +0x1F0
 """
 from __future__ import annotations
@@ -75,6 +75,9 @@ class Slot:
     building: str | None        # building level key
     level: int | None
     constructing: bool
+    target: str | None = None   # the level a construction builds: [[[S+0x190]+0x10]+0xD0] level record (the construction
+                                # item's BuildingLevelRecordContext, FUN_14202bb40 -> vfunc +0x40 = FUN_1408f0510,
+                                # decompiled 9.0.4 2026-10-19; checked live: Zhufbar slot 5 wh2_main_skv_order_1)
 
 
 @dataclass
@@ -248,14 +251,22 @@ class World:
             active = self.pm.read_bytes(s + 0x1D8, 1)[0] != 0
             sb = self.q(s + 0x190)
             b = self.q(sb + 0x20) if sb else 0
-            con = bool(self.q(sb + 0x10)) if sb else False
+            C = self.q(sb + 0x10) if sb else 0
+            con = bool(C)
+            target = None                          # what the construction builds (an upgrade, or a new building)
+            if C:
+                try:
+                    trec = self.q(C + 0xD0)
+                    target = (string_object(self.pm, self.q(trec + 8)) or string_object(self.pm, trec + 8)) if trec                         else None
+                except Exception:
+                    target = None
             key = lvl = None
             if b:
                 rec = self.q(b + 0x30)
                 if rec:
                     key = string_object(self.pm, self.q(rec + 8)) or string_object(self.pm, rec + 8)
                     lvl = self.u32(rec + 0x1F0)
-            out.append(Slot(stype, active, key, lvl, con))
+            out.append(Slot(stype, active, key, lvl, con, target))
         return out
 
     # -------------------------------------------------------------- whole-world view
