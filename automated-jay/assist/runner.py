@@ -172,39 +172,50 @@ def mp_waiting(ui: UI) -> bool:
     return bool(MP_ME["name"]) and mp_ready(ui).get(MP_ME["name"]) is True
 
 
-def players_turn(ui: UI) -> tuple[bool, str]:
-    """(True, "") when the player can act on the campaign map now, else (False, why). Root panels plus one cached
-    lookup: cheap enough to poll."""
+def phase(ui: UI) -> tuple[str, str]:
+    """The game's phase for the assistant (assist/turnstate.py): (free | held | ended | not_mine | none, why).
+    Memory decides whose turn it is (bot/sensor/turn.players_turn, the local faction); the UI only says whether the
+    game takes actions right now (root panels, the multiplayer hold message, the End Turn button's state).
+    Root panels plus one cached lookup: cheap enough to poll."""
     from bot.sensor import turn as turn_mem
+    from . import turnstate as ts
     mine, why = turn_mem.players_turn(ui.s)        # authoritative: the faction the campaign runs a turn for
+    if mine is None:
+        return (ts.NONE if "no campaign" in why else ts.HELD), why
     if not mine:                                   # (the ai_turns panel hides for moments while the AI moves)
-        return False, why
+        return ts.NOT_MINE, why
     if ui.find_root() is None:
-        return False, "game UI not found"
+        return ts.HELD, "game UI not found"
     top = dict((cid, c) for c, cid in reversed(ui.root_children()))      # visible root panels, first wins
     if (cin := ui.cinematic()):
-        return False, f"a cinematic is playing ({cin}); nothing is clicked until it is over"
+        return ts.HELD, f"a cinematic is playing ({cin}); nothing is clicked until it is over"
     if "hud_campaign" not in top:
-        return False, "campaign map not shown"
+        return ts.HELD, "campaign map not shown"
     if "ai_turns" in top:
-        return False, "other factions are moving"
+        return ts.NOT_MINE, "other factions are moving"
     if mp_waiting(ui):
-        return False, "you ended the turn: waiting for the other players"
+        return ts.ENDED, "you ended the turn: waiting for the other players"
     from tools.ui import other_players_pending
     who = other_players_pending(ui)
     if who:                                        # multiplayer: the game is held by another player (2026-10-18)
-        return False, f"waiting: {who} has a battle or decision pending"
+        return ts.HELD, f"waiting: {who} has a battle or decision pending"
     end = ui.cached("button_end_turn", under="hud_campaign")
     if end is None:
-        return False, "End Turn button not shown"
+        return ts.HELD, "End Turn button not shown"
     st = ui.state(end) or ""
     if st.startswith("selected"):                  # multiplayer: pressed, waiting for the others (watched 2026-10-18)
-        return False, "you ended the turn: waiting for the other players"
+        return ts.ENDED, "you ended the turn: waiting for the other players"
     if st.startswith(("inactive", "disabled")):
         if any(plans_at_max_alarm(ui.s).values()):
-            return True, ""                        # the game holds End Turn until that plan is resolved (below)
-        return False, f"End Turn button is {st}"
-    return True, ""
+            return ts.FREE, ""                     # the game holds End Turn until that plan is resolved (below)
+        return ts.HELD, f"End Turn button is {st}"
+    return ts.FREE, ""
+
+
+def players_turn(ui: UI) -> tuple[bool, str]:
+    """(True, "") when the player can act on the campaign map now, else (False, why): phase() == free."""
+    code, why = phase(ui)
+    return code == "free", why
 
 
 def plans_at_max_alarm(sensor) -> dict[str, list[str]]:
@@ -266,6 +277,8 @@ class Runner:
         # a restarted copy finishes this turn's pass if the old copy left it unfinished: what the old copy last wrote,
         # read now, before this copy's first status overwrites it (2026-10-17: it was read after, so never acted on)
         self.prev_state = read_state() if os.environ.get("AJ_RESTARTED") else {}
+        from . import turnstate
+        self.ts = turnstate.load()            # what this turn owes, saved (assist/turnstate.py, 2026-10-19)
         self.paused = False
         self.busy = threading.Lock()          # held only while a pass sends input
         self.stop = threading.Event()
@@ -369,7 +382,7 @@ class Runner:
     def run_now(self) -> None:
         """The app's "Run now": one pass for the current turn, right away (after the idle wait)."""
         if not self.busy.acquire(blocking=False):
-            print("Run now: a pass is already running", flush=True)
+            print("Run now: a pass is already running (its result is this turn's pass)", flush=True)
             return
         try:
             s = self.mem.read()
@@ -382,11 +395,17 @@ class Runner:
             if not ok and why.startswith("End Turn button is") and self._clear_notices_first(have_busy=True):
                 ok, why = players_turn(self.ui)
             if not ok:
-                self.post("waiting", f"WAITING (turn {s.turn})", f"Run now: not your turn ({why})", turn=s.turn)
+                if phase(self.ui)[0] == "held":    # the player's turn, held for now: Run now waits for it
+                    self._mark(s.turn, run_requested=True)
+                    self.post("waiting", f"RUN NOW QUEUED (turn {s.turn})",
+                              f"the pass runs as soon as the game allows it\nnow: {why}", turn=s.turn)
+                else:
+                    self.post("waiting", f"WAITING (turn {s.turn})", f"Run now: not your turn ({why})", turn=s.turn)
                 return
             pre, need = self.check_popups()
             if need:
-                self.post_decisions(s.turn, need, prefix="Run now: ")
+                self._mark(s.turn, run_requested=True)
+                self.post_decisions(s.turn, need, prefix="Run now (queued, runs once it is answered): ")
                 return
             self.do_pass(s.turn, pre)
         except InputAborted as ex:
@@ -432,12 +451,13 @@ class Runner:
         for a turn-start pass, and End Turn is pressed only when every step ran (an interruption, a failure to raise
         the game or a decision that came up leaves the turn open)."""
         if not self.busy.acquire(blocking=False):
-            print("Build & End Turn: a pass is already running", flush=True)
+            self._queue_end(self.last_turn, "a pass is running")     # (was dropped: player report 2026-10-19)
             return
         turn = self.last_turn
         try:
             s = self.mem.read()
             if not s.ok:
+                self.end_request = None
                 self.post("waiting", "WAITING", "Build & End Turn: no campaign loaded")
                 return
             turn = s.turn
@@ -447,14 +467,24 @@ class Runner:
             if not ok and why.startswith("End Turn button is") and self._clear_notices_first(have_busy=True):
                 ok, why = players_turn(self.ui)
             if not ok:
-                self.post("waiting", f"WAITING (turn {turn})", f"Build & End Turn: not your turn ({why})", turn=turn)
+                from bot.sensor import turn as turn_mem
+                if turn_mem.players_turn(self.mem)[0] is True and not why.startswith("you ended the turn"):
+                    # memory: still the player's turn, the game only holds actions for now (another player's battle
+                    # or decision, a cinematic, End Turn greyed): the request waits and runs the moment it can
+                    self._queue_end(turn, why)
+                else:
+                    self.end_request = None
+                    self.post("waiting", f"WAITING (turn {turn})", f"Build & End Turn: not your turn ({why})",
+                              turn=turn)
                 return
+            self.end_request = None
             from bot.focus import game_focus
             with game_focus():                             # (the Masterplans panel, a Hero Actions panel ...)
                 self.close_panels()
             pre, need = self.check_popups()
             if need:
-                self.post_decisions(turn, need, prefix="Build & End Turn: ")
+                self.end_request = (self.model, turn)  # still wanted: runs once the player has answered
+                self.post_decisions(turn, need, prefix="Build & End Turn (queued, runs once it is answered): ")
                 return
             sch = schedule()
             names = self.start_steps(turn) if (self.pending == turn and self.done_turn != turn) else []
@@ -471,11 +501,13 @@ class Runner:
                 self.close_panels()
             _pre, need = self.check_popups()
             if need:
-                self.post_decisions(turn, need, prefix="steps done, turn not ended: ")
+                self.end_request = (self.model, turn)
+                self.post_decisions(turn, need, prefix="steps done, End Turn queued until it is answered: ")
                 return
             ended = self.press_end_turn(turn)
             if ended:
                 self.end_done = (self.model, turn)
+                self._mark(turn, end_done=True, end_requested=False, start_done=True)
                 self.rail(end="done")
             self.post("waiting" if ended else "error", f"TURN {turn} ENDED" if ended else f"TURN {turn} NOT ENDED",
                       "\n".join(done + [f"End Turn pressed: {self.end_turn_note}" if ended else
@@ -489,6 +521,46 @@ class Runner:
             self.post("error", "ERROR", f"Build & End Turn failed: {ex}\nthe turn was not ended", turn=turn)
         finally:
             self.busy.release()
+
+    # ---------------------------------------------------------------- the turn's record (assist/turnstate.py)
+    def _cid(self) -> str:
+        from . import turnstate
+        from bot.sensor.world import current_faction
+        return turnstate.campaign_id(self.model, current_faction())
+
+    def _record(self, turn):
+        """This campaign's record for `turn` (a fresh one when the turn or campaign changed)."""
+        from . import turnstate
+        self.ts = turnstate.for_turn(self.ts, self._cid(), turn)
+        return self.ts
+
+    def _mark(self, turn, **fields) -> None:
+        from . import turnstate
+        st = self._record(turn)
+        for k, v in fields.items():
+            setattr(st, k, v)
+        turnstate.save(st)
+
+    @property
+    def end_request(self):
+        st = self.ts
+        return (self.model, st.turn) if st.end_requested and not st.end_done and st.campaign == self._cid() else None
+
+    @end_request.setter
+    def end_request(self, v) -> None:
+        if v is None:
+            if self.ts.end_requested:
+                self._mark(self.ts.turn, end_requested=False)
+        else:
+            self._mark(v[1], end_requested=True)
+
+    def _queue_end(self, turn, why: str) -> None:
+        """Build & End Turn pressed while the game does not allow it yet: remembered for this campaign and turn, run
+        by _tick the moment players_turn says the player can act (player request 2026-10-19: "the assistant ignores
+        that I want it to take over and queue up ending the turn"). Dropped when the turn or campaign changes."""
+        self.end_request = (self.model, turn)
+        self.post("waiting", f"END TURN QUEUED (turn {turn})",
+                  f"Build & End Turn runs as soon as the game allows it\nnow: {why}", turn=turn)
 
     def press_end_turn(self, turn) -> bool:
         """End the turn with Shift+Enter, the game's own "end turn and skip the End Turn warnings", and wait until the
@@ -717,8 +789,8 @@ class Runner:
     def do_pass(self, turn, pre: list[str], phases: dict | None = None) -> None:
         """One turn-start pass (busy must be held). InputAborted propagates to the caller."""
         self.offer_ignore([])
-        from . import notifications                      # off once per campaign (player request 2026-10-19)
-        if self.model not in notifications._DONE:
+        from . import notifications                      # off whenever one shows (player request 2026-10-19)
+        if notifications.showing(self.ui):
             from bot.focus import game_focus
             try:
                 with game_focus():
@@ -735,6 +807,7 @@ class Runner:
             done.append(f"Kill-Stab at {gd.place_name(region)} is at maximum Alarm: complete it yourself "
                         "(the game holds End Turn until you do)")
         self.done_turn = turn
+        self._mark(turn, start_done=True, run_requested=False)
         if self.pending == turn:
             self.pending = None
         self.post("your turn", f"YOUR TURN {turn}", "\n".join(done), turn=turn)
@@ -941,8 +1014,10 @@ class Runner:
             coming = mine is False
             # restarted on the player's turn whose pass the old copy left to do: unfinished (waiting / interrupted /
             # error), or never begun because the old copy ended the turn before and was stopped during the AI moves
+            rec = self.ts                     # the saved record (assist/turnstate.py): this turn's pass not done yet
             unfinished = mine is True and (
-                (prev.get("turn") == s.turn and prev.get("state") != "your turn")
+                (rec.campaign == self._cid() and rec.turn == s.turn and not rec.start_done)
+                or (prev.get("turn") == s.turn and prev.get("state") != "your turn")
                 or (prev.get("turn") == s.turn - 1 and str(prev.get("headline", "")).startswith(f"TURN {s.turn - 1} ENDED")))
             if (coming or unfinished) and not self.campaign_lost:
                 self.pending = s.turn
@@ -972,6 +1047,14 @@ class Runner:
                 self.post("paused", f"PAUSED (turn {s.turn})", "skipped this turn's automations")
             elif self.done_turn != s.turn:                  # Run now may already have done it
                 self.pending = s.turn
+        st = self._record(s.turn)                      # (a new turn or campaign drops what the old one owed)
+        owed = st.owes()
+        if owed and not self.busy.locked() and phase(self.ui)[0] == "free":
+            if owed[0] == "end":
+                self.end_turn_now()                    # the queued Build & End Turn (it runs the turn start too)
+            else:
+                self.run_now()                         # the queued Run now
+            return
         if self.pending is not None:
             self._try_pass(self.pending)
         elif getattr(self, "auto_end", None) == s.turn:
@@ -1155,6 +1238,10 @@ class Runner:
             self.gate_since = None
             self.post("waiting", f"WAITING (turn {turn})", f"{ex}: the pass goes on once it is over", turn=turn)
         except InputAborted as ex:
+            if "another player" in str(ex):                # a multiplayer hold, not the player's hands: the pass
+                self.post("waiting", f"WAITING (turn {turn})",   # stays pending and goes on once it is free
+                          f"{ex}: the pass goes on once the game is free", turn=turn)
+                return
             self.pending = None
             self.post("error", f"INTERRUPTED (turn {turn})", f"interrupted: {ex}\nRun now redoes the pass", turn=turn)
         finally:
