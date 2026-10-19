@@ -46,7 +46,6 @@ CHAR_ID_OFF = 0x110       # character id: u32 at character + 0x110 (character_ro
 DETAILS = "character_details_panel"
 SKILLS_PANEL = "character_details_panel_skills"
 SKIP_STATES = frozenset({"maxed", "locked", "locked_rank"})   # card states a click does not change (2026-10-16)
-CLICK_EFFECT_S = 0.35     # a click that has not taken a point by then never will (the old fixed wait after a click)
 TREE_TIMEOUT_S = 1.5      # the new character's tree is normally built 130-210 ms after the switch
 NOT_TAKEN: set = set()    # (character, skill, turn) a click did not take: not clicked again that turn
 
@@ -335,19 +334,20 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
             before = _points(w, ptr)
             if before == 0:
                 break
-            click(ui, card)
-            # off the card at once: resting on it brings up its tooltip, which covers the next card to the right
-            # and takes that click (2026-10-18, multiplayer: three skills lost behind a tooltip, 2.5 s each)
-            try:
-                k = ui.comp(tree.clip)
-                move_to(int(k.x + k.w / 2), max(5, int(k.y) - 18))
-            except Exception:
-                move_to(960, 160)
-            from bot.sensor.world import effect_timeout
-            after = wait.value_changes(lambda: _points(w, ptr), before, timeout=effect_timeout(CLICK_EFFECT_S, 2.5),
-                                       must=False,
-                                       what=f"skill point taken by {sk}")
-            if after is None or after >= before:
+            def press():
+                click(ui, card)
+                # off the card at once: resting on it brings up its tooltip, which covers the next card to the right
+                # and takes that click (2026-10-18, multiplayer: three skills lost behind a tooltip, 2.5 s each)
+                try:
+                    k = ui.comp(tree.clip)
+                    move_to(int(k.x + k.w / 2), max(5, int(k.y) - 18))
+                except Exception:
+                    move_to(960, 160)
+            # paced by the game (bot/sensor/commands.py): clicked again only when no command reached the game; the
+            # point is taken when memory says so, however long the sync takes
+            from bot.sensor import commands
+            st, _v = commands.act_retry(w.pm, press, lambda: _points(w, ptr) < before)
+            if st != "done":
                 NOT_TAKEN.add((ptr, sk, _turn(w)))   # not again this turn (2026-10-18: a locked mount skill was
                 break                                # clicked and waited on in every pass)
             n += 1

@@ -671,12 +671,3 @@ def multiplayer(w: World | None = None) -> bool:
     _MP_CACHE.clear()
     _MP_CACHE[m] = hit
     return hit
-
-
-def effect_timeout(single: float, multi: float) -> float:
-    """How long to wait for a click's effect: in multiplayer the game applies an action only after syncing with
-    the other players, seconds later (2026-10-18: notices, research clicks), so the wait is longer there."""
-    try:
-        return multi if multiplayer() else single
-    except Exception:
-        return single

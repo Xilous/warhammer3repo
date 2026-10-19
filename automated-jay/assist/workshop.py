@@ -263,14 +263,20 @@ def run(log=print) -> str:
                     out.append(f"{name}: waits for the workshop level")
                     continue
                 wait.stable_rect(ui, item, n=3, timeout=1.5, must=False, what=f"{key} still")
-                click(ui, item)
-                box = wait.wait_until(lambda: ui.root_child("dialogue_box"), 0.8, "confirmation", must=False)
-                if box:
-                    tick = ui.first("button_tick", under=box)
-                    if tick:
-                        click(ui, tick)
-                        wait.gone(ui, box, timeout=2.0, must=False, what="confirmation closed")
-                if wait.wait_until(lambda k=key: k in faction_bundles(w, F), 3.0, f"{key} bought", must=False):
+                from bot.sensor import commands  # paced by the game: the purchase command, then the bundle in memory
+                with commands.Watch(w.pm) as cw:
+                    click(ui, item)
+                    box = wait.wait_until(lambda: ui.root_child("dialogue_box") or (cw.count and "sent"), 0.8,
+                                          "confirmation", must=False)
+                    if box and box != "sent":
+                        tick = ui.first("button_tick", under=box)
+                        if tick:
+                            click(ui, tick)
+                            wait.gone(ui, box, timeout=2.0, must=False, what="confirmation closed")
+                    sent = wait.wait_until(lambda k=key: cw.count or not cw.ok or k in faction_bundles(w, F),
+                                           commands.MISS_S, "purchase command", must=False)
+                if sent and wait.wait_until(lambda k=key: k in faction_bundles(w, F), commands.EFFECT_CAP_S,
+                                            f"{key} bought", must=False):
                     out.append(f"bought {name}")
                     log(f"workshop: bought {name}")
                 else:

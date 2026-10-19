@@ -77,7 +77,6 @@ def first(ui: UI, cid: str, under: str | None = None):
 
 BUSY = ("main_units_panel", "recruitment_docker", "settlement_panel", "character_panel")
 NOTCH_PX = 82                       # one wheel notch scrolls a recruitment pool by about this much
-RECRUIT_EFFECT_S = 0.5              # a recruit click that has not taken gold by then never will (cap or gold out)
 
 
 def _busy(ui: UI) -> tuple[str, ...]:
@@ -275,7 +274,9 @@ def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
     if not press_disband(ui, pick[-1]):
         park()
         return ["disband skipped: the disband button or its confirmation did not appear"]
-    wait.wait_until(lambda: count() <= n_before - len(pick), 5.0, "disbanded units gone in memory", must=False)
+    from bot.sensor.commands import EFFECT_CAP_S   # the game's pace: ends the moment memory shows them gone
+    wait.wait_until(lambda: count() <= n_before - len(pick), EFFECT_CAP_S, "disbanded units gone in memory",
+                    must=False)
     a2 = next((a for a in armies(w, F) if a.cqi == army.cqi), None)
     after = Counter(u.key for u in a2.units) if a2 else Counter()
     gone, added = before - after, after - before
@@ -405,9 +406,10 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log) -> lis
                 out.append(f"could not scroll {unit_name(unit)} into view")
                 break
             before = treasury(w, F)
-            click(ui, card)
-            if wait.value_changes(lambda: treasury(w, F), before, timeout=RECRUIT_EFFECT_S, cmp=lambda v, b: v < b,
-                                  must=False, what=f"gold paid for {unit}") is None:
+            from bot.sensor import commands    # paced by the game: no command = the game refused the click (capacity
+            st, _v = commands.act(w.pm, lambda: click(ui, card) and None,   # full, gold); a command = wait for the
+                                  lambda: treasury(w, F) < before)          # gold, however long the sync takes
+            if st != "done":
                 break                          # not taken: local capacity full or not affordable
             done += 1
         if done:
@@ -581,8 +583,8 @@ def recruit_engineer(ui: UI, w: World, F: int, region: str):
         clear(ui)
         return "cap", "Recruit button inactive", None
     n0 = w.u32(F + 0xF24)
-    click(ui, conf)
-    wait.wait_until(lambda: w.u32(F + 0xF24) != n0, 3.0, "new character in memory", must=False)
+    from bot.sensor import commands             # paced by the game: the command, then the new character in memory
+    commands.act(w.pm, lambda: click(ui, conf) and None, lambda: w.u32(F + 0xF24) != n0)
     clear(ui)
     park()
     new = [c for c in characters(w, F) if c.subtype == ENGINEER and c.ptr not in before]

@@ -302,8 +302,6 @@ def candidates(entries: dict[str, TechEntry]) -> list[str]:
 PANEL_ID = "technology_panel"
 PANEL_PARK = (960, 160)          # inside the panel, above the tree: no tooltip over a node
 OPEN_TIMEOUT = 2.0               # s: the panel appears ~10 ms after the click; its 56 nodes are built ~20 ms later
-REGISTER_TIMEOUT = 0.5           # s: a click the game took changes [T+0x30] (or starts research) within a few frames
-RESEARCH_TIMEOUT = 0.5           # s: after a registered click, research starts at once unless the game ignored it
 # There is no fixed settle after the panel opens: nodes report hover as soon as they are built, and every click is
 # checked in memory ([T+0x30] is written by every click the game registers): a click that is not registered is
 # sent again, one that is registered but does not start research is a target the game will not queue.
@@ -401,15 +399,14 @@ def _click_node(ui, w, T: int, k) -> str:
     """Click a node and read the outcome from memory: "started" (research running), "ignored" (the game took the
     click, [T+0x30] moved, but will not research it) or "lost" (no sign the click was taken)."""
     before = w.q(T + 0x30)
-    click(ui, k.ptr)
-    move_to(*PANEL_PARK)
-    from bot.sensor.world import effect_timeout
-    took = wait.wait_until(lambda: researching(w, T) or w.q(T + 0x30) != before, effect_timeout(REGISTER_TIMEOUT, 3.0),
-                           "research click registered ([T+0x30] or research)", must=False)
-    if not took:
+    from bot.sensor import commands             # paced by the game: the command, then its effect in memory
+    st, _v = commands.act(w.pm, lambda: (click(ui, k.ptr), move_to(*PANEL_PARK)) and None,
+                          lambda: researching(w, T) or w.q(T + 0x30) != before)
+    if st == "missed":
         return "lost"
-    return "started" if wait.wait_until(lambda: researching(w, T), effect_timeout(RESEARCH_TIMEOUT, 3.0),
-                                        "research started",
+    if st != "done":
+        return "ignored"
+    return "started" if wait.wait_until(lambda: researching(w, T), commands.EFFECT_CAP_S, "research started",
                                         must=False) else "ignored"
 
 

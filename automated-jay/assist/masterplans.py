@@ -447,7 +447,7 @@ def _confirm_trigger(ui, done=None) -> bool:
         wait.wait_until(hovered, 0.4, "plan-complete Complete takes the hover", must=False)
     for _ in range(3):
         click(ui, btn)
-        if done is None or wait.wait_until(done, 2.5, "plan completed (memory)", must=False):
+        if done is None or wait.wait_until(done, _cap(), "plan completed (memory)", must=False):
             return True
         if not ui.first("trigger_plan_button", under=TRIGGER):
             return False
@@ -492,7 +492,7 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
         if act == "complete":
             _confirm_trigger(ui, done=lambda: not running())
         _confirm(ui, done=lambda: not running())
-        gone = wait.wait_until(lambda: not running(), 6.0, "plan finished (memory)", must=False)
+        gone = wait.wait_until(lambda: not running(), _cap(), "plan finished (memory)", must=False)
         _settle_after_completion(ui)
         loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
         out.append(f"Steal-Take {place}: {'completed' if act == 'complete' else 'abandoned'} ({loot}; {why})"
@@ -741,7 +741,7 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
                 break
             click(ui, est)
             _confirm(ui, done=lambda: any(p.region == region for p in (mem.read(w) or state).plans))
-            ok = wait.wait_until(lambda: any(p.region == region for p in (mem.read(w) or state).plans), 4.0,
+            ok = wait.wait_until(lambda: any(p.region == region for p in (mem.read(w) or state).plans), _cap(),
                                  "plan started (memory)", must=False)
             out.append(f"{u.name}: Steal-Take started on {place}" if ok else
                        f"{u.name}: Steal-Take on {place} NOT confirmed")
@@ -756,6 +756,13 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
                        f"settlements; none within {cfg.get('max_pan', 120)} map units came on screen)")
         move_to(960, 1070)
     return out
+
+
+def _cap() -> float:
+    """How long an action's effect is waited for in memory: the game's own pace (bot/sensor/commands.py, player rule
+    2026-10-19): the wait ends the moment memory shows it; multiplayer sync can take seconds."""
+    from bot.sensor.commands import EFFECT_CAP_S
+    return EFFECT_CAP_S
 
 
 # ------------------------------------------------------------------ 3. the Secrets shop
@@ -825,7 +832,7 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
         have = ws()
         click(ui, btn)
         _confirm(ui, done=lambda: ws() <= have - cost)
-        if not wait.wait_until(lambda: ws() <= have - cost, 3.0, "purchase registered (memory)", must=False):
+        if not wait.wait_until(lambda: ws() <= have - cost, _cap(), "purchase registered (memory)", must=False):
             out.append(f"{name}: the purchase did not register")
             break
         out.append(f"bought {name} ({cost} Warpstone)")

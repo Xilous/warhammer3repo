@@ -48,7 +48,6 @@ PARK = (1700, 700)
 PANEL = "settlement_panel"
 CATEGORIES_FILE = config.RUNS_DIR / "build_categories.json"
 AUTOMATION_FILE = config.STRATEGY_DIR / "automation.json"
-EFFECT_TIMEOUT_S = 1.0        # (3 s in multiplayer: _effect_s)
 # a click on a card / button that has not started construction by then never will
                               # (measured 2026-10-16: the slot shows construction 10-100 ms after the click)
 POPUP_TIMEOUT_S = 0.3         # hovering a slot opens its popup in 18-22 ms (measured 2026-10-16)
@@ -280,7 +279,20 @@ def _slot_popup(ui, slot, cid: str, timeout: float = POPUP_TIMEOUT_S):
 
 
 def _await_started(w: World, S: int, what: str) -> bool:
-    return bool(wait.wait_until(lambda: constructing(w, S), _effect_s(), what, must=False))
+    """(A click that already went in: no command watch.) The slot is under construction in memory."""
+    from bot.sensor.commands import EFFECT_CAP_S
+    return bool(wait.wait_until(lambda: constructing(w, S), EFFECT_CAP_S, what, must=False))
+
+
+def _press_started(ui, w: World, S: int, card: int, level_key: str) -> bool:
+    """Press a construct / upgrade card and wait until memory shows the slot under construction ([[S+0x190]+0x10]).
+    Paced by the game itself (bot/sensor/commands.py, player rule 2026-10-19): a click that wrote no command to the
+    game is pressed once more; after a command, never (in multiplayer a second click could cancel the first)."""
+    from bot.sensor import commands
+    st, _ = commands.act_retry(w.pm, lambda: _press(ui, card, level_key, settled=True), lambda: constructing(w, S))
+    if st != "done" and commands.WHY.get(st):
+        REASON["last"] = commands.WHY[st]
+    return st == "done"
 
 
 def _settled(ui, ptr: int, what: str):
@@ -349,9 +361,6 @@ def _why_greyed(ui, card: int) -> str:
     return ""
 
 
-def _effect_s() -> float:
-    from bot.sensor.world import effect_timeout
-    return effect_timeout(EFFECT_TIMEOUT_S, 3.0)
 
 
 def ui_upgrade(ui, w: World, S: int, slot, level_key: str) -> bool:
@@ -365,9 +374,7 @@ def ui_upgrade(ui, w: World, S: int, slot, level_key: str) -> bool:
     if _greyed(ui, card):                         # the game would ignore the click
         REASON["last"] = "greyed out" + (f": {r}" if (r := _why_greyed(ui, card)) else "")
         return False
-    if not _press(ui, card, level_key, settled=True):
-        return False
-    return _await_started(w, S, f"{level_key} under construction")
+    return _press_started(ui, w, S, card, level_key)
 
 
 def _greyed(ui, card: int) -> bool:
@@ -390,12 +397,14 @@ def ui_repair(ui, w: World, F: int, S: int, slot) -> tuple[str, int]:
     if btn is None:
         return ("queued" if busy else "not started"), 0
     gold = treasury(w, F)
-    if ui.id(btn) != "button_repair" or not _press(ui, btn, "button_repair"):
+    if ui.id(btn) != "button_repair":
         return "not started", 0
-    after = wait.value_changes(lambda: treasury(w, F), gold, timeout=_effect_s(), must=False,
-                               what=f"repair paid for {slot.id}")
-    if after is None or after >= gold:
+    from bot.sensor import commands
+    st, after = commands.act(w.pm, lambda: _press(ui, btn, "button_repair"),
+                             lambda: (lambda g: (g,) if g < gold else None)(treasury(w, F)))   # (a tuple: 0 gold left
+    if st != "done":                                                                      # is still paid)
         return "not started", 0
+    after = after[0]
     if not busy:
         _await_started(w, S, f"repair under way in {slot.id}")
     return "repaired", gold - after
@@ -489,9 +498,7 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
         if _greyed(ui, card):
             REASON["last"] = "greyed out" + (f": {r}" if (r := _why_greyed(ui, card)) else "")
             return False
-        if not _press(ui, card, level_key, settled=True):
-            return False
-        return _await_started(w, S, f"{level_key} under construction")
+        return _press_started(ui, w, S, card, level_key)
     if unread:                                    # not every category was seen: not a verdict, tried again next pass
         REASON["last"] = f"{unread} building categor{'y' if unread == 1 else 'ies'} did not open on hover"
         return False
@@ -529,18 +536,26 @@ def ui_demolish(ui, w: World, o, idx: int, slot) -> str | None:
         return None
     btn = wait.wait_until(lambda: (lambda b: b if b and ui.effective_visible(b) else None)(
         ui.first("button_raze", under=pop)), 0.5, "button_raze", must=False)
-    if btn is None or not _press(ui, btn, "button_raze"):
+    if btn is None:
         return None
-    box = wait.wait_until(lambda: ui.root_child("dialogue_box"), 1.0, "demolish confirmation", must=False)
-    if box:
+    from bot.sensor import commands
+    S = slot_ptr(w, o.region_obj, idx)
+    effect = lambda: "gone" if slot_building(w, o, idx) is None else "pending" if constructing(w, S) else None
+    with commands.Watch(w.pm) as cw:              # the raze click itself may be the command (no confirmation)
+        if not _press(ui, btn, "button_raze"):
+            return None
+        box = wait.wait_until(lambda: ui.root_child("dialogue_box") or (cw.count and "sent"), 1.0,
+                              "demolish confirmation", must=False)
+    if box and box != "sent":
         tick = ui.first("button_tick", under=box)
         if tick is None:
             return None
-        click(ui, tick)
+        st, v = commands.act(w.pm, lambda: click(ui, tick), effect)
         wait.gone(ui, box, timeout=2.0, must=False, what="confirmation closed")
-    S = slot_ptr(w, o.region_obj, idx)
-    return wait.wait_until(lambda: "gone" if slot_building(w, o, idx) is None else "pending" if constructing(w, S)
-                           else None, 3.0, "building demolished", must=False) or None
+        return v if st == "done" else None
+    if not cw.count and cw.ok:                    # no box and no command: the click did not reach the game
+        return effect()
+    return wait.wait_until(effect, commands.EFFECT_CAP_S, "building demolished", must=False) or None
 
 
 def construction_kind(w: World, S: int) -> int | None:

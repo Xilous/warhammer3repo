@@ -205,11 +205,15 @@ def dismiss_events(ui: UI | None = None) -> list[str]:
             c, cid, btn = todo[0]
             before = _shows(ui, c)
             _CLICKED[_sig(ui, cid, c)] = _time.time()
-            click(ui, btn)
             # multiplayer (2026-10-18): a notice closes some seconds after its button, once the game has synced
-            # with the other players; a slow close is not a failure, and the notice is not clicked again meanwhile
-            if wait.wait_until(lambda: not ui.effective_visible(btn) or _shows(ui, c) != before, CLOSE_TIMEOUT,
-                               f"{cid} notice closed", must=False):
+            # with the other players. Paced by the game (bot/sensor/commands.py): a click that wrote a command waits
+            # for the close however long the sync takes; one that wrote none and closed nothing did not reach the
+            # game. The notice is never clicked again meanwhile (RECLICK_S).
+            from bot.sensor import commands
+            st, _v = commands.act(ui.pm, lambda: click(ui, btn) and None,
+                                  lambda: not ui.effective_visible(btn) or _shows(ui, c) != before,
+                                  cap=max(CLOSE_TIMEOUT, commands.EFFECT_CAP_S))
+            if st == "done":
                 closed.append(cid)
             else:
                 break

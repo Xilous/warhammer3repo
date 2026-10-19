@@ -189,10 +189,10 @@ def pick_commandment(ui: UI, w: World, F: int, province: str, key: str) -> str |
     wait.stable_rect(ui, target, n=3, timeout=2.0, must=False, what="commandment list still")
     tx, ty = ui.comp(target).center
     move_path([(sx + (tx - sx) * f // 4, sy + (ty - sy) * f // 4) for f in (1, 2, 3)] + [(tx, ty)])
-    click(ui, target)
-    ok = wait.wait_until(lambda: any(p["province"] == province and p["picked"] == key for p in provinces(w, F)), 3.0,
-                         f"{key} picked for {province}", must=False)
-    return None if ok else "the pick did not register"
+    from bot.sensor import commands             # paced by the game: the command, then the pick in memory
+    st, _v = commands.act(w.pm, lambda: click(ui, target) and None,
+                          lambda: any(p["province"] == province and p["picked"] == key for p in provinces(w, F)))
+    return None if st == "done" else f"the pick did not register ({commands.WHY.get(st) or st})"
 
 
 # ------------------------------------------------------------------ rite (UI)
@@ -265,10 +265,10 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
             req = ui.first("dy_unlock_requirements", under=card)
             text = re.sub(r"\[\[[^\]]*\]\]", "", ui.text(req) or "").strip().replace("\n", " ") if req else ""
             return f"Dominating Scheme cannot be cast: {text or 'requirements not met'}"
-        click(ui, btn)
-        if not wait.wait_until(lambda: rite_cooldowns(w, F).get(key, 0) > 0, 3.0, "rite cast (cooldown running)",
-                               must=False):
-            return "Perform Rite did not register"
+        from bot.sensor import commands         # paced by the game: the command, then the cooldown in memory
+        st, _v = commands.act(w.pm, lambda: click(ui, btn) and None, lambda: rite_cooldowns(w, F).get(key, 0) > 0)
+        if st != "done":
+            return f"Perform Rite did not register ({commands.WHY.get(st) or st})"
         spent = gold - (w.s.read().treasury or 0)
         out = f"cast the Dominating Scheme ({spent} gold)"
         if key == RITE_VERMINLORD:

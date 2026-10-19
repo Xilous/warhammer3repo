@@ -190,10 +190,10 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
         park()
         return ["new army: the Warpseer could not be raised (Lord cap full or not enough gold)"], None
     before = {a.cqi for a in armies(w, F)}
-    click(ui, raise_btn)
-    new = wait.wait_until(lambda: next((a for a in armies(w, F) if a.cqi not in before
-                                        and a.general_subtype == WARPSEER), None), 3.0, "new army in memory",
-                          must=False)
+    from bot.sensor import commands             # paced by the game: the command, then the new army in memory
+    _st, new = commands.act(w.pm, lambda: click(ui, raise_btn) and None,
+                            lambda: next((a for a in armies(w, F) if a.cqi not in before
+                                          and a.general_subtype == WARPSEER), None))
     clear(ui)
     park()
     if new is None:
