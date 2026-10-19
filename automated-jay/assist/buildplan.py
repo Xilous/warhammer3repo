@@ -162,7 +162,8 @@ def final_layout(s: Settlement, allowed_per_province) -> list[Target]:
         return len(out) < n - held_back
     for entry in strat["priority"]:
         if entry.get("landmarks"):
-            cands = standing + [c for c in s.landmarks if c not in standing]
+            skip = set(entry.get("skip", []))          # landmarks the player leaves out (strategy/settlements.json)
+            cands = standing + [c for c in s.landmarks if c not in standing and c not in skip]
         else:
             c = chain_for(entry, s.kind)
             cands = [c] if c else []

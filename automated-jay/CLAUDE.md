@@ -24,6 +24,18 @@ happens to display.
 - **Verify against the live game** before relying on a new offset (compare with what the game shows), and keep
   that check repeatable (a test or a `--selftest` line where possible).
 
+## Single player is played as multiplayer (player rule, 2026-10-18)
+
+The player uses single-player campaigns to practise multiplayer with the assistant on. So the assistant plays a
+single-player campaign as a multiplayer one as far as it can:
+
+- Nothing it plans or buys may rely on something only single player has: story missions and their rewards,
+  story-locked buildings (the Morskittar Engine at Zhufbar is skipped in `strategy/settlements.json`), story-only
+  unlocks or items. If a feature exists in both but unlocks differently (Masterplans, Underlings), the assistant
+  reads what is unlocked from memory and never assumes the single-player route.
+- When you add a plan, a shop order or a priority, check that it works the same in multiplayer; if it does not,
+  leave it out or make it optional, and say so.
+
 ## Other standing rules
 - Player decisions are recorded where they apply (strategy/*.json `_doc` notes, code comments) with the date.
 - Kill-Stab Masterplans are the player's: never started, completed or abandoned by the assistant.

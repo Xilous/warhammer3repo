@@ -149,7 +149,8 @@ Thanquol's Clan Scruten); there is nothing to set. What is different with Thanqu
   unique row unlocks at rank 11), then Ikit's army and campaign skills, Mentor last; Boneripper with **Warpfire
   Projectors** as soon as rank 15 allows, Warpfire Braziers never.
 - **Buildings**: the same settlement list. His Grey Seer Lair in Karag Dromar is kept and upgraded as a landmark;
-  the Morskittar Engine is Zhufbar's landmark (once his story unlocks it). Frontline provinces stay yours, as with
+  the Morskittar Engine is left out (single player only, story-locked until mission 5): Zhufbar's slot takes the
+  next building on the list. Frontline provinces stay yours, as with
   Ikit (Black Water is one while Zhufbar is an enemy's).
 - **No Forbidden Workshop**: the Shop step does nothing.
 - Rites, tech tree and the army template are the same (Thanquol is an allowed lord); Ferocious Plans comes
