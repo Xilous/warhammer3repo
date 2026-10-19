@@ -24,6 +24,7 @@ NORMAL = {
     "ai_attack_targets_parent", "3d_ui_parent", "mission_indicator_parent", "endgame_scenarios_holder",
     "hud_campaign", "menu_bar", "panel_manager", "under_advisor_docker", "tooltip_default", "black_fade",
     "tutorial_halo_group",  # tutorial highlight around a HUD element: never a decision (seen 2026-10-16)
+    "mp_start_turn_popup",  # multiplayer "Your Turn" banner: no buttons, fades by itself (held a pass 2026-10-18)
     "highlight_dummy", "text_pointer_parent",   # parts of a scripted tour (fullscreen_highlight is the one reported)
     "advice_interface", "help_panel", "saving_icon", "qa_console", "campaign_space_bar_options",
     "targeting_interface_dimming", "character_map_path_icons", "units_panel", "resources_bar",
