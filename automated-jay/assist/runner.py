@@ -64,6 +64,10 @@ STEP_FNS = {
     "buildings": build.run,             # player rule: building upgrades take precedence over refilling armies
     "army": army_builder.run,            # recruits with whatever gold the building step left
 }
+# Memory checks run after a step and its verification run: what the step planned that memory shows is not done.
+MISSED_FNS = {
+    "buildings": build.missed,
+}
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
@@ -765,6 +769,30 @@ class Runner:
             notes.append(f"verification redid: {r}")
         return "; ".join(notes) + "; still changing after verification"
 
+    def _memory_check(self, name: str) -> str:
+        """After the step and its verification run: what the step wanted that memory shows did not happen (player
+        request 2026-10-19: "verified" only says a second run changed nothing, so a slot missed on every run read
+        as verified). "" when all of it happened or the step has no such check yet. A card the game greys out is
+        reported apart from a miss: the game refused it (its reason is not read from memory yet)."""
+        fn = MISSED_FNS.get(name)
+        if fn is None:
+            return ""
+        try:
+            items = fn()
+        except InputAborted:
+            raise
+        except Exception as ex:
+            traceback.print_exc()
+            return f"MISSED? memory check failed ({ex})"
+        refused = [i for i in items if "greyed out" in i]
+        lost = [i for i in items if i not in refused]
+        parts = []
+        if lost:
+            parts.append("MISSED (memory check): " + "; ".join(lost))
+        if refused:
+            parts.append("refused by the game: " + "; ".join(refused))
+        return " | ".join(parts)
+
     def _automate(self, turn, done: list[str], names: list[str]) -> list[str]:
         from tools import ui as ui_input
         yields0, suspect0 = ui_input.PLAYER_YIELDS, ui_input.SUSPECT_CLICKS
@@ -782,7 +810,10 @@ class Runner:
                         traceback.print_exc()
                     timing.set_result(result)
                 result = f"{result} | {self._verify(name)}"
-                self.rail(**{name: "failed" if result.startswith("ERROR") else "done"})
+                lost = self._memory_check(name)
+                if lost:
+                    result += " | " + lost
+                self.rail(**{name: "failed" if result.startswith("ERROR") or "MISSED" in lost else "done"})
                 done.append(f"{name}: {result}")
                 self.post("automating", f"AUTOMATING turn {turn}", "\n".join(done), turn=turn)
             from . import popups

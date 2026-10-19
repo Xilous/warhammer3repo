@@ -592,7 +592,47 @@ def treasury(w: World, F: int) -> int:
     return struct.unpack("<i", w.pm.read_bytes(F + 0xD58, 4))[0]
 
 
+FAILED: dict = {}          # (region, item) -> why the last run did not get it under way (a UI failure)
+PROTECTED: set = set()     # (region, slot index) the last run kept for the Construction Cavern
+
+
+def _failed(problems: list, o, a, text: str) -> None:
+    problems.append(text)
+    FAILED[(o.region, a.item)] = text.split(": ", 1)[-1]
+
+
+def missed(w: World | None = None) -> list[str]:
+    """The memory check after the step (player request 2026-10-19: Swartzhafen's empty slot was missed for turns
+    while the step read "verified"). The plan is made again from memory, after the run: every action in it must be
+    under way in its slot ([[S+0x190]+0x10]) or have a reason read from memory why not (the gold, a damaged building,
+    the Cavern's slot, a blocked province is not planned at all). Anything else is missed: with the reason the run
+    saw in the UI (a greyed card: the game's reason is not decoded from memory yet), or "not attempted"."""
+    w = w or World()
+    snap = snapshot(w)
+    if snap is None:
+        return []
+    models, blocked = build_models(w, snap)
+    todo, _ = _actions(models, blocked)
+    gold = w.s.read().treasury or 0
+    out = []
+    for o, a, _busy in todo:
+        idx = slot_index_for(o, a)
+        S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
+        if S and constructing(w, S):
+            continue
+        why = FAILED.get((o.region, a.item))
+        if why is None:                           # not tried: only a reason from memory excuses it
+            if a.cost > gold or (o.region, idx) in PROTECTED:
+                continue
+            if S and a.kind not in ("construct", "replace") and damaged(w, S):
+                continue
+            why = "not attempted"
+        out.append(f"{gd.place_name(o.region)}: {a.item} ({why})")
+    return out
+
+
 def run(log=print, override_blocked: bool = False) -> str:
+    FAILED.clear()
     w = World()
     snap = snapshot(w)
     if snap is None:
@@ -690,24 +730,24 @@ def run(log=print, override_blocked: bool = False) -> str:
                 problems.append(f"{o.region}: {a.item} needs {a.cost} gold")
                 continue
             if idx is None or not a.level_key:
-                problems.append(f"{o.region}: no slot for {a.item}")
+                _failed(problems, o, a, f"{o.region}: no slot for {a.item}")
                 continue
             if a.kind not in ("construct", "replace") and damaged(w, S):   # (a replaced one goes anyway)
                 problems.append(f"{o.region}: {a.item} waits for a repair")
                 continue
             if not ui_open_province(ui, o):
-                problems.append(f"{o.region}: could not open its province")
+                _failed(problems, o, a, f"{o.region}: could not open its province")
                 continue
             slot = ui_slot(ui, w, o, idx)
             if slot is None:
-                problems.append(f"{o.region}: slot not on screen")
+                _failed(problems, o, a, f"{o.region}: slot not on screen")
                 continue
             if a.kind == "replace":
                 old = next((s.building for s in [o.slot_states[idx]] if s.building), None)
                 old_name = gd.level_name(old) if old else "the building"
                 how = ui_demolish(ui, w, o, idx, slot)
                 if how is None:
-                    problems.append(f"{o.region}: could not demolish {old_name}")
+                    _failed(problems, o, a, f"{o.region}: could not demolish {old_name}")
                     continue
                 if how == "pending":                  # the slot is free next turn: the planned building goes up then
                     done.append(f"{gd.place_name(o.region)}: demolishing {old_name} (not on your list; "
@@ -732,9 +772,11 @@ def run(log=print, override_blocked: bool = False) -> str:
                 done.append(f"{gd.place_name(o.region)}: {a.item} {a.detail}")
                 log(f"build: {done[-1]}")
             else:
-                problems.append(f"{o.region}: {a.item} not started"
-                                + (f" ({REASON['last']})" if REASON["last"] else ""))
+                _failed(problems, o, a, f"{o.region}: {a.item} not started"
+                        + (f" ({REASON['last']})" if REASON["last"] else ""))
         move_to(*PARK)
+    PROTECTED.clear()
+    PROTECTED.update(protected)
     parts = []
     if done:
         parts.append("; ".join(done))
