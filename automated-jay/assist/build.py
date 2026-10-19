@@ -454,13 +454,25 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
     if lst is None:
         return False
     cats = [c for c in ui.children(lst) if (ui.id(c) or "").startswith("CcoBuildingSetRecord")]
+    # the popup grows its category icons in over a few frames: hovered before then, the cursor misses the icon and
+    # its tree never shows (2026-10-19, Swartzhafen: an icon still 1 px tall, the Breeding Pit taken for "not
+    # offered" for the rest of the session)
+    rects = lambda: tuple(v for c in cats for k in (ui.comp(c),) for v in (k.x, k.y, k.w, k.h))
+    wait.stable(rects, n=3, timeout=1.0, what="building categories laid out", must=False, ui=ui)
     known = _learned().get(chain)
     cats.sort(key=lambda c: ui.id(c) != known)
     before = _tree_chains(ui, slot.ptr)
+    unread = 0
     for cat in cats:
-        move_to(*ui.comp(cat).center)
-        got = _category_tree(ui, slot.ptr, before)
+        got = None
+        for nudge in (0, 1):                      # the game re-checks hover only when the mouse moves
+            x, y = ui.comp(cat).center
+            move_to(x + nudge, y)
+            got = _category_tree(ui, slot.ptr, before)
+            if got is not None:
+                break
         if got is None:
+            unread += 1
             continue
         before, chains = got
         _learn(list(chains), ui.id(cat) or "")
@@ -469,6 +481,9 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
         card = ui.first(level_key, under=chains[chain])
         if card is None:
             continue
+        # the tree slides in too: its card can read invisible for a few frames ("its card is not shown", Swartzhafen
+        # turns 11-13)
+        wait.wait_until(lambda: ui.effective_visible(card), 1.0, f"{level_key} shown", must=False)
         if _settled(ui, card, level_key) is None:
             return False
         if _greyed(ui, card):
@@ -477,6 +492,9 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
         if not _press(ui, card, level_key, settled=True):
             return False
         return _await_started(w, S, f"{level_key} under construction")
+    if unread:                                    # not every category was seen: not a verdict, tried again next pass
+        REASON["last"] = f"{unread} building categor{'y' if unread == 1 else 'ies'} did not open on hover"
+        return False
     NOT_OFFERED.add((region, chain))
     REASON["last"] = "not offered by the game (locked, e.g. by the story)"
     return False
