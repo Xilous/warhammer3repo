@@ -149,6 +149,69 @@ class World:
                 continue
         return out
 
+    # ---- the shroud: is a settlement explored? (decompiled 9.0.4, 2026-10-18: the check behind Cco IsShrouded and
+    # the Masterplans region eligibility, FUN_1426CA9E0 -> FUN_142808AF8 -> FUN_141436C20)
+    #   shroud Z = [F+0xEC0] (none: everything shown); Z+0xD0 byte 0: no shroud at all
+    #   settlement S = [R+0x128]: map grid cell u16 x, u16 y at S+0x340
+    #   grid descriptor D = [[[[[Z+0xC8]+0x6C98]]+0x28]]+0x68: u16 W, H; floats: x0 +4, y0 +8, odd-column y shift
+    #     +0x18, row height +0x1C, column width +0x24 -> world (wx, wy)
+    #   cell grid G = [[Z+0xC8]+0x6C98]: floats x0 +0x64, y0 +0x68, x1 +0x6C, y1 +0x70; u32 cells nx +0x74, ny +0x78
+    #   bitmaps (quadtrees): explored at Z+0x20, hidden-again at Z+0x60: u32 width, height, span; root node at +0x10
+    #     {u32 bits[2]; node* children}; children (4 x 0x10): +0 x<half y>=half, +0x10 x>=half y>=half,
+    #     +0x20 x<half y<half, +0x30 x>=half y<half; a leaf maps its span onto 8 x 8 bits (bit x + 8y)
+    #   shown = explored and not hidden-again
+    def _qbit(self, B: int, x: int, y: int) -> bool:
+        w, h, span = struct.unpack("<3I", self.pm.read_bytes(B, 12))
+        if x >= w or y >= h:
+            return False
+        node = B + 0x10
+        for _ in range(32):
+            kids = self.q(node + 8)
+            half = span >> 1
+            if not kids:
+                if span != 8 and span:
+                    fx, fy = x / span * 8, y / span * 8
+                    x = min(7, int(fx)) if fx > 0 else 0
+                    y = min(7, int(fy)) if fy > 0 else 0
+                bit = x + y * 8
+                word = self.u32(node + (0 if y < 4 else 4))
+                return bool(word & (1 << (bit & 31)))
+            if x < half:
+                node = kids + 0x20 if y < half else kids
+            else:
+                x -= half
+                node = kids + 0x30 if y < half else kids + 0x10
+            if y >= half:
+                y -= half
+            span = half
+        return False
+
+    def explored(self, f: int, r: int) -> bool:
+        """The region's settlement is not under f's shroud (see above). True when it cannot be read."""
+        try:
+            Z = self.q(f + 0xEC0)
+            if not Z or self.pm.read_bytes(Z + 0xD0, 1)[0] == 0:
+                return True
+            S = self.q(r + 0x128)
+            if not S:
+                return True
+            gx, gy = struct.unpack("<2H", self.pm.read_bytes(S + 0x340, 4))
+            M = self.q(Z + 0xC8)
+            D = self.q(self.q(self.q(self.q(M + 0x6C98)) + 0x28)) + 0x68
+            W, H = struct.unpack("<2H", self.pm.read_bytes(D, 4))
+            gx, gy = min(gx, W - 1), min(gy, H - 1)
+            fl = lambda o: struct.unpack("<f", self.pm.read_bytes(D + o, 4))[0]
+            wy = gy * fl(0x1C) + (fl(0x18) if gx & 1 else 0.0) + fl(0x08)
+            wx = gx * fl(0x24) + fl(0x04)
+            G = self.q(M + 0x6C98)
+            g = lambda o: struct.unpack("<f", self.pm.read_bytes(G + o, 4))[0]
+            nx, ny = self.u32(G + 0x74), self.u32(G + 0x78)
+            cx = int((wx - g(0x64)) * nx / (g(0x6C) - g(0x64)))
+            cy = int((wy - g(0x68)) * ny / (g(0x70) - g(0x68)))
+            return self._qbit(Z + 0x20, cx, cy) and not self._qbit(Z + 0x60, cx, cy)
+        except Exception:
+            return True
+
     def region_key(self, r: int) -> str | None:
         try:
             return _cstr(self.pm, self.q(self.q(r + 0x80) + 0x10))
