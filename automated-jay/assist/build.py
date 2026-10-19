@@ -50,7 +50,9 @@ CATEGORIES_FILE = config.RUNS_DIR / "build_categories.json"
 AUTOMATION_FILE = config.STRATEGY_DIR / "automation.json"
 # a click on a card / button that has not started construction by then never will
                               # (measured 2026-10-16: the slot shows construction 10-100 ms after the click)
-POPUP_TIMEOUT_S = 0.3         # hovering a slot opens its popup in 18-22 ms (measured 2026-10-16)
+POPUPS = ("building_categories_popup", "building_construction_popup")
+POPUP_TIMEOUT_S = 1.0         # hovering a slot opens its popup in 18-22 ms (measured 2026-10-16); 0.3 s missed it
+                              # while the previous slot's popup was still closing (2026-10-19, Swartzhafen)
 
 
 # ------------------------------------------------------------------ state -> planner model
@@ -269,6 +271,11 @@ def _slot_popup(ui, slot, cid: str, timeout: float = POPUP_TIMEOUT_S):
     k = wait.stable_rect(ui, slot.ptr, n=3 if off else 1, timeout=2.0, must=False, what=f"{slot.id} still")
     if k is None:
         return None
+    # another slot's popup still closing takes the hover (2026-10-19, Swartzhafen: the next slot's popup never came)
+    pan = ui.first(PANEL)
+    others = lambda: [c for c, n, _r in (ui.nodes(pan) if pan else []) if n in POPUPS
+                      and ui.effective_visible(c) and ui.parent(c) != slot.ptr]
+    wait.wait_until(lambda: not others(), 1.0, "previous building popup closed", must=False)
     x, y = k.center
     move_to(x, y)
     probe = lambda: ui.child(slot.ptr, cid, visible_only=True)
@@ -342,10 +349,6 @@ def _press(ui, ptr: int, what: str, settled: bool = False) -> bool:
     click(ui, ptr)                                # hovered already: the button goes down at once
     return True
 
-
-NOT_OFFERED: set = set()       # (region, chain) no category of the slot offered, this session (2026-10-18: the
-                               # Morskittar Engine's Crude Scaffolding before story mission 5: every category was
-                               # hovered and waited on, twice a turn)
 
 
 def _why_greyed(ui, card: int) -> str:
@@ -464,14 +467,15 @@ def _category_tree(ui, under: int, before: tuple):
 
 def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region: str = "") -> bool:
     REASON["last"] = ""
-    if (region, chain) in NOT_OFFERED:
-        REASON["last"] = "not offered by the game (locked, e.g. by the story)"
-        return False
     pop = _slot_popup(ui, slot, "building_categories_popup")
     lst = ui.first("category_list", under=pop) if pop else None
     if lst is None:
         return False
-    cats = [c for c in ui.children(lst) if (ui.id(c) or "").startswith("CcoBuildingSetRecord")]
+    # the popup adds its categories over a few frames: listed too early it had 2 of its 5 (2026-10-19, Swartzhafen:
+    # the Breeding Pit taken for "not offered"); listed once the set has held for 3 frames
+    ids = lambda: tuple(c for c in ui.children(lst) if (ui.id(c) or "").startswith("CcoBuildingSetRecord"))
+    wait.wait_until(ids, 1.0, "building categories listed", must=False)
+    cats = list(wait.stable(ids, n=3, timeout=1.0, what="building categories complete", must=False, ui=ui) or ids())
     # the popup grows its category icons in over a few frames: hovered before then, the cursor misses the icon and
     # its tree never shows (2026-10-19, Swartzhafen: an icon still 1 px tall, the Breeding Pit taken for "not
     # offered" for the rest of the session)
@@ -514,8 +518,10 @@ def ui_construct(ui, w: World, S: int, slot, level_key: str, chain: str, region:
         unread = unread or 1
         REASON["last"] = f"{unread} building categor{'y' if unread == 1 else 'ies'} did not open on hover"
         return False
-    NOT_OFFERED.add((region, chain))
-    REASON["last"] = "not offered by the game (locked, e.g. by the story)"
+    # memory decides what can be built (locks, main level, development points, cost); the popup is only where the
+    # card is clicked, so a card not found there is a miss of the UI, never "the game does not offer it" (player
+    # 2026-10-19: memory first, the popup only as the fallback)
+    REASON["last"] = "its card was not found in the building popup (UI); memory says it can be built: tried again"
     return False
 
 
