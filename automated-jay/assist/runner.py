@@ -168,8 +168,20 @@ def mp_ready(ui: UI) -> dict[str, bool]:
 
 
 def mp_waiting(ui: UI) -> bool:
-    """The player ended the turn and the other players have not yet (multiplayer)."""
+    """The player ended the turn and the other players have not yet (multiplayer). From memory (the turn record's
+    list of factions that ended, bot/sensor/turn.local_ended, 2026-10-19); the player list's ready tick only when
+    memory cannot be read."""
+    from bot.sensor import turn as turn_mem
+    mem = turn_mem.local_ended(ui.s)
+    if mem is not None:
+        return mem
     return bool(MP_ME["name"]) and mp_ready(ui).get(MP_ME["name"]) is True
+
+
+def faction_screen_name(key: str) -> str:
+    from . import gamedata as gd
+    n = gd.loc().get(f"factions_screen_name_{key}", "")
+    return gd._tr(n) if n else key
 
 
 def phase(ui: UI) -> tuple[str, str]:
@@ -623,6 +635,11 @@ class Runner:
                 # flickered right after the key, the End Turn button among them, and a turn that never ended was
                 # reported ended. The switch to the next faction took ~2.3 s in the logs, so wait well beyond that.)
                 if self.mem.read().turn != turn or turn_mem.players_turn(self.mem)[0] is False:
+                    return True
+                if turn_mem.local_ended(self.mem):     # memory: this faction is in the turn's ended list
+                    left = turn_mem.waiting_for(self.mem) or []
+                    self.end_turn_note = ("waiting for " + ", ".join(faction_screen_name(k) for k in left)
+                                          + " to end their turn") if left else "the other factions are moving"
                     return True
                 # multiplayer: the player's ready tick came on (MP_ME). 2026-10-18: without this the turn ended,
                 # memory still listed the player's faction while the friend moved, and a second Shift+Enter went in.

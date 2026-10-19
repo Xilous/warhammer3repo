@@ -108,7 +108,9 @@ def ended_factions(pm, model: int) -> list[int] | None:
     """Faction objects that pressed End Turn in the current turn record (simultaneous multiplayer turns: the
     factions whose turn runs stay listed at R+4/R+8 until everyone has ended). u32 R+0x10 count, [R+0x18] array of
     faction pointers. Found 2026-10-19 by diffing memory as the player's ready tick came on (R+0x10 0 -> 1, +0x14
-    capacity 0 -> 1, +0x18 the array). None when unreadable."""
+    capacity 0 -> 1, +0x18 the array), then checked against the ticks for a whole turn: Clan Scruten listed the
+    moment the player ended, Clan Skryre when the friend did, the list gone with the record when the AI started.
+    None when unreadable."""
     r = turn_record(pm, model)
     if r is None:
         return None
@@ -122,3 +124,30 @@ def ended_factions(pm, model: int) -> list[int] | None:
         return [f for f in struct.unpack(f"<{n}Q", pm.read_bytes(arr, 8 * n))]
     except Exception:
         return None
+
+
+def local_ended(s) -> bool | None:
+    """The local player has pressed End Turn this turn (memory: their faction is in ended_factions). None when it
+    cannot be read."""
+    from .world import World, local_faction
+    model = s.model
+    if model is None:
+        return None
+    w = World(s)
+    F = local_faction(w)
+    e = ended_factions(s.pm, model)
+    if F is None or e is None:
+        return None
+    return F in e
+
+
+def waiting_for(s) -> list[str] | None:
+    """Factions whose turn still runs and that have not ended (multiplayer: the other players being waited for),
+    as faction keys. None when it cannot be read."""
+    from .world import World
+    model = s.model
+    who, e = whose_turn(s.pm, model), ended_factions(s.pm, model)
+    if who is None or e is None:
+        return None
+    w = World(s)
+    return [w.faction_name(f) or hex(f) for f in who if f not in e]
