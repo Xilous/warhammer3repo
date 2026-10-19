@@ -30,6 +30,9 @@ CURSOR_OFF = 0x5008
 BUF_OFF = 8
 BUF_MAX = 0x5000
 
+MISS_GRACE_S = 2.5     # before a "missed" click is clicked again: this much longer for its effect (multiplayer: a
+                       # command applied 0.4 s after it was written, 2026-10-19; a command the watch did not see while
+                       # its effect is on the way must never be clicked a second time)
 MISS_S = 0.6           # no command by then: the click did not reach the game (the command is written in the frame of
                        # the click, before any sync, in single player and multiplayer alike)
 EFFECT_CAP_S = 15.0    # a command sent: wait this long at most for its effect (multiplayer sync measured at 1-3 s,
@@ -74,9 +77,20 @@ class Watch:
         self.types: list[int] = []
         self._stop = threading.Event()
         self._t = None
+        self._head0 = self._head()
+
+    def _head(self) -> bytes:
+        """The stream's first bytes. A flush only resets the cursor: the bytes of the last command stay in the
+        buffer, so a command written and flushed between two samples still shows as changed bytes."""
+        try:
+            return self.pm.read_bytes(self.Q + BUF_OFF, 64) if self.Q else b""
+        except Exception:
+            return b""
 
     @property
     def count(self) -> int:
+        if not self.types and self.ok and self._head() != self._head0:
+            self.types.append(-1)                  # written and flushed between two samples: type not seen
         return len(self.types)
 
     def _run(self) -> None:
@@ -138,12 +152,22 @@ def act(pm, do, done, cap: float = EFFECT_CAP_S, miss_s: float = MISS_S, poll: f
 
 
 def act_retry(pm, do, done, tries: int = 2, **kw):
-    """act, clicked again only while the click "missed" (no command reached the game): never after a command."""
+    """act, clicked again only while the click "missed" (no command reached the game): never after a command, and
+    only after MISS_GRACE_S more without the effect."""
     st, v = "missed", None
-    for _ in range(tries):
+    for i in range(tries):
         st, v = act(pm, do, done, **kw)
         if st != "missed":
             break
+        end = time.perf_counter() + MISS_GRACE_S
+        while time.perf_counter() < end:           # a command the watch did not see: its effect still comes
+            try:
+                v = done()
+            except Exception:
+                v = None
+            if v:
+                return "done", v
+            time.sleep(0.02)
     return st, v
 
 

@@ -46,7 +46,7 @@ POLL_SECONDS = 2.0            # loop period while nothing is about to happen
 POLL_NOTICES = 0.5            # during the player's turn: how often to look for event notices to close
 POLL_FAST = 0.1               # while a turn is pending or other factions are moving: notice the turn start at once
 END_TURN_WAIT_S = 8.0         # after Shift+Enter, until the game runs another faction's turn (took ~2.3 s in the logs)
-END_TURN_TRIES = 2            # a key the game did not take is pressed once more
+END_TURN_TRIES = 3            # a key the game did not take is pressed again, each time once End Turn is allowed
 MP_PENDING_WAIT_S = 180.0     # multiplayer: how long End Turn waits out another player's battle ("pending action")
 VERIFY_ROUNDS = 2            # verification runs per step (each one that had to redo something is followed by another)
 IDLE_SECONDS = 3.0            # the player must have left mouse and keyboard alone this long before a pass
@@ -535,16 +535,42 @@ class Runner:
                     return True
                 return False
             opened: list[str] = []
-            from bot.sensor.world import multiplayer
-            from tools.ui import click
-            b = self.ui.cached("button_end_turn", under="hud_campaign")
-            if multiplayer() and b is not None and (self.ui.state(b) or "").startswith("active"):
-                # multiplayer: Shift+Enter is not taken (2026-10-18, turns 1 and 2: twice each), the button is
-                ready0 = mp_ready(self.ui)
-                click(self.ui, b)
-                if wait.wait_until(ended, END_TURN_WAIT_S, "another faction's turn (End Turn button)", must=False):
-                    return True
+            # Shift+Enter first, in multiplayer too (player 2026-10-19: on 2026-10-18 it was not taken because another
+            # player's battle or dilemma held the game, which blocks any End Turn). So: wait out such a hold first
+            # (tools/ui.wait_for_other_players), then the shortcut; the button is only the fallback below. The
+            # end-turn notifications are switched off first (assist/notifications.py): on 2026-10-19 a "building
+            # upgrade available" notification sat over End Turn and took the button click.
+            from tools.ui import click, wait_for_other_players
+            from . import notifications
+            try:
+                note = notifications.ensure_off(self.ui, self.model)
+                if note:
+                    print(note, flush=True)
+            except InputAborted:
+                raise
+            except Exception:
+                traceback.print_exc()
+            wait_for_other_players(self.ui)
+
+            def allowed():
+                # the game lets the turn end now: no other player's battle or dilemma holds it (its "pending action"
+                # message) and the End Turn button is active (player 2026-10-19: wait for this instead of giving up)
+                if self.ui.root_child("mp_pending_action_blocking_msg"):
+                    return False
+                bb = self.ui.cached("button_end_turn", under="hud_campaign")
+                return bb is not None and (self.ui.state(bb) or "").startswith("active")
             for attempt in range(END_TURN_TRIES):
+                if ended():
+                    return True
+                if not allowed():
+                    self.post("waiting", f"ENDING TURN {turn}", "waiting until the game allows End Turn "
+                              "(another player's battle or decision, or a panel the game opened)", turn=turn)
+                    if not wait.wait_until(lambda: allowed() or ended(), MP_PENDING_WAIT_S, "End Turn allowed",
+                                           must=False):
+                        self.end_turn_problem = "the game did not allow End Turn for 3 minutes"
+                        return False
+                    if ended():
+                        return True
                 before = {cid for _c, cid in self.ui.root_children()}
                 ready0 = mp_ready(self.ui)
                 with held("shift"):
@@ -684,6 +710,18 @@ class Runner:
     def do_pass(self, turn, pre: list[str], phases: dict | None = None) -> None:
         """One turn-start pass (busy must be held). InputAborted propagates to the caller."""
         self.offer_ignore([])
+        from . import notifications                      # off once per campaign (player request 2026-10-19)
+        if self.model not in notifications._DONE:
+            from bot.focus import game_focus
+            try:
+                with game_focus():
+                    note = notifications.ensure_off(self.ui, self.model)
+                if note:
+                    pre = list(pre or []) + [note]
+            except InputAborted:
+                raise
+            except Exception:
+                traceback.print_exc()
         done = self.automate(turn, pre, phases=phases, names=self.start_steps(turn))
         from . import gamedata as gd
         for region in plans_at_max_alarm(self.mem)["military"]:       # Kill-Stabs are the player's (2026-10-17)
