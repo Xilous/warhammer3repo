@@ -178,8 +178,27 @@ def players_turn(ui: UI) -> tuple[bool, str]:
     if st.startswith("selected"):                  # multiplayer: pressed, waiting for the others (watched 2026-10-18)
         return False, "you ended the turn: waiting for the other players"
     if st.startswith(("inactive", "disabled")):
+        if any(plans_at_max_alarm(ui.s).values()):
+            return True, ""                        # the game holds End Turn until that plan is resolved (below)
         return False, f"End Turn button is {st}"
     return True, ""
+
+
+def plans_at_max_alarm(sensor) -> dict[str, list[str]]:
+    """{"economic": [regions], "military": [regions]}: Masterplans at maximum Alarm, from memory. The game greys out
+    End Turn until each is completed or abandoned (2026-10-18, turn 17: Mount Gunbad at Alarm 4/4, End Turn
+    "inactive", and the assistant took that for "not your turn" and never started the pass)."""
+    out = {"economic": [], "military": []}
+    try:
+        from bot.sensor import masterplans as mem
+        from bot.sensor.world import World
+        st = mem.read(World(sensor))
+    except Exception:
+        return out
+    for p in (st.plans if st else []):
+        if p.alarm_max and p.alarm >= p.alarm_max and p.type in out:
+            out[p.type].append(p.region)
+    return out
 
 
 def settle(ui: UI, cancel=lambda: False, timeout: float = SETTLE_TIMEOUT) -> tuple[bool | None, float]:
@@ -618,12 +637,19 @@ class Runner:
         names = list(sch["turn_start"])
         if self.end_done != (self.model, (turn or 0) - 1):
             names += [n for n in sch["end_turn"] if n not in names]
+        # a Steal-Take at maximum Alarm holds End Turn: the Masterplans step completes it now, not at the end
+        if "masterplans" not in names and plans_at_max_alarm(self.mem)["economic"]:
+            names.append("masterplans")
         return names
 
     def do_pass(self, turn, pre: list[str], phases: dict | None = None) -> None:
         """One turn-start pass (busy must be held). InputAborted propagates to the caller."""
         self.offer_ignore([])
         done = self.automate(turn, pre, phases=phases, names=self.start_steps(turn))
+        from . import gamedata as gd
+        for region in plans_at_max_alarm(self.mem)["military"]:       # Kill-Stabs are the player's (2026-10-17)
+            done.append(f"Kill-Stab at {gd.place_name(region)} is at maximum Alarm: complete it yourself "
+                        "(the game holds End Turn until you do)")
         self.done_turn = turn
         if self.pending == turn:
             self.pending = None
