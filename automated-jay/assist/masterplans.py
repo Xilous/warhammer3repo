@@ -632,11 +632,17 @@ def _reachable_targets(ui, w, scores: dict, taken: set, labels: dict, avoid_rect
         d = ((xy[0] - cx) ** 2 + (xy[1] - cy) ** 2) ** 0.5
         if d <= cfg.get("max_pan", 120):
             cands.append((-score, d, region, xy))
-    for _s, _d, region, xy in sorted(cands)[:4]:
+    tries = 0
+    for _s, _d, region, xy in sorted(cands)[:8]:
         if region in UNREACHABLE:
             continue
         lab = f"label_settlement:{region}"
         if xy is not None:
+            # at most 2 pans per Underling (2026-10-18, turn 28: five settlements without a label on screen, under the
+            # fog of war most likely, cost 2-4 s each, 23 s in all); each failure is not tried again this session
+            if tries >= 2:
+                continue
+            tries += 1
             k, _jumped = bring_into_view(w, ui, xy[0], xy[1], lab)
             if k is None or not in_safe(k):
                 UNREACHABLE.add(region)                # (2026-10-18: each failed pan cost ~6 s, every turn)
@@ -718,7 +724,7 @@ def start_plans(ui, cfg: dict, state, w, F: int, dry_run: bool = False) -> list[
             break
         if not started:
             out.append(f"{u.name}: no Steal-Take target could be brought on screen ({len(scores)} eligible "
-                       f"settlements, none within {cfg.get('max_pan', 60)} map units)")
+                       f"settlements; none within {cfg.get('max_pan', 120)} map units came on screen)")
         move_to(960, 1070)
     return out
 
