@@ -235,12 +235,38 @@ def _aim_clear(x: int, y: int, target=None) -> tuple[int, int]:
     raise InputAborted("the cursor kept being moved by the player")
 
 
+def pace_s() -> float:
+    """The pause after every click, key press and drag (player request 2026-10-18: "slow down the iterations of all
+    automations by a tad, but keep the pace visibly faster than a human"; a game crash came right after a fast click
+    sequence). strategy/automation.json "pace_ms", default 120 ms; 0 turns it off."""
+    global _PACE
+    if _PACE is None:
+        try:
+            import json
+            from bot import config
+            _PACE = max(0.0, float(json.load(open(config.STRATEGY_DIR / "automation.json", encoding="utf-8"))
+                                   .get("pace_ms", 120)) / 1000.0)
+        except Exception:
+            _PACE = 0.12
+    return _PACE
+
+
+_PACE: float | None = None
+
+
+def _pace() -> None:
+    t = pace_s()
+    if t > 0:
+        time.sleep(t)
+
+
 def _after_click(at) -> None:
     """The player moved the cursor while the button was down: the click may have gone astray (counted; the runner's
-    verification round redoes what did not happen)."""
+    verification round redoes what did not happen). Then the pace pause."""
     global SUSPECT_CLICKS
     if _player_busy(at):
         SUSPECT_CLICKS += 1
+    _pace()
 
 
 @_timed("click")
@@ -358,6 +384,7 @@ def press(key: str) -> None:
         _frames(KEY_HOLD_FRAMES)
     finally:
         pydirectinput.keyUp(key, _pause=False)
+    _pace()
 
 
 @contextlib.contextmanager
