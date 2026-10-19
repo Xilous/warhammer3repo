@@ -105,6 +105,24 @@ def last_logged_turn() -> list[str]:
         return []
 
 
+def army_signal(rows, fin, checks) -> str | None:
+    """The collapsed rail's army line (player request 2026-10-18): an army that can be ticked for a refill to the
+    playbook (its refill is possible now), or a new playbook army that can be created, with the income left after
+    it. None when there is no such decision."""
+    from .army import enabled_armies, tick_for
+    enabled = enabled_armies()
+    cost = {c.cqi: c for c in (fin.armies if fin else [])}
+    for a, d, (can, _why) in rows:
+        if can and not tick_for(a, enabled)[0] and (d.missing or d.heroes_missing) and a.cqi in cost:
+            inc = cost[a.cqi].income_if_refilled
+            return (f"{a.general_name} can be refilled to the playbook: income after {inc:+,}/turn"
+                    + (" ✓" if inc >= 0 else " ✗"))
+    if checks and all(ok for _l, ok, _w in checks) and fin is not None:
+        return (f"a new playbook army can be created: income after {fin.after_next:+,}/turn"
+                + (" ✓" if fin.after_next >= 0 else " ✗"))
+    return None
+
+
 class App:
     def __init__(self, on_pause, on_run_now, on_ignore=None, on_end_turn=None, on_restart=None, on_exit=None,
                  on_raise_army=None) -> None:
@@ -297,6 +315,8 @@ class App:
                             "no province yet" + (f" (needs {', '.join(n for n in self.template_needs)})"
                                                   if getattr(self, "template_needs", None) else ""))
                         self.rail.set_template(ok, short)
+                elif kind == "signal":
+                    self.rail.set_signal(msg[1])
                 elif kind == "finance":
                     f = msg[1]
                     self._can_raise = f["can"]
@@ -379,6 +399,7 @@ class App:
                 if (w.faction_name(F) or "") == "wh3_dlc29_skv_clan_scruten":
                     from bot.sensor import masterplans as mp
                     ws = mp.Reader(w).pooled(F).get(mp.WARPSTONE_KEY)
+                self.q.put(("signal", army_signal(rows, f, cs)))
                 self.q.put(("finance", {"fin": f, "verdict": f.verdict(), "ok": f.after_next >= 0,
                                         "can": all(ok for _l, ok, _w in cs), "checks": cs, "warpstone": ws,
                                         "lines": f.lines(),

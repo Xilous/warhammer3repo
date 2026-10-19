@@ -3,9 +3,10 @@ template would make it cost, and what the next army would cost, Supply Lines inc
 army is raised or ticked; this only does the sums. Everything from memory (bot/sensor/economy.py, world.armies) and
 the game tables (main_units upkeep).
 
-Upkeep per unit = its base upkeep (main_units_tables) x (1 + Supply Lines % x (armies - 1)) x k, where k calibrates
-the other upkeep effects (techs, skills, traits): last turn's army upkeep (memory) over the same sum for the armies
-fielded now (1 when it cannot be worked out). A refill removes the units that are not in the template (the builder
+Upkeep per unit = its base upkeep (main_units_tables) x (1 + Supply Lines % x (armies - 1)). The game computes the
+rest live per unit (FUN_1424B7E24: base x (100 + upkeep effects) %), nothing stores it; 2026-10-18 the base sum was
+exactly the game's figure (Thanquol 3,446). A calibration on last turn's upkeep (the faction's turn record, which
+is also what the game's TotalArmyUpkeep shows) was dropped: it carried last turn's units and read 3,696. A refill removes the units that are not in the template (the builder
 disbands them, so they stop costing) and adds the missing ones and the Warlock Engineer. A new army adds its own
 upkeep, and one more Supply Lines step on every unit of every army.
 """
@@ -24,6 +25,8 @@ class ArmyCost:
     now: int                  # upkeep per turn now
     refilled: int             # upkeep per turn once it matches the template
     removed: int              # units a refill disbands
+    income_if_refilled: int = 0   # the projected income once this army is refilled (the other ticked refills
+                                  # counted too)
 
 
 @dataclass
@@ -87,9 +90,8 @@ def compute(w, F) -> Finance:
     mult = 1 + pct / 100 * max(0, n - 1)
     bases = {a.cqi: _base([u.key for u in a.units], up) for a in fielded}
     est = sum(bases.values()) * mult
-    k = eco.army_upkeep / est if est > 0 and eco.army_upkeep > 0 else 1.0
-    if not 0.3 < k < 3:
-        k = 1.0
+    k = 1.0
+    _ = est
     ticked = enabled_armies()
     fin = Finance(eco.net, [], pct, eco.difficulty, round(k, 3))
     after_bases = {}
@@ -109,6 +111,8 @@ def compute(w, F) -> Finance:
                                    round(after * mult * k), len(d.disband) if d.lord_ok else 0))
         if on:
             fin.ticked_extra += round((after - bases[a.cqi]) * mult * k)
+    for c in fin.armies:                           # with the ticked refills, plus this one when it is not ticked
+        c.income_if_refilled = fin.income - fin.ticked_extra - (0 if c.ticked else c.refilled - c.now)
     # the next army: a Warpseer with the template, and one more Supply Lines step on everything fielded
     base_planned = sum(after_bases[a.cqi] if tick_for(a, ticked)[0] else bases[a.cqi] for a in fielded)
     mult2 = 1 + pct / 100 * n

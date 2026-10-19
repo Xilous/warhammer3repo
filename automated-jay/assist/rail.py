@@ -78,6 +78,7 @@ class TurnRail:
         self.f_btn_s = _font(["Bahnschrift SemiBold Condensed", "Bahnschrift", "Segoe UI Semibold"], 10, "bold")
         self.state, self.headline, self.sub = "waiting", "WAITING", ""
         self.template: tuple[bool, str] | None = None
+        self.signal: str | None = None               # an army decision is open (assist/app.py army_signal)
         self.steps: dict[str, str] = {}
         self.hover = False
         self._press = None
@@ -93,6 +94,11 @@ class TurnRail:
         self.state, self.headline = state, headline
         self.sub = next((ln for ln in (detail or "").splitlines() if ln.strip()), "")[:60]
         self.draw()
+
+    def set_signal(self, text: str | None) -> None:
+        if text != self.signal:
+            self.signal = text
+            self.draw()
 
     def set_template(self, ok: bool, text: str) -> None:
         if (ok, text) != self.template:
@@ -245,7 +251,10 @@ class TurnRail:
             self._draw_icons(W)
             # bottom strip, always visible: can any province recruit the whole army template?
             cv.create_line(12, 53, W - 12, 53, fill=T.LINE)
-            if self.template is not None:
+            if self.signal:                            # an army decision first: it is something to do
+                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, width=W - 28, text="ARMY ▲ " + self.signal,
+                               fill=T.BRASS_HI)
+            elif self.template is not None:
                 ok, text = self.template
                 cv.create_text(14, 61, anchor="w", font=self.f_sub_s, width=W - 28,
                                text=("TEMPLATE ✓ " if ok else "TEMPLATE: ") + text,

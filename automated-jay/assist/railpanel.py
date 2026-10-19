@@ -294,7 +294,8 @@ class RailPanel:
         cost = {a.cqi: a for a in (self.fin.armies if self.fin else [])}
         sig = tuple((a.cqi, a.general_name, len(a.units), len(a.queued), a.region, tick_for(a, enabled), can, why_not,
                      d.summary(), d.matches, bool(d.missing or d.heroes_missing),
-                     (cost[a.cqi].now, cost[a.cqi].refilled, cost[a.cqi].removed) if a.cqi in cost else None)
+                     (cost[a.cqi].now, cost[a.cqi].refilled, cost[a.cqi].removed,
+                      cost[a.cqi].income_if_refilled) if a.cqi in cost else None)
                     for a, d, (can, why_not) in self.rows)
         if sig == getattr(self, "_armies_sig", None):
             return
@@ -326,8 +327,14 @@ class RailPanel:
             note = why or d.summary()
             if c is not None and c.removed:
                 note += f" · {c.removed} disbanded on refill"
+            if c is not None and c.refilled != c.now and not d.matches:
+                inc = c.income_if_refilled
+                verdict = "✓ affordable" if inc >= 0 else "✗ not affordable"
+                state = ("ticked" if on else "you can tick it now" if can else
+                         "can be ticked once " + (why_not.replace("cannot refill: ", "") if why_not else "possible"))
+                tk.Label(self.armies, text=f"if refilled: {c.now:,} → {c.refilled:,}/turn · income after {inc:+,}/turn"
+                         f"  {verdict} · {state}", bg=T.PANEL, fg=T.GOOD if inc >= 0 else T.WARN, font=self.f_body,
+                         anchor="w", justify="left", wraplength=WIDTH - 70, padx=24).pack(fill="x")
             tk.Label(self.armies, text=note, bg=T.PANEL, fg=(T.RED if why else T.GOOD if d.matches else T.MUTED),
                      font=self.f_body, anchor="w", justify="left", wraplength=WIDTH - 70, padx=24).pack(fill="x")
-            if locked and (d.missing or d.heroes_missing):
-                tk.Label(self.armies, text=why_not, bg=T.PANEL, fg=T.WARN, font=self.f_body, anchor="w",
-                         justify="left", wraplength=WIDTH - 70, padx=24).pack(fill="x")
+
