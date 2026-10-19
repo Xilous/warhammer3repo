@@ -313,7 +313,9 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
             if before == 0:
                 break
             click(ui, card)
-            after = wait.value_changes(lambda: _points(w, ptr), before, timeout=CLICK_EFFECT_S, must=False,
+            from bot.sensor.world import effect_timeout
+            after = wait.value_changes(lambda: _points(w, ptr), before, timeout=effect_timeout(CLICK_EFFECT_S, 2.5),
+                                       must=False,
                                        what=f"skill point taken by {sk}")
             if after is None or after >= before:
                 NOT_TAKEN.add((ptr, sk, _turn(w)))   # not again this turn (2026-10-18: a locked mount skill was

@@ -48,7 +48,8 @@ PARK = (1700, 700)
 PANEL = "settlement_panel"
 CATEGORIES_FILE = config.RUNS_DIR / "build_categories.json"
 AUTOMATION_FILE = config.STRATEGY_DIR / "automation.json"
-EFFECT_TIMEOUT_S = 1.0        # a click on a card / button that has not started construction by then never will
+EFFECT_TIMEOUT_S = 1.0        # (3 s in multiplayer: _effect_s)
+# a click on a card / button that has not started construction by then never will
                               # (measured 2026-10-16: the slot shows construction 10-100 ms after the click)
 POPUP_TIMEOUT_S = 0.3         # hovering a slot opens its popup in 18-22 ms (measured 2026-10-16)
 
@@ -279,7 +280,7 @@ def _slot_popup(ui, slot, cid: str, timeout: float = POPUP_TIMEOUT_S):
 
 
 def _await_started(w: World, S: int, what: str) -> bool:
-    return bool(wait.wait_until(lambda: constructing(w, S), EFFECT_TIMEOUT_S, what, must=False))
+    return bool(wait.wait_until(lambda: constructing(w, S), _effect_s(), what, must=False))
 
 
 def _settled(ui, ptr: int, what: str):
@@ -348,6 +349,11 @@ def _why_greyed(ui, card: int) -> str:
     return ""
 
 
+def _effect_s() -> float:
+    from bot.sensor.world import effect_timeout
+    return effect_timeout(EFFECT_TIMEOUT_S, 3.0)
+
+
 def ui_upgrade(ui, w: World, S: int, slot, level_key: str) -> bool:
     REASON["last"] = ""
     pop = _slot_popup(ui, slot, "building_construction_popup")
@@ -386,7 +392,7 @@ def ui_repair(ui, w: World, F: int, S: int, slot) -> tuple[str, int]:
     gold = treasury(w, F)
     if ui.id(btn) != "button_repair" or not _press(ui, btn, "button_repair"):
         return "not started", 0
-    after = wait.value_changes(lambda: treasury(w, F), gold, timeout=EFFECT_TIMEOUT_S, must=False,
+    after = wait.value_changes(lambda: treasury(w, F), gold, timeout=_effect_s(), must=False,
                                what=f"repair paid for {slot.id}")
     if after is None or after >= gold:
         return "not started", 0

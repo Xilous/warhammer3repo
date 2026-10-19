@@ -403,11 +403,13 @@ def _click_node(ui, w, T: int, k) -> str:
     before = w.q(T + 0x30)
     click(ui, k.ptr)
     move_to(*PANEL_PARK)
-    took = wait.wait_until(lambda: researching(w, T) or w.q(T + 0x30) != before, REGISTER_TIMEOUT,
+    from bot.sensor.world import effect_timeout
+    took = wait.wait_until(lambda: researching(w, T) or w.q(T + 0x30) != before, effect_timeout(REGISTER_TIMEOUT, 3.0),
                            "research click registered ([T+0x30] or research)", must=False)
     if not took:
         return "lost"
-    return "started" if wait.wait_until(lambda: researching(w, T), RESEARCH_TIMEOUT, "research started",
+    return "started" if wait.wait_until(lambda: researching(w, T), effect_timeout(RESEARCH_TIMEOUT, 3.0),
+                                        "research started",
                                         must=False) else "ignored"
 
 
@@ -456,8 +458,11 @@ def run(log=print) -> str:
                     tried.append(f"{_name(key, ns)}: node not on screen")
                     continue
                 outcome = _click_node(ui, w, T, k)
-                if outcome == "lost" and not researching(w, T):
-                    outcome = _click_node(ui, w, T, k)      # not taken at all (no [T+0x30] write): once more
+                from bot.sensor.world import multiplayer
+                if outcome == "lost" and not researching(w, T) and not multiplayer(w):
+                    # not taken at all (no [T+0x30] write): once more; never in multiplayer, where a click lands
+                    # seconds later and a second one can undo it (2026-10-18)
+                    outcome = _click_node(ui, w, T, k)
                 if outcome == "started":
                     break
                 tried.append(f"{_name(key, ns)}: click " + ("ignored" if outcome == "ignored" else "not taken"))

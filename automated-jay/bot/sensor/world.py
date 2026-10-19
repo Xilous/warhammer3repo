@@ -643,3 +643,40 @@ def characters(w: World, F: int) -> list[Character]:
         except Exception:
             continue
     return out
+
+
+# ------------------------------------------------------------------ multiplayer latency
+_MP_CACHE: dict = {}
+
+
+def multiplayer(w: World | None = None) -> bool:
+    """Another human faction is in the loaded campaign (memory: the player's diplomacy list, is_human)."""
+    w = w or World()
+    m = w.s.model
+    if m in _MP_CACHE:
+        return _MP_CACHE[m]
+    F = find_player_faction(w)
+    hit = False
+    rel = w.q(F + 0xDB8) if F else 0
+    if rel:
+        n, base = w.u32(rel + 4), w.q(rel + 8)
+        for i in range(min(n, 4000)):
+            try:
+                o = w.q(base + 0x78 * i + 0x28)
+                if o and o != F and is_human(w, o):
+                    hit = True
+                    break
+            except Exception:
+                continue
+    _MP_CACHE.clear()
+    _MP_CACHE[m] = hit
+    return hit
+
+
+def effect_timeout(single: float, multi: float) -> float:
+    """How long to wait for a click's effect: in multiplayer the game applies an action only after syncing with
+    the other players, seconds later (2026-10-18: notices, research clicks), so the wait is longer there."""
+    try:
+        return multi if multiplayer() else single
+    except Exception:
+        return single
