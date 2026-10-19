@@ -56,7 +56,11 @@ NAMES = {"agent_options": "a Hero Actions panel",      # known panels that are n
          "dlc29_skv_chaotic_plans": "the Masterplans panel (Thanquol)"}
 CLOSE_BUTTONS = ("button_accept", "button_tick", "button_close", "button_ok", "button_dismiss")
 MAX_NOTICES = 24              # notices closed per check at most (they stack at turn start)
-CLOSE_TIMEOUT = 2.0           # s: a clicked notice must be gone (or show the next stacked notice) by then
+CLOSE_TIMEOUT = 5.0           # s: a clicked notice should be gone (or show the next stacked notice) by then;
+                              # multiplayer closes take seconds (2026-10-18: 2 s timed out, then closed)
+RECLICK_S = 8.0               # a notice just clicked is not clicked again for this long (it may still be closing)
+_CLICKED: dict = {}           # (id, title) -> when its close button was clicked
+import time as _time
 NEXT_NOTICE_MS = 150          # after the last notice closed: no root panel appearing for this long = none is coming
 
 
@@ -184,12 +188,20 @@ def dismiss_events(ui: UI | None = None) -> list[str]:
             if focus is None:
                 focus = game_focus()
                 focus.__enter__()
+            todo = [t for t in todo if _time.time() - _CLICKED.get((t[1], title(ui, t[0])), 0) > RECLICK_S]
+            if not todo:
+                break
             c, cid, btn = todo[0]
             before = _shows(ui, c)
+            _CLICKED[(cid, title(ui, c))] = _time.time()
             click(ui, btn)
-            wait.wait_until(lambda: not ui.effective_visible(btn) or _shows(ui, c) != before, CLOSE_TIMEOUT,
-                            f"{cid} notice closed")
-            closed.append(cid)
+            # multiplayer (2026-10-18): a notice closes some seconds after its button, once the game has synced
+            # with the other players; a slow close is not a failure, and the notice is not clicked again meanwhile
+            if wait.wait_until(lambda: not ui.effective_visible(btn) or _shows(ui, c) != before, CLOSE_TIMEOUT,
+                               f"{cid} notice closed", must=False):
+                closed.append(cid)
+            else:
+                break
     finally:
         if focus is not None:
             focus.__exit__(None, None, None)

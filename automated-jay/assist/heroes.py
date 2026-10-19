@@ -195,6 +195,58 @@ def _far(cam, x: float, y: float, h: float) -> bool:
     return math.hypot(x - cx, y - cy) > WASD_MAX
 
 
+_MP: dict = {}           # campaign model -> another human faction is in it (multiplayer)
+
+
+def multiplayer(w: World) -> bool:
+    """Another human faction is in the campaign (from memory: the player's diplomacy list, is_human)."""
+    from bot.sensor.world import is_human
+    m = w.s.model
+    if m not in _MP:
+        F = find_player_faction(w)
+        rel = w.q(F + 0xDB8) if F else 0
+        hit = False
+        if rel:
+            n, base = w.u32(rel + 4), w.q(rel + 8)
+            for i in range(min(n, 4000)):
+                try:
+                    o = w.q(base + 0x78 * i + 0x28)
+                    if o and o != F and is_human(w, o):
+                        hit = True
+                        break
+                except Exception:
+                    continue
+        _MP.clear()
+        _MP[m] = hit
+    return _MP[m]
+
+
+def pan_by_edge(w: World) -> bool:
+    """Pan with the cursor at the screen edge instead of WASD: multiplayer has no WASD camera (player note
+    2026-10-18: there the camera moves only by edge scrolling or the middle-button drag). strategy/automation.json
+    "camera_pan": "auto" (default: edge in multiplayer, WASD otherwise), "edge" or "keys"."""
+    try:
+        import json as _json
+        from bot import config as _cfg
+        mode = _json.load(open(_cfg.STRATEGY_DIR / "automation.json", encoding="utf-8")).get("camera_pan", "auto")
+    except Exception:
+        mode = "auto"
+    if mode in ("edge", "keys"):
+        return mode == "edge"
+    return multiplayer(w)
+
+
+def _edge_cursor(dirs: set[str]) -> None:
+    """The cursor on the screen edge (corner for a diagonal) that scrolls the camera toward dirs (w a s d); no
+    directions: back to the middle of the map, which stops the scrolling."""
+    import win32api
+    from bot import config as _cfg
+    W, H = _cfg.RESOLUTION
+    x = 0 if "a" in dirs else W - 1 if "d" in dirs else W // 2
+    y = 0 if "w" in dirs else H - 1 if "s" in dirs else H // 2
+    win32api.SetCursorPos((x, y))
+
+
 def bring_into_view(w: World, ui, x: float, y: float, comp_id: str, h: float = GROUND_H, jump=None):
     """Make the map label `comp_id` (of the thing at map position x, y, height h) clickable: inside SAFE and moving
     less than STILL_PX per frame. Returns (label Comp or None, jumped).
@@ -221,18 +273,23 @@ def bring_into_view(w: World, ui, x: float, y: float, comp_id: str, h: float = G
                 timing.wait_event(f"camera jump to {comp_id}", (time.perf_counter() - t0) * 1000, True, 0)
                 return k, True
     held: set[str] = set()
+    edge = pan_by_edge(w)
     end = time.perf_counter() + PAN_TIMEOUT
     frames = 0
     try:
         while time.perf_counter() < end:
             cam = read_camera(w.s)
             want = _steer(cam, _target_px(ui, cam, x, y, h, comp_id), x, y)
-            for key in held - want:
-                pydirectinput.keyUp(key, _pause=False)
             if want:
                 require_game_front()           # every frame while keys are down: an alt-tab stops the pan at once
-            for key in want - held:
-                pydirectinput.keyDown(key, _pause=False)
+            if edge:                           # multiplayer: the cursor at the screen edge toward the target
+                if want != held:
+                    _edge_cursor(want)
+            else:
+                for key in held - want:
+                    pydirectinput.keyUp(key, _pause=False)
+                for key in want - held:
+                    pydirectinput.keyDown(key, _pause=False)
             held = want
             if held:
                 frames += 1
@@ -247,8 +304,12 @@ def bring_into_view(w: World, ui, x: float, y: float, comp_id: str, h: float = G
             if not _steer(cam, _target_px(ui, cam, x, y, h, comp_id), x, y):
                 break                                  # on target but the game shows no label (or it is covered)
     finally:
-        for key in held:
-            pydirectinput.keyUp(key, _pause=False)
+        if edge:
+            if held:
+                _edge_cursor(set())
+        else:
+            for key in held:
+                pydirectinput.keyUp(key, _pause=False)
     timing.wait_event(f"camera pan to {comp_id}", (time.perf_counter() - t0) * 1000, False, frames)
     return None, jumped
 
