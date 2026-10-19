@@ -282,6 +282,7 @@ HUMAN = 0x1BC4                    # faction:is_human(): byte < 2 (the Lua bindin
 DEFAULT_FACTION = "wh2_main_skv_clan_skryre"
 PLAYER = {"key": None}            # the player's faction key, as last found (modules that need it: current_faction())
 _found: dict = {}                 # model -> (faction object, key): the search runs once per loaded campaign
+_confirmed: dict = {}             # model -> the local faction's key, once confirmed (HUD treasury, or the only one)
 
 
 def is_human(w: World, f: int) -> bool:
@@ -324,7 +325,24 @@ def find_player_faction(w: World) -> int | None:
             continue
     if not found:
         return None
-    p, name = found[0] if len(found) == 1 else _local_of(w, found)
+    # 2026-10-18, multiplayer (Thanquol with friends on Ikit and Slaanesh): one pass read Thanquol's path and failed,
+    # Ikit's faction was the only candidate and the pass acted as Ikit. The faction confirmed against the HUD is kept
+    # for the campaign; a read without it, or a HUD that matches no candidate, gives None (the pass waits).
+    sure = _confirmed.get(model)
+    if sure is not None:
+        hit = next(((p, n) for p, n in found if n == sure), None)
+        if hit is None:
+            return None
+        p, name = hit
+    elif len(found) == 1 and not _other_assistant_humans(w, found[0][0], want):
+        p, name = found[0]
+        _confirmed[model] = name
+    else:
+        got = _local_of(w, found)
+        if got is None:
+            return None
+        p, name = got
+        _confirmed[model] = name
     _found.clear()
     _found[model] = (p, name)
     if PLAYER["key"] != name:
@@ -353,7 +371,24 @@ def _local_of(w: World, found: list[tuple[int, str]]) -> tuple[int, str]:
             return mine[0]
     except Exception:
         pass
-    return found[0]
+    return None                                    # not a guess (it was found[0]: another player's faction)
+
+
+def _other_assistant_humans(w: World, F: int, want: list[str]) -> bool:
+    """Another human faction of a clan the assistant plays is in the campaign (F's diplomacy list): then one
+    candidate is not enough, the HUD must say which is local."""
+    rel = w.q(F + 0xDB8)
+    if not rel:
+        return False
+    n, base = w.u32(rel + 4), w.q(rel + 8)
+    for i in range(min(n, 4000)):
+        try:
+            o = w.q(base + 0x78 * i + 0x28)
+            if o and o != F and is_human(w, o) and w.faction_name(o) in want:
+                return True
+        except Exception:
+            continue
+    return False
 
 
 def player_faction_key(w: World) -> str | None:
