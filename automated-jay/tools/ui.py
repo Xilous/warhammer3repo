@@ -315,8 +315,10 @@ def other_players_pending(ui) -> str | None:
         return None
     if not c:
         return None
-    texts = [t for b, _n, _r in ui.nodes(c) if (t := (ui.text(b) or "").strip())]
-    who = [t for t in texts if not t.lower().startswith("involved players")]
+    import re
+    texts = [" ".join(re.sub(r"\[\[[^\]]*\]\]", "", t).split())
+             for b, _n, _r in ui.nodes(c) if (t := (ui.text(b) or "").strip())]
+    who = [t for t in texts if t and not t.lower().startswith("involved players")]   # (flag icons are [[img:...]])
     return ", ".join(who) or "another player"
 
 
