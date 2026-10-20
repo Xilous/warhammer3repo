@@ -51,7 +51,7 @@ ALLOWED = {
     "assist/runner.py::press_end_turn": "ui-only",
     "assist/skills.py::_lords_row": "click",
     "assist/skills.py::_selected": "click",
-    "assist/skills.py::_spend": "fallback",                       # memory_state first, the card logged against it
+    "assist/skills.py::_walk": "fallback",                        # memory_state first, the card logged against it (_spend's walk)
     "assist/workshop.py::run": "fallback",                        # level from memory; the card confirms
     "tools/ui.py::other_players_pending": "ui-only",
 }

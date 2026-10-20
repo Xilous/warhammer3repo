@@ -386,6 +386,54 @@ def treasury(w: World, F: int) -> int:
     return struct.unpack("<i", w.pm.read_bytes(F + 0xD58, 4))[0]
 
 
+OWED_FILE = config.RUNS_DIR / "army_owed.json"   # {"campaign", "turn", "gold"}: units queued this turn but not paid
+                                                 # yet (spilled over past the recruitment capacity), across armies,
+                                                 # passes and restarts, so no later click spends their gold. Which
+                                                 # queued units are paid is not decoded from memory yet.
+
+
+def _owed() -> dict:
+    try:
+        return json.loads(OWED_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def _owed_key(w: World) -> tuple:
+    s = w.s.read()
+    return (f"{w.s.model:#x}" if w.s.model else "", s.turn)
+
+
+def owed_now(w: World) -> int:
+    try:
+        o, (cid, turn) = _owed(), _owed_key(w)
+        return int(o.get("gold", 0)) if (o.get("campaign"), o.get("turn")) == (cid, turn) else 0
+    except Exception:
+        return 0
+
+
+def owe(w: World, gold: int) -> None:
+    try:
+        cid, turn = _owed_key(w)
+        OWED_FILE.write_text(json.dumps({"campaign": cid, "turn": turn, "gold": owed_now(w) + gold}), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def base_prices() -> dict[str, int]:
+    return {r["unit"]: int(r.get("recruitment_cost") or 0) for r in gd._load("main_units_tables")}
+
+
+def saving_reserve_of(w: World, F: int) -> int:
+    from .build import saving_reserve
+    return saving_reserve(w, F)
+
+
+def spendable(w: World, F: int) -> int:
+    """Gold the army step may spend now: the treasury less what the buildings keep and what spilled-over units owe."""
+    return treasury(w, F) - saving_reserve_of(w, F) - owed_now(w)
+
+
 def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: int = 0) -> list[str]:
     btn = first(ui, "button_recruitment")
     if btn is None:
@@ -403,11 +451,8 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: in
     # Gold is checked before every click (player report 2026-10-20), counting the units queued this run but not paid
     # yet. The price: the base cost until a paid click shows the real one (discounts such as the Scrap Heap's are in
     # it). Gold the building step saves this turn stays (player decision 2026-10-20: buildings take precedence).
-    from bot.sensor.world import recruitment_queue
-    from .build import saving_reserve
-    keep = saving_reserve(w, F)
-    price = {r["unit"]: int(r.get("recruitment_cost") or 0) for r in gd._load("main_units_tables")}
-    owed = 0                                   # queued this run, not charged yet
+    keep = saving_reserve_of(w, F)
+    price = base_prices()
 
     def queued() -> int:
         try:
@@ -417,7 +462,7 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: in
     for unit, n in missing.items():
         done = 0
         for _ in range(n):
-            gold = treasury(w, F) - owed
+            gold = treasury(w, F) - owed_now(w)
             if gold - price.get(unit, 0) < keep:
                 out.append(f"{unit_name(unit)}: {price.get(unit, 0)} gold each, {gold} in the treasury"
                            + (f", {keep} kept for the buildings this turn" if keep else ""))
@@ -438,7 +483,7 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: in
             if (paid := before - treasury(w, F)) > 0:
                 price[unit] = paid                 # the real price, for the next click
             else:
-                owed += price.get(unit, 0)         # spilled over: paid when it starts
+                owe(w, price.get(unit, 0))         # spilled over: paid when it starts
             done += 1
         if done:
             out.append(f"queued {done} {unit_name(unit)}")
@@ -826,10 +871,19 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
     for c in extra_heroes(w, F, army):
         out.append(f"extra hero {c.name} in {name}: remove it yourself")
     d0 = delta(army, [])
+    # What the gold allows now, from memory (2026-10-20: Thanquol's 17 Warpfire Throwers were disbanded on a turn
+    # the gold was kept for the buildings, leaving him alone at Zhufbar): nothing affordable = no disband and no
+    # recruitment panel this turn.
+    prices = base_prices()
+    cheapest = min((prices.get(u, 0) for u in d0.missing), default=0)
+    broke = bool(d0.missing) and spendable(w, F) < cheapest
     # Player rule: never strip an army away from its recruiting province (a lone lord gets attacked on the
     # march). Off-template troops are disbanded only once the army stands in a province that can recruit its
     # missing units locally, right before recruiting the replacements.
-    if d0.disband:
+    if d0.disband and broke:
+        out.append(f"keeping off-template units: no gold for a replacement this turn ({spendable(w, F)} to spend, "
+                   f"{cheapest} needed)")
+    elif d0.disband:
         if not d0.missing or here in eligible(w, F, set(d0.missing)):
             if not select_army(ui, army):
                 return [f"{name}: could not select the army"], None
@@ -842,10 +896,22 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
     if missing:
         elig = eligible(w, F, set(missing))
         if here in elig:
-            if not select_army(ui, army):
-                return [f"{name}: could not select the army"], None
-            out += recruit_local(ui, w, F, {u: n for u, n in missing.items() if u in elig[here]}, log,
-                                 mf=army.force_ptr)
+            # room: 20 units, an empty slot kept for a missing Warlock Engineer; queued units count (2026-10-20)
+            room = 20 - len(army.units) - len(army.queued) - d.heroes_missing.get(ENGINEER, 0)   # (a walking-in one too)
+            want, left = {}, max(0, room)
+            for u, n in missing.items():                   # template order: the Stormfiends (front line) first
+                if u in elig[here] and left > 0:
+                    want[u] = min(n, left)
+                    left -= want[u]
+            cheapest = min((prices.get(u, 0) for u in want), default=0)
+            if not want:
+                out.append("no free unit slot to recruit into")
+            elif spendable(w, F) < cheapest:
+                out.append(f"no gold to recruit this turn ({spendable(w, F)} to spend, {cheapest} needed)")
+            else:
+                if not select_army(ui, army):
+                    return [f"{name}: could not select the army"], None
+                out += recruit_local(ui, w, F, want, log, mf=army.force_ptr)
         else:
             tgt = closest_target(w, F, army, elig)
             if tgt is None:
@@ -910,11 +976,13 @@ def missed() -> list[str]:
 def run(log=print, verify: bool = False) -> str:
     """verify: the runner's verification run (assist/runner.py): only disbands, recruitment and engineer recruitment
     are redone if they did not happen; march and walk orders are not issued again."""
-    ticked = enabled_armies()
     w = World()
     F = find_player_faction(w)
     if F is None:
         return "player faction not found"
+    # the ticks of the player's faction, read after the faction is known (2026-10-20: read first, a fresh process saw
+    # the default faction's ticks, Ikit's, in a Thanquol campaign and did nothing)
+    ticked = enabled_armies(w.faction_name(F))
     ui = UI(w.s)
     ui.find_root()
     out, acting = [], []

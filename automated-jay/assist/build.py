@@ -166,12 +166,16 @@ def spend_rank(o: OwnedSettlement, a) -> tuple:
 
 
 def saving_reserve(w: World, F: int | None = None) -> int:
-    """Gold the building step is saving this turn (the army step leaves it alone), 0 when none."""
+    """Gold the army step leaves alone this turn: what the saved-for item still needs beyond next turn's net income,
+    so it is affordable next turn whatever the army queues now (2026-10-20: keeping its whole cost blocked every
+    recruit on every saving turn, and Thanquol was disbanded down to his lord). 0 when nothing is saved for."""
     try:
         turn = w.s.read().turn
     except Exception:
         return 0
-    return int(SAVING.get("gold", 0)) if SAVING.get("turn") == turn else 0
+    if SAVING.get("turn") != turn:
+        return 0
+    return max(0, int(SAVING.get("gold", 0)) - int(SAVING.get("net", 0)))
 
 
 SPECIAL = ("special", "landmark", "legendary", "unique", "wonder")
@@ -919,7 +923,7 @@ def run(log=print, override_blocked: bool = False) -> str:
             if cost > gold:
                 if rank[0] <= SAVE_UP_TO and cost - gold <= SAVE_TURNS * net:
                     SAVING.update(turn=w.s.read().turn, gold=cost, item=f"{gd.place_name(o.region)}: {a.item}",
-                                  rank=rank)
+                                  rank=rank, net=net)
                 problems.append(f"{o.region}: {a.item} needs {cost} gold")
                 continue
             if idx is None or not a.level_key:

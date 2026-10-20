@@ -322,12 +322,17 @@ def _links():
     return out
 
 
-def memory_state(w, ptr: int, sk: str, ranks: int) -> str:
+def memory_state(w, ptr: int, sk: str, ranks: int, node_set: str | None = None) -> str:
     """A skill's state from memory (player rule 2026-10-19: memory first): "taken" (at its planned rank: the
     character's skill list, army_builder.character_skills), "rank" (unlocks above the character's rank), "locked"
     (its node's REQUIRED parents not all taken, or fewer SUBSET_REQUIRED parents taken than required_num_parents),
     else "open". Taken and rank checked live; the node links are DB data and wait for their live check (_spend logs
-    every disagreement with the card)."""
+    every disagreement with the card).
+    The node is looked up in the character's own node set (2026-10-20: the first node anywhere with the skill key was
+    taken, e.g. Triangulation from Jorek's tree, Warp-Smart from Tretch's, whose parents are never taken, so those
+    skills read locked forever and the points went elsewhere). SUBSET_REQUIRED counts points: required_num_parents is
+    the number of points spent in the parent skills (live: Rally! needs 6, taken with Blastmaster 3 + Engineering
+    Skill 3)."""
     from .army_builder import character_skills
     taken = character_skills(w, ptr)
     if taken.get(sk, 0) >= ranks:
@@ -335,8 +340,9 @@ def memory_state(w, ptr: int, sk: str, ranks: int) -> str:
     rank = _rank(w, ptr)
     if rank is not None and _unlock_ranks().get(sk, 0) > rank:
         return "rank"
-    nodes = _tables()[0]
-    node = next((k for k, n in nodes.items() if n["character_skill_key"] == sk), None)
+    nodes, _e, _m, set_items = _tables()
+    pool = set_items.get(node_set, []) if node_set else nodes
+    node = next((k for k in pool if k in nodes and nodes[k]["character_skill_key"] == sk), None)
     if node:
         links = _links().get(node, [])
         tk = lambda p: taken.get(nodes[p]["character_skill_key"], 0) if p in nodes else 0
@@ -344,7 +350,7 @@ def memory_state(w, ptr: int, sk: str, ranks: int) -> str:
             return "locked"
         sub = [p for p, t in links if t == "SUBSET_REQUIRED"]
         need = nodes[node].get("required_num_parents") or 0
-        if sub and sum(1 for p in sub if tk(p) >= 1) < max(1, need):
+        if sub and sum(tk(p) for p in sub) < max(1, need):
             return "locked"
     return "open"
 
@@ -358,18 +364,27 @@ def _log_check(**fields) -> None:
         pass
 
 
-def _spend(ui, w, ptr: int, plan) -> list[str]:
+def _spend(ui, w, ptr: int, plan, node_set: str | None = None) -> list[str]:
     tree = _Tree(ui)
     if tree.clip is None:
         return []
     out = []
+    # After every skill taken the order is walked again from the top (2026-10-20: a skill unlocked by a point spent
+    # earlier in the same pass was passed over, and the point went to a skill lower in the order)
+    while _walk(ui, w, ptr, plan, node_set, tree, out):
+        pass
+    return out
+
+
+def _walk(ui, w, ptr: int, plan, node_set, tree, out: list) -> bool:
+    """One walk down the order; True as soon as a skill was taken (the caller walks again from the top)."""
     for sname, ranks, sk in plan:
         if _points(w, ptr) == 0:
-            break
+            return False
         card = tree.card(sk)
         if card is None:
             continue
-        mem = memory_state(w, ptr, sk, ranks)
+        mem = memory_state(w, ptr, sk, ranks, node_set)
         ui_locked = (ui.state(card) or "") in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card))
         if (mem != "open") != ui_locked:               # the data for the switch to memory only: see memory_state
             _log_check(skill=sk, memory=mem, card=ui.state(card), points=_points(w, ptr))
@@ -416,7 +431,8 @@ def _spend(ui, w, ptr: int, plan) -> list[str]:
                     break
         if n:
             out.append(f"{sname} x{n}")
-    return out
+            return True
+    return False
 
 
 # ------------------------------------------------------------------ the automation step
@@ -438,7 +454,7 @@ def run(log=print) -> str:
                 if not _show(ui, char_id, rows[key]):
                     done.append(f"{name}: could not open skills")
                     continue
-                spent_here = _spend(ui, w, ptr, plans[key])
+                spent_here = _spend(ui, w, ptr, plans[key], orders()["characters"][key]["node_set"])
                 if spent_here:
                     done.append(f"{name}: " + ", ".join(spent_here))
                     log(f"skills: {name}: {', '.join(spent_here)}")

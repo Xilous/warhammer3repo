@@ -11,7 +11,7 @@ disbands them, so they stop costing) and adds the missing ones and the Warlock E
 upkeep, and one more Supply Lines step on every unit of every army.
 """
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import replace, dataclass, field
 
 from .army import delta, enabled_armies, tick_for
 from .new_army import ENGINEER_UNIT, template_upkeep, upkeep_of
@@ -96,7 +96,9 @@ def compute(w, F) -> Finance:
     fin = Finance(eco.net, [], pct, eco.difficulty, round(k, 3))
     after_bases = {}
     for a in fielded:
-        d = delta(a, [])
+        # queued units are not in the army yet but will be paid for: the projection counts them as missing (2026-10-20:
+        # delta counts them as present, so they were in neither the current nor the refilled upkeep)
+        d = delta(replace(a, queued=[]), [])
         lord = [a.units[0].key] if a.units else []
         keep = [u.key for u in a.units[1:]]
         for key in d.disband:
