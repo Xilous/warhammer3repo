@@ -316,11 +316,12 @@ class Runner:
     def post(self, state: str, headline: str, detail: str = "", turn: int | None = None) -> None:
         turn = self.last_turn if turn is None else turn
         key = (state, headline, detail, turn)
-        if key == self._last_post:            # polled states repeat every 2 s: say it once
-            return
-        self._last_post = key
-        print(f"[{datetime.now():%H:%M:%S}] {headline} {detail}".rstrip(), flush=True)
-        write_state(state, headline, detail, turn)
+        if key != self._last_post:            # polled states repeat every 2 s: logged once
+            self._last_post = key
+            print(f"[{datetime.now():%H:%M:%S}] {headline} {detail}".rstrip(), flush=True)
+            write_state(state, headline, detail, turn)
+        # the widget always gets it (2026-10-20: a second Build & End Turn press got the same answer as the first,
+        # the repeat was dropped, and the button kept the QUEUED spinner it shows the moment it is pressed)
         if self.widget:
             self.widget.post(state, headline, detail)
 
@@ -1125,6 +1126,16 @@ class Runner:
         code, why = phase(self.ui)
         self._timeline(s.turn, code, why)
         st = self._record(s.turn)                      # (a new turn or campaign drops what the old one owed)
+        if st.end_done and code == "free" and not self.busy.locked():
+            # multiplayer: the turn was ended, and is open again on the same turn (2026-10-20, turn 7: the ready
+            # tick went off 16 s after End Turn, the friend ready). Not ended any more: say so, and a Build & End
+            # Turn press ends it again. Never pressed again on its own (a second End Turn un-ends; the player may
+            # have reopened it on purpose)
+            self._mark(s.turn, end_done=False)            # (self.end_done stays: the end-of-turn steps did run)
+            self.rail(end="pending")
+            self.post("your turn", f"TURN {s.turn} REOPENED", "your End Turn was cancelled (by the game or a click "
+                      "on End Turn); press Build & End Turn to end it again", turn=s.turn)
+            return
         owed = st.owes()
         if owed and not self.busy.locked() and code == "free":
             if owed[0] == "end":
