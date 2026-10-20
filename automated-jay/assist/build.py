@@ -131,7 +131,47 @@ def _actions(models, blocked: dict, override_blocked: bool = False):
                     todo.append((o, a, busy))
                 elif a.kind == "replace" and buildings_setting("off_list_buildings", "ask") == "replace"                         and replaceable(o, slot_index_for(o, a)):
                     todo.append((o, a, busy))
+    todo.sort(key=lambda t: spend_rank(t[0], t[1]))
     return todo, skipped
+
+
+# Spending order across all provinces (player decision 2026-10-20). Before, the gold went province by province down
+# each list and anything affordable lower down was bought while a top item waited, so the recruit buildings and the
+# landmarks never got saved for. Now: main building (and port) upgrades, which unlock slots and tiers; the Warpstone
+# Reactor line (+30/40/50% income from every building in the province, paid back in about 6 turns, landmarks' income
+# included); landmarks; the army template's recruit buildings, the capital closest to tier 5 first; then the rest in
+# settlements.json order. The settlement list itself still decides which buildings get a slot.
+RECRUIT_CHAINS = ("wh3_dlc29_skv_stormfiends", "wh2_main_skv_engineers")
+REACTOR_CHAIN = "wh2_main_skv_energy"
+SAVE_TURNS = 2              # a top item affordable within this many turns of net income is saved for
+SAVE_UP_TO = 3              # saving only for ranks 0-3 (main, Reactor, landmarks, recruit buildings), never fillers
+SAVING: dict = {}           # this turn's saving: {"turn", "gold", "item", "rank"}; the army step keeps the gold too
+
+
+def spend_rank(o: OwnedSettlement, a) -> tuple:
+    """Where an action stands in the spending order (lower first)."""
+    from .buildplan import current_tier
+    if a.kind in ("upgrade_main", "upgrade_port"):
+        return (0, 0, a.cost)
+    lv = level_of(a.level_key) if a.level_key else None
+    chain = lv[0] if lv else None
+    if chain == REACTOR_CHAIN:
+        return (1, 0, a.cost)
+    if chain is not None and chain in o.model.landmarks:
+        return (2, 0, a.cost)
+    if chain in RECRUIT_CHAINS:
+        return (3, -current_tier(o.model), o.province, RECRUIT_CHAINS.index(chain))
+    names = [e["name"] for e in strategy()["priority"]]
+    return (4, names.index(a.item) if a.item in names else len(names), a.cost)
+
+
+def saving_reserve(w: World, F: int | None = None) -> int:
+    """Gold the building step is saving this turn (the army step leaves it alone), 0 when none."""
+    try:
+        turn = w.s.read().turn
+    except Exception:
+        return 0
+    return int(SAVING.get("gold", 0)) if SAVING.get("turn") == turn else 0
 
 
 SPECIAL = ("special", "landmark", "legendary", "unique", "wonder")
@@ -719,8 +759,11 @@ def missed(w: World | None = None) -> list[str]:
     models, blocked = build_models(w, snap)
     todo, _ = _actions(models, blocked)
     gold = w.s.read().treasury or 0
+    keep = SAVING.get("rank") if SAVING.get("turn") == w.s.read().turn else None
     out = []
     for o, a, _busy in todo:
+        if keep is not None and spend_rank(o, a) > keep:
+            continue                              # held back: the run saved for a higher item (SAVING)
         idx = slot_index_for(o, a)
         S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
         if S and constructing(w, S):
@@ -828,8 +871,20 @@ def run(log=print, override_blocked: bool = False) -> str:
                     log(f"build: {done[-1]}")
                 else:
                     problems.append(f"workshop: could not start the Construction Cavern in {place}")
-        # 3. constructions and upgrades
+        # 3. constructions and upgrades, in spending order; a top item affordable within SAVE_TURNS turns of net
+        #    income is saved for: nothing ranked below it is bought this turn (player decision 2026-10-20)
+        SAVING.clear()
+        try:
+            from bot.sensor.economy import read as economy
+            net = max(economy(w, snap.faction).net, 0)
+        except Exception:
+            net = 0
+        held = 0
         for o, a, busy in todo:
+            rank = spend_rank(o, a)
+            if SAVING and rank > SAVING["rank"]:
+                held += 1
+                continue
             idx = slot_index_for(o, a)
             S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
             # right before the action, from memory: the plan still holds (multiplayer, 2026-10-19: the other players
@@ -857,12 +912,15 @@ def run(log=print, override_blocked: bool = False) -> str:
                 problems.append(f"{o.region}: {a.item} needs main building level {lvl}")
                 continue
             cost = real_cost(w, snap.faction, a)
-            if cost > gold:
-                problems.append(f"{o.region}: {a.item} needs {cost} gold")
-                continue
             need = dev_cost(a.level_key, w)
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
                 problems.append(f"{o.region}: {a.item} needs {need} development points (the province has {have})")
+                continue
+            if cost > gold:
+                if rank[0] <= SAVE_UP_TO and cost - gold <= SAVE_TURNS * net:
+                    SAVING.update(turn=w.s.read().turn, gold=cost, item=f"{gd.place_name(o.region)}: {a.item}",
+                                  rank=rank)
+                problems.append(f"{o.region}: {a.item} needs {cost} gold")
                 continue
             if idx is None or not a.level_key:
                 _failed(problems, o, a, f"{o.region}: no slot for {a.item}")
@@ -915,6 +973,10 @@ def run(log=print, override_blocked: bool = False) -> str:
     parts = []
     if done:
         parts.append("; ".join(done))
+    if SAVING:
+        parts.append(f"saving for {SAVING['item']} ({SAVING['gold']} gold, {gold} now, about "
+                     f"{-(-(SAVING['gold'] - gold) // max(net, 1))} turn(s) of income)"
+                     + (f"; {held} cheaper item(s) wait for it" if held else ""))
     if skipped:
         parts.append("blocked: " + ", ".join(gd.place_name(p) for p, _ in skipped))
     if problems:

@@ -381,6 +381,13 @@ turns by itself, and drafts the assistant replaced. Nothing imports it and it mu
 - Equipment Warpforge is one per province. The Warp-Turbine Plant is capital only (never a lone Cavern in a minor);
   a Construction Cavern left in a minor is off the list there and replaced.
 - Clan Armoury (Stormvermin) is off the list since 2026-10-20; a standing one is replaced when its slot is needed.
+- Spending (2026-10-20, `assist/build.py` `spend_rank`): the gold goes across all provinces at once, in value order:
+  main building and port upgrades; the Warpstone Reactor line (+30/40/50% income from every building in the
+  province, paid back in about 6 turns); landmarks; the template's recruit buildings, the capital closest to tier 5
+  first; then the rest in list order. A top item affordable within 2 turns of net income is saved for: nothing
+  below it is bought that turn, and the army step leaves that gold alone too ("saving for ..." in the result).
+- The army step checks the gold before every recruit click (base price until a click shows the real one), so it
+  never clicks on with an empty treasury.
 - Nothing is planned above the current main-building tier. Buildings that are not on the list are only
   offered for replacement, never demolished silently.
 

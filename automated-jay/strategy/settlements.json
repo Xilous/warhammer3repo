@@ -7,7 +7,8 @@
     "If slots run out, lower entries are dropped. Leftover slots stay empty.",
     "A chain set to null for a settlement type is not buildable there and is skipped.",
     "per_province: at most that many of the chain per province. Capital is considered first, then minor settlements.",
-    "Order since 2026-10-20 (player decision, Stormvermin replaced by Warp-Doom Magma-Cannons): landmarks always stay, then the two buildings that recruit the army template (Equipment Warpforge, Warp-Turbine Plant), then the rest. A capital has 7 slots besides the main building (6 with a port): chains that reach tier 5 (Reactor, Temple) come before the tier-3 ones (Breeding Pit, Scrap Heap), which are the minor settlements' buildings; Chained Sentry Beasts and Spy Nests are filler and go first. Clan Armoury (Stormvermin) is off the list: a standing one is replaced when its slot is needed.",
+    "Order since 2026-10-20 (player decisions, Stormvermin replaced by Warp-Doom Magma-Cannons): the Warpstone Reactor (province-wide income multiplier) first, landmarks always stay, then the two buildings that recruit the army template (Equipment Warpforge, Warp-Turbine Plant), then the rest. A capital has 7 slots besides the main building (6 with a port): chains that reach tier 5 (Reactor, Temple) come before the tier-3 ones (Breeding Pit, Scrap Heap), which are the minor settlements' buildings; Chained Sentry Beasts and Spy Nests are filler and go first. Clan Armoury (Stormvermin) is off the list: a standing one is replaced when its slot is needed.",
+    "Spending (assist/build.py spend_rank, 2026-10-20): gold goes across all provinces in this order, not province by province: main building and port upgrades, the Reactor line, landmarks, the recruit buildings (capital closest to tier 5 first), then the rest in list order. A top item (any of those four) affordable within 2 turns of net income is saved for: nothing below it is bought, and the army step leaves that gold alone too.",
     "What a capital lets go: no port: Spy Nests; one landmark or a port: Sentry Beasts and Spy Nests; port + landmark: also the Scrap Heap; port + 2 landmarks: also the Breeding Pit."
   ],
   "main_chain": {
@@ -16,13 +17,14 @@
   },
   "port_chain": "wh2_main_skv_port",
   "priority": [
+    {"name": "Warpstone Reactor",         "chain": {"capital": "wh2_main_skv_energy", "minor": null},
+     "_why": "+30/40/50% income from every building in the province (all its settlements), paid back in about 6 turns; first in the list and first in spending after main building upgrades (player decision 2026-10-20)."},
     {"name": "Landmarks",                 "landmarks": true, "skip": ["wh3_dlc29_skv_special_morskittar_engine"],
      "_skip": "Landmarks never planned (player rule 2026-10-18): the Morskittar Engine (Zhufbar) is single player only, locked by Thanquol's story until mission 5 and locked out in multiplayer; its slot takes the next building on the list."},
     {"name": "Equipment Warpforge",       "chain": {"capital": "wh3_dlc29_skv_stormfiends", "minor": null}, "per_province": 1,
      "_why": "Recruits the Stormfiends (Ratling Cannons) of the army template. Tier 5: capitals only."},
     {"name": "Warp-Turbine Plant",        "chain": {"capital": "wh2_main_skv_engineers", "minor": null},
      "_why": "Recruits the Warp-Doom Magma-Cannons of the army template (2026-10-20); its Construction Cavern level also recruits Warlock Engineers and counts for Ikit's Workshop level 2. Tier 5: capitals only (minor null, so a minor never gets a lone Cavern). No per_province: a province has one capital, and per_province would let an old Cavern in a minor claim the chain and keep it out of the capital."},
-    {"name": "Warpstone Reactor",         "chain": {"capital": "wh2_main_skv_energy", "minor": null}},
     {"name": "Temple of the Horned Rat",  "chain": {"capital": "wh2_main_skv_order", "minor": null}},
     {"name": "Breeding Pit",              "chain": "wh2_main_skv_farm"},
     {"name": "Scrap Heap",                "chain": "wh2_main_skv_industry"},

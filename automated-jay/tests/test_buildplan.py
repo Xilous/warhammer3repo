@@ -42,23 +42,24 @@ RECRUIT = ["Equipment Warpforge", "Warp-Turbine Plant"]       # the army templat
 
 
 def test_capital_layout_in_priority_order_without_landmark():
-    # 2026-10-20: the template's recruit buildings first, then tier-5 chains before the tier-3 ones, fillers last
+    # 2026-10-20: the Reactor (province income multiplier), the template's recruit buildings, then tier-5 chains before
+    # the tier-3 ones, fillers last
     p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), None, [None] * 7)]))[0]
-    assert names(p) == RECRUIT + ["Warpstone Reactor", "Temple of the Horned Rat", "Breeding Pit", "Scrap Heap",
-                                  "Chained Sentry Beasts"]
+    assert names(p) == ["Warpstone Reactor"] + RECRUIT + ["Temple of the Horned Rat", "Breeding Pit", "Scrap Heap",
+                                                          "Chained Sentry Beasts"]
 
 
 def test_capital_with_landmark_lets_go_of_the_fillers():
     p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), None, [None] * 7, [LANDMARK])]))[0]
-    assert names(p) == ["Depths of the Pit"] + RECRUIT + ["Warpstone Reactor", "Temple of the Horned Rat",
-                                                          "Breeding Pit", "Scrap Heap"]
+    assert names(p) == ["Warpstone Reactor", "Depths of the Pit"] + RECRUIT + ["Temple of the Horned Rat",
+                                                                               "Breeding Pit", "Scrap Heap"]
 
 
 def test_port_capital_with_landmark_keeps_both_recruit_buildings():
     # the tightest common capital (6 slots): the landmark stays, the template stays recruitable, the Scrap Heap goes
     p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), B(PORT, 3), [None] * 6, [LANDMARK])]))[0]
-    assert names(p) == ["Depths of the Pit"] + RECRUIT + ["Warpstone Reactor", "Temple of the Horned Rat",
-                                                          "Breeding Pit"]
+    assert names(p) == ["Warpstone Reactor", "Depths of the Pit"] + RECRUIT + ["Temple of the Horned Rat",
+                                                                               "Breeding Pit"]
 
 
 def test_no_stormvermin_building_planned():

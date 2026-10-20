@@ -396,9 +396,21 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log) -> lis
         wait.stable(lambda: tuple(c for c, i, _r in ui.nodes(pool.ptr) if i.endswith("_recruitable")), n=2,
                     timeout=1.0, what="local recruitment pool listed", ui=ui, must=False)
     out = []
+    # Gold is checked before every click (player report 2026-10-20: clicks went on after the gold ran out, each refused
+    # one waited for a command that never came). The price: the unit's base cost until one click shows the real one
+    # (the treasury drop: discounts such as the Scrap Heap's are in it). Gold the building step saves this turn stays
+    # (player decision 2026-10-20: buildings take precedence).
+    from .build import saving_reserve
+    keep = saving_reserve(w, F)
+    price = {r["unit"]: int(r.get("recruitment_cost") or 0) for r in gd._load("main_units_tables")}
     for unit, n in missing.items():
         done = 0
         for _ in range(n):
+            gold = treasury(w, F)
+            if gold - price.get(unit, 0) < keep:
+                out.append(f"{unit_name(unit)}: {price.get(unit, 0)} gold each, {gold} in the treasury"
+                           + (f", {keep} kept for the buildings this turn" if keep else ""))
+                break
             card = first(ui, f"{unit}_recruitable", under="local1")
             if card is None:
                 break
@@ -411,6 +423,8 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log) -> lis
                                   lambda: treasury(w, F) < before)          # gold, however long the sync takes
             if st != "done":
                 break                          # not taken: local capacity full or not affordable
+            if (paid := before - treasury(w, F)) > 0:
+                price[unit] = paid                 # the real price, for the next click
             done += 1
         if done:
             out.append(f"queued {done} {unit_name(unit)}")

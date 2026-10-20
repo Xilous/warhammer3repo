@@ -940,6 +940,13 @@ def run(log=print, verify: bool = False) -> str:
                 out += manage_plans(ui, st, turn, state, w)
             if starting:
                 out += start_plans(ui, st, mem.read(w) or state, w, F)
+            if shop_on and (acting or starting):
+                # what to buy decided again from memory now: a completed Steal-Take has brought its Warpstone in and
+                # a started one has spent its 50 (2026-10-20, turn 24: Mighdal Vongalbarak's 265 Warpstone came in
+                # after the list was made, the Veteran Drillers were not bought and the check reported them missed)
+                now = mem.read(w) or state
+                buys, why = shop_plan(shop, now.warpstone, set(now.inventory),
+                                      {u.subtype for u in now.underlings if u.unlocked})
             if buys:
                 out += buy_secrets(ui, buys, w, F)
             if why:
