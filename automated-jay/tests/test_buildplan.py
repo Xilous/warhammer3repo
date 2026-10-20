@@ -37,34 +37,64 @@ def test_minor_settlement_caps_at_tier_3_and_skips_reactor():
     assert names(p) == ["Breeding Pit", "Scrap Heap", "Overseer's Lookout"]
 
 
+LANDMARK = "wh2_main_special_hellpit_pits"
+RECRUIT = ["Equipment Warpforge", "Warp-Turbine Plant"]       # the army template's two buildings (2026-10-20)
+
+
 def test_capital_layout_in_priority_order_without_landmark():
+    # 2026-10-20: the template's recruit buildings first, then tier-5 chains before the tier-3 ones, fillers last
     p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), None, [None] * 7)]))[0]
-    assert names(p) == ["Warpstone Reactor", "Breeding Pit", "Scrap Heap", "Temple of the Horned Rat",
-                        "Clan Armoury", "Equipment Warpforge", "Chained Sentry Beasts"]
+    assert names(p) == RECRUIT + ["Warpstone Reactor", "Temple of the Horned Rat", "Breeding Pit", "Scrap Heap",
+                                  "Chained Sentry Beasts"]
 
 
-def test_port_capital_with_landmark_runs_out_before_warpforge():
-    p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), B(PORT, 3), [None] * 6,
-                                                ["wh2_main_special_hellpit_pits"])]))[0]
-    assert names(p)[-1] == "Clan Armoury" and "Equipment Warpforge" not in names(p)
+def test_capital_with_landmark_lets_go_of_the_fillers():
+    p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), None, [None] * 7, [LANDMARK])]))[0]
+    assert names(p) == ["Depths of the Pit"] + RECRUIT + ["Warpstone Reactor", "Temple of the Horned Rat",
+                                                          "Breeding Pit", "Scrap Heap"]
 
 
-def test_one_armoury_per_province_goes_to_capital_first():
+def test_port_capital_with_landmark_keeps_both_recruit_buildings():
+    # the tightest common capital (6 slots): the landmark stays, the template stays recruitable, the Scrap Heap goes
+    p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), B(PORT, 3), [None] * 6, [LANDMARK])]))[0]
+    assert names(p) == ["Depths of the Pit"] + RECRUIT + ["Warpstone Reactor", "Temple of the Horned Rat",
+                                                          "Breeding Pit"]
+
+
+def test_no_stormvermin_building_planned():
+    for kind, s in (("capital", Settlement("c", True, B(MAJOR, 5), None, [None] * 7)),
+                    ("minor", Settlement("m", False, B(MINOR, 3), None, [None] * 3))):
+        assert "wh2_main_skv_clanrats" not in [t.chain for t in plan_province(Province("p", [s]))[0].layout], kind
+
+
+def test_minor_never_gets_the_cavern_line():
+    # a minor reaches tier 3 = a lone Construction Cavern, which recruits no template unit: never planned there
     plans = plan_province(Province("p", [
+        Settlement("c", True, B(MAJOR, 5), B(PORT, 3), [None] * 6, [LANDMARK]),
         Settlement("m", False, B(MINOR, 3), None, [None] * 3),
-        Settlement("c", True, B(MAJOR, 5), None, [None] * 7),
     ]))
-    by = {pl.settlement.name: names(pl) for pl in plans}
-    assert "Clan Armoury" in by["c"] and "Clan Armoury" not in by["m"]
+    by = {pl.settlement.name: [t.chain for t in pl.layout] for pl in plans}
+    assert "wh2_main_skv_engineers" in by["c"] and "wh2_main_skv_engineers" not in by["m"]
 
 
-def test_existing_armoury_in_minor_is_kept_and_not_duplicated():
+def test_old_cavern_in_a_minor_does_not_block_the_capital():
+    # a Workshop Cavern left in a minor (2026-10-17 rule) is off-list there and replaced; the capital still plans
+    # its own Warp-Turbine Plant
     plans = plan_province(Province("p", [
         Settlement("c", True, B(MAJOR, 5), None, [None] * 7),
-        Settlement("m", False, B(MINOR, 1), None, [B("wh2_main_skv_clanrats", 0)]),
+        Settlement("m", False, B(MINOR, 3), None, [B("wh2_main_skv_engineers", 0), None, None]),
     ]))
-    by = {pl.settlement.name: names(pl) for pl in plans}
-    assert "Clan Armoury" not in by["c"]
+    by = {pl.settlement.name: pl for pl in plans}
+    assert "Warp-Turbine Plant" in names(by["c"])
+    assert any(a.kind == "replace" and "Construction Cavern" in a.detail for a in by["m"].actions)
+
+
+def test_one_warpforge_per_province():
+    plans = plan_province(Province("p", [
+        Settlement("c", True, B(MAJOR, 5), None, [None] * 7),
+        Settlement("c2", True, B(MAJOR, 5), None, [None] * 7),
+    ]))
+    assert sum("Equipment Warpforge" in names(pl) for pl in plans) == 1
 
 
 def test_main_building_upgrade_comes_first():

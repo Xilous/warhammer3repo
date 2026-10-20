@@ -113,7 +113,9 @@ walk orders are not issued twice.
    3. **Buildings**: first every damaged building is repaired, then upgrades and constructions from your
       settlement priority list. Provinces where an enemy you are at war with holds a region, or that border one,
       are skipped, repairs included. A damaged building is never upgraded (the game would halt the upgrade).
-   4. **Army**: only armies you ticked in the window. Each is made to match the doomstack template: extra units
+   4. **Army**: only armies you ticked in the window. Each is made to match the doomstack template (since
+      2026-10-20: lord, 1 Warlock Engineer, 12 Stormfiends with Ratling Cannons, 6 Warp-Doom Magma-Cannons; pure
+      ranged, the cannons fire over the Stormfiends): extra units
       are disbanded once the army stands where its missing units can be recruited locally, missing units are
       recruited from the local pool (never the global one), the army is moved toward the nearest such province,
       and free Warlock Engineers are walked in. It spends the gold the buildings left.
@@ -156,8 +158,8 @@ Thanquol's Clan Scruten); there is nothing to set. What is different with Thanqu
 - **No Forbidden Workshop**: the Shop step does nothing.
 - Rites, tech tree and the army template are the same (Thanquol is an allowed lord); Ferocious Plans comes
   researched.
-- **Not built for him**: a Construction Cavern. Warlock Engineers need one somewhere; until you build one the
-  army builder says so.
+- **Warlock Engineers**: his capitals build the Warp-Turbine Plant line like Ikit's (it recruits the Magma Cannons),
+  and its Construction Cavern level is what recruits Warlock Engineers. Until one stands the army builder says so.
 
 ### The widget (everything without alt-tab)
 
@@ -182,7 +184,7 @@ while a pass runs. Drag the bar to move both. Restart and Exit are refused while
 | This turn | what each step did in the last pass |
 | **Armies** (tick boxes) | every field army and how it differs from the template. Tick an army to let the army step manage it; unticked armies are never touched. The ticks are saved in `strategy/automation.json`. Also lists heroes on their own and which provinces can recruit the template units now. |
 | **Army finances** | you decide when a new army is raised (the builder no longer raises one by itself). A green ✓ or orange ✗ line says whether you can afford a new army, after what the ticked refills will add. Below it: income per turn (last turn's, as the HUD shows it), the Supply Lines % per extra army for your difficulty, what each army costs now and what it would cost once refilled to the template (units not in the template are disbanded, so they drop out of upkeep and Supply Lines), and what the next army would add in all. Unit upkeep is the game's base upkeep with Supply Lines, calibrated against last turn's real army upkeep. All from memory (`assist/army_finance.py`, `bot/sensor/economy.py`). |
-| **Create new playbook army** | greyed out, with the reason, until a Verminlord Warpseer is in the Recruit Lord pool, a Warlock Engineer is free or the engineer cap has room, and a province recruits Stormvermin and Stormfiend Ratling Cannons. Pressed, it raises the Warpseer at once, ticks the new army and recruits the template. It does not stop you when the ✗ says it is not affordable: that is your call. |
+| **Create new playbook army** | greyed out, with the reason, until a Verminlord Warpseer is in the Recruit Lord pool, a Warlock Engineer is free or the engineer cap has room, and a province recruits Stormfiend Ratling Cannons and Warp-Doom Magma-Cannons. Pressed, it raises the Warpseer at once, ticks the new army and recruits the template. It does not stop you when the ✗ says it is not affordable: that is your call. |
 | Provinces where nothing is built | the provinces the building step skips, and why |
 
 The window only reads memory. It never sends input to the game.
@@ -370,8 +372,15 @@ turns by itself, and drafts the assistant replaced. Nothing imports it and it mu
 - Port settlements keep the port in slot 2 and upgrade it as far as the main building allows.
 - The rest of the slots are filled top to bottom from the list, each chain to the highest level the
   settlement allows. Lower entries are dropped when slots run out.
-- Clan Armoury and Equipment Warpforge are one per province. The capital gets first claim, and an
-  existing one elsewhere in the province is kept.
+- The order (player decision 2026-10-20): landmarks, then the two buildings that recruit the army template
+  (Equipment Warpforge, Warp-Turbine Plant, both tier 5, so capital only), then chains that reach tier 5
+  (Warpstone Reactor, Temple of the Horned Rat) before the tier-3 ones (Breeding Pit, Scrap Heap), fillers last
+  (Chained Sentry Beasts, Spy Nests). Minor settlements keep Breeding Pit, Scrap Heap, Overseer's Lookout.
+- What a capital lets go: no port: Spy Nests; one landmark or a port: also Sentry Beasts; port + landmark: also
+  the Scrap Heap; port + two landmarks: also the Breeding Pit. Every capital can recruit the template.
+- Equipment Warpforge is one per province. The Warp-Turbine Plant is capital only (never a lone Cavern in a minor);
+  a Construction Cavern left in a minor is off the list there and replaced.
+- Clan Armoury (Stormvermin) is off the list since 2026-10-20; a standing one is replaced when its slot is needed.
 - Nothing is planned above the current main-building tier. Buildings that are not on the list are only
   offered for replacement, never demolished silently.
 
@@ -383,7 +392,8 @@ Facts taken from the game data rather than assumed:
 | Warpstone Reactor chain is not allowed in minor settlements | secondary-slot chain sets |
 | Chained Sentry Beasts has a minor-settlement counterpart, Fortified Entries | garrison chain sets |
 | Spy Nests is tier 4, so minor settlements stop at Deep Burrows | building levels |
-| Equipment Warpforge needs tier 5, so it can only go in a capital | building levels |
+| Equipment Warpforge and Warp-Turbine Plant need tier 5, so they can only go in a capital | building levels |
+| Breeding Pit and Scrap Heap stop at tier 3; Reactor, Temple and Sentry Beasts reach tier 5 | building levels |
 
 Unverified: whether the port occupies one of the slots the main building unlocks. The planner assumes
 it does (`PORT_TAKES_A_SLOT`).
@@ -563,9 +573,12 @@ joins later. Verified once on 9.0.4 with a lord garrisoned in a settlement.
 Which provinces can recruit each template unit right now, from game data plus live memory:
 
 - Units are gated by buildings only; no game table locks these units behind a technology.
-  Stormvermin (Swords & Shields) need a Clan Armoury, Stormfiends (Ratling Cannons) an Equipment Warpforge.
+  Stormfiends (Ratling Cannons) need an Equipment Warpforge, Warp-Doom Magma-Cannons a Warp-Turbine Plant
+  (Thanquol's Morskittar Engine also has them, but it is single player only and never planned).
 - Warlock Engineers are recruitable in a province with a Construction Cavern chain building (or Galbaraz's
-  oathgold landmark). That chain is not on the settlement priority list.
+  oathgold landmark). Since 2026-10-20 that chain is on the settlement list (Warp-Turbine Plant, capitals). For
+  Ikit's Forbidden Workshop level 2 the planned one counts; a temporary Cavern is only built when no managed
+  settlement plans the chain.
 - Only finished buildings count; one under construction or being upgraded does not.
 - Recruitment draws on buildings anywhere in the province the army stands in.
 

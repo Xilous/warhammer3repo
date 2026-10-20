@@ -14,6 +14,11 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
 ## Any session (single player is fine)
+- [ ] **Magma Cannon build swap (2026-10-20) live checks**: a capital with Equipment Warpforge + Warp-Turbine Plant
+      shows the Magma Cannon card in the local pool and the army builder refills it there; the first refill disbands
+      the Stormvermin; the dashboard's "Province recruiting Ratling Cannons + Magma Cannons" line turns green there.
+- [ ] **Workshop level 2 from the planned Cavern line** (Ikit, workshop level 1, no Cavern yet): no temporary Cavern
+      is built while a capital plans the Warp-Turbine Plant; the planned one counts once it stands.
 - [ ] **Skill prerequisites from memory** (skills.memory_state): runs next to the card states; every disagreement is
       logged to runs/skills_check.jsonl. Needs a character with unspent points. If the log shows no disagreement,
       drop the card-state check (SKIP_STATES) so memory alone decides.

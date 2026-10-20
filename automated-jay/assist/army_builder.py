@@ -31,7 +31,7 @@ between campaigns). Per ticked army, in order:
      turn). The engineer is sent to the army every turn until it joins (the army may have moved). A hero
      recruited this turn cannot move yet, and a 20/20 army cannot take it.
 
-Units already queued count as present (both template units take 2 turns to recruit).
+Units already queued count as present (both template units take 2 turns to recruit: Ratling Cannons, Magma Cannons).
 
 UI ids used (9.0.4): character_row_<id> (Lords & Heroes), main_units_panel / "LandUnit n" / "AgentUnit n" (unit
 cards; state name "selected..." while selected; tooltip string {u32 length +0x238, wchar* +0x240} that starts with
@@ -292,7 +292,7 @@ def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
 def eligible(w: World, F: int, need: set[str]) -> dict[str, set[str]]:
     """province -> the needed units it can recruit locally right now, for provinces that are FULLY eligible: they can
     recruit every unit type of the army template (player rule 2026-10-17: a province that can only make some of
-    them, e.g. Stormvermin but no Stormfiends yet, is no recruiting province; with none, a ticked army stays put)."""
+    them, e.g. Stormfiends but no Magma Cannons yet, is no recruiting province; with none, a ticked army stays put)."""
     from .recruit import sources
     template = set(load_automation()["army_builder"]["template"]["units"])
     can: dict[str, set[str]] = {}

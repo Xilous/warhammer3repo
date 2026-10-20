@@ -51,7 +51,7 @@
     "gold_reserve": 0,
     "off_list_buildings": "replace",
     "_ports_and_specials": "Never replaced: the port of a port settlement is kept (adopted) whatever it is, a unique port too, and so is the main building; special buildings (landmarks, legendary or unique buildings) are kept as well. Only normal slots are replaced (player rule, 2026-10-17).",
-    "_workshop": "At Forbidden Workshop level 1 a Construction Cavern is kept standing for level 2 (the 3rd Stormfiend Ratling Cannon upgrade): built in a free slot, else an off-list building's slot, else in place of the lowest-priority building on the list; removed the turn after it has counted (player rule, 2026-10-17).",
+    "_workshop": "Forbidden Workshop level 2 (the 3rd Stormfiend Ratling Cannon upgrade) needs a Construction Cavern line building (any level) standing. Since 2026-10-20 the Warp-Turbine Plant (same chain) is on the settlement list for every capital, so the planned one counts and no temporary Cavern is built while it is planned anywhere. Only when no capital plans it is a temporary Cavern still kept for one turn: in a free slot, else an off-list building's slot, else in place of the lowest-priority building on the list (player rule, 2026-10-17).",
     "_off_list_buildings": "replace: in a province the assistant manages (not frontline), a building that is not on the settlement list is demolished and the planned one is built in its slot; frontline provinces stay entirely yours (player rule, 2026-10-17). ask: leave such buildings alone."
   },
   "skills": {
@@ -73,12 +73,6 @@
         "cqi": 3231,
         "name": "Schurft",
         "general_id": 5700
-      },
-      {
-        "cqi": 111,
-        "name": "Thanquol",
-        "general_id": 213,
-        "faction": "wh3_dlc29_skv_clan_scruten"
       }
     ],
     "_doc": [
@@ -86,7 +80,8 @@
       "A ticked army must match the template: units not in it are disbanded once it stands in a recruiting province,",
       "missing units are recruited, and the army is moved to the province that can recruit them.",
       "auto_create: false (player rule 2026-10-18): the player decides when a new army is raised. The dashboard's Army finances show what every army costs now, what a refill would make it cost (units not in the template are disbanded and stop costing) and what the next army would cost with Supply Lines, and whether it is affordable; 'Create new playbook army' (greyed out while a Warpseer, a lord slot or a province recruiting the whole template is missing) raises a Verminlord Warpseer army at once. true: the builder raises one by itself whenever that holds and the income after the ticked refills and the new army stays at or above income_reserve.",
-      "Before Stormfiends (Ratling Cannons) can be recruited, their slots stay empty.",
+      "Composition (player decision 2026-10-20, pure ranged): 12 Stormfiends (Ratling Cannons) + 6 Warp-Doom Magma-Cannons, which are tall enough to fire over the Stormfiends in front of them; they replace the 6 Stormvermin. Stormfiends come from the Equipment Warpforge, Magma Cannons from the Warp-Turbine Plant, both tier 5, so only a capital holding both recruits the whole template. Stormvermin still in a ticked army are disbanded at its first refill in such a province.",
+      "Until a province can recruit the whole template, the missing slots stay empty.",
       "Heroes are separate characters on the map: a recruited Warlock Engineer spawns outside the town that recruited it and must be moved into the lord's army. A free Warlock Engineer counts as available for an army that lacks one (player note, 2026-10-16).",
       "The army only goes to a province for actual units; the engineer never decides where it goes. If it has no engineer and none is free, one is recruited as soon as the faction cap allows (the cap rises +2 per Verminlord Warpseer with Inscrutable Genius), at the settlement nearest the army that can recruit one, and it walks to wherever the army is (player decision, 2026-10-16).",
       "Heroes are never disbanded automatically: an extra hero is reported for the player to remove."
@@ -101,8 +96,8 @@
         "wh2_main_skv_warlock_engineer": 1
       },
       "units": {
-        "wh2_main_skv_inf_stormvermin_1": 6,
-        "wh3_dlc29_skv_mon_stormfiend_ratling_cannons": 12
+        "wh3_dlc29_skv_mon_stormfiend_ratling_cannons": 12,
+        "wh3_dlc29_skv_art_warp_doom_magma_cannon": 6
       }
     },
     "disband_off_template": true,

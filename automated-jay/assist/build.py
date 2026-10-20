@@ -777,7 +777,8 @@ def run(log=print, override_blocked: bool = False) -> str:
             elif how == "not started":
                 problems.append(f"{o.region}: repair of {name} not started")
         # 2. Ikit's Forbidden Workshop: a Construction Cavern while the workshop needs one for level 2 (player build,
-        #    2026-10-17; assist/workshop.py), kept away from the off-list rule until its requirement has counted
+        #    2026-10-17; assist/workshop.py). The planned Warp-Turbine line counts (2026-10-20); only when no managed
+        #    settlement plans it is a temporary one built and kept away from the off-list rule until it has counted
         from . import workshop
         off_list = [(o, i) for o, a, _b in todo if a.kind == "replace" for i in [slot_index_for(o, a)] if i is not None]
         def priority_of(o, building):                 # higher = lower priority on the settlement list
@@ -791,7 +792,9 @@ def run(log=print, override_blocked: bool = False) -> str:
         protected, target, note = workshop.plan(w, snap.faction, models, blocked, turn, off_list,
                                                 priority_of=priority_of, special=SPECIAL,
                                                 can_host=lambda o: current_tier(o.model) >= cavern.tier,
-                                                faction=faction)
+                                                faction=faction,
+                                                planned=lambda o: any(t.chain == workshop.CAVERN_CHAIN
+                                                                      for t in plan_targets(o)))
         if note:
             problems.append(f"workshop: {note}")
         if target is not None:

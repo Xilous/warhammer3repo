@@ -1,7 +1,7 @@
 """Army template: compare an army (from memory) with the doomstack template in strategy/automation.json.
 
-The template is lord (Ikit Claw, Thanquol or a Verminlord Warpseer), 1 Warlock Engineer, 6 Stormvermin (Swords &
-Shields) and 12 Stormfiends (Ratling Cannons). Character units (lord and embedded heroes) appear in the
+The template is lord (Ikit Claw, Thanquol or a Verminlord Warpseer), 1 Warlock Engineer, 12 Stormfiends (Ratling
+Cannons) and 6 Warp-Doom Magma-Cannons (player decision 2026-10-20; they replaced 6 Stormvermin). Character units (lord and embedded heroes) appear in the
 army's unit list with "_cha_" in their key.
 
 Toggles: strategy/automation.json -> army_builder.enabled_armies =

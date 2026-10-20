@@ -3,8 +3,9 @@
 Game data (9.0.4):
   - units are gated by buildings only (building_units_allowed). No table locks these units behind a
     technology, so the tech automation does not gate recruitment.
-      Stormvermin (Swords & Shields)  <- Clan Armoury (wh2_main_skv_clanrats_3)
-      Stormfiends (Ratling Cannons)   <- Equipment Warpforge (wh3_dlc29_skv_stormfiends_2)
+      Stormfiends (Ratling Cannons)   <- Equipment Warpforge (wh3_dlc29_skv_stormfiends_2), main building tier 5
+      Warp-Doom Magma-Cannons         <- Warp-Turbine Plant (wh2_main_skv_engineers_3), main building tier 5
+                                         (also Thanquol's Morskittar Engine, single player only, never planned)
   - Warlock Engineers: hero recruitment is enabled province-wide by the Construction Cavern chain
     (wh2_main_skv_engineers_1..3) or Galbaraz's oathgold landmark (agent_enable_recruitment_engineer_skv).
   - recruitment draws on buildings anywhere in the province the army stands in.

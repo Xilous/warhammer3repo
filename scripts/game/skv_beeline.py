@@ -1,5 +1,6 @@
 """Skaven (Clan Skryre) tech bee-line + hero (Chieftain / Warlock Engineer) buffs for a
-Stormvermin (Sword & Shield) + Stormfiend (Ratling Cannons) army, straight from the installed game's DB dump (tww/db).
+Stormfiend (Ratling Cannons) + Warp-Doom Magma-Cannon army (player build since 2026-10-20; was Stormvermin S&S
++ Stormfiend), straight from the installed game's DB dump (tww/db).
 
 Rule: a tech is WANTED unless everything it does is for units (or hero types) that will not be fielded.
 Bee-line targets = the wanted techs that are not prerequisites of another wanted tech; clicking them in-game queues
@@ -10,9 +11,12 @@ Usage: python scripts/game/skv_beeline.py  -> writes GUIDE_Skryre_Tech_Beeline.m
 import json,re,collections
 L=lambda t: json.load(open('tww/db/%s.json'%t,encoding='utf-8'))
 loc=json.load(open('tww/loc_en.json',encoding='utf-8'))
-SV='wh2_main_skv_inf_stormvermin_1'; SF='wh3_dlc29_skv_mon_stormfiend_ratling_cannons'
-UNITS={SV:'Stormvermin (S&S)',SF:'Stormfiend (Ratling)'}
-SHORT={SV:'SV',SF:'SF'}
+SF='wh3_dlc29_skv_mon_stormfiend_ratling_cannons'; MC='wh3_dlc29_skv_art_warp_doom_magma_cannon'
+UNITS={SF:'Stormfiend (Ratling)',MC:'Warp-Doom Magma-Cannon'}
+SHORT={SF:'SF',MC:'MC'}
+# Not wanted whatever they do (player decision 2026-10-20, Stormvermin left the build): Best of the Best and Ensure
+# Absolute Loyalty. Still researched when a wanted tech needs them; otherwise they fall to the cheapest-first tail.
+NOT_WANTED={'wh2_main_tech_skv_8_3','wh2_main_tech_skv_8_5'}
 FACTION='wh2_main_skv_clan_skryre'
 # Researched first, in this order, before the cheapest-chain phases: the Verminlord unlock (Horned One's Approval swaps the
 # Dominating Scheme rite for the version that summons a Verminlord of your choice; Rat-Daemons buffs them).
@@ -126,7 +130,7 @@ for n in tnodes:
         effs.append({'effect':r['effect'],'scope':r['effect_scope'],'value':r['value'],'text':txt,'sets':eset_names(r['effect']),'cls':c,'units':targets_real(r['effect']) if c=='ours' else {}})
     cls=set(e['cls'] for e in effs)
     tech_info[n['key']]={'tech':tk,'name':tname(tk),'tier':n['tier'],'col':n['indent'],'rp':n['research_points_required'],'effects':effs,
-        'hits':[e for e in effs if e['cls']=='ours'],'wanted':bool(cls&WANT),'parents':parents[n['key']],'anc':ancestors(n['key'])}
+        'hits':[e for e in effs if e['cls']=='ours'],'wanted':bool(cls&WANT) and n['key'] not in NOT_WANTED,'parents':parents[n['key']],'anc':ancestors(n['key'])}
 depth={}
 def dep(k):
     if k not in depth: depth[k]=1+max([dep(p) for p in parents[k]],default=-1)
@@ -142,10 +146,10 @@ def why(t):
     return ', '.join('%s x%d'%(CLS_LABEL[k],v) for k,v in c.items())
 
 out=[]; P=out.append
-P('# Clan Skryre tech bee-line for Stormvermin (S&S) + Stormfiend (Ratling Cannons)\n')
+P('# Clan Skryre tech bee-line for Stormfiend (Ratling Cannons) + Warp-Doom Magma-Cannon\n')
 P('Source: installed game DB (technology_nodes / technology_node_links / technology_effects_junction / unit sets). Node set `skv_mil`, %d nodes available to `%s` (Eshin/Moulder-only nodes dropped). '%(len(tnodes),FACTION))
 P('Every node has required_parents=0 (= ALL linked parents needed) and there are no technology-to-technology extra requirements, so the prerequisite closure of a tech is exactly its ancestor set in the link graph. The `building_level` column on these techs is the placeholder `wh_main_chs_port_ruin`: no building gates. In-game, clicking a locked tech queues every missing prerequisite ahead of it.\n')
-P('**Rule.** Every effect of every tech is classified: OUR UNITS (unit set contains Stormvermin S&S or Stormfiend Ratling Cannons, any scope: stats, recruit rank, upkeep...), other units only, hero/lord in play (%s), hero not in play (%s), or faction / army / province (no unit targeting at all). A tech is wanted unless every effect is "other units only" or "hero not in play". Hidden script effects are ignored.\n'%(', '.join(HERO_OK),', '.join(HERO_NO)))
+P('**Rule.** Every effect of every tech is classified: OUR UNITS (unit set contains Stormfiend Ratling Cannons or Warp-Doom Magma-Cannon, any scope: stats, recruit rank, upkeep...), other units only, hero/lord in play (%s), hero not in play (%s), or faction / army / province (no unit targeting at all). A tech is wanted unless every effect is "other units only" or "hero not in play", or the player left it out (Best of the Best, Ensure Absolute Loyalty, 2026-10-20). Hidden script effects are ignored.\n'%(', '.join(HERO_OK),', '.join(HERO_NO)))
 
 P('## Techs that directly touch either unit\n')
 P('| Tier | Tech (db key) | RP | Effect | Units | Unit set |'); P('|---|---|---|---|---|---|')
@@ -234,7 +238,7 @@ for hero,setkey in sets.items():
             if tg: rows.append(row)
             elif not has_unit_target(ek): armywide.append(row)
     rows.sort(key=lambda r:(r['tier'],r['skill']))
-    P('### Hits Stormvermin / Stormfiend directly\n')
+    P('### Hits Stormfiend / Magma Cannon directly\n')
     P('| Skill (row, unlock rank) | Effect | Value per level | Units | Unit set | Prerequisite nodes |'); P('|---|---|---|---|---|---|')
     for r in rows:
         P('| %s (row %d, rank %d) | %s | %s | %s | %s | %s |'%(r['skill'],r['tier'],r['rank'],r['text'],r['levels'],', '.join(UNITS[u] for u in r['units']),', '.join('`%s`'%s for s in r['sets']),'; '.join('%s (%s)'%p for p in r['pre']) or '-'))

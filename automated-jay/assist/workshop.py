@@ -1,4 +1,4 @@
-"""Ikit's Forbidden Workshop (player build, 2026-10-17): a temporary Construction Cavern for workshop level 2.
+"""Ikit's Forbidden Workshop (player build, 2026-10-17): a Construction Cavern for workshop level 2.
 
 The Stormfiend Ratling Cannon upgrades are workshop parts (wh3_dlc29_ikit_workshop_stormfiend_ranged_type_0/1/2);
 the third needs workshop level 2, and one of level 2's requirements is a Construction Cavern (any level) standing in
@@ -6,6 +6,12 @@ any settlement. So, at workshop level 1 the building step makes sure one exists:
 settlement it manages (never a frontline province); while it is being built, and for the turn it is first seen
 finished, the off-list rule leaves it alone; the turn after, it is released, and the off-list rule replaces it with
 the planned building. After that the requirement counts as met (no second Cavern while the workshop is still level 1).
+
+Since 2026-10-20 the Cavern line is on the settlement list (the Warp-Turbine Plant recruits the army's Warp-Doom
+Magma-Cannons, strategy/settlements.json): a settlement whose plan holds the chain builds it as a normal building, and
+that one counts. So no temporary Cavern is built while any managed settlement plans the chain, a temporary slot chosen
+earlier but not started yet is dropped, and a planned Cavern is never held back from its upgrades. The temporary
+Cavern below is only the fallback for when no managed settlement plans the chain.
 
 One Cavern, ever (player rule 2026-10-17: "only 1 cavern needs to be built, ever, anywhere in my territory"). The
 slot is chosen once and recorded BEFORE the first click (runs/workshop.json "cavern"); from then on the step only
@@ -103,10 +109,11 @@ def _committed(st: dict):
 
 
 def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=None, special=(),
-         can_host=lambda o: True, faction: str | None = None):
+         can_host=lambda o: True, faction: str | None = None, planned=lambda o: False):
     """-> (protected: set of (region, slot) the off-list rule must leave alone, build: (settlement, slot, demolish
     first?) to build a Cavern in or None, note: str or None). off_list: (settlement, slot) of off-list buildings the
-    building step is about to replace anyway: with no free slot, the Cavern takes one of those slots first."""
+    building step is about to replace anyway: with no free slot, the Cavern takes one of those slots first.
+    planned(o): the settlement's plan holds the Cavern chain (the Warp-Turbine Plant, 2026-10-20)."""
     if w.faction_name(F) != SKRYRE:
         return set(), None, None
     level = workshop_level(w, F)
@@ -125,18 +132,27 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
     protected, found = set(), caverns(models)
     for o, idx, building in found:
         key = f"{o.region}:{idx}"
+        keep = not planned(o)                              # a planned one is never replaced: no need to hold it back
         if building:
-            protected.add((o.region, idx))
+            if keep:
+                protected.add((o.region, idx))
             continue
         first = seen.setdefault(key, turn)
         if turn <= first:
-            protected.add((o.region, idx))                  # finished: kept for the turn it is first seen
+            if keep:
+                protected.add((o.region, idx))              # finished: kept for the turn it is first seen
         else:
             st["met"] = True                               # the turn after: released, the requirement counts as met
     _save(st)
     if found or st.get("met"):
         return protected, None, None
     mine = _committed(st)
+    on_plan = any(planned(o) for p, owned in models.items() if p not in blocked for o in owned)
+    if on_plan and not (mine and mine[2]):                 # the planned Cavern line counts: no temporary one
+        if mine:
+            st.pop("cavern", None)                         # chosen earlier, never started: dropped
+            _save(st)
+        return protected, None, None
     if mine:                                               # the one Cavern's slot: nothing is ever chosen again
         region, idx, started = mine
         protected.add((region, idx))

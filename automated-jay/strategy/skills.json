@@ -3,6 +3,7 @@
     "Skill orders given by the player on 2026-10-16. Each skill is taken to its max rank before the next.",
     "After the list: spend remaining points on the rest of the tree 'as fits', never relying on active abilities.",
     "Prerequisites are satisfied by the list itself: row unlocks count points spent in the row (verified against node links).",
+    "Build swap (player decision 2026-10-20, Stormvermin replaced by Warp-Doom Magma-Cannons): the Verminlord Warpseer follows the player's planner build; Ikit and Thanquol take the same red (army) and blue (campaign) rows. Red row: Inspiring Presence, Blastmaster 3 (Stormfiends count as weapon teams), Engineering Skill 3 (artillery: Magma Cannons), Rally!, Warp-Smart (both units). Respected & Feared and Whip-Smart left out: they buff only Stormvermin, Clanrats and Skavenslaves. Warpseer unique row: Lord of Black Lightning, Inscrutable Genius, Purest Warpstone (Skryre units: both). Soldiers of Renown is not taken; Immortality comes from the game at rank 20. Leftover points still go to the rest of the tree as fits.",
     "asap (2026-10-18): the skill is tried before the rest of the order, straight after the mounts, so each rank is taken as soon as the character's rank unlocks it (Mentor: unlocked_at_rank 29/39/49 for its 3 ranks). Until then its card is locked and the step goes on down the order. It stays last in the list because nothing before it waits on it."
   ],
   "after_list": {
@@ -31,8 +32,8 @@
           "ranks": 3
         },
         {
-          "skill": "Respected & Feared",
-          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_04",
+          "skill": "Engineering Skill",
+          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_06",
           "ranks": 3
         },
         {
@@ -43,11 +44,6 @@
         {
           "skill": "Warp-Smart",
           "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_10",
-          "ranks": 1
-        },
-        {
-          "skill": "Whip-Smart",
-          "node": "wh2_dlc12_skill_node_skv_ikit_claw_army_chain_08",
           "ranks": 1
         },
         {
@@ -187,8 +183,8 @@
           "ranks": 3
         },
         {
-          "skill": "Respected & Feared",
-          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_04",
+          "skill": "Engineering Skill",
+          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_06",
           "ranks": 3
         },
         {
@@ -202,11 +198,6 @@
           "ranks": 1
         },
         {
-          "skill": "Whip-Smart",
-          "node": "wh2_dlc12_skill_node_skv_master_engineer_army_chain_08",
-          "ranks": 1
-        },
-        {
           "skill": "Lord of Black Lightning",
           "node": "wh3_dlc29_skill_node_skv_verminlord_warpseer_unique_0",
           "ranks": 1
@@ -214,6 +205,11 @@
         {
           "skill": "Inscrutable Genius",
           "node": "wh3_dlc29_skill_node_skv_verminlord_warpseer_unique_4",
+          "ranks": 1
+        },
+        {
+          "skill": "Purest Warpstone",
+          "node": "wh3_dlc29_skill_node_skv_verminlord_warpseer_unique_1",
           "ranks": 1
         },
         {
@@ -271,7 +267,7 @@
     "thanquol": {
       "agent_subtype": "wh3_dlc29_skv_thanquol",
       "node_set": "wh3_dlc29_skill_node_set_skv_thanquol",
-      "_note": "Thanquol (Clan Scruten, backup faction): player order of 2026-10-18. Blessings of the Horned Rat is not in the player's list but is REQUIRED by Hasty Redirection, Insatiable Greed and Replaceable Fodder (character_skill_node_links), so it goes right before them. Rally! (REQUIRED by Warp-Smart and Whip-Smart) and Draftmaster (REQUIRED by Lightning Strike, Quartermaster, Wary and Miiine All Miiine!) are not in the player's list either and go right before the first skill that needs them. Unlock ranks (character_skill_level_details): his unique row at rank 11, the Boneripper skills at 9, the Projectors mount at 15; until then the step takes the next skill in the order, and each of these is taken as soon as its rank allows. Boneripper: Warpfire Projectors (player choice), taken as soon as rank 15 allows; Warpfire Braziers never (one mount).",
+      "_note": "Thanquol (Clan Scruten, backup faction): player order of 2026-10-18. Blessings of the Horned Rat is not in the player's list but is REQUIRED by Hasty Redirection, Insatiable Greed and Replaceable Fodder (character_skill_node_links), so it goes right before them. Rally! (REQUIRED by Warp-Smart) and Draftmaster (REQUIRED by Lightning Strike, Quartermaster, Wary and Miiine All Miiine!) are not in the player's list either and go right before the first skill that needs them. Unlock ranks (character_skill_level_details): his unique row at rank 11, the Boneripper skills at 9, the Projectors mount at 15; until then the step takes the next skill in the order, and each of these is taken as soon as its rank allows. Boneripper: Warpfire Projectors (player choice), taken as soon as rank 15 allows; Warpfire Braziers never (one mount).",
       "mounts": {
         "take": [
           "wh3_dlc29_skill_skv_thanquol_unique_mount_boneripper_2"
@@ -317,8 +313,8 @@
           "ranks": 3
         },
         {
-          "skill": "Respected & Feared",
-          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_1_4",
+          "skill": "Engineering Skill",
+          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_1_6",
           "ranks": 3
         },
         {
@@ -369,11 +365,6 @@
         {
           "skill": "Warp-Smart",
           "node": "wh2_main_skill_node_skv_grey_seer_plague_army_3_3",
-          "ranks": 1
-        },
-        {
-          "skill": "Whip-Smart",
-          "node": "wh2_main_skill_node_skv_grey_seer_plague_army_3_1",
           "ranks": 1
         },
         {

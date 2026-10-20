@@ -164,7 +164,7 @@ def checks(w, F) -> list[tuple[str, bool, str]]:
         ("Verminlord Warpseer in the Recruit Lord pool", WARPSEER in pool_subtypes(w, F),
          "the Dominating Scheme brings one"),
         ("Warlock Engineer free" if free else "Warlock Engineer (cap has room)", eng, "none free, engineer cap full"),
-        ("Province recruiting Stormvermin + Ratling Cannons", bool(eligible(w, F, set(t["units"]))),
+        ("Province recruiting Ratling Cannons + Magma Cannons", bool(eligible(w, F, set(t["units"]))),
          "none yet"),
     ]
 
