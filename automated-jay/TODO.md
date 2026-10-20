@@ -14,6 +14,12 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
 ## Any session (single player is fine)
+- [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ..." appears for a top item,
+      nothing below it is bought that turn, and the army still recruits with what is beyond the reserve.
+- [ ] **Skill step after the memory_state fix (2026-10-20)**: Triangulation, Warp-Smart, Draftmaster, Quartermaster etc.
+      are taken again in order; runs/skills_check.jsonl shows no memory/card disagreement.
+- [ ] **Spilled-over recruits**: what the game does when a unit queued past the recruitment capacity cannot be paid
+      when it starts (dropped, or waits); decode which queue items are paid (queue item X) to replace runs/army_owed.json.
 - [ ] **Magma Cannon build swap (2026-10-20) live checks**: a capital with Equipment Warpforge + Warp-Turbine Plant
       shows the Magma Cannon card in the local pool and the army builder refills it there; the first refill disbands
       the Stormvermin; the dashboard's "Province recruiting Ratling Cannons + Magma Cannons" line turns green there.
