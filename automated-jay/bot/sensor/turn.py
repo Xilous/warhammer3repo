@@ -129,7 +129,13 @@ def ended_factions(pm, model: int) -> list[int] | None:
         # a list that is not a set of this turn's factions is stale, not read (multiplayer 2026-10-19, turn 29: 8
         # entries at the turn's start, The Tormentors twice and three non-factions, Clan Scruten among them, and the
         # assistant waited for 'the other players' while nobody had ended): unreadable, the ready ticks decide
-        if len(set(out)) != len(out) or not set(out) <= set(whose_turn(pm, model) or ()):
+        who = set(whose_turn(pm, model) or ())
+        if len(set(out)) != len(out) or not set(out) <= who:
+            return None
+        # every faction of the turn listed is the last turn's list, not this one's: once all have ended the game
+        # moves on and the record goes (multiplayer 2026-10-20, turn 3: both players listed from turn 2 at the start
+        # of turn 3, nobody's ready tick on, and Build & End Turn waited for 'the other players' forever)
+        if who and set(out) == who:
             return None
         return out
     except Exception:

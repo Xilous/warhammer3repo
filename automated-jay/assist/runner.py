@@ -605,6 +605,11 @@ class Runner:
         except OSError:
             pass
 
+    def _waiting_head(self, turn) -> str:
+        """WAITING, or END TURN QUEUED while a Build & End Turn is owed (2026-10-20: the waiting posts of every poll
+        replaced the queued one, and the button lost its QUEUED spinner though the request still stood)."""
+        return f"END TURN QUEUED (turn {turn})" if self.end_request else f"WAITING (turn {turn})"
+
     def _queue_end(self, turn, why: str) -> None:
         """Build & End Turn pressed while the game does not allow it yet: remembered for this campaign and turn, run
         by _tick the moment players_turn says the player can act (player request 2026-10-19: "the assistant ignores
@@ -1272,7 +1277,7 @@ class Runner:
             ok, why = players_turn(self.ui)                 # (the game greys End Turn out while a notice is open)
         if not ok:
             self.gate_since = None
-            self.post("waiting", f"WAITING (turn {turn})", f"{why}; acts when your turn starts", turn=turn)
+            self.post("waiting", self._waiting_head(turn), f"{why}; acts when your turn starts", turn=turn)
             return
         if self.gate_since is None:
             self.gate_since = time.monotonic()
@@ -1300,7 +1305,7 @@ class Runner:
             ok, why = players_turn(self.ui)                  # once more, right before the first click
             if not ok:
                 self.gate_since = None
-                self.post("waiting", f"WAITING (turn {turn})", f"{why}; acts when your turn starts", turn=turn)
+                self.post("waiting", self._waiting_head(turn), f"{why}; acts when your turn starts", turn=turn)
                 return
             try:
                 t_pop = time.monotonic()
