@@ -743,7 +743,8 @@ class Runner:
         time, each confirmed gone in the UI tree; the game menu that Escape opens when nothing was open is resumed.
         Returns what is still open (empty = the bare campaign map). Game in front."""
         from tools import wait
-        from tools.ui import click, press
+        from tools.ui import click, leave_tactical_view, press
+        leave_tactical_view(self.ui)                   # (the zoomed-out view's Overlays panel covers the right side)
         # units_panel = an army or character selected: Shift+Enter does not end the turn then (2026-10-17: the army
         # builder left an army selected and End Turn failed twice; deselected, one Shift+Enter ended it)
         closable = ("character_details_panel", "settlement_panel", "technology_panel", "recruitment_docker",
@@ -988,6 +989,7 @@ class Runner:
             self.rail(events="done")
             for name in names:
                 self.rail(**{name: "active"})
+                self._leave_tactical_view()
                 with timing.step(name):
                     try:
                         result = self._call(name)
@@ -1157,6 +1159,18 @@ class Runner:
         self._held_ids = ids
 
     FULL_SCREEN = ("dlc29_skv_chaotic_plans", "character_details_panel", "technology_panel")
+
+    def _leave_tactical_view(self) -> None:
+        """Before every step: out of the zoomed-out tactical view (tools/ui.py leave_tactical_view), the player may
+        have zoomed out during the pass."""
+        from tools.ui import TACTICAL, leave_tactical_view
+        c = self.ui.root_child(TACTICAL)
+        if not c or not self.ui.effective_visible(c):
+            return
+        from bot.focus import game_focus
+        with game_focus():
+            if not leave_tactical_view(self.ui):
+                print("the tactical view (zoomed out) could not be left; the step goes on")
 
     def _put_away_panels(self) -> bool:
         """The player pressed Run now / Build & End Turn with a full-screen panel open (2026-10-17: Thanquol's

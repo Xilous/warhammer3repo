@@ -63,7 +63,8 @@ def _block(s: MemorySensor) -> int:
         except Exception:
             continue
         n = sum(v * v for v in fwd)
-        if abs(n - 1) < 0.01 and -0.99 < fwd[1] < -0.2 and eye[1] > 0.5:
+        # (straight down, fwd h about -1, is the zoomed-out tactical view: 2026-10-20 it read as "not found")
+        if abs(n - 1) < 0.01 and -1.001 < fwd[1] < -0.2 and eye[1] > 0.5:
             return blk
     raise RuntimeError("camera block not found")
 
@@ -75,6 +76,8 @@ def read_camera(s: MemorySensor) -> Camera:
     fwd = np.array(struct.unpack("<3f", pm.read_bytes(blk - 0x60, 12)), dtype=np.float64)
     fwd /= np.linalg.norm(fwd)
     right = np.array([fwd[2], 0.0, -fwd[0]])
+    if np.linalg.norm(right) < 1e-6:          # looking exactly straight down: screen right is world +x
+        right = np.array([1.0, 0.0, 0.0])
     right /= np.linalg.norm(right)
     up = np.array([0.0, 1.0, 0.0]) - fwd[1] * fwd
     up /= np.linalg.norm(up)

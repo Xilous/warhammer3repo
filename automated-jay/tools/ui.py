@@ -411,6 +411,28 @@ def wheel(x: int, y: int, notches: int, pause: float | None = None) -> None:
             _frames(WHEEL_GAP_FRAMES)
 
 
+TACTICAL = "campaign_space_bar_options"   # the Overlays panel the game shows on the right in the zoomed-out tactical view
+TACTICAL_NOTCHES = 20
+
+
+def leave_tactical_view(ui) -> bool:
+    """The zoomed-out tactical view (player report 2026-10-20: it "completely breaks" a pass): the game puts its
+    Overlays panel over the right of the screen (x 1592-1920, y 145-756) and looks straight down. Zoom in with the
+    wheel over the middle of the map, a notch at a time, until the panel is gone from the UI tree. A camera zoom sends
+    no command (it is local), so the effect is the panel in the UI tree (ui-only). True when the view was left (or was
+    not on)."""
+    c = ui.root_child(TACTICAL)
+    if not c or not ui.effective_visible(c):
+        return True
+    x, y = config.RESOLUTION[0] // 2, config.RESOLUTION[1] // 2
+    for _ in range(TACTICAL_NOTCHES):
+        wheel(x, y, 1)
+        if wait.wait_until(lambda: not (ui.root_child(TACTICAL) and ui.effective_visible(ui.root_child(TACTICAL))),
+                           0.4, "tactical view left", must=False):
+            return True
+    return False
+
+
 @_timed("key")
 def press(key: str) -> None:
     """Key down, KEY_HOLD_FRAMES rendered frames, key up (the game samples keys once per frame)."""
