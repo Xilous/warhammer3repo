@@ -21,7 +21,7 @@ def ikit(queued):
 
 def pending(monkeypatch, army):
     monkeypatch.setattr(N, "armies", lambda w, F: [army])
-    monkeypatch.setattr(N, "enabled_armies", lambda: {55: {"cqi": 55, "name": "Ikit Claw", "general_id": 100}})
+    monkeypatch.setattr(N, "enabled_armies", lambda: {55: {"cqi": 55, "name": "Ikit Claw", "general_id": 100, "turn": 0, "rank": 0}})
     monkeypatch.setattr(N, "load_automation", lambda: {"army_builder": {"template": {
         "lord": ["wh2_dlc12_skv_ikit_claw"], "heroes": {"wh2_main_skv_warlock_engineer": 1},
         "units": {CANNONS: 12, MAGMA: 6}}}})

@@ -198,7 +198,7 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
     park()
     if new is None:
         return ["new army: raising the Warpseer did not go through"], None
-    set_enabled(new.cqi, new.general_name, True, new.general_id)
+    set_enabled(new.cqi, new.general_name, True, new.general_id, new.turn, new.rank)
     lines.append(f"new army: raised {new.general_name} (Verminlord Warpseer) at {region_name(site)} and ticked it "
                  f"({b[1]})")
     log(lines[-1])

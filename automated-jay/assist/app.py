@@ -463,7 +463,7 @@ class App:
             row.pack(fill="x", anchor="w")
             # the tick stores the general's character id and name with the cqi (cqis repeat between campaigns)
             cb = ttk.Checkbutton(row, variable=var, command=lambda a=a, var=var: set_enabled(
-                a.cqi, a.general_name, var.get(), a.general_id))
+                a.cqi, a.general_name, var.get(), a.general_id, a.turn, a.rank))
             if not on and not can:                  # a refill that cannot happen cannot be ticked; a tick can go
                 cb.state(["disabled"])
             cb.pack(side="left")

@@ -329,7 +329,7 @@ class RailPanel:
             tk.Checkbutton(row, variable=var, bg=T.PANEL, activebackground=T.PANEL, selectcolor=T.PANEL2,
                            fg=T.INK, highlightthickness=0, bd=0, cursor="arrow" if locked else "hand2",
                            state="disabled" if locked else "normal",
-                           command=lambda a=a, var=var: set_enabled(a.cqi, a.general_name, var.get(), a.general_id)
+                           command=lambda a=a, var=var: set_enabled(a.cqi, a.general_name, var.get(), a.general_id, a.turn, a.rank)
                            ).pack(side="left")
             tk.Label(row, text=a.general_name, bg=T.PANEL, fg=T.INK, font=self.f_bold).pack(side="left")
             size = f"{len(a.units)}" + (f"+{len(a.queued)}" if a.queued else "")

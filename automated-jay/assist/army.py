@@ -10,6 +10,10 @@ The cqi is the game's own id for the army and survives save/load, but it is only
 campaign and the player's real campaign hand out the same cqis. So a tick also stores the general's character id
 (u32 at character +0x110) and name, and a tick whose cqi now belongs to an army under a different general is
 ignored (tick_for). Entries ticked before the id was stored are matched by the general's name.
+A legendary lord (Thanquol, Ikit) has the same cqi AND character id in every new campaign, so a tick also stores the
+turn and the general's rank when it was set: a campaign earlier than that turn, or a general below that rank, is
+another campaign and the tick is ignored (2026-10-20: a turn-40 Thanquol tick acted in a new turn-23 Thanquol
+campaign and recruited a Warlock Engineer nobody asked for). Ticks without a turn (set before that) are ignored.
 """
 from __future__ import annotations
 
@@ -54,7 +58,7 @@ def enabled_armies(faction: str | None = None) -> dict[int, dict]:
     return {e["cqi"]: e for e in load_automation()["army_builder"].get("enabled_armies", []) if _tick_faction(e) == f}
 
 
-def set_enabled(cqi: int, name: str, on: bool, general_id: int | None = None) -> None:
+def set_enabled(cqi: int, name: str, on: bool, general_id: int | None = None, turn: int = 0, rank: int = 0) -> None:
     d = load_automation()
     f = _faction()
     lst = [e for e in d["army_builder"].get("enabled_armies", []) if not (e["cqi"] == cqi and _tick_faction(e) == f)]
@@ -62,6 +66,7 @@ def set_enabled(cqi: int, name: str, on: bool, general_id: int | None = None) ->
         e = {"cqi": cqi, "name": name}
         if general_id:
             e["general_id"] = general_id
+        e["turn"], e["rank"] = turn, rank
         e["faction"] = f
         lst.append(e)
     d["army_builder"]["enabled_armies"] = lst
@@ -77,6 +82,12 @@ def tick_for(army, ticked: dict[int, dict] | None = None) -> tuple[bool, str]:
     gid = e.get("general_id")
     same = gid == army.general_id if gid else e.get("name", "") == army.general_name
     if same:
+        turn, rank = getattr(army, "turn", 0), getattr(army, "rank", 0)
+        if "turn" not in e:
+            return False, "tick ignored: it was set before ticks remembered their campaign; tick it again to automate"
+        if (turn and e["turn"] and turn < e["turn"]) or (rank and e.get("rank") and rank < e["rank"]):
+            return False, (f"tick ignored: it was set at turn {e['turn']} (rank {e.get('rank') or '?'}), this is turn "
+                           f"{turn} (rank {rank}): another campaign or an earlier save; tick it again to automate")
         return True, ""
     return False, (f"tick ignored: it was set for {e.get('name') or '?'}" + (f" (id {gid})" if gid else "")
                    + f", but this army (cqi {army.cqi}) is led by {army.general_name} (id {army.general_id}),"

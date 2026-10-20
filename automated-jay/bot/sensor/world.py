@@ -501,11 +501,20 @@ class Army:
     force_ptr: int = 0
     queued: list[str] = field(default_factory=list)     # unit keys in the recruitment queue
     general_id: int = 0          # the general's character id (u32 at character +0x110; character_row_<id> in the UI)
+    rank: int = 0                # the general's rank ([C+0x3F0]+0x244 plus one, as assist/skills.py _rank)
+    turn: int = 0                # the campaign turn when this was read (a tick stores both: assist/army.py tick_for)
 
 
 def _loc() -> dict:
     from assist import gamedata as gd
     return gd.loc()
+
+
+def _rank(w: World, C: int) -> int:
+    try:
+        return w.u32(w.q(C + 0x3F0) + 0x244) + 1
+    except Exception:
+        return 0
 
 
 def _nonnull_pp(w: World, a: int) -> bool:
@@ -573,6 +582,10 @@ SCHEMER = "wh3_dlc29_skv_schemer_"     # Thanquol's Underlings: each is a one-un
 
 def armies(w: World, F: int, include_garrisons: bool = False) -> list[Army]:
     out = []
+    try:
+        turn = w.s._field("turn", "<i", w.s.model) or 0
+    except Exception:
+        turn = 0
     n = w.u32(F + 0xF64)
     arr = w.q(F + 0xF68)
     for i in range(min(n, 200)):
@@ -601,7 +614,8 @@ def armies(w: World, F: int, include_garrisons: bool = False) -> list[Army]:
                 continue
             out.append(Army(w.u32(MF + 8), sub,
                             character_name(w, C) if C else "(no general)", region, units, C, robj, garrison,
-                            MF, recruitment_queue(w, MF), w.u32(C + 0x110) if C else 0))
+                            MF, recruitment_queue(w, MF), w.u32(C + 0x110) if C else 0,
+                            _rank(w, C) if C else 0, turn))
         except Exception:
             continue
     return out
