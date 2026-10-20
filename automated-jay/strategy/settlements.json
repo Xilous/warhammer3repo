@@ -28,6 +28,8 @@
     {"name": "Temple of the Horned Rat",  "chain": {"capital": "wh2_main_skv_order", "minor": null}},
     {"name": "Breeding Pit",              "chain": "wh2_main_skv_farm"},
     {"name": "Scrap Heap",                "chain": "wh2_main_skv_industry"},
+    {"name": "Resource buildings",        "standing_resources": true,
+     "_why": "A resource building already standing (mine, quarry, ...) is kept at its level, never demolished for the entries below it (player decision 2026-10-20, by value: Zhufbar's Iron Mining Pit makes +80 and iron for nothing; replacing it with Chained Sentry Beasts costs 2,000 gold for +100, and demolishing refunds only 60% of 250). Not upgraded: +10 income for 500-1,000 gold."},
     {"name": "Overseer's Lookout",        "chain": {"capital": null, "minor": "wh2_main_skv_order"},
      "_why": "The order chain in minor settlements (tier 3 there), after the Breeding Pit and Scrap Heap as before 2026-10-20."},
     {"name": "Chained Sentry Beasts",     "chain": {"capital": "wh2_main_skv_defence_major", "minor": "wh2_main_skv_defence_minor"}},
