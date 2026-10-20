@@ -16,8 +16,11 @@ Every node has required_parents=0 (= ALL linked parents needed) and there are no
 | 7 | Ensure Product Quality (`wh2_main_tech_skv_6_2`) | 1200 | Missile strength: +10% for Warpfire Thrower, Warplock Jezzails, Ratling Gun, Poisoned Wind Globadiers, Poisoned Wind Mortars, Death Globe Bombardiers and Ranged Stormfiend units | Stormfiend (Ratling) | `skv_weaponteams_no_warpgrinder`, `wh2_dlc12_skv_jezzail` |
 | 7 | Ensure Product Quality (`wh2_main_tech_skv_6_2`) | 1200 | Range: +10% for Warpfire Thrower, Warplock Jezzails, Ratling Gun, Poisoned Wind Globadiers, Poisoned Wind Mortars, Death Globe Bombardiers and Ranged Stormfiend units | Stormfiend (Ratling) | `skv_weaponteams_no_warpgrinder`, `wh2_dlc12_skv_jezzail` |
 | 7 | Unfathomable Horrors (`wh2_main_tech_skv_4_3`) | 800 | Recruit rank: +2 for Rat Ogres, Mutant Rat Ogre, Hell Pit Abomination and Stormfiend units | Stormfiend (Ratling) | `skv_hellpit_abomination`, `wh2_dlc16_skv_rat_ogres_mutant_rat_ogres`, `wh3_dlc29_stormfiends` |
+| 8 | Promoted on Merit (`wh2_main_tech_skv_7_1`) | 1200 | Ammunition: +20% for Doomwheel, Plagueclaw Catapult, Warp Lightning Cannon and Warp-Doom Magma-Cannon units | Warp-Doom Magma-Cannon | `skv_artillery`, `skv_doomwheel` |
+| 8 | Promoted on Merit (`wh2_main_tech_skv_7_1`) | 1200 | Reload time reduction: +10% for Doomwheel, Plagueclaw Catapult, Warp Lightning Cannon and Warp-Doom Magma-Cannon units | Warp-Doom Magma-Cannon | `skv_artillery`, `skv_doomwheel` |
 | 9 | Requisition Protective Gear (`wh2_main_tech_skv_7_2`) | 1200 | Armour: +5 for Stormvermin and Stormfiend units | Stormfiend (Ratling) | `skv_stormvermin`, `wh3_dlc29_stormfiends` |
 | 9 | They Can't Blame Their Tools (`wh2_main_tech_skv_7_3`) | 1200 | Armour: +10 for Plagueclaw Catapult, Doom-Flayers, Warp Lightning Cannon, Warp-Doom Magma-Cannon and Doomwheel units | Warp-Doom Magma-Cannon | `skv_artillery`, `skv_doomwheel`, `wh2_dlc12_skv_doomflayers` |
+| 9 | They Can't Blame Their Tools (`wh2_main_tech_skv_7_3`) | 1200 | Missile strength: +10% for Plague Claw Catapults, Warp Lightning Cannons, Warp-Doom Magma-Cannon and Doomwheel units | Warp-Doom Magma-Cannon | `skv_artillery`, `skv_doomwheel` |
 | 8 | Portable Destruction (`wh3_dlc29_tech_skv_9_1_2`) | 400 | Missile strength: +10% for Stormfiend (Ratling Cannons, Warpfire Projectors, Windlaunchers) units | Stormfiend (Ratling) | `wh3_dlc29_missile_stormfiends` |
 | 8 | Portable Destruction (`wh3_dlc29_tech_skv_9_1_2`) | 400 | Range: +10% for Stormfiend (Ratling Cannons, Warpfire Projectors, Windlaunchers) units | Stormfiend (Ratling) | `wh3_dlc29_missile_stormfiends` |
 
@@ -73,11 +76,11 @@ Every node has required_parents=0 (= ALL linked parents needed) and there are no
 | 7 | Best of the Best | 1600 | no | Adds a Doomwheel unit to the army spawned from "The Vermintide" Under-City building [faction / army / province]<br>Recruit rank: +2 for Stormvermin and Death Runners units [other units only] |
 | 7 | Rule Through Fear | 1600 | no | Charge bonus: +10 for Death Runners units [other units only]<br>Leadership: +10 for Death Runners units [other units only]<br>Weapon strength: +10% for Death Runners units [other units only] |
 | 7 | Ensure Absolute Loyalty | 1600 | no | Melee attack: +5 for Stormvermin units [other units only]<br>Melee defence: +5 for Stormvermin units [other units only]<br>Public order: +1 [faction / army / province] |
-| 8 | Promoted on Merit | 1200 | **yes** | Hero recruit rank: +2 for Warlock Engineers [hero/lord in play]<br>Ammunition: +20% for Doomwheel, Plagueclaw Catapult, Warp Lightning Cannon and Warp-Doom Magma-Cannon units [other units only]<br>Reload time reduction: +10% for Doomwheel, Plagueclaw Catapult, Warp Lightning Cannon and Warp-Doom Magma-Cannon units [other units only]<br>Lord recruit rank: +2 [hero/lord in play] |
+| 8 | Promoted on Merit | 1200 | **yes** | Hero recruit rank: +2 for Warlock Engineers [hero/lord in play]<br>Ammunition: +20% for Doomwheel, Plagueclaw Catapult, Warp Lightning Cannon and Warp-Doom Magma-Cannon units [OUR UNITS]<br>Reload time reduction: +10% for Doomwheel, Plagueclaw Catapult, Warp Lightning Cannon and Warp-Doom Magma-Cannon units [OUR UNITS]<br>Lord recruit rank: +2 [hero/lord in play] |
 | 8 | Plans Within Plans | 100 | **yes** | Adds an extra Clanrat unit to the army spawned from "The Vermintide" Under-City building [faction / army / province]<br>Food capacity: +30 [faction / army / province]<br>Food generated: 1 [faction / army / province] |
 | 9 | Requisition Protective Gear | 1200 | **yes** | Armour: +10 for Warpfire Thrower, Ratling Gun, Poisoned Wind Globadiers, Poisoned Wind Mortars and Death Globe Bombardiers units [other units only]<br>Armour: +5 for Stormvermin and Stormfiend units [OUR UNITS] |
 | 8 | New Warpstone Uses | 1600 | **yes** | Casualty replenishment rate: +10% [faction / army / province]<br>Local recruitment capacity: +1 [faction / army / province] |
-| 9 | They Can't Blame Their Tools | 1200 | **yes** | Armour: +10 for Plagueclaw Catapult, Doom-Flayers, Warp Lightning Cannon, Warp-Doom Magma-Cannon and Doomwheel units [OUR UNITS]<br>Missile strength: +10% for Plague Claw Catapults, Warp Lightning Cannons, Warp-Doom Magma-Cannon and Doomwheel units [other units only]<br>Weapon strength: +10% for Doomwheel and Doom-Flayers units [other units only] |
+| 9 | They Can't Blame Their Tools | 1200 | **yes** | Armour: +10 for Plagueclaw Catapult, Doom-Flayers, Warp Lightning Cannon, Warp-Doom Magma-Cannon and Doomwheel units [OUR UNITS]<br>Missile strength: +10% for Plague Claw Catapults, Warp Lightning Cannons, Warp-Doom Magma-Cannon and Doomwheel units [OUR UNITS]<br>Weapon strength: +10% for Doomwheel and Doom-Flayers units [other units only] |
 | 9 | Ultimate Experiments | 1600 | **yes** | Replaces all Clanrat units spawned from "The Vermintide" Under-City building with Stormvermin [faction / army / province]<br>Income from all buildings: +5% [faction / army / province]<br>Growth: +25 [faction / army / province] |
 | 8 | Refined Punching Power | 400 | no | Missile resistance: +10% for Stormfiend (Grinderfist, Doomflayer Gauntlets, Shock Gauntlets) units [other units only]<br>Weapon strength: +10% for Stormfiend (Grinderfist, Doomflayer Gauntlets, Shock Gauntlets) units [other units only] |
 | 8 | Portable Destruction | 400 | **yes** | Missile strength: +10% for Stormfiend (Ratling Cannons, Warpfire Projectors, Windlaunchers) units [OUR UNITS]<br>Range: +10% for Stormfiend (Ratling Cannons, Warpfire Projectors, Windlaunchers) units [OUR UNITS] |
@@ -90,26 +93,31 @@ Unwanted techs researched only because they are prerequisites: Fight Dirty!, Int
 
 ## Click order
 
-Phase 0 = the Verminlord unlock, forced first (see the section after the table). Every row is a leaf: no click in this table is a prerequisite of a later click, so each click is a separate queue entry and nothing is clicked twice. Phase 1 = every target whose chain adds a tech that buffs our units, cheapest remaining chain first. Phase 2 = the remaining faction-buff leaves, cheapest first. Click the target; the game queues every missing prerequisite ahead of it. Cumulative RP assumes nothing else is researched; turns = cumulative RP at the base 100 RP per turn (Warp-Forge +4, Warp-Turbine Plant +8 each shorten this).
+Phase 0 = the Verminlord unlock, forced first (see the section after the table). Phase 1 = value per research point (2026-10-20): each click is the wanted tech, leaf or not, whose not-yet-researched chain brings the most VALUE per RP (see VALUE in scripts/game/skv_beeline.py: the build missile buffs first, then compounding economy). A click may be a prerequisite of a later click; it is then simply researched already when that comes. Click the target; the game queues every missing prerequisite ahead of it. Cumulative RP assumes nothing else is researched; turns = cumulative RP at the base 100 RP per turn (Warp-Forge +4, Warp-Turbine Plant +8 each shorten this).
 
 | # | Phase | Click this target | New techs queued | Added RP | Cumulative RP | Turns at 100 RP | Unit buffs gained on the way |
 |---|---|---|---|---|---|---|---|
 | 1 | 0 | Rat-Daemons (T4) | 10 | 3400 | 3400 | 34 |  |
-| 2 | 1 | Practiced Goaders (T5) | 3 | 900 | 4300 | 43 | Practiced Goaders |
-| 3 | 1 | Hit & Run (T1) | 3 | 1700 | 6000 | 60 | Hit & Run |
-| 4 | 1 | Unfathomable Horrors (T7) | 3 | 2400 | 8400 | 84 | Monstrous Abominations, Unfathomable Horrors |
-| 5 | 1 | Promoted on Merit (T8) | 4 | 2600 | 11000 | 110 | Ensure Product Quality |
-| 6 | 1 | They Can't Blame Their Tools (T9) | 2 | 2400 | 13400 | 134 | Requisition Protective Gear, They Can't Blame Their Tools |
-| 7 | 1 | Portable Destruction (T8) | 9 | 7000 | 20400 | 204 | Portable Destruction |
-| 8 | 2 | Always More Besides (T1) | 1 | 400 | 20800 | 208 |  |
-| 9 | 2 | Murder Dissenters (T2) | 1 | 400 | 21200 | 212 |  |
-| 10 | 2 | Know Your Place! (T2) | 1 | 400 | 21600 | 216 |  |
-| 11 | 2 | Eyes Everywhere (T2) | 1 | 800 | 22400 | 224 |  |
-| 12 | 2 | Spread Rot & Decay (T5) | 1 | 1200 | 23600 | 236 |  |
-| 13 | 2 | Enormous Caches (T6) | 1 | 1200 | 24800 | 248 |  |
-| 14 | 2 | Ultimate Experiments (T9) | 1 | 1600 | 26400 | 264 |  |
-| 15 | 2 | Eliminate the Competition (T6) | 5 | 4100 | 30500 | 305 |  |
-| 16 | 2 | Masters of Infiltration (T7) | 1 | 1600 | 32100 | 321 |  |
+| 2 | 1 | Devious Plans (T0) | 1 | 100 | 3500 | 35 |  |
+| 3 | 1 | Ensure Product Quality (T7) | 3 | 1700 | 5200 | 52 | Ensure Product Quality |
+| 4 | 1 | Monstrous Plans (T4) | 1 | 100 | 5300 | 53 |  |
+| 5 | 1 | Ingenious Plans (T8) | 1 | 100 | 5400 | 54 |  |
+| 6 | 1 | Promoted on Merit (T8) | 1 | 1200 | 6600 | 66 | Promoted on Merit |
+| 7 | 1 | Murder Dissenters (T2) | 1 | 400 | 7000 | 70 |  |
+| 8 | 1 | They Can't Blame Their Tools (T9) | 2 | 2400 | 9400 | 94 | Requisition Protective Gear, They Can't Blame Their Tools |
+| 9 | 1 | Always More Besides (T1) | 1 | 400 | 9800 | 98 |  |
+| 10 | 1 | Practiced Goaders (T5) | 1 | 400 | 10200 | 102 | Practiced Goaders |
+| 11 | 1 | Portable Destruction (T8) | 10 | 7800 | 18000 | 180 | Portable Destruction |
+| 12 | 1 | Ultimate Experiments (T9) | 1 | 1600 | 19600 | 196 |  |
+| 13 | 1 | Hit & Run (T1) | 1 | 800 | 20400 | 204 | Hit & Run |
+| 14 | 1 | Unfathomable Horrors (T7) | 3 | 2400 | 22800 | 228 | Monstrous Abominations, Unfathomable Horrors |
+| 15 | 1 | Oppressive Plans (T6) | 4 | 2500 | 25300 | 253 |  |
+| 16 | 1 | Spread Rot & Decay (T5) | 1 | 1200 | 26500 | 265 |  |
+| 17 | 1 | Know Your Place! (T2) | 1 | 400 | 26900 | 269 |  |
+| 18 | 1 | Eyes Everywhere (T2) | 1 | 800 | 27700 | 277 |  |
+| 19 | 1 | Enormous Caches (T6) | 1 | 1200 | 28900 | 289 |  |
+| 20 | 1 | Eliminate the Competition (T6) | 1 | 1600 | 30500 | 305 |  |
+| 21 | 1 | Masters of Infiltration (T7) | 1 | 1600 | 32100 | 321 |  |
 
 ## Why the Verminlord techs go first (from the game script and DB)
 
@@ -131,41 +139,41 @@ Flat research order (what the queue will actually research, in a valid order; bo
 8. Carve Undertunnels (T3, 400 RP)
 9. Horned One's Approval (T3, 400 RP)
 10. Rat-Daemons (T4, 400 RP) <- click target
-11. The Menace Below (T4, 400 RP)
-12. Monstrous Plans (T4, 100 RP)
-13. **Practiced Goaders** (T5, 400 RP) <- click target
-14. Devious Plans (T0, 100 RP)
-15. Fight Dirty! (T1, 800 RP) (skip)
-16. **Hit & Run** (T1, 800 RP) <- click target
-17. **Monstrous Abominations** (T5, 800 RP)
-18. Twisted Beyond Recognition (T6, 800 RP) (skip)
-19. **Unfathomable Horrors** (T7, 800 RP) <- click target
-20. Volatile Plans (T6, 100 RP)
-21. **Ensure Product Quality** (T7, 1200 RP)
-22. Ingenious Plans (T8, 100 RP)
-23. Promoted on Merit (T8, 1200 RP) <- click target
-24. **Requisition Protective Gear** (T9, 1200 RP)
-25. **They Can't Blame Their Tools** (T9, 1200 RP) <- click target
-26. Abduct Promising Candidates (T2, 800 RP) (skip)
-27. Virulent Plans (T3, 100 RP)
-28. Distil Poisons (T4, 1200 RP) (skip)
-29. Hallucinogenics (T5, 1200 RP) (skip)
-30. Record Effective Recipes (T5, 1200 RP) (skip)
-31. Plans Within Plans (T8, 100 RP)
-32. New Warpstone Uses (T8, 1600 RP)
-33. Refined Punching Power (T8, 400 RP) (skip)
-34. **Portable Destruction** (T8, 400 RP) <- click target
-35. Always More Besides (T1, 400 RP) <- click target
-36. Murder Dissenters (T2, 400 RP) <- click target
-37. Know Your Place! (T2, 400 RP) <- click target
-38. Eyes Everywhere (T2, 800 RP) <- click target
-39. Spread Rot & Decay (T5, 1200 RP) <- click target
-40. Enormous Caches (T6, 1200 RP) <- click target
-41. Ultimate Experiments (T9, 1600 RP) <- click target
-42. Intensive Training (T1, 800 RP) (skip)
-43. Exotic Martial Arts (T2, 800 RP) (skip)
-44. Exploit Criminals (T3, 800 RP)
-45. Oppressive Plans (T6, 100 RP)
+11. Devious Plans (T0, 100 RP) <- click target
+12. The Menace Below (T4, 400 RP)
+13. Volatile Plans (T6, 100 RP)
+14. **Ensure Product Quality** (T7, 1200 RP) <- click target
+15. Monstrous Plans (T4, 100 RP) <- click target
+16. Ingenious Plans (T8, 100 RP) <- click target
+17. **Promoted on Merit** (T8, 1200 RP) <- click target
+18. Murder Dissenters (T2, 400 RP) <- click target
+19. **Requisition Protective Gear** (T9, 1200 RP)
+20. **They Can't Blame Their Tools** (T9, 1200 RP) <- click target
+21. Always More Besides (T1, 400 RP) <- click target
+22. **Practiced Goaders** (T5, 400 RP) <- click target
+23. Fight Dirty! (T1, 800 RP) (skip)
+24. Abduct Promising Candidates (T2, 800 RP) (skip)
+25. Virulent Plans (T3, 100 RP)
+26. Distil Poisons (T4, 1200 RP) (skip)
+27. Hallucinogenics (T5, 1200 RP) (skip)
+28. Record Effective Recipes (T5, 1200 RP) (skip)
+29. Plans Within Plans (T8, 100 RP)
+30. New Warpstone Uses (T8, 1600 RP)
+31. Refined Punching Power (T8, 400 RP) (skip)
+32. **Portable Destruction** (T8, 400 RP) <- click target
+33. Ultimate Experiments (T9, 1600 RP) <- click target
+34. **Hit & Run** (T1, 800 RP) <- click target
+35. **Monstrous Abominations** (T5, 800 RP)
+36. Twisted Beyond Recognition (T6, 800 RP) (skip)
+37. **Unfathomable Horrors** (T7, 800 RP) <- click target
+38. Intensive Training (T1, 800 RP) (skip)
+39. Exotic Martial Arts (T2, 800 RP) (skip)
+40. Exploit Criminals (T3, 800 RP)
+41. Oppressive Plans (T6, 100 RP) <- click target
+42. Spread Rot & Decay (T5, 1200 RP) <- click target
+43. Know Your Place! (T2, 400 RP) <- click target
+44. Eyes Everywhere (T2, 800 RP) <- click target
+45. Enormous Caches (T6, 1200 RP) <- click target
 46. Eliminate the Competition (T6, 1600 RP) <- click target
 47. Masters of Infiltration (T7, 1600 RP) <- click target
 
@@ -179,8 +187,9 @@ Scopes counted as army-wide: agent_to_parent_army_own, character_to_force_own, c
 
 | Skill (row, unlock rank) | Effect | Value per level | Units | Unit set | Prerequisite nodes |
 |---|---|---|---|---|---|
-| Standardised Firing Drill (row 0, rank 0) | Reload time reduction: %+n% for all Missile units | +8 | Stormfiend (Ratling) | `missile_units` | - |
-| Triangulation (row 4, rank 0) | Missile strength: %+n% | +3 / +7 / +12 | Stormfiend (Ratling) | `all_units` | Standardised Firing Drill (REQUIRED) |
+| Standardised Firing Drill (row 0, rank 0) | Reload time reduction: %+n% for all Missile units | +8 | Stormfiend (Ratling), Warp-Doom Magma-Cannon | `missile_units` | - |
+| Warpstone Hoarder (row 3, rank 0) | Armour-piercing missile damage: %+n for Plague Claw Catapult, Warp Lightning Cannon and Doomwheel units | +3 | Warp-Doom Magma-Cannon | `skv_artillery`, `skv_doomwheel` | - |
+| Triangulation (row 4, rank 0) | Missile strength: %+n% | +3 / +7 / +12 | Stormfiend (Ratling), Warp-Doom Magma-Cannon | `all_units` | Standardised Firing Drill (REQUIRED) |
 | Sapper (row 9, rank 0) | Speed: %+n% for all Missile units | +3 / +8 / +15 | Stormfiend (Ratling), Warp-Doom Magma-Cannon | `missile_units` | Ballistics Calibration (REQUIRED) |
 
 ### Army-wide, not unit-targeted (still applies to the army)

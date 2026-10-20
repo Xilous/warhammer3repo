@@ -17,6 +17,15 @@ SHORT={SF:'SF',MC:'MC'}
 # Not wanted whatever they do (player decision 2026-10-20, Stormvermin left the build): Best of the Best and Ensure
 # Absolute Loyalty. Still researched when a wanted tech needs them; otherwise they fall to the cheapest-first tail.
 NOT_WANTED={'wh2_main_tech_skv_8_3','wh2_main_tech_skv_8_5'}
+# Click order by value per research point (2026-10-20, review for the Ratling + Magma build): after PRIORITY, the next click
+# is the wanted tech (leaf or not) whose not-yet-researched chain brings the most VALUE per RP. Points per tech: the
+# build's missile buffs highest (Stormfiend missile strength/range x12 units, Magma Cannon ammo/reload/strength x6), then
+# compounding economy (income, growth, recruitment cost), then the rest. Unlisted wanted techs: 0.5.
+V='wh2_main_tech_skv_'; V3='wh3_dlc29_tech_skv_'
+VALUE={V+'6_2':30, V3+'9_1_2':30, V+'9_2':20, V+'7_1':15, V+'7_3':15, V+'4_3':10, V+'3_0':8, V+'9_1':8, V+'7_2':6,
+       V+'2_5':5, V+'3_2':4, V+'2_1':4, V+'2_3':4, V+'1_2':3, V+'4_4':3, V+'1_7':3, V+'3_7':3, V+'1_0':2, V+'2_2':2,
+       V+'2_0':2, V+'4_0':2, V+'5_0':2, V+'6_0':2, V+'7_0':2, V+'8_0':2, V+'9_0':2, V+'5_2':1.5,
+       V+'3_5':0.3, V+'6_1':0.3, V+'8_1':0.3, V+'8_2':0.3, V+'2_4':0.3}
 FACTION='wh2_main_skv_clan_skryre'
 # Researched first, in this order, before the cheapest-chain phases: the Verminlord unlock (Horned One's Approval swaps the
 # Dominating Scheme rite for the version that summons a Verminlord of your choice; Rat-Daemons buffs them).
@@ -76,7 +85,10 @@ def targets(effect):
             if set_has(us,u): out[u].append('ability:'+a)
     return {u:sorted(set(v)) for u,v in out.items()}
 def has_unit_target(effect): return bool(eff_sets.get(effect) or eff_rec.get(effect) or eff_attr.get(effect) or eff_abil.get(effect))
-has_missile={u:bool(lu[mu[u]['land_unit']]['primary_missile_weapon']) for u in UNITS}
+# artillery carries its gun on the articulated record / engine, not primary_missile_weapon (2026-10-20: the Magma Cannon's
+# ammo, reload and missile bonuses were dropped as 'no missile weapon')
+has_missile={u:bool(lu[mu[u]['land_unit']].get('primary_missile_weapon') or lu[mu[u]['land_unit']].get('articulated_record')
+                    or lu[mu[u]['land_unit']].get('engine') or lu[mu[u]['land_unit']].get('category')=='artillery') for u in UNITS}
 def targets_real(effect):
     """targets(), minus units for which every touched bonus is missile/ammo-only and the unit has no missile weapon."""
     out={}
@@ -172,7 +184,7 @@ P('%d wanted techs out of %d. %d targets; their chains cover %d techs for %d RP 
 unwanted_in=[x for x in sorted(allchain,key=order) if not tech_info[x]['wanted']]
 if unwanted_in: P('Unwanted techs researched only because they are prerequisites: '+', '.join(tech_info[x]['name'] for x in unwanted_in)+'.\n')
 P('## Click order\n')
-P('Phase 0 = the Verminlord unlock, forced first (see the section after the table). Every row is a leaf: no click in this table is a prerequisite of a later click, so each click is a separate queue entry and nothing is clicked twice. Phase 1 = every target whose chain adds a tech that buffs our units, cheapest remaining chain first. Phase 2 = the remaining faction-buff leaves, cheapest first. Click the target; the game queues every missing prerequisite ahead of it. Cumulative RP assumes nothing else is researched; turns = cumulative RP at the base 100 RP per turn (Warp-Forge +4, Warp-Turbine Plant +8 each shorten this).\n')
+P('Phase 0 = the Verminlord unlock, forced first (see the section after the table). Phase 1 = value per research point (2026-10-20): each click is the wanted tech, leaf or not, whose not-yet-researched chain brings the most VALUE per RP (see VALUE in scripts/game/skv_beeline.py: the build missile buffs first, then compounding economy). A click may be a prerequisite of a later click; it is then simply researched already when that comes. Click the target; the game queues every missing prerequisite ahead of it. Cumulative RP assumes nothing else is researched; turns = cumulative RP at the base 100 RP per turn (Warp-Forge +4, Warp-Turbine Plant +8 each shorten this).\n')
 P('| # | Phase | Click this target | New techs queued | Added RP | Cumulative RP | Turns at 100 RP | Unit buffs gained on the way |'); P('|---|---|---|---|---|---|---|---|')
 done=set(); cum=0; step=0; seq=[]
 left=list(targets_nodes)
@@ -182,12 +194,16 @@ for tk in PRIORITY:
     gained=[tech_info[x]['name'] for x in new if tech_info[x]['hits']]; seq.append((k,new))
     P('| %d | 0 | %s (T%d) | %d | %d | %d | %d | %s |'%(step,tech_info[k]['name'],tech_info[k]['tier'],len(new),rp,cum,round(cum/100),', '.join(gained)))
 def remaining_cost(k): return sum(tech_info[x]['rp'] for x in chain(k) if x not in done)
-def adds_unit_buff(k): return any(tech_info[x]['hits'] for x in chain(k) if x not in done)
+def value(x): return VALUE.get(tech_info[x]['tech'], 0.5 if tech_info[x]['wanted'] else 0)
+def ratio(k):
+    new=[x for x in chain(k) if x not in done]
+    return sum(value(x) for x in new)/max(1,sum(tech_info[x]['rp'] for x in new))
+left=[k for k in wanted if k not in done]
 while left:
-    pool=[k for k in left if adds_unit_buff(k)]; phase=1
-    if not pool: pool=left; phase=2
-    k=min(pool,key=lambda k:(remaining_cost(k),order(k)))
-    new=[x for x in chain(k) if x not in done]; rp=sum(tech_info[x]['rp'] for x in new); cum+=rp; done|=set(new); left.remove(k); step+=1
+    phase=1
+    k=max(left,key=lambda k:(ratio(k),-remaining_cost(k),[-v for v in order(k)]))
+    new=[x for x in chain(k) if x not in done]; rp=sum(tech_info[x]['rp'] for x in new); cum+=rp; done|=set(new); step+=1
+    left=[c for c in left if c not in done]
     gained=[tech_info[x]['name'] for x in new if tech_info[x]['hits']]; seq.append((k,new))
     P('| %d | %d | %s (T%d) | %d | %d | %d | %d | %s |'%(step,phase,tech_info[k]['name'],tech_info[k]['tier'],len(new),rp,cum,round(cum/100),', '.join(gained)))
 P("""
@@ -256,5 +272,5 @@ for k in sorted(tech_info,key=order):
 P('\nRebuild: `python scripts/game/skv_beeline.py` (needs `tww/db` from `python run_all.py game` plus `python scripts/game/dumpdb.py character_skill_node_links_tables technology_required_technology_junctions_tables`).')
 rep='\n'.join(out)
 open('GUIDE_Skryre_Tech_Beeline.md','w',encoding='utf-8').write(rep)
-json.dump({'targets':[tech_info[k]['tech'] for k in targets_nodes],'order':[tech_info[x]['tech'] for _,new in seq for x in new],'tech':{k:{kk:(sorted(v) if isinstance(v,set) else v) for kk,v in t.items()} for k,t in tech_info.items()},'heroes':hero_out},open('tww/skv_beeline.json','w',encoding='utf-8'),ensure_ascii=False,indent=1)
+json.dump({'targets':[tech_info[k]['tech'] for k,_ in seq],'order':[tech_info[x]['tech'] for _,new in seq for x in new],'tech':{k:{kk:(sorted(v) if isinstance(v,set) else v) for kk,v in t.items()} for k,t in tech_info.items()},'heroes':hero_out},open('tww/skv_beeline.json','w',encoding='utf-8'),ensure_ascii=False,indent=1)
 print(rep)
