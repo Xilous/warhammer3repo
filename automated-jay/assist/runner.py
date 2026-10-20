@@ -41,6 +41,7 @@ from . import army_builder, build, masterplans, rites, skills, tech, workshop
 SETTLE_CAMERA_PX = 0.1
 SETTLE_CAMERA_MS = 250
 SETTLE_PANELS_MS = 500
+SETTLE_PLAYER_IDLE_S = 1.0   # camera motion within this long of the player's last input is the player's own
 SETTLE_TIMEOUT = 20.0         # s: never settled (the player keeps panning): go on, the idle check still applies
 POLL_SECONDS = 2.0            # loop period while nothing is about to happen
 POLL_NOTICES = 0.5            # during the player's turn: how often to look for event notices to close
@@ -251,6 +252,7 @@ def settle(ui: UI, cancel=lambda: False, timeout: float = SETTLE_TIMEOUT) -> tup
     """Wait until the turn start has settled: camera still and no root panel coming or going (see SETTLE_*).
     Returns (True, seconds) when settled, (False, s) when cancelled, (None, s) on timeout."""
     from bot.sensor.camera import read_camera
+    from bot.focus import idle_seconds
     import numpy as np
     t0 = time.monotonic()
     cam_since = panels_since = t0
@@ -265,7 +267,10 @@ def settle(ui: UI, cancel=lambda: False, timeout: float = SETTLE_TIMEOUT) -> tup
             if prev_cam is not None:
                 gx, gy = prev_cam.ground_at_center()
                 p = cam.project(gx, gy)
-                if p is None or float(np.hypot(p[0] - 960, p[1] - 540)) >= SETTLE_CAMERA_PX:
+                # camera motion while the player is using mouse or keyboard is theirs, not the turn start's
+                # (multiplayer 2026-10-20: the player panned at once every turn, the camera never read as still,
+                # and the turn-start pass waited until End Turn, turns 16 and 17)
+                if (p is None or float(np.hypot(p[0] - 960, p[1] - 540)) >= SETTLE_CAMERA_PX)                         and idle_seconds() >= SETTLE_PLAYER_IDLE_S:
                     cam_since = now
             prev_cam = cam
         except Exception:                    # noqa: BLE001  (camera block unreadable for a moment: not settled)
