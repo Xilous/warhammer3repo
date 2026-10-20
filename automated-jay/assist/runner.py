@@ -1273,6 +1273,9 @@ class Runner:
                       " during your turn", flush=True)
         except InputAborted:
             pass                                       # the player switched windows mid-click: try again later
+        except RuntimeError as ex:
+            if "game UI not found" not in str(ex):    # (a battle or a load: no campaign UI for a while; the phase
+                traceback.print_exc()                  # line already says "game UI not found")
         except Exception:
             traceback.print_exc()
 
