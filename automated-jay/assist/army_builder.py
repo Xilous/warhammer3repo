@@ -386,7 +386,7 @@ def treasury(w: World, F: int) -> int:
     return struct.unpack("<i", w.pm.read_bytes(F + 0xD58, 4))[0]
 
 
-def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log) -> list[str]:
+def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: int = 0) -> list[str]:
     btn = first(ui, "button_recruitment")
     if btn is None:
         return ["recruitment button not found"]
@@ -396,17 +396,28 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log) -> lis
         wait.stable(lambda: tuple(c for c, i, _r in ui.nodes(pool.ptr) if i.endswith("_recruitable")), n=2,
                     timeout=1.0, what="local recruitment pool listed", ui=ui, must=False)
     out = []
-    # Gold is checked before every click (player report 2026-10-20: clicks went on after the gold ran out, each refused
-    # one waited for a command that never came). The price: the unit's base cost until one click shows the real one
-    # (the treasury drop: discounts such as the Scrap Heap's are in it). Gold the building step saves this turn stays
-    # (player decision 2026-10-20: buildings take precedence).
+    # A click is confirmed by the army's recruitment queue growing (memory, MF+0x6EC), not by the treasury: a unit
+    # queued beyond the province's recruitment capacity spills over to later turns and is paid only when it starts
+    # (checked live 2026-10-20, Thanquol at Zhufbar: 4 clicks, queue 5 -> 9, treasury unchanged; waiting for the gold
+    # made every such click wait the 15 s effect cap, one unit per type per pass).
+    # Gold is checked before every click (player report 2026-10-20), counting the units queued this run but not paid
+    # yet. The price: the base cost until a paid click shows the real one (discounts such as the Scrap Heap's are in
+    # it). Gold the building step saves this turn stays (player decision 2026-10-20: buildings take precedence).
+    from bot.sensor.world import recruitment_queue
     from .build import saving_reserve
     keep = saving_reserve(w, F)
     price = {r["unit"]: int(r.get("recruitment_cost") or 0) for r in gd._load("main_units_tables")}
+    owed = 0                                   # queued this run, not charged yet
+
+    def queued() -> int:
+        try:
+            return w.u32(mf + 0x6EC) if mf else -1     # the queue count (bot/sensor/world.recruitment_queue)
+        except Exception:
+            return -1
     for unit, n in missing.items():
         done = 0
         for _ in range(n):
-            gold = treasury(w, F)
+            gold = treasury(w, F) - owed
             if gold - price.get(unit, 0) < keep:
                 out.append(f"{unit_name(unit)}: {price.get(unit, 0)} gold each, {gold} in the treasury"
                            + (f", {keep} kept for the buildings this turn" if keep else ""))
@@ -417,14 +428,17 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log) -> lis
             if not scroll_into_view(ui, card):
                 out.append(f"could not scroll {unit_name(unit)} into view")
                 break
-            before = treasury(w, F)
-            from bot.sensor import commands    # paced by the game: no command = the game refused the click (capacity
-            st, _v = commands.act(w.pm, lambda: click(ui, card) and None,   # full, gold); a command = wait for the
-                                  lambda: treasury(w, F) < before)          # gold, however long the sync takes
+            before, q0 = treasury(w, F), queued()
+            from bot.sensor import commands    # paced by the game: no command = the click did not reach the game; a
+            st, _v = commands.act(              # command = wait for the queue (or, unreadable, the gold), however long
+                w.pm, lambda: click(ui, card) and None,                     # the sync takes
+                (lambda: queued() > q0) if q0 >= 0 else (lambda: treasury(w, F) < before))
             if st != "done":
-                break                          # not taken: local capacity full or not affordable
+                break                          # not taken: not affordable, or refused
             if (paid := before - treasury(w, F)) > 0:
                 price[unit] = paid                 # the real price, for the next click
+            else:
+                owed += price.get(unit, 0)         # spilled over: paid when it starts
             done += 1
         if done:
             out.append(f"queued {done} {unit_name(unit)}")
@@ -830,7 +844,8 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
         if here in elig:
             if not select_army(ui, army):
                 return [f"{name}: could not select the army"], None
-            out += recruit_local(ui, w, F, {u: n for u, n in missing.items() if u in elig[here]}, log)
+            out += recruit_local(ui, w, F, {u: n for u, n in missing.items() if u in elig[here]}, log,
+                                 mf=army.force_ptr)
         else:
             tgt = closest_target(w, F, army, elig)
             if tgt is None:
