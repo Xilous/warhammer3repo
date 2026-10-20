@@ -5,6 +5,8 @@ needs Expansionist Planning first: on a fresh campaign (no complete province has
 complete province gets Expansionist Planning, and keeps it until the rite has been cast once (its cooldown runs in
 memory); then it switches to Exploitative Planning like every other. After that there is always an Exploitative
 province, so the Expansionist phase never comes back.
+Kept as is (player decision, 2026-10-20): no switch to Expansionist once food is capped, no Martial Planning in the
+refill province.
 Rite: The Dominating Scheme is cast whenever it is off cooldown and affordable, before buildings and the army builder
 spend the gold (player rule). After Horned One's Approval the rite is its Verminlord version, and every cast opens a
 dilemma: it is answered with "A Verminlord Warpseer" (player rule; every other dilemma stays the player's).
