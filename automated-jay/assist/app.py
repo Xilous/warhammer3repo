@@ -5,7 +5,7 @@ Main window:
   - this turn: what each automation did
   - armies: every field army (not garrisons) by lord name, its location and how it compares with the
     template; the checkbox turns on "match template" for that army (strategy/automation.json)
-  - provinces: which ones are blocked from building and why
+  - settlements blocked from building (next to an enemy-held one) and why
   - while a pass waits for an unknown panel: one "Ignore <id>" button per panel (never blocks again)
 The window only reads game memory to refresh; it never sends input to the game. One refresh at a time, on one
 long-lived sensor (it re-attaches by itself when the game is restarted).
@@ -418,7 +418,7 @@ class App:
             rows = [(a, d, refill_check(w, F, a, d, elig_any, slots, claims))
                     for a in armies(w, F) for d in [delta(a, heroes)]]
             snap = snapshot(w)
-            blocked = dict(snap.blocked_provinces) if snap else {}
+            blocked = dict(snap.blocked_settlements) if snap else {}
             from .recruit import report, sources
             src = sources(w)
             self.recruit_lines = report(src)

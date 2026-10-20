@@ -510,8 +510,10 @@ offsets, so the assistant reads the same data the game's own scripts use, from o
 The player's faction is found by following candidate paths from the campaign model (`anchors.json:
 faction_paths`) and accepting the one whose name is `player_faction_key`.
 
-The no-build rule: a province is blocked when a faction the player is at war with holds a region in it,
-or when it shares a border with a province where such a faction holds a region.
+The no-build rule (per settlement, player decision 2026-10-20): an owned settlement, capital or minor, is blocked when
+a region next to it (the region's neighbour list in memory: land borders) is held by a faction the player is at war
+with. The rest of its province is built as usual. (Until 2026-10-20 the whole province was blocked when such a
+faction held a region in it or in a bordering province.)
 
 ## Building UI mechanics (`assist/build.py`)
 

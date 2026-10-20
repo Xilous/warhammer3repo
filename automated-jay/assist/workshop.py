@@ -3,7 +3,7 @@
 The Stormfiend Ratling Cannon upgrades are workshop parts (wh3_dlc29_ikit_workshop_stormfiend_ranged_type_0/1/2);
 the third needs workshop level 2, and one of level 2's requirements is a Construction Cavern (any level) standing in
 any settlement. So, at workshop level 1 the building step makes sure one exists: if there is none, it builds one in a
-settlement it manages (never a frontline province); while it is being built, and for the turn it is first seen
+settlement it manages (never a frontline settlement); while it is being built, and for the turn it is first seen
 finished, the off-list rule leaves it alone; the turn after, it is released, and the off-list rule replaces it with
 the planned building. After that the requirement counts as met (no second Cavern while the workshop is still level 1).
 
@@ -147,7 +147,7 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
     if found or st.get("met"):
         return protected, None, None
     mine = _committed(st)
-    on_plan = any(planned(o) for p, owned in models.items() if p not in blocked for o in owned)
+    on_plan = any(planned(o) for p, owned in models.items() for o in owned if o.region not in blocked)
     if on_plan and not (mine and mine[2]):                 # the planned Cavern line counts: no temporary one
         if mine:
             st.pop("cavern", None)                         # chosen earlier, never started: dropped
@@ -164,23 +164,21 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
             return set(), None, None
         if started or s.constructing:                      # going up, or the old building is demolished at the end
             return protected, None, None                   # of the turn
-        if o.province in blocked:
-            return protected, None, f"the Construction Cavern waits: {o.province} is a frontline province now"
+        if o.region in blocked:
+            return protected, None, f"the Construction Cavern waits: {o.region} is on the frontline now"
         return protected, (o, idx, bool(s.building)), None
     # can_host: the settlement's main building is high enough for a Construction Cavern (tier 3, player note
     # 2026-10-17; from the game data in assist/build.py)
-    for p, owned in models.items():                        # none yet: a free slot in a managed (not frontline) province
-        if p in blocked:
-            continue
+    for p, owned in models.items():                        # none yet: a free slot in a managed (not frontline) settlement
         for o in owned:
-            if not can_host(o):
+            if o.region in blocked or not can_host(o):
                 continue
             for idx, s in enumerate(o.slot_states):
                 if idx > 0 and s.type == "secondary" and s.active and not s.building and not s.constructing:
                     return protected, (o, idx, False), None
     for o, idx in off_list:                                # no free slot: an off-list building's slot, first
         st = o.slot_states[idx]                           # (a Cavern only fits a secondary slot, never the port)
-        if o.province not in blocked and st.type == "secondary" and not st.constructing and can_host(o):
+        if o.region not in blocked and st.type == "secondary" and not st.constructing and can_host(o):
             return protected, (o, idx, True), None
     # worst case (player rule 2026-10-17): temporarily replace the lowest-priority building on the settlement list
     # (lowest level on a tie) in a managed settlement; once the Cavern has counted, the off-list rule puts the
@@ -188,10 +186,8 @@ def plan(w, F: int, models, blocked: dict, turn: int, off_list=(), priority_of=N
     worst = None
     if priority_of is not None:
         for p, owned in models.items():
-            if p in blocked:
-                continue
             for o in owned:
-                if not can_host(o):
+                if o.region in blocked or not can_host(o):
                     continue
                 for idx, s in enumerate(o.slot_states):
                     if idx == 0 or s.type != "secondary" or not s.building or s.constructing:

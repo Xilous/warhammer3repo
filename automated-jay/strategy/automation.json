@@ -52,7 +52,7 @@
     "off_list_buildings": "replace",
     "_ports_and_specials": "Never replaced: the port of a port settlement is kept (adopted) whatever it is, a unique port too, and so is the main building; special buildings (landmarks, legendary or unique buildings) are kept as well. Only normal slots are replaced (player rule, 2026-10-17).",
     "_workshop": "Forbidden Workshop level 2 (the 3rd Stormfiend Ratling Cannon upgrade) needs a Construction Cavern line building (any level) standing. Since 2026-10-20 the Warp-Turbine Plant (same chain) is on the settlement list for every capital, so the planned one counts and no temporary Cavern is built while it is planned anywhere. Only when no capital plans it is a temporary Cavern still kept for one turn: in a free slot, else an off-list building's slot, else in place of the lowest-priority building on the list (player rule, 2026-10-17).",
-    "_off_list_buildings": "replace: in a province the assistant manages (not frontline), a building that is not on the settlement list is demolished and the planned one is built in its slot; frontline provinces stay entirely yours (player rule, 2026-10-17). ask: leave such buildings alone."
+    "_off_list_buildings": "replace: in a settlement the assistant manages (not frontline), a building that is not on the settlement list is demolished and the planned one is built in its slot; frontline settlements (next to an enemy-held one, per settlement since 2026-10-20) stay entirely yours (player rule, 2026-10-17). ask: leave such buildings alone."
   },
   "skills": {
     "orders": "skills.json",

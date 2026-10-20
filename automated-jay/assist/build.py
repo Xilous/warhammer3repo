@@ -112,19 +112,22 @@ def build_models(w: World, snap) -> tuple[dict[str, list[OwnedSettlement]], dict
         model = Settlement(key, bool(is_cap.get(key)), main, port, rest,
                            gd.landmarks_for_region(key), key)
         out.setdefault(p, []).append(OwnedSettlement(key, r, p, col, len(order), slots, model))
-    return out, snap.blocked_provinces
+    return out, snap.blocked_settlements
 
 
 def _actions(models, blocked: dict, override_blocked: bool = False):
+    # blocked: owned settlements next to an enemy-held one (world.snapshot, per settlement since 2026-10-20). The
+    # province is still planned as a whole (its one-per-province buildings stay where the plan puts them); a blocked
+    # settlement's own actions wait
     todo, skipped = [], []
     for p, owned in models.items():
-        if p in blocked and not override_blocked:
-            skipped.append((p, blocked[p]))
-            continue
         plans = plan_province(Province(p, [o.model for o in owned]))
         by_name = {o.region: o for o in owned}
+        skipped += [(o.region, blocked[o.region]) for o in owned if o.region in blocked and not override_blocked]
         for sp in plans:
             o = by_name[sp.settlement.name]
+            if o.region in blocked and not override_blocked:
+                continue
             busy = any(s.constructing for s in o.slot_states)
             for a in sp.actions:
                 if a.kind in ("upgrade_main", "upgrade_port", "construct", "upgrade"):
@@ -623,7 +626,7 @@ def slot_building(w: World, o, idx: int) -> str | None:
 
 def ui_demolish(ui, w: World, o, idx: int, slot) -> str | None:
     """Demolish the building in this slot (player rule 2026-10-17: in a province the assistant manages, a building
-    that is not on the settlement list is replaced by the planned one; frontline provinces stay the player's).
+    that is not on the settlement list is replaced by the planned one; frontline settlements stay the player's).
     The slot's hover popup has options_list/button_raze; a confirmation box, if the game shows one, is accepted.
     -> "gone" (the slot is empty), "pending" (the game demolishes at the end of the turn: until then the building
     stays in its slot and the slot shows work under way, [[S + 0x190] + 0x10] set; seen 2026-10-17, when every
@@ -672,7 +675,7 @@ def buildings_setting(name: str, default=True):
 
 
 def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = False) -> list[Repair]:
-    """Damaged buildings in provinces where building is allowed (the war block applies to repairs too), skipping
+    """Damaged buildings in settlements where building is allowed (the war block applies to repairs too), skipping
     those already under repair. Province by province, slot order (main building first)."""
     if not buildings_setting("repair_damaged"):
         return []
@@ -680,9 +683,9 @@ def planned_repairs(w: World, models, blocked: dict, override_blocked: bool = Fa
     replacing = buildings_setting("off_list_buildings", "ask") == "replace"
     out = []
     for p, owned in models.items():
-        if p in blocked and not override_blocked:
-            continue
         for o in owned:
+            if o.region in blocked and not override_blocked:
+                continue
             listed = {t.chain for t in plan_targets(o)} | {strategy()["port_chain"]} if replacing else set()
             for i, st in enumerate(o.slot_states):
                 if not st.building:

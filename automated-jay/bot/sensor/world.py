@@ -410,7 +410,7 @@ class Snapshot:
     at_war: list[str]
     own: dict[str, int]                      # region key -> region object
     province_of: dict[str, str]
-    blocked_provinces: dict[str, str]        # province -> reason
+    blocked_settlements: dict[str, str]      # region key of an owned settlement -> why nothing is built there
     neighbours_of: dict[str, list[str]]
 
 
@@ -453,22 +453,14 @@ def snapshot(w: World | None = None) -> Snapshot | None:
             if prov.get(k) in our_provs:        # keep walking inside our provinces only
                 frontier.append(n)
     neighbours_of = {k: [w.region_key(n) or "?" for n in w.neighbours(r)] for k, r in objs.items()}
+    # the no-build rule, per settlement (player decision 2026-10-20; was per province: a province was blocked when an
+    # enemy held a region in it or in a bordering province): an owned settlement, capital or minor, is blocked when
+    # a region next to it (the region's own neighbour list, land borders) is held by a faction we are at war with
     blocked: dict[str, str] = {}
-    for p in our_provs:
-        if p in enemy_provinces:
-            k, f = enemy_provinces[p]
-            blocked[p] = f"{f} holds {k} inside this province"
-            continue
-        members = [k for k in objs if prov.get(k) == p]
-        for k in members:
-            for nk in neighbours_of.get(k, []):
-                np_ = prov.get(nk)
-                if np_ and np_ != p and np_ in enemy_provinces:
-                    ek, f = enemy_provinces[np_]
-                    blocked[p] = f"borders {np_} where {f} (at war) holds {ek}"
-                    break
-            if p in blocked:
-                break
+    for k in own:
+        near = [f"{nk} ({enemy_regions[nk]})" for nk in neighbours_of.get(k, []) if nk in enemy_regions]
+        if near:
+            blocked[k] = "next to enemy-held " + ", ".join(near)
     return Snapshot(F, w.faction_name(F) or "?", war_keys, own, prov, blocked, neighbours_of)
 
 

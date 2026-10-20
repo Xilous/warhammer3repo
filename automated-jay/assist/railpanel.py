@@ -9,7 +9,7 @@ Look: Clan Brass (player's pick 2026-10-18, assist/theme.py). Contents, top to b
 Exit, treasury - income - Warpstone, "Ignore <id>" for popups that block a pass, this turn's step results, the
 armies with their army-builder tick boxes (saved exactly as the main window does: assist/army.py set_enabled) and
 what each costs now and once refilled, the next army (can you afford it: a bar of income against its cost, Create
-new playbook army, greyed out with a ✓/✗ list of what it needs), the frontline provinces, and a link to the full
+new playbook army, greyed out with a ✓/✗ list of what it needs), the frontline settlements, and a link to the full
 window.
 """
 from __future__ import annotations
