@@ -473,6 +473,9 @@ class Runner:
                 self.post("waiting", "WAITING", "Build & End Turn: no campaign loaded")
                 return
             turn = s.turn
+            # first of all (player request 2026-10-20): out of the zoomed-out tactical view, whose Overlays panel
+            # covers the right of the screen, before anything is read off the HUD or clicked
+            self._leave_tactical_view()
             ok, why = players_turn(self.ui)
             if not ok and why == "campaign map not shown" and self._put_away_panels():
                 ok, why = players_turn(self.ui)
