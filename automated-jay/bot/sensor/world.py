@@ -455,7 +455,9 @@ def snapshot(w: World | None = None) -> Snapshot | None:
     neighbours_of = {k: [w.region_key(n) or "?" for n in w.neighbours(r)] for k, r in objs.items()}
     # the no-build rule, per settlement (player decision 2026-10-20; was per province: a province was blocked when an
     # enemy held a region in it or in a bordering province): an owned settlement, capital or minor, is blocked when
-    # a region next to it (the region's own neighbour list, land borders) is held by a faction we are at war with
+    # a region next to it (the region's own neighbour list, land borders) is held by a faction we are at war with.
+    # Next to = the regions' territories share a border, however far apart the settlements are (Zhufbar borders
+    # Eschen around Castle Drakenhof's east side); kept that way, no distance limit (player decision 2026-10-20)
     blocked: dict[str, str] = {}
     for k in own:
         near = [f"{nk} ({enemy_regions[nk]})" for nk in neighbours_of.get(k, []) if nk in enemy_regions]
