@@ -232,7 +232,11 @@ class TurnRail:
         self._spinning = False
         if self.end_wait:
             self._spin += 1
-            self.draw()
+            try:
+                self.draw()
+            except Exception:                        # (logged; the next status redraws it)
+                import traceback
+                traceback.print_exc()
 
     def _draw_icons(self, W: int) -> None:
         """Expand (the fold-out panel), restart (a fresh copy with the latest code), exit: right on the bar."""

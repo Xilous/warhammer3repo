@@ -312,6 +312,18 @@ class App:
         self._click_through = click_through
 
     def _poll(self) -> None:
+        """Drain the runner's messages into the widgets, every 150 ms. Always rescheduled (2026-10-20: one message
+        that raised ended the chain; the rail froze on "YOUR TURN 2 / QUEUED" while the runner went on to turn 3)."""
+        try:
+            self._drain()
+        except Exception:
+            import traceback
+            print("widget update failed:", flush=True)
+            traceback.print_exc()
+        finally:
+            self.root.after(150, self._poll)
+
+    def _drain(self) -> None:
         try:
             while True:
                 msg = self.q.get_nowait()
@@ -363,7 +375,6 @@ class App:
                 self._overlay_style(click_through=False)
             if self.panel.suppressed:
                 self.panel.suppress(False)
-        self.root.after(150, self._poll)
 
     def _show_log(self, lines: list[str]) -> None:
         """The box grows with the text, wrapped lines included: at a fixed 7 lines the last steps were cut off."""
