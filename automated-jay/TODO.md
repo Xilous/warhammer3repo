@@ -14,8 +14,9 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
 ## Any session (single player is fine)
-- [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ..." appears for a top item,
-      nothing below it is bought that turn, and the army still recruits with what is beyond the reserve.
+- [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ... in N turn(s)" appears for a top item,
+      cheap items are still bought with the spare gold, the saved item is bought on the turn it said, and the army
+      still recruits with what is beyond the reserve.
 - [ ] **Skill step after the memory_state fix (2026-10-20)**: Triangulation, Warp-Smart, Draftmaster, Quartermaster etc.
       are taken again in order; runs/skills_check.jsonl shows no memory/card disagreement.
 - [ ] **Spilled-over recruits**: what the game does when a unit queued past the recruitment capacity cannot be paid

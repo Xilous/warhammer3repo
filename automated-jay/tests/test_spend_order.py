@@ -51,3 +51,49 @@ def test_recruit_buildings_closest_capital_first():
             (near, act("construct", "Equipment Warpforge", first("wh3_dlc29_skv_stormfiends")))]
     got = [(o.province, a.item) for o, a in sorted(todo, key=lambda t: build.spend_rank(*t))]
     assert got == [("b", "Equipment Warpforge"), ("b", "Warp-Turbine Plant"), ("a", "Equipment Warpforge")]
+
+
+# ---- saving that never idles gold (player decision 2026-10-20, after the 10-turn simulation)
+def plan(gold, net, items):
+    """items: (label, rank, cost) in spending order -> (bought, held, saved labels, reserve)."""
+    b, bought, held = build.Budget(gold, net), [], []
+    for label, rank, cost in items:
+        if cost > b.spare():
+            if cost <= b.gold:
+                held.append(label)
+            else:
+                b.save(cost, (rank,), label)
+            continue
+        b.spend(cost)
+        bought.append(label)
+    return bought, held, [l for _c, _k, l in b.saved], b.reserve()
+
+
+TURN_25 = [("landmark", 2, 10000), ("warpforge", 3, 8000), ("turbine", 3, 8000), ("temple GP", 4, 1000),
+           ("temple CD", 4, 1500), ("temple Z", 4, 2000), ("pit GP", 4, 500), ("pit KD", 4, 1000),
+           ("pit CD", 4, 1000), ("scrap KD", 4, 250), ("scrap Z", 4, 1000), ("sentry", 4, 4000)]
+
+
+def test_turn_25_spends_the_spare_gold_and_keeps_the_landmark_on_time():
+    bought, held, saved, reserve = plan(3108, 3779, TURN_25)
+    assert saved == ["landmark"]                  # the Warpforge is not reachable within 2 turns after it
+    assert bought == ["pit GP"]                   # 666 spare: the landmark still comes in 2 turns
+    assert "temple GP" in held and "scrap KD" in held
+    assert 3108 - 500 + 2 * 3779 >= 10000 and reserve == 10000 - 2 * 3779
+
+
+def test_nothing_saved_buys_everything_affordable():
+    bought, held, saved, _r = plan(5000, 1000, [("a", 4, 2000), ("b", 4, 2000), ("c", 4, 2000)])
+    assert bought == ["a", "b"] and not held and not saved
+
+
+def test_far_item_is_not_saved_for():
+    bought, _h, saved, reserve = plan(1000, 500, [("landmark", 2, 10000), ("pit", 4, 500)])
+    assert saved == [] and bought == ["pit"] and reserve == 0
+
+
+def test_second_saved_item_counts_the_first():
+    # a: 6000 - 4000 -> next turn; b: 6000 + 9000 - 4000 = 11000 -> 2 turns of 6000; spare = 4000 + 12000 - 15000
+    bought, held, saved, reserve = plan(4000, 6000, [("a", 1, 6000), ("b", 3, 9000), ("pit", 4, 800),
+                                                     ("temple", 4, 500)])
+    assert saved == ["a", "b"] and bought == ["pit"] and held == ["temple"] and reserve == 3000

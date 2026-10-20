@@ -384,8 +384,10 @@ turns by itself, and drafts the assistant replaced. Nothing imports it and it mu
 - Spending (2026-10-20, `assist/build.py` `spend_rank`): the gold goes across all provinces at once, in value order:
   main building and port upgrades; the Warpstone Reactor line (+30/40/50% income from every building in the
   province, paid back in about 6 turns); landmarks; the template's recruit buildings, the capital closest to tier 5
-  first; then the rest in list order. A top item affordable within 2 turns of net income is saved for: nothing
-  below it is bought that turn, and the army step leaves that gold alone too ("saving for ..." in the result).
+  first; then the rest in list order. Top items affordable within 2 turns of net income are saved for, and the
+  rest is bought with the spare gold: anything that does not push a saved item a turn later (player decision
+  2026-10-20; holding all the gold idled it while cheap upgrades waited). The army step leaves only what the saved
+  items still need ("saving for ... in N turn(s)" in the result).
 - The army step checks the gold before every recruit click (base price until a click shows the real one), so it
   never clicks on with an empty treasury.
 - Nothing is planned above the current main-building tier. Buildings that are not on the list are only

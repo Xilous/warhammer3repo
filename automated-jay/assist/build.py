@@ -145,7 +145,40 @@ RECRUIT_CHAINS = ("wh3_dlc29_skv_stormfiends", "wh2_main_skv_engineers")
 REACTOR_CHAIN = "wh2_main_skv_energy"
 SAVE_TURNS = 2              # a top item affordable within this many turns of net income is saved for
 SAVE_UP_TO = 3              # saving only for ranks 0-3 (main, Reactor, landmarks, recruit buildings), never fillers
-SAVING: dict = {}           # this turn's saving: {"turn", "gold", "item", "rank"}; the army step keeps the gold too
+SAVING: dict = {}           # this turn's saving: {"turn", "gold", "item", "rank", "net", "reserve", "held", "items"}
+
+
+class Budget:
+    """Gold for one building pass, with saving that never idles gold (player decision 2026-10-20, after the math:
+    holding all the gold for a 10,000 landmark left 3,108 unspent while 13 cheap upgrades waited; over 10 turns that
+    rule earned 600 gold from new buildings, this one 1,630, with the landmark done on the same turn).
+
+    Items the step saves for form a queue, in spending order: each one is reachable within SAVE_TURNS turns of net
+    income counting the ones before it, and gets the turn it becomes affordable (k = ceil((sum of costs - gold) /
+    net)). Anything else is bought only with spare gold: what can go now without pushing any saved item past its
+    turn, i.e. cost <= min over the queue of (gold + k * net - sum of costs up to it)."""
+
+    def __init__(self, gold: int, net: int) -> None:
+        self.gold, self.net = gold, max(net, 0)
+        self.saved: list[tuple[int, int, str]] = []          # (sum of costs up to it, turn k, label)
+
+    def spare(self) -> int:
+        return min([self.gold] + [self.gold + k * self.net - cum for cum, k, _l in self.saved])
+
+    def reserve(self) -> int:
+        """Gold to leave in the treasury at the end of the turn so every saved item stays on its turn."""
+        return max([0] + [cum - k * self.net for cum, k, _l in self.saved])
+
+    def save(self, cost: int, rank: tuple, label: str) -> bool:
+        """Queue an item the gold does not cover yet, when it is a top item reachable within SAVE_TURNS turns."""
+        cum = (self.saved[-1][0] if self.saved else 0) + cost
+        if rank[0] > SAVE_UP_TO or self.net <= 0 or cum - self.gold > SAVE_TURNS * self.net:
+            return False
+        self.saved.append((cum, max(1, -(-(cum - self.gold) // self.net)), label))
+        return True
+
+    def spend(self, cost: int) -> None:
+        self.gold -= cost
 
 
 def spend_rank(o: OwnedSettlement, a) -> tuple:
@@ -175,6 +208,8 @@ def saving_reserve(w: World, F: int | None = None) -> int:
         return 0
     if SAVING.get("turn") != turn:
         return 0
+    if "reserve" in SAVING:                       # (Budget.reserve: every saved item stays on its turn)
+        return int(SAVING["reserve"])
     return max(0, int(SAVING.get("gold", 0)) - int(SAVING.get("net", 0)))
 
 
@@ -763,11 +798,11 @@ def missed(w: World | None = None) -> list[str]:
     models, blocked = build_models(w, snap)
     todo, _ = _actions(models, blocked)
     gold = w.s.read().treasury or 0
-    keep = SAVING.get("rank") if SAVING.get("turn") == w.s.read().turn else None
+    held = {tuple(h) for h in SAVING.get("held", [])} if SAVING.get("turn") == w.s.read().turn else set()
     out = []
     for o, a, _busy in todo:
-        if keep is not None and spend_rank(o, a) > keep:
-            continue                              # held back: the run saved for a higher item (SAVING)
+        if (o.region, a.item) in held:
+            continue                              # held back: it would have pushed a saved item later (Budget)
         idx = slot_index_for(o, a)
         S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
         if S and constructing(w, S):
@@ -875,20 +910,17 @@ def run(log=print, override_blocked: bool = False) -> str:
                     log(f"build: {done[-1]}")
                 else:
                     problems.append(f"workshop: could not start the Construction Cavern in {place}")
-        # 3. constructions and upgrades, in spending order; a top item affordable within SAVE_TURNS turns of net
-        #    income is saved for: nothing ranked below it is bought this turn (player decision 2026-10-20)
+        # 3. constructions and upgrades, in spending order; top items affordable within SAVE_TURNS turns of net
+        #    income are saved for, and everything else is bought with the spare gold (Budget, 2026-10-20)
         SAVING.clear()
         try:
             from bot.sensor.economy import read as economy
             net = max(economy(w, snap.faction).net, 0)
         except Exception:
             net = 0
-        held = 0
+        budget, held = Budget(gold, net), []
         for o, a, busy in todo:
             rank = spend_rank(o, a)
-            if SAVING and rank > SAVING["rank"]:
-                held += 1
-                continue
             idx = slot_index_for(o, a)
             S = slot_ptr(w, o.region_obj, idx) if idx is not None else 0
             # right before the action, from memory: the plan still holds (multiplayer, 2026-10-19: the other players
@@ -920,10 +952,12 @@ def run(log=print, override_blocked: bool = False) -> str:
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
                 problems.append(f"{o.region}: {a.item} needs {need} development points (the province has {have})")
                 continue
-            if cost > gold:
-                if rank[0] <= SAVE_UP_TO and cost - gold <= SAVE_TURNS * net:
-                    SAVING.update(turn=w.s.read().turn, gold=cost, item=f"{gd.place_name(o.region)}: {a.item}",
-                                  rank=rank, net=net)
+            if cost > budget.spare():
+                if cost <= budget.gold:               # affordable, but it would push a saved item a turn later
+                    held.append((o.region, a.item))
+                    continue
+                if budget.save(cost, rank, f"{gd.place_name(o.region)}: {a.item}") and not SAVING:
+                    SAVING.update(gold=cost, item=budget.saved[0][2], rank=rank)
                 problems.append(f"{o.region}: {a.item} needs {cost} gold")
                 continue
             if idx is None or not a.level_key:
@@ -966,6 +1000,7 @@ def run(log=print, override_blocked: bool = False) -> str:
                 ok = ui_upgrade(ui, w, S, slot, a.level_key)
             if ok:
                 gold = min(w.s.read().treasury or gold, gold - cost)   # (the treasury can lag the slot in MP)
+                budget.gold = gold
                 done.append(f"{gd.place_name(o.region)}: {a.item} {a.detail}")
                 log(f"build: {done[-1]}")
             else:
@@ -978,9 +1013,11 @@ def run(log=print, override_blocked: bool = False) -> str:
     if done:
         parts.append("; ".join(done))
     if SAVING:
-        parts.append(f"saving for {SAVING['item']} ({SAVING['gold']} gold, {gold} now, about "
-                     f"{-(-(SAVING['gold'] - gold) // max(net, 1))} turn(s) of income)"
-                     + (f"; {held} cheaper item(s) wait for it" if held else ""))
+        SAVING.update(turn=w.s.read().turn, net=net, reserve=budget.reserve(), held=held,
+                      items=[label for _c, _k, label in budget.saved])
+        parts.append("saving for " + ", ".join(f"{label} (in {k} turn(s))" for _c, k, label in budget.saved)
+                     + f", {gold} gold now"
+                     + (f"; {len(held)} item(s) wait so they stay on time" if held else ""))
     if skipped:
         parts.append("blocked: " + ", ".join(gd.place_name(p) for p, _ in skipped))
     if problems:
