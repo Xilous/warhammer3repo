@@ -110,18 +110,28 @@ def ended_factions(pm, model: int) -> list[int] | None:
     faction pointers. Found 2026-10-19 by diffing memory as the player's ready tick came on (R+0x10 0 -> 1, +0x14
     capacity 0 -> 1, +0x18 the array), then checked against the ticks for a whole turn: Clan Scruten listed the
     moment the player ended, Clan Skryre when the friend did, the list gone with the record when the AI started.
-    None when unreadable."""
+    Only meaningful in a simultaneous record (MODE 1): with one faction at a time, End Turn passes the turn on at
+    once, and the list is stale (single player 2026-10-19, turn 2: mode 0, the list still held Clan Scruten from
+    turn 1, and the assistant waited for 'the other players' forever). [] there. None when unreadable."""
     r = turn_record(pm, model)
     if r is None:
         return None
     try:
+        if pm.read_bytes(r + MODE, 1)[0] != 1:
+            return []
         n = struct.unpack("<I", pm.read_bytes(r + ENDED_COUNT, 4))[0]
         if n == 0:
             return []
         if n > MAX_LIST:
             return None
         arr = _q(pm, r + ENDED_ARRAY)
-        return [f for f in struct.unpack(f"<{n}Q", pm.read_bytes(arr, 8 * n))]
+        out = list(struct.unpack(f"<{n}Q", pm.read_bytes(arr, 8 * n)))
+        # a list that is not a set of this turn's factions is stale, not read (multiplayer 2026-10-19, turn 29: 8
+        # entries at the turn's start, The Tormentors twice and three non-factions, Clan Scruten among them, and the
+        # assistant waited for 'the other players' while nobody had ended): unreadable, the ready ticks decide
+        if len(set(out)) != len(out) or not set(out) <= set(whose_turn(pm, model) or ()):
+            return None
+        return out
     except Exception:
         return None
 

@@ -218,10 +218,13 @@ def _lords_row(ui, char_id: int):
     tab = ui.cached("tab_units", under="bar_small_top")
     if tab is None:
         return None
-    if not (ui.state(tab) or "").startswith("selected"):
-        click(ui, tab)
-    row = wait.wait_until(lambda: ui.first(f"character_row_{char_id}"), 2.0, f"character_row_{char_id} listed",
-                          must=False)
+    for _ in range(2):          # a tab click the game did not take is a UI miss, clicked once more (2026-10-19,
+        if not (ui.state(tab) or "").startswith("selected"):    # multiplayer: just after another player's battle
+            click(ui, tab)                                      # the hover never showed and the list stayed shut)
+        row = wait.wait_until(lambda: ui.first(f"character_row_{char_id}"), 2.0, f"character_row_{char_id} listed",
+                              must=False)
+        if row is not None or (ui.state(tab) or "").startswith("selected"):
+            break
     if row is None:
         return None
     clip = ui.clip_of(row)

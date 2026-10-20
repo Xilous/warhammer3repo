@@ -185,8 +185,13 @@ class RailPanel:
         x, y = self.rail.win.winfo_x(), self.rail.win.winfo_y() + self.rail.win.winfo_height() + 6
         h = self.body.winfo_reqheight() + 4
         sh = self.win.winfo_screenheight()
-        if y + h > sh:                               # no room below: open above the rail
-            y = max(0, self.rail.win.winfo_y() - h - 6)
+        ry = self.rail.win.winfo_y()
+        if y + h > sh and ry - h - 6 >= 0:           # no room below: open above the rail
+            y = ry - h - 6
+        elif y + h > sh:                             # no room above either: beside the rail, never over it (player
+            rx, rw = self.rail.win.winfo_x(), self.rail.win.winfo_width()   # report 2026-10-19: the panel was pinned
+            x = rx + rw + 6 if rx + rw + 6 + WIDTH <= self.win.winfo_screenwidth() else max(0, rx - WIDTH - 6)
+            y = max(0, min(ry, sh - h))              # at the top, over the rail, and a drag up/down did nothing)
         self.win.geometry(f"{WIDTH}x{h}+{x}+{y}")
         self.win.deiconify()
         self.win.lift()

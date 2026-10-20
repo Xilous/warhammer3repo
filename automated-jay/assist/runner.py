@@ -480,9 +480,13 @@ class Runner:
                 ok, why = players_turn(self.ui)
             if not ok:
                 from bot.sensor import turn as turn_mem
-                if turn_mem.players_turn(self.mem)[0] is True and not why.startswith("you ended the turn"):
+                ended_here = why.startswith("you ended the turn") and self.ts.end_done and self.ts.turn == turn
+                if turn_mem.players_turn(self.mem)[0] is True and not ended_here:
                     # memory: still the player's turn, the game only holds actions for now (another player's battle
-                    # or decision, a cinematic, End Turn greyed): the request waits and runs the moment it can
+                    # or decision, a cinematic, End Turn greyed): the request waits and runs the moment it can. Also
+                    # while the turn reads as ended: the read can be stale (2026-10-19, turn 29: the presses were
+                    # dropped with no sign on the button while the turn was free); not after the assistant itself
+                    # ended this turn, and a turn that really ended drops the request when the next one starts
                     self._queue_end(turn, why)
                 else:
                     self.end_request = None
