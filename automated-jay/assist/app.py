@@ -309,6 +309,10 @@ class App:
         ex = user32.GetWindowLongW(self.ov_hwnd, win32con.GWL_EXSTYLE) | win32con.WS_EX_NOACTIVATE
         ex = ex | win32con.WS_EX_TRANSPARENT if click_through else ex & ~win32con.WS_EX_TRANSPARENT
         user32.SetWindowLongW(self.ov_hwnd, win32con.GWL_EXSTYLE, ex)
+        # wake the Tk thread (2026-10-20, rail frozen on QUEUED with every after() timer dead: the style change sent
+        # from the runner's thread was handled inside Tcl's GetMessageW, which then waited for a posted message that
+        # never came, the overlay being click-through. py-spy: main thread in GetMessageW; a posted WM_NULL revived it)
+        user32.PostMessageW(self.ov_hwnd, win32con.WM_NULL, 0, 0)
         self._click_through = click_through
 
     def _poll(self) -> None:
