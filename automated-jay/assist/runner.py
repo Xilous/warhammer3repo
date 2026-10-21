@@ -149,7 +149,17 @@ def read_state() -> dict:
 # until all of them have ended the turn, so memory alone cannot tell "ended, waiting for the others" from "still
 # moving". The player list at the top left (mp_player_list) shows a ready tick (icon_ready) beside each player who
 # ended. Its rows do not say which one is local: it is the one whose tick came on when the assistant pressed End Turn.
-MP_ME = {"name": None}
+MP_ME_FILE = config.RUNS_DIR / "mp_me.json"     # the player's name in the multiplayer list, kept across restarts
+
+
+def _load_mp_me():
+    try:
+        return json.loads(MP_ME_FILE.read_text(encoding="utf-8")).get("name")
+    except (OSError, ValueError):
+        return None
+
+
+MP_ME = {"name": _load_mp_me()}
 
 
 def mp_ready(ui: UI) -> dict[str, bool]:
@@ -187,7 +197,9 @@ def mp_waiting(ui: UI, strict: bool = False) -> bool:
         _CONFLICT["since"] = None
         unexpected("ended-vs-button", None)
         return True
-    if mem and st and not st.startswith(("inactive", "disabled")):
+    # the ready tick off (known: this player's name in the list) = not ended, also with End Turn greyed (2026-10-20,
+    # turn 50: list stale, End Turn inactive for a moment while the game held it, tick off: read as ended)
+    if mem and (tick is False or (st and not st.startswith(("inactive", "disabled")))):
         since = _CONFLICT["since"] = _CONFLICT["since"] or time.monotonic()
         if not strict and time.monotonic() - since < CONFLICT_S:
             return True                                 # (a flicker so far: still ended)
@@ -762,6 +774,10 @@ class Runner:
                 new = [n for n, r in ready.items() if r and not ready0.get(n)]
                 if MP_ME["name"] is None and len(new) == 1:
                     MP_ME["name"] = new[0]
+                    try:
+                        MP_ME_FILE.write_text(json.dumps({"name": new[0]}), encoding="utf-8")
+                    except OSError:
+                        pass
                     print(f"multiplayer: you are {new[0]!r} in the player list", flush=True)
                 b = self.ui.cached("button_end_turn", under="hud_campaign")
                 waiting = bool(b) and (self.ui.state(b) or "").startswith("selected")     # (the tick's twin)
