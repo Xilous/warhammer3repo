@@ -269,6 +269,7 @@ class App:
 
     def _overlay_ready(self) -> None:
         self.ov_hwnd = int(self.overlay.wm_frame(), 16)
+        self._root_hwnd = int(self.root.wm_frame(), 16)
         self._overlay_style(click_through=False)
         from bot import focus
         focus.BEFORE_INPUT.append(self._step_aside)
@@ -318,6 +319,7 @@ class App:
     def _poll(self) -> None:
         """Drain the runner's messages into the widgets, every 150 ms. Always rescheduled (2026-10-20: one message
         that raised ended the chain; the rail froze on "YOUR TURN 2 / QUEUED" while the runner went on to turn 3)."""
+        self.tk_beat = time.time()                   # the runner's _watch reports a widget that stops beating
         try:
             self._drain()
         except Exception:
@@ -326,6 +328,15 @@ class App:
             traceback.print_exc()
         finally:
             self.root.after(150, self._poll)
+
+    def wake(self) -> None:
+        """From any thread: a posted WM_NULL to each of the widget's windows ends a Tcl wait that no message would
+        end (see _overlay_style)."""
+        import ctypes
+        import win32con
+        for h in (self.ov_hwnd, getattr(self, "_root_hwnd", 0)):
+            if h:
+                ctypes.windll.user32.PostMessageW(h, win32con.WM_NULL, 0, 0)
 
     def _drain(self) -> None:
         try:

@@ -185,6 +185,24 @@ def faction_screen_name(key: str) -> str:
     return gd._tr(n) if n else key
 
 
+_UNEXPECTED: dict[str, str] = {}
+
+
+def unexpected(key: str, text: str | None) -> None:
+    """Something the assistant's own model of the game did not expect (signals that disagree, a press that changed
+    nothing ...): logged once as "UNEXPECTED <text>" when it starts, and "RESOLVED" when it ends (text None). The
+    monitor watches for these (player request 2026-10-20: "detect whatever the assistant does not expect")."""
+    old = _UNEXPECTED.get(key)
+    if text == old:
+        return
+    if text is None:
+        _UNEXPECTED.pop(key, None)
+        print(f"[{datetime.now():%H:%M:%S}] RESOLVED {key}: {old}", flush=True)
+    else:
+        _UNEXPECTED[key] = text
+        print(f"[{datetime.now():%H:%M:%S}] UNEXPECTED {key}: {text}", flush=True)
+
+
 def phase(ui: UI) -> tuple[str, str]:
     """The game's phase for the assistant (assist/turnstate.py): (free | held | ended | not_mine | none, why).
     Memory decides whose turn it is (bot/sensor/turn.players_turn, the local faction); the UI only says whether the
@@ -206,16 +224,27 @@ def phase(ui: UI) -> tuple[str, str]:
         return ts.HELD, "campaign map not shown"
     if "ai_turns" in top:
         return ts.NOT_MINE, "other factions are moving"
+    end = ui.cached("button_end_turn", under="hud_campaign")
+    st = (ui.state(end) or "") if end is not None else ""
     if mp_waiting(ui):
-        return ts.ENDED, "you ended the turn: waiting for the other players"
+        # the ended list against the End Turn button (2026-10-20, turn 43: back from a manual battle, the turn read
+        # as ended for 100 s while the game had cancelled the End Turn, and the player's Build & End Turn presses
+        # were answered "not your turn"). The list said ended, the button the game's own state: a plain active
+        # button means not ended. UI stop-gap: the list's post-battle reset not decoded yet, memory reader pending
+        if st and not st.startswith(("selected", "inactive", "disabled")):
+            unexpected("ended-vs-button", f"memory lists you as ended, the End Turn button is {st}: taken as not "
+                                          f"ended (ready tick: {mp_ready(ui).get(MP_ME['name']) if MP_ME['name'] else '?'})")
+        else:
+            unexpected("ended-vs-button", None)
+            return ts.ENDED, "you ended the turn: waiting for the other players"
+    else:
+        unexpected("ended-vs-button", None)
     from tools.ui import other_players_pending
     who = other_players_pending(ui)
     if who:                                        # multiplayer: the game is held by another player (2026-10-18)
         return ts.HELD, f"waiting: {who} has a battle or decision pending"
-    end = ui.cached("button_end_turn", under="hud_campaign")
     if end is None:
         return ts.HELD, "End Turn button not shown"
-    st = ui.state(end) or ""
     if st.startswith("selected"):                  # multiplayer: pressed, waiting for the others (watched 2026-10-18)
         return ts.ENDED, "you ended the turn: waiting for the other players"
     if st.startswith(("inactive", "disabled")):
@@ -468,6 +497,9 @@ class Runner:
         the game's End Turn button. The player asked for it, so there is no idle wait; everything else is checked as
         for a turn-start pass, and End Turn is pressed only when every step ran (an interruption, a failure to raise
         the game or a decision that came up leaves the turn open)."""
+        # every press is logged (2026-10-20: repeated answers were kept out of the log, and presses that the
+        # assistant refused left no trace)
+        print(f"[{datetime.now():%H:%M:%S}] PRESS Build & End Turn (turn {self.last_turn})", flush=True)
         if not self.busy.acquire(blocking=False):
             self._queue_end(self.last_turn, "a pass is running")     # (was dropped: player report 2026-10-19)
             return
@@ -499,6 +531,7 @@ class Runner:
                     self._queue_end(turn, why)
                 else:
                     self.end_request = None
+                    print(f"[{datetime.now():%H:%M:%S}] PRESS refused: not your turn ({why})", flush=True)
                     self.post("waiting", f"WAITING (turn {turn})", f"Build & End Turn: not your turn ({why})",
                               turn=turn)
                 return
@@ -1057,7 +1090,30 @@ class Runner:
             except Exception as ex:          # keep watching: a failed read (game closing, loading) is not fatal
                 traceback.print_exc()
                 self.post("error", "ERROR", f"{ex}\nstill watching for the next turn")
+            self._watch()
             self.stop.wait(POLL_FAST if (self.pending is not None or not self.my_turn) else POLL_NOTICES)
+
+    WIDGET_STALL_S = 3.0           # the widget drains every 150 ms: this long without a drain is a stall
+
+    def _watch(self) -> None:
+        """Health the assistant checks on itself every poll: runs/heartbeat.json for an outside watcher (the loop and
+        the widget's last beat), and a stalled widget (2026-10-20: every Tk timer stopped, the rail frozen on QUEUED)
+        reported as UNEXPECTED and woken."""
+        now = time.time()
+        tk = getattr(self.widget, "tk_beat", None) if self.widget else None
+        try:
+            (config.RUNS_DIR / "heartbeat.json").write_text(json.dumps({"loop": now, "tk": tk, "pid": os.getpid()}),
+                                                             encoding="utf-8")
+        except OSError:
+            pass
+        if tk is None:
+            return
+        if now - tk > self.WIDGET_STALL_S:
+            unexpected("widget-stalled", f"the widget has not updated for {now - tk:.0f} s; woken")
+            if hasattr(self.widget, "wake"):
+                self.widget.wake()
+        else:
+            unexpected("widget-stalled", None)
 
     def _tick(self) -> None:
         s = self.mem.read()
