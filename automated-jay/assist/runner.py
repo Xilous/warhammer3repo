@@ -174,9 +174,24 @@ def mp_waiting(ui: UI) -> bool:
     memory cannot be read."""
     from bot.sensor import turn as turn_mem
     mem = turn_mem.local_ended(ui.s)
+    b = ui.cached("button_end_turn", under="hud_campaign")
+    st = (ui.state(b) or "") if b is not None else ""
+    tick = mp_ready(ui).get(MP_ME["name"]) if MP_ME["name"] else None
+    if st.startswith("selected") or tick is True:      # the game's own End Turn shows pressed / the ready tick is on
+        unexpected("ended-vs-button", None)
+        return True
+    if mem and st and not st.startswith(("inactive", "disabled")):
+        # the list keeps the faction after the player cancels their End Turn (2026-10-20, turn 47: the player
+        # un-readied with the game's End Turn button; button active, ready tick off, the list still held Clan
+        # Scruten, so the turn read as ended, and Build & End Turn took it as ended already and pressed nothing).
+        # The game's button decides then. UI stop-gap: the list's reset on a cancel not decoded, memory reader pending
+        unexpected("ended-vs-button", f"memory lists you as ended, the End Turn button is {st} and the ready tick "
+                                      f"{tick}: taken as not ended")
+        return False
+    unexpected("ended-vs-button", None)
     if mem is not None:
         return mem
-    return bool(MP_ME["name"]) and mp_ready(ui).get(MP_ME["name"]) is True
+    return False
 
 
 def faction_screen_name(key: str) -> str:
@@ -224,21 +239,10 @@ def phase(ui: UI) -> tuple[str, str]:
         return ts.HELD, "campaign map not shown"
     if "ai_turns" in top:
         return ts.NOT_MINE, "other factions are moving"
+    if mp_waiting(ui):          # (the ended list checked against the End Turn button and the ready tick: mp_waiting)
+        return ts.ENDED, "you ended the turn: waiting for the other players"
     end = ui.cached("button_end_turn", under="hud_campaign")
     st = (ui.state(end) or "") if end is not None else ""
-    if mp_waiting(ui):
-        # the ended list against the End Turn button (2026-10-20, turn 43: back from a manual battle, the turn read
-        # as ended for 100 s while the game had cancelled the End Turn, and the player's Build & End Turn presses
-        # were answered "not your turn"). The list said ended, the button the game's own state: a plain active
-        # button means not ended. UI stop-gap: the list's post-battle reset not decoded yet, memory reader pending
-        if st and not st.startswith(("selected", "inactive", "disabled")):
-            unexpected("ended-vs-button", f"memory lists you as ended, the End Turn button is {st}: taken as not "
-                                          f"ended (ready tick: {mp_ready(ui).get(MP_ME['name']) if MP_ME['name'] else '?'})")
-        else:
-            unexpected("ended-vs-button", None)
-            return ts.ENDED, "you ended the turn: waiting for the other players"
-    else:
-        unexpected("ended-vs-button", None)
     from tools.ui import other_players_pending
     who = other_players_pending(ui)
     if who:                                        # multiplayer: the game is held by another player (2026-10-18)
@@ -369,12 +373,14 @@ class Runner:
         if not (self.widget and hasattr(self.widget, "set_view")):
             return
         st = getattr(self, "ts", None)
-        self.view_ver = getattr(self, "view_ver", 0) + 1
-        self.widget.set_view({
-            "ver": self.view_ver,
-            "owed": bool(getattr(self, "_ending", False) or (st and st.end_requested and not st.end_done)),
-            "run_owed": bool(st and st.run_requested),
-            "ack": getattr(self, "press_ack", 0)})
+        view = {"owed": bool(getattr(self, "_ending", False) or (st and st.end_requested and not st.end_done)),
+                "run_owed": bool(st and st.run_requested),
+                "ack": getattr(self, "press_ack", 0)}
+        if view != getattr(self, "_view_last", None):           # a new version only when something changed
+            self._view_last = view
+            self.view_ver = getattr(self, "view_ver", 0) + 1
+            self._view_times = (getattr(self, "_view_times", []) + [(time.time(), self.view_ver)])[-50:]
+        self.widget.set_view({**view, "ver": self.view_ver})
 
     def rail(self, reset: bool = False, **changes) -> None:
         """The overlay's Turn rail (assist/rail.py): one status per step. reset: a new turn (end-of-turn steps
@@ -731,7 +737,9 @@ class Runner:
                 # reported ended. The switch to the next faction took ~2.3 s in the logs, so wait well beyond that.)
                 if self.mem.read().turn != turn or turn_mem.players_turn(self.mem)[0] is False:
                     return True
-                if turn_mem.local_ended(self.mem):     # memory: this faction is in the turn's ended list
+                if mp_waiting(self.ui):                # the ended list, checked against the button and the tick
+                    # (2026-10-20, turn 47: the bare list read ended after the player cancelled, and nothing was
+                    # pressed: "TURN 47 ENDED", then REOPENED a second later)
                     left = turn_mem.waiting_for(self.mem) or []
                     self.end_turn_note = ("waiting for " + ", ".join(faction_screen_name(k) for k in left)
                                           + " to end their turn") if left else "the other factions are moving"
@@ -1160,11 +1168,12 @@ class Runner:
             unexpected("widget-stalled", None)
         # the widget in step with the runner: it has drawn the runner's latest state, and no press of the player's
         # waits unhandled while nothing is handling it
-        applied, ver = getattr(self.widget, "view_applied", None), getattr(self, "view_ver", 0)
-        behind = ver and applied != ver
-        self._behind_since = (getattr(self, "_behind_since", None) or now) if behind else None
-        if self._behind_since and now - self._behind_since > self.WIDGET_STALL_S:
-            unexpected("widget-out-of-sync", f"the widget shows state {applied}, the runner is at {ver}")
+        # (behind = it has not drawn a state the runner published more than WIDGET_STALL_S ago)
+        applied = getattr(self.widget, "view_applied", None) or 0
+        due = max((v for t, v in getattr(self, "_view_times", []) if now - t > self.WIDGET_STALL_S), default=0)
+        if applied < due:
+            unexpected("widget-out-of-sync", f"the widget is more than {self.WIDGET_STALL_S:.0f} s behind the "
+                                             "runner's state")
         else:
             unexpected("widget-out-of-sync", None)
         rail = getattr(self.widget, "rail", None)

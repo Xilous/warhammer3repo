@@ -47,6 +47,8 @@ ALLOWED = {
     "assist/runner.py::allowed": "ui-only",                       # End Turn button: the game's "may end now"
     "assist/runner.py::ended": "fallback",                        # memory: the turn record's ended list
     "assist/runner.py::mp_ready": "fallback",
+    "assist/runner.py::mp_waiting": "fallback",                   # memory's ended list goes stale on a cancel: the button decides
+
     "assist/runner.py::phase": "ui-only",
     "assist/runner.py::press_end_turn": "ui-only",
     "assist/skills.py::_lords_row": "click",
