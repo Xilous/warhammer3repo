@@ -507,7 +507,21 @@ class Runner:
         try:
             s = self.mem.read()
             if not s.ok:
+                st = getattr(self, "ts", None)
+                if st is not None and st.turn is not None and st.campaign and not st.end_done:
+                    # a battle (or a load) has the campaign map down: kept for this campaign and turn, run once the
+                    # map is back (2026-10-20, turn 47: pressed during a manual battle and dropped); another campaign
+                    # or turn drops it (turnstate)
+                    from . import turnstate                # (not _mark: with no campaign, _cid() reads nothing)
+                    st.end_requested = True
+                    turnstate.save(st)
+                    print(f"[{datetime.now():%H:%M:%S}] PRESS queued: the campaign map is not loaded (turn {st.turn})",
+                          flush=True)
+                    self.post("waiting", f"END TURN QUEUED (turn {st.turn})",
+                              "Build & End Turn runs once the campaign map is back (a battle or a load)", turn=st.turn)
+                    return
                 self.end_request = None
+                print(f"[{datetime.now():%H:%M:%S}] PRESS refused: no campaign loaded", flush=True)
                 self.post("waiting", "WAITING", "Build & End Turn: no campaign loaded")
                 return
             turn = s.turn
