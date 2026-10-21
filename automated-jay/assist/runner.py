@@ -195,8 +195,9 @@ def mp_waiting(ui: UI, strict: bool = False) -> bool:
         # un-readied with the game's End Turn button; button active, ready tick off, the list still held Clan
         # Scruten, so the turn read as ended, and Build & End Turn took it as ended already and pressed nothing).
         # The game's button decides then. UI stop-gap: the list's reset on a cancel not decoded, memory reader pending
-        unexpected("ended-vs-button", f"memory lists you as ended, the End Turn button is {st} and the ready tick "
-                                      f"{tick}: taken as not ended")
+        if not strict:          # (right after an End Turn press the list leads the button for a moment: expected)
+            unexpected("ended-vs-button", f"memory lists you as ended, the End Turn button is {st} and the ready "
+                                          f"tick {tick}: taken as not ended")
         return False
     _CONFLICT["since"] = None
     unexpected("ended-vs-button", None)
