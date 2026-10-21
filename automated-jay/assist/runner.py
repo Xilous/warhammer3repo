@@ -168,19 +168,29 @@ def mp_ready(ui: UI) -> dict[str, bool]:
     return out
 
 
-def mp_waiting(ui: UI) -> bool:
+CONFLICT_S = 2.0               # the ended list against an active End Turn button: this long before it counts (watching)
+_CONFLICT = {"since": None}
+
+
+def mp_waiting(ui: UI, strict: bool = False) -> bool:
     """The player ended the turn and the other players have not yet (multiplayer). From memory (the turn record's
-    list of factions that ended, bot/sensor/turn.local_ended, 2026-10-19); the player list's ready tick only when
-    memory cannot be read."""
+    list of factions that ended, bot/sensor/turn.local_ended, 2026-10-19), checked against the End Turn button and
+    the ready tick (below). strict (about to press End Turn): any active button means not ended; otherwise the
+    disagreement has to last CONFLICT_S (2026-10-20, turn 49: the button read active for one second as a battle
+    began, and an ended turn was reported REOPENED)."""
     from bot.sensor import turn as turn_mem
     mem = turn_mem.local_ended(ui.s)
     b = ui.cached("button_end_turn", under="hud_campaign")
     st = (ui.state(b) or "") if b is not None else ""
     tick = mp_ready(ui).get(MP_ME["name"]) if MP_ME["name"] else None
     if st.startswith("selected") or tick is True:      # the game's own End Turn shows pressed / the ready tick is on
+        _CONFLICT["since"] = None
         unexpected("ended-vs-button", None)
         return True
     if mem and st and not st.startswith(("inactive", "disabled")):
+        since = _CONFLICT["since"] = _CONFLICT["since"] or time.monotonic()
+        if not strict and time.monotonic() - since < CONFLICT_S:
+            return True                                 # (a flicker so far: still ended)
         # the list keeps the faction after the player cancels their End Turn (2026-10-20, turn 47: the player
         # un-readied with the game's End Turn button; button active, ready tick off, the list still held Clan
         # Scruten, so the turn read as ended, and Build & End Turn took it as ended already and pressed nothing).
@@ -188,6 +198,7 @@ def mp_waiting(ui: UI) -> bool:
         unexpected("ended-vs-button", f"memory lists you as ended, the End Turn button is {st} and the ready tick "
                                       f"{tick}: taken as not ended")
         return False
+    _CONFLICT["since"] = None
     unexpected("ended-vs-button", None)
     if mem is not None:
         return mem
@@ -737,7 +748,7 @@ class Runner:
                 # reported ended. The switch to the next faction took ~2.3 s in the logs, so wait well beyond that.)
                 if self.mem.read().turn != turn or turn_mem.players_turn(self.mem)[0] is False:
                     return True
-                if mp_waiting(self.ui):                # the ended list, checked against the button and the tick
+                if mp_waiting(self.ui, strict=True):   # the ended list, checked against the button and the tick
                     # (2026-10-20, turn 47: the bare list read ended after the player cancelled, and nothing was
                     # pressed: "TURN 47 ENDED", then REOPENED a second later)
                     left = turn_mem.waiting_for(self.mem) or []
