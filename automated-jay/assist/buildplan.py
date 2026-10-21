@@ -143,9 +143,6 @@ def current_tier(s: Settlement) -> int:
 
 # ---------------------------------------------------------------- layout
 
-RESOURCE = "_resource_"        # resource building chains (wh2_main_skv_resource_iron, ..._gold, ...)
-
-
 def final_layout(s: Settlement, allowed_per_province) -> list[Target]:
     """Walk the priority list and fill the slots the settlement will have at max tier.
     A landmark already standing in the settlement keeps its slot (2026-10-17, Thanquol's Grey Seer Lair in Karag
@@ -164,17 +161,9 @@ def final_layout(s: Settlement, allowed_per_province) -> list[Target]:
         held_back = sum(1 for x in standing if x not in placed and x != c)
         return len(out) < n - held_back
     for entry in strat["priority"]:
-        keep_at: dict[str, int] = {}
         if entry.get("landmarks"):
             skip = set(entry.get("skip", []))          # landmarks the player leaves out (strategy/settlements.json)
             cands = standing + [c for c in s.landmarks if c not in standing and c not in skip]
-        elif entry.get("standing_resources"):
-            # a resource building already standing (a mine, a quarry...: the region's own resource) is kept at its
-            # level where the list would otherwise put something below it here (2026-10-20, Zhufbar's Iron Mining
-            # Pit: +80 income and iron for nothing, to be demolished for Chained Sentry Beasts at 2,000 gold for
-            # +100; the 60% refund is 150). Never upgraded: +10 income for 500-1,000 gold
-            keep_at = {b.chain: b.index for b in s.slots if b is not None and RESOURCE in b.chain}
-            cands = list(keep_at)
         else:
             c = chain_for(entry, s.kind)
             cands = [c] if c else []
@@ -183,7 +172,7 @@ def final_layout(s: Settlement, allowed_per_province) -> list[Target]:
                 continue
             if entry.get("per_province") and not allowed_per_province(c, s):
                 continue
-            idx = keep_at.get(c, reachable_index(c, max_tier))
+            idx = reachable_index(c, max_tier)
             if idx is None:
                 continue
             if not room_for(c):

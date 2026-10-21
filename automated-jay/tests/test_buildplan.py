@@ -167,20 +167,3 @@ def test_standing_landmark_keeps_its_slot_and_is_upgraded():
         assert len(layout) == final_slot_count(s)
     finally:
         world.PLAYER["key"] = keep
-
-
-IRON = "wh2_main_skv_resource_iron"
-
-
-def test_standing_resource_building_is_kept_over_the_fillers():
-    # 2026-10-20, Zhufbar: the Iron Mining Pit (+80, iron) was planned to be demolished for Chained Sentry Beasts
-    p = plan_province(Province("p", [Settlement("c", True, B(MAJOR, 5), None, [B(IRON, 0)] + [None] * 6)]))[0]
-    assert names(p) == ["Warpstone Reactor"] + RECRUIT + ["Temple of the Horned Rat", "Breeding Pit", "Scrap Heap",
-                                                          "Iron Mining Pit"]
-    assert not [a for a in p.actions if "Iron" in a.detail or a.kind == "replace"]   # kept as it is, not upgraded
-
-
-def test_resource_building_gives_way_to_the_core_list():
-    # a minor with three slots: Breeding Pit and Scrap Heap come first, the mine keeps the third (no Lookout)
-    p = plan_province(Province("p", [Settlement("m", False, B(MINOR, 3), None, [B(IRON, 0), None, None])]))[0]
-    assert names(p) == ["Breeding Pit", "Scrap Heap", "Iron Mining Pit"]
