@@ -220,6 +220,7 @@ class App:
         self.root.protocol("WM_DELETE_WINDOW", self.root.withdraw)
         self.root.withdraw()
         self.ov_hwnd = 0
+        self.view_applied = None                   # the runner's view version last drawn (set_view)
         self.root.after(100, self._overlay_ready)
 
         self.root.after(150, self._poll)
@@ -230,6 +231,10 @@ class App:
         self.state = state
         self._overlay_style(click_through=state == "automating" or self._stepping_aside())  # now: clicks follow
         self.q.put(("status", state, headline, detail))
+
+    def set_view(self, view: dict) -> None:
+        """The runner's state, latest wins (a plain assignment: any thread); the Tk poll draws it."""
+        self._view = view
 
     def post_steps(self, steps: dict[str, str]) -> None:
         self.q.put(("steps", steps))
@@ -385,6 +390,10 @@ class App:
                     self.panel.show_ignorable(msg[1])
         except queue.Empty:
             pass
+        v = getattr(self, "_view", None)
+        if v is not None and v.get("ver") != self.view_applied:
+            self.rail.set_view(v)
+            self.view_applied = v.get("ver")         # the runner's _watch checks the widget keeps up with it
         if getattr(self, "state", "") != "automating" and not self._stepping_aside():   # back once input is idle
             if getattr(self, "_click_through", False):
                 self._overlay_style(click_through=False)

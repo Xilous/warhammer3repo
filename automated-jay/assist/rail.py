@@ -80,6 +80,9 @@ class TurnRail:
         self.f_btn_s = _font(["Bahnschrift SemiBold Condensed", "Bahnschrift", "Segoe UI Semibold"], 10, "bold")
         self.state, self.headline, self.sub = "waiting", "WAITING", ""
         self.end_wait = False                        # Build & End Turn taken, waiting for the game (spinner)
+        self.view: dict = {}                         # the runner's state (set_view)
+        self.press_seq = 0                           # Build & End Turn presses so far
+        self.pending_press = 0                       # the press the runner has not handled yet (0: none)
         self._spin, self._spinning = 0, False
         self.template: tuple[bool, str] | None = None
         self.signal: str | None = None               # an army decision is open (assist/app.py army_signal)
@@ -95,20 +98,26 @@ class TurnRail:
         self.draw()
 
     # ---------------------------------------------------------------- model
-    WAIT_HEADLINES = ("END TURN QUEUED", "ENDING TURN", "RUN NOW QUEUED")
-
     def set_status(self, state: str, headline: str, detail: str = "") -> None:
         self.state, self.headline = state, headline
-        # player request 2026-10-19: the End Turn button shows that the press was taken and the assistant is
-        # waiting for the game (a pending action, End Turn greyed); a pass in progress keeps it too, until the
-        # turn has ended or the request ended otherwise
-        if (headline.startswith(self.WAIT_HEADLINES) or (self.end_wait and state == "automating")
-                or "queued" in (detail or "").lower()[:120]):
-            self.end_wait = True
-        else:
-            self.end_wait = False
         self.sub = next((ln for ln in (detail or "").splitlines() if ln.strip()), "")
         self.draw()
+
+    def set_view(self, view: dict) -> None:
+        """The runner's own state (Runner.publish): the QUEUED spinner is drawn from it, never guessed from the wording
+        of a status (2026-10-20: the button and the runner went out of step several times: QUEUED kept after the
+        request was gone, or dropped while it stood)."""
+        self.view = view
+        if view.get("ack", 0) >= self.pending_press:
+            self.pending_press = 0                   # the runner has handled the press
+        self._derive()
+        self.draw()
+
+    def _derive(self) -> None:
+        # player request 2026-10-19: the End Turn button shows that the press was taken and the assistant is waiting
+        # for the game; from the press until the runner has handled it, then for as long as the runner owes it
+        v = self.view
+        self.end_wait = bool(self.pending_press or v.get("owed") or v.get("run_owed"))
 
     def set_signal(self, text: str | None) -> None:
         if text != self.signal:
@@ -396,7 +405,9 @@ class TurnRail:
             fn = self.on_end_turn if self.btn == "end" else self.on_run_now
             if fn:
                 if self.btn == "end":
-                    self.end_wait = True             # at once: the press was taken (the runner's status follows)
+                    self.press_seq += 1              # at once: the press was taken, until the runner acks it
+                    self.pending_press = self.press_seq
+                    self._derive()
                     self.draw()
                 fn()
             return

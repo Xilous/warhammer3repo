@@ -327,6 +327,9 @@ class Runner:
         self.ts = turnstate.load()            # what this turn owes, saved (assist/turnstate.py, 2026-10-19)
         self.paused = False
         self.busy = threading.Lock()          # held only while a pass sends input
+        self._ending = False                  # a Build & End Turn press is being handled (publish: "owed")
+        self.press_ack = 0                    # the widget's last press handled (rail.press_seq)
+        self.view_ver = 0                     # publish() count; the widget reports the one it drew
         self.stop = threading.Event()
         self.mem = MemorySensor()             # never fails: with no game it waits for one
         self.ui = UI(self.mem)
@@ -358,6 +361,20 @@ class Runner:
         # the repeat was dropped, and the button kept the QUEUED spinner it shows the moment it is pressed)
         if self.widget:
             self.widget.post(state, headline, detail)
+        self.publish()
+
+    def publish(self) -> None:
+        """The runner's own state for the widget (rail.set_view): what it owes and which press it has handled, read
+        from its record, never from the wording of a status. Sent with every status and every poll (_watch)."""
+        if not (self.widget and hasattr(self.widget, "set_view")):
+            return
+        st = getattr(self, "ts", None)
+        self.view_ver = getattr(self, "view_ver", 0) + 1
+        self.widget.set_view({
+            "ver": self.view_ver,
+            "owed": bool(getattr(self, "_ending", False) or (st and st.end_requested and not st.end_done)),
+            "run_owed": bool(st and st.run_requested),
+            "ack": getattr(self, "press_ack", 0)})
 
     def rail(self, reset: bool = False, **changes) -> None:
         """The overlay's Turn rail (assist/rail.py): one status per step. reset: a new turn (end-of-turn steps
@@ -493,6 +510,19 @@ class Runner:
             self.busy.release()
 
     def end_turn_now(self) -> None:
+        """A Build & End Turn press (or the queued one): handled, then acknowledged to the widget with the press it
+        covered, whatever the outcome (rail.set_view: the QUEUED spinner lasts until then, then follows "owed")."""
+        rail = getattr(self.widget, "rail", None) if self.widget else None
+        seq = getattr(rail, "press_seq", 0)
+        self._ending = True
+        try:
+            self._end_turn_now()
+        finally:
+            self._ending = False
+            self.press_ack = max(getattr(self, "press_ack", 0), seq)
+            self.publish()
+
+    def _end_turn_now(self) -> None:
         """The app's "Build & End Turn": the end-of-turn steps (by default buildings, then the army builder), then
         the game's End Turn button. The player asked for it, so there is no idle wait; everything else is checked as
         for a turn-start pass, and End Turn is pressed only when every step ran (an interruption, a failure to raise
@@ -1128,6 +1158,24 @@ class Runner:
                 self.widget.wake()
         else:
             unexpected("widget-stalled", None)
+        # the widget in step with the runner: it has drawn the runner's latest state, and no press of the player's
+        # waits unhandled while nothing is handling it
+        applied, ver = getattr(self.widget, "view_applied", None), getattr(self, "view_ver", 0)
+        behind = ver and applied != ver
+        self._behind_since = (getattr(self, "_behind_since", None) or now) if behind else None
+        if self._behind_since and now - self._behind_since > self.WIDGET_STALL_S:
+            unexpected("widget-out-of-sync", f"the widget shows state {applied}, the runner is at {ver}")
+        else:
+            unexpected("widget-out-of-sync", None)
+        rail = getattr(self.widget, "rail", None)
+        waiting = getattr(rail, "pending_press", 0) > getattr(self, "press_ack", 0) and not self._ending
+        self._press_since = (getattr(self, "_press_since", None) or now) if waiting else None
+        if self._press_since and now - self._press_since > self.WIDGET_STALL_S:
+            unexpected("press-unhandled", f"Build & End Turn press {rail.pending_press} shows QUEUED but never "
+                                          f"reached the runner (last handled: {getattr(self, 'press_ack', 0)})")
+        else:
+            unexpected("press-unhandled", None)
+        self.publish()
 
     def _tick(self) -> None:
         s = self.mem.read()
