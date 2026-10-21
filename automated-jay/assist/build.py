@@ -109,7 +109,12 @@ def build_models(w: World, snap) -> tuple[dict[str, list[OwnedSettlement]], dict
                 rest.append(Building(*lv) if lv else None)
         if main is None:
             continue
-        model = Settlement(key, bool(is_cap.get(key)), main, port, rest,
+        # capital or minor: the main building chain the game gave it, from memory; the region table's is_capital only
+        # when the chain is neither (2026-10-20, The Moot: the capital of a one-region province, yet on the minor
+        # chain; planned as a capital, every target needed tier 2-3 and its open tier-1 slot stayed empty)
+        mc = strategy()["main_chain"]
+        cap = main.chain == mc["capital"] if main.chain in (mc["capital"], mc["minor"]) else bool(is_cap.get(key))
+        model = Settlement(key, cap, main, port, rest,
                            gd.landmarks_for_region(key), key)
         out.setdefault(p, []).append(OwnedSettlement(key, r, p, col, len(order), slots, model))
     return out, snap.blocked_settlements
