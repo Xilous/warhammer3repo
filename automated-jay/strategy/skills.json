@@ -12,6 +12,29 @@
     "abilities_last": true,
     "_note": "Active abilities are never used in battle, so ability skills only get points once nothing else is left."
   },
+  "generic_lord": {
+    "_note": "Player request 2026-10-22: every other lord (agent type general, read from memory: legendary or generic, e.g. Warlord, Grey Seer, Warlock Master, Queek, the other Verminlords) without a template under characters takes the bottom two rows (army and campaign) in the same order as Ikit and the Warpseer, plus Mentor asap. Skills are given by skill key, not node, because every lord's tree has its own nodes: each is looked up in that lord's node set and left out where the tree does not have it (the Masterplan schemer lords lack most of the campaign row). After the list the rest of the tree goes 'as fits' (after_list: passives first, top row first, active abilities last). Mounts are skipped (assistant decision 2026-10-22: a mount is the player's choice per lord; add the lord under characters with mounts.take to have one taken).",
+    "skip_mounts": true,
+    "order": [
+      {"skill": "Route Marcher", "skill_key": "wh_main_skill_all_lord_campaign_route_marcher", "ranks": 1},
+      {"skill": "Inspiring Presence", "skill_key": "wh_main_skill_all_lord_battle_inspiring_presence", "ranks": 1},
+      {"skill": "Blastmaster", "skill_key": "wh2_main_skill_skv_army_buff_weaponteams", "ranks": 3},
+      {"skill": "Engineering Skill", "skill_key": "wh2_main_skill_skv_army_buff_artillery", "ranks": 3},
+      {"skill": "Rally!", "skill_key": "wh_main_skill_all_lord_battle_rally", "ranks": 1},
+      {"skill": "Warp-Smart", "skill_key": "wh2_main_skill_skv_army_buff_warped_workshops", "ranks": 1},
+      {"skill": "Bonded Service", "skill_key": "wh_main_skill_brt_lord_campaign_bonded_service", "ranks": 3},
+      {"skill": "Ancient Cunning", "skill_key": "wh_main_skill_vmp_lord_campaign_ancient_cunning", "ranks": 1},
+      {"skill": "Draftmaster", "skill_key": "wh2_main_skill_def_campaign_draftmaster", "ranks": 1},
+      {"skill": "Quartermaster", "skill_key": "wh_main_skill_emp_lord_campaign_quartermaster", "ranks": 3},
+      {"skill": "Lightning Strike", "skill_key": "wh_main_skill_all_lord_campaign_lightning_strike", "ranks": 1},
+      {"skill": "Renowned & Feared", "skill_key": "wh2_main_skill_LL_self_defense", "ranks": 1},
+      {"skill": "\"Miiine All Miiine!\"", "skill_key": "wh2_main_skill_skv_campaign_miiine", "ranks": 3},
+      {"skill": "Lightning Strike", "skill_key": "wh_main_skill_all_lord_campaign_lightning_strike", "ranks": 3},
+      {"skill": "Ancient Cunning", "skill_key": "wh_main_skill_vmp_lord_campaign_ancient_cunning", "ranks": 3},
+      {"skill": "Wary", "skill_key": "wh2_main_skill_def_campaign_wary", "ranks": 3},
+      {"skill": "Mentor", "skill_key": "wh3_main_skill_all_mentor_lord", "ranks": 3, "asap": true}
+    ]
+  },
   "characters": {
     "ikit_claw": {
       "agent_subtype": "wh2_dlc12_skv_ikit_claw",

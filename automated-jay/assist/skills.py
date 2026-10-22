@@ -1,6 +1,8 @@
-"""Skill automation: spend every unspent skill point on Ikit Claw, Verminlord Warpseers and Warlock
+"""Skill automation: spend every unspent skill point on Ikit Claw, Verminlord Warpseers, Thanquol and Warlock
 Engineers in the player's fixed order (strategy/skills.json), then "as fits" (passives first,
-active-ability skills last). Other characters are left alone.
+active-ability skills last). Every other lord (agent type "general") follows the generic_lord template: the
+same army and campaign rows, found by skill key in its own tree (player request 2026-10-22). Other heroes are left
+alone.
 
 Everything is read from memory and the game's UI tree (verified 2026-10-16, 9.0.4); nothing is searched for on
 screen, and every wait is a condition (tools/wait.py):
@@ -23,7 +25,8 @@ screen, and every wait is a condition (tools/wait.py):
   close      character_details_panel/.../button_ok.
 
     python -X utf8 -m assist.skills run
-    python -X utf8 -m assist.skills plan [ikit_claw|warlock_engineer|verminlord_warpseer]
+    python -X utf8 -m assist.skills plan [ikit_claw|warlock_engineer|verminlord_warpseer|thanquol|
+                                          generic_lord:<agent subtype>, e.g. generic_lord:wh2_main_skv_warlord]
 """
 from __future__ import annotations
 
@@ -73,11 +76,47 @@ def _tables():
     return nodes, effects, maxlvl, set_items
 
 
+GENERIC = "generic_lord"      # the template for lords without their own (key "generic_lord:<agent subtype>")
+
+
+@lru_cache(maxsize=1)
+def _node_sets() -> dict[str, str]:
+    """agent subtype -> its skill node set (character_skill_node_sets_tables; one per Skaven subtype on 9.0.4)."""
+    out: dict[str, str] = {}
+    for r in gd._load("character_skill_node_sets_tables"):
+        out.setdefault(r["agent_subtype_key"], r["key"])
+    return out
+
+
+def character_orders(char_key: str) -> dict:
+    """The orders for a template key: a characters entry as written, or generic_lord:<subtype> made into one
+    (each skill key looked up in that subtype's node set, skills its tree lacks left out, mounts skipped)."""
+    o = orders()
+    if char_key in o["characters"]:
+        return o["characters"][char_key]
+    sub = char_key.split(":", 1)[1]
+    g = o[GENERIC]
+    node_set = _node_sets()[sub]
+    nodes, _e, _m, set_items = _tables()
+    by_skill = {nodes[n]["character_skill_key"]: n for n in set_items.get(node_set, []) if n in nodes}
+    loc = gd.loc()
+    by_name = {}                 # the same skill under another key (a schemer's Inspiring Presence: schemer_military_00)
+    for sk, n in by_skill.items():
+        nm = loc.get("character_skills_localised_name_" + sk, "")
+        by_name.setdefault(gd._tr(nm) if nm else "", n)
+    order = []
+    for i in g["order"]:
+        n = by_skill.get(i["skill_key"]) or by_name.get(i["skill"])
+        if n:
+            order.append({**i, "node": n})
+    skip = [n for sk, n in by_skill.items() if "mount" in n or "mount" in sk] if g.get("skip_mounts") else []
+    return {"agent_subtype": sub, "node_set": node_set, "order": order, "mounts": {"take": [], "skip": skip}}
+
+
 def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
     """The player's order (mounts and "asap" skills first, they unlock by rank), then the rest of the tree:
     passive skills first, active-ability skills last."""
-    o = orders()
-    c = o["characters"][char_key]
+    c = character_orders(char_key)
     nodes, effects, maxlvl, set_items = _tables()
     loc = gd.loc()
 
@@ -118,10 +157,13 @@ def _skill_targets():
     from bot.sensor.world import World, characters, find_player_faction
     w = World()
     F = find_player_faction(w)
-    by_subtype = {c["agent_subtype"]: k for k, c in orders()["characters"].items()}
+    o = orders()
+    by_subtype = {c["agent_subtype"]: k for k, c in o["characters"].items()}
     out = []
     for c in characters(w, F):
         k = by_subtype.get(c.subtype)
+        if not k and GENERIC in o and c.agent == "general" and c.subtype in _node_sets():
+            k = f"{GENERIC}:{c.subtype}"        # a lord without a template of its own (agent type from memory)
         if not k:
             continue
         pts = w.u32(w.q(c.ptr + 0x3F0) + POINTS_OFF)
@@ -188,7 +230,7 @@ def tree_rows(char_key: str) -> int:
     """Rows of this character type's skill tree: one per indent level of its visible nodes (ikit 6, warlock 4,
     verminlord 6 on 9.0.4, matching the panel)."""
     nodes, _e, _m, set_items = _tables()
-    node_set = orders()["characters"][char_key]["node_set"]
+    node_set = character_orders(char_key)["node_set"]
     return len({int(nodes[n]["indent"]) for n in set_items.get(node_set, [])
                 if n in nodes and nodes[n]["visible_in_ui"] is not False})
 
@@ -455,7 +497,7 @@ def run(log=print) -> str:
                 if not _show(ui, char_id, rows[key]):
                     done.append(f"{name}: could not open skills")
                     continue
-                spent_here = _spend(ui, w, ptr, plans[key], orders()["characters"][key]["node_set"])
+                spent_here = _spend(ui, w, ptr, plans[key], character_orders(key)["node_set"])
                 if spent_here:
                     done.append(f"{name}: " + ", ".join(spent_here))
                     log(f"skills: {name}: {', '.join(spent_here)}")
