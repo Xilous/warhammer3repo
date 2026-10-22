@@ -186,8 +186,7 @@ class App:
         self.finance_lbl = tk.Label(ff, text="", justify="left", anchor="w", bg="#1d1f1d", fg="#c8c8c8",
                                     font=("Consolas", 9), wraplength=600)
         self.finance_lbl.pack(fill="x")
-        self.raise_btn = ttk.Button(ff, text="Create new playbook army", command=self._raise_army,
-                                    state="disabled")
+        self.raise_btn = ttk.Button(ff, text="Create new playbook army", command=self._raise_army)
         if on_raise_army is not None:
             self.raise_btn.pack(anchor="w", pady=(4, 0))
 
@@ -263,8 +262,8 @@ class App:
         threading.Thread(target=self.on_exit, daemon=True).start()
 
     def _raise_army(self) -> None:
-        if getattr(self, "_can_raise", False):
-            threading.Thread(target=self.on_raise_army, daemon=True).start()
+        """Never locked out (player rule 2026-10-21); what blocks raising is reported by the army step."""
+        threading.Thread(target=self.on_raise_army, daemon=True).start()
 
     def _restart(self) -> None:
         threading.Thread(target=self.on_restart, daemon=True).start()
@@ -383,7 +382,6 @@ class App:
                     self._can_raise = f["can"]
                     self.verdict_lbl.configure(text=f["verdict"], fg="#b8d98a" if f["ok"] else "#f0b49f")
                     self.finance_lbl.configure(text="\n".join(f["lines"] + ([f["why_not"]] if f["why_not"] else [])))
-                    self.raise_btn.configure(state="normal" if f["can"] else "disabled")
                     self.panel.show_finance(f)
                 elif kind == "diplomacy":
                     self.panel.show_diplomacy(msg[1])

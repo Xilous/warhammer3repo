@@ -175,11 +175,13 @@ class RailPanel:
         tk.Frame(self.body, bg=T.LINE, height=1).pack(fill="x", pady=(12, 10))
 
     def _style_raise(self, can: bool) -> None:
+        """Always pressable (player rule 2026-10-21: never locked out, whatever income would be after it); the ✓/✗
+        checks below it are information. can: every check met (brass), else outlined."""
         if can:
             self.raise_btn.configure(bg=T.BRASS, fg=T.ON_BRASS, cursor="hand2", highlightthickness=0)
         else:
-            self.raise_btn.configure(bg=T.PANEL, fg=T.DIM, cursor="arrow", highlightthickness=1,
-                                     highlightbackground=T.LINE, highlightcolor=T.LINE)
+            self.raise_btn.configure(bg=T.PANEL, fg=T.BRASS, cursor="hand2", highlightthickness=1,
+                                     highlightbackground=T.BRASS, highlightcolor=T.BRASS)
 
     # ---------------------------------------------------------------- showing / hiding
     def toggle(self) -> None:
@@ -234,7 +236,7 @@ class RailPanel:
         self.place()
 
     def _raise(self) -> None:
-        if self.can_raise and self.on_raise_army is not None:
+        if self.on_raise_army is not None:
             self.on_raise_army()
 
     def show_finance(self, f: dict) -> None:

@@ -99,7 +99,7 @@ Every rule, step by step, is in [Logic](#logic) below.
 | This turn | what each step did in the last pass |
 | **Armies** (tick boxes) | every field army and how it differs from the template. Tick an army to let the army step manage it; unticked armies are never touched. The ticks are saved in `strategy/automation.json`. Also lists heroes on their own and which provinces can recruit the template units now. |
 | **Army finances** | you decide when a new army is raised (the builder no longer raises one by itself). A green ✓ or orange ✗ line says whether you can afford a new army, after what the ticked refills will add. Below it: income per turn (last turn's, as the HUD shows it), the Supply Lines % per extra army for your difficulty, what each army costs now and what it would cost once refilled to the template (units not in the template are disbanded, so they drop out of upkeep and Supply Lines), and what the next army would add in all. Unit upkeep is the game's base upkeep with Supply Lines, calibrated against last turn's real army upkeep. All from memory (`assist/army_finance.py`, `bot/sensor/economy.py`). |
-| **Create new playbook army** | greyed out, with the reason, until a Verminlord Warpseer is in the Recruit Lord pool, a Warlock Engineer is free or the engineer cap has room, and a province recruits Stormfiend Ratling Cannons and Warp-Doom Magma-Cannons. Pressed, it raises the Warpseer at once, ticks the new army and recruits the template. It does not stop you when the ✗ says it is not affordable: that is your call. |
+| **Create new playbook army** | always pressable, whatever income would be after it. Below it, ✓/✗: a Verminlord Warpseer in the Recruit Lord pool, a Warlock Engineer (free or room under the cap), a province recruiting Stormfiend Ratling Cannons and Warp-Doom Magma-Cannons. Pressed, it raises the Warpseer, ticks the new army and recruits the template; without a Warpseer or a recruiting province it says why; without an engineer it raises the army anyway and the engineer follows. |
 | Provinces where nothing is built | the provinces the building step skips, and why |
 
 The window only reads memory. It never sends input to the game.
@@ -353,10 +353,11 @@ is used only to find what to click, to confirm a click took, and for what exists
   - assigned engineers walked into the army every turn until they join (not with no movement left or the army full).
 - Refilled (nothing missing, nothing to disband) -> tick cleared.
 - Missed: a ticked army at an eligible province with units not queued or off-template units left.
-- **New playbook army** (button, or `auto_create`): an eligible province, an engineer (free or cap room), a
-  Verminlord Warpseer in the Recruit Lord pool, and (auto only) income after it >= `income_reserve`; raised at a
-  free settlement of an eligible province, capitals first; confirmed by the new army in memory; ticked and built
-  the same pass.
+- **New playbook army**: the button is never locked (the ✓/✗ checks are information). Pressed: needs an eligible
+  province, a Verminlord Warpseer in the Recruit Lord pool and a free settlement there; income after it and a
+  missing engineer never block (the engineer is recruited once the cap allows). `auto_create` (by itself): also
+  needs an engineer (free or cap room) and income after it >= `income_reserve`. Raised at a free settlement of an
+  eligible province, capitals first; confirmed by the new army in memory; ticked and built the same pass.
 - **Finances**: upkeep = base x (1 + Supply Lines % x (armies - 1)); Supply Lines 1% easy/normal, 2% hard, 4% very
   hard/legendary; verdict = income after ticked refills and the next army.
 

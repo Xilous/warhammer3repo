@@ -3,15 +3,15 @@ dashboard shows what every army costs, what a refill would make it cost and what
 (assist/army_finance.py); the player decides. "Raise next army" on the dashboard asks for one, and the next army pass
 raises it when
   1. a province can recruit the whole template (assist/army_builder.eligible, the builder's own test);
-  2. the new army can have its Warlock Engineer: one is free (unclaimed) or the engineer cap has room (the cap as the
-     Recruit Hero panel last showed it, runs/caps.json; UI stop-gap, memory reader pending; never read yet = not a
-     reason to wait);
-  3. income pays for it: the projected income (memory, bot/sensor/economy.py) minus what the ticked refills will add
-     minus the next army's upkeep and Supply Lines (army_finance) stays at or above army_builder.income_reserve;
-  4. a Verminlord Warpseer is in the Recruit Lord pool (its Verminlords tab) and the Raise button is active (Lord cap).
+  2. a Verminlord Warpseer is in the Recruit Lord pool (its Verminlords tab) and the Raise button is active (Lord cap).
+Asked for by the player, it is raised whatever income would be after it and with or without a Warlock Engineer for
+it (player rule 2026-10-21: "the create new playbook army button should never be locked out": a treasury of 100k
+pays for an army that secures a frontline while another expands); the engineer is recruited by the army builder as
+soon as the cap allows. Raised by itself (auto_create), it also needs an engineer (free, or room under the cap) and
+income after it (army_finance) at or above army_builder.income_reserve.
 The Warpseer is raised at a settlement of an eligible province that no other army of ours stands in, and the new army
 is ticked: the builder recruits the template there in the same pass, and unticks it once it matches (army_builder).
-army_builder.auto_create true brings back the old behaviour (raised by itself whenever 1-4 hold).
+army_builder.auto_create true brings back the old behaviour (raised by itself whenever all of the above hold).
 
 Supply Lines (game script wh_campaign_setup.lua, apply_upkeep_penalty): every army with a general after the first
 adds 1% (normal), 2% (hard) or 4% (very hard, legendary) to the upkeep of every unit. The Recruit Lord panel states
@@ -140,7 +140,8 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
     free = [c for c in characters(w, F) if c.embedded_force == 0 and c.subtype == ENGINEER
             and w.u32(c.ptr + 0x110) not in claims]
     slots = free_engineer_slots(w, F)
-    if not free and slots is not None and slots <= 0:
+    no_engineer = not free and slots is not None and slots <= 0
+    if no_engineer and ab.get("auto_create", False):      # asked for: raised anyway, the engineer follows later
         return ["new army: no Warlock Engineer for it (none free, engineer cap full)"], None
     from .army_finance import pool_subtypes
     if WARPSEER not in pool_subtypes(w, F):
@@ -200,6 +201,6 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
         return ["new army: raising the Warpseer did not go through"], None
     set_enabled(new.cqi, new.general_name, True, new.general_id, new.turn, new.rank)
     lines.append(f"new army: raised {new.general_name} (Verminlord Warpseer) at {region_name(site)} and ticked it "
-                 f"({b[1]})")
+                 f"({b[1]})" + ("; its Warlock Engineer follows once the engineer cap has room" if no_engineer else ""))
     log(lines[-1])
     return lines, new
