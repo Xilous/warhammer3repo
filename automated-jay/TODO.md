@@ -14,11 +14,6 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
 ## Any session (single player is fine)
-- [ ] **Army courier: live checks and the hand-over (built 2026-10-21, assist/courier.py)**. Ikit's / Thanquol's
-      army recruits the playbook armies' losses and walks them to the front; the template's lord is the Warpseer
-      only. To do with the game: the unit exchange panel the game opens on arrival (its id is logged to
-      runs/courier_panels.jsonl the first time) -> decode it and move the carried units across; then check a whole
-      round trip (recruit, walk, hand over, back to a recruiting province).
 - [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ... in N turn(s)" appears for a top item,
       cheap items are still bought with the spare gold, the saved item is bought on the turn it said, and the army
       still recruits with what is beyond the reserve.

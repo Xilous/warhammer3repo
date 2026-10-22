@@ -44,8 +44,6 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("buildings", "off_list_buildings"), "Buildings not on the list", "Buildings",
             "choice", "replace", choices=("replace", "ask")),
     # army (assist/new_army.py)
-    Setting("automation.json", ("army_builder", "courier"), "Courier (Ikit / Thanquol) brings the lost units", "Army",
-            default=True),
     Setting("automation.json", ("army_builder", "auto_create"), "Raise new armies by itself", "Army", default=False),
     Setting("automation.json", ("army_builder", "income_reserve"), "Income kept after a new army", "Army", "int", 0,
             50, 0, 5000, unit=" /turn"),

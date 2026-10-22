@@ -102,8 +102,7 @@
     "move_army_to_recruit": true,
     "auto_create": false,
     "income_reserve": 0,
-    "courier": true,
-    "_courier": "The army courier (player decisions 2026-10-21, assist/courier.py): the faction leader's own army (Ikit Claw or Thanquol) recruits the units the playbook armies have lost and walks them to the front; playbook armies (led by a Verminlord Warpseer, the template's only lord) never walk back to recruit. false: they march back to recruit as before. In the widget's settings."
+    "_template_lord": "The playbook armies are led by a Verminlord Warpseer (player decision 2026-10-21); a ticked army led by Ikit or Thanquol still has its units refilled to the template."
   },
   "done_indicator": "widget",
   "widget": {

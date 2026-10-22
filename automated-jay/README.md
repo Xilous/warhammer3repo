@@ -321,7 +321,7 @@ is used only to find what to click, to confirm a click took, and for what exists
 - Ticked armies only. A tick counts only for the same general (id or name), set with a turn, at or before the
   army's turn and rank (another campaign's tick ignored).
 - Template: lord Verminlord Warpseer (only), 1 Warlock Engineer, 12 Stormfiend Ratling Cannons, 6 Warp-Doom
-  Magma-Cannons. Queued units count as present. The courier's army (Ikit / Thanquol) is never refilled to it.
+  Magma-Cannons. Queued units count as present.
 - Eligible province: recruits every template unit type (finished, active buildings in owned regions).
 - Engineers: free ones (not in an army) kept on or assigned to the nearest army that needs one
   (`runs/engineer_claims.json`).
@@ -332,25 +332,11 @@ is used only to find what to click, to confirm a click took, and for what exists
     (cards checked against memory, selection checked, confirmed by the unit count);
   - at an eligible province: missing units queued from the local pool only (never global), room = 20 - units -
     queued - missing engineer; gold checked before each click; each click confirmed by the queue in memory;
-  - else, courier on and alive: waits at the front for the courier;
   - else marched to the closest eligible province (fewest region hops, then distance, then most missing units
     covered; not within 1.5 of another army); re-chosen every turn;
   - engineer missing and none free: recruited at the nearest settlement that can, if the cap (memory) allows;
   - assigned engineers walked into the army every turn until they join (not with no movement left or the army full).
 - Refilled (nothing missing, nothing to disband) -> tick cleared.
-- **Courier** (`assist/courier.py`, `army_builder.courier`, after the playbook armies): the faction leader's own army
-  (Ikit Claw or Thanquol; no extra Supply Lines). One action a turn, first match:
-  - units in its recruitment queue -> wait;
-  - target = ticked playbook army missing template units outside a recruiting province, nearest by region hops
-    (then most missing);
-  - no target -> wait in a recruiting province, or march to the nearest one (carrying nothing);
-  - in a recruiting province with room and gold -> recruit what the target needs beyond its cargo (template order,
-    up to 20 units);
-  - carrying units the target needs -> walk to the target (right-click its lord's flag; continues next turn);
-  - else -> march to the nearest recruiting province.
-  - On arrival the game's unit exchange panel opens: the hand-over is not automated yet (the panel is recorded in
-    `runs/courier_panels.jsonl` and closed; "merge the units yourself").
-- Missed: a ticked army at an eligible province with units not queued or off-template units left.
 - **New playbook army**: the button is never locked (the ✓/✗ checks are information). Pressed: needs an eligible
   province, a Verminlord Warpseer in the Recruit Lord pool and a free settlement there; income after it and a
   missing engineer never block (the engineer is recruited once the cap allows). `auto_create` (by itself): also
@@ -430,7 +416,6 @@ player.
 | Rites and commandments (`assist/rites.py`) | Working: commandments and the Dominating Scheme from memory, before any gold is spent. |
 | Forbidden Workshop (`assist/workshop.py`, Ikit) | Working: Ratling Cannon upgrades as soon as they can be bought. |
 | Masterplans (`assist/masterplans.py`, `bot/sensor/masterplans.py`, Thanquol) | Working: Steal-Takes and Secrets from memory; Kill-Stabs stay the player's. Multiplayer not yet exercised. |
-| Army courier (`assist/courier.py`) | Built (2026-10-21): Ikit's or Thanquol's army recruits the playbook armies' losses and walks them to the front; playbook armies (Warpseer-led) wait for it. The hand-over on arrival is not automated yet (merge the units yourself). |
 | Widget settings (`assist/settings.py`, `assist/railpanel.py`) | Working (2026-10-21): every option and each step's schedule changed with a click in the expanded widget. |
 | Building automation (`assist/build.py`) | Working: state from memory, provinces next to an enemy at war are skipped; damaged buildings repaired first, then upgrades and constructions through the province panel, each verified in memory. Repairs verified live 2026-10-16. |
 | Army builder (`assist/army_builder.py`, `assist/army.py`, `assist/recruit.py`, `assist/heroes.py`) | Built: per-army tick in the window. For a ticked army: disband off-template units, recruit missing units from the local pool, recruit a Warlock Engineer, move toward the closest province that can recruit what is missing, walk free heroes in (see "Army builder"). Walking heroes in was verified live. |
@@ -460,7 +445,6 @@ assist/app.py          the assistant window and the overlay (colours in assist/w
 assist/popups.py       turn-start popups: closes event notices, holds the pass for decisions
 assist/tech.py         tech step
 assist/skills.py       skill step
-assist/courier.py      the army courier
 assist/build.py        building step: repairs, upgrades, constructions (plan: assist/buildplan.py)
 assist/army_builder.py army step (template compare: army.py, recruitable units: recruit.py, heroes: heroes.py)
 assist/gamedata.py     static game data from ../tww/db and ../tww/loc_en.json

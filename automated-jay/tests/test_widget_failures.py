@@ -17,7 +17,7 @@ def test_successes_and_planned_waits_are_hidden():
              "buildings: Karag Dromar: Breeding Pit -> Nest-Nursery | blocked: Oakenhammer | problems: "
              "karag_dromar: Main building needs 2 development points (the province has 0); karag_dromar: "
              "Landmarks needs 5000 gold | verified",
-             "army: courier Thanquol: no playbook army is missing units | verified"]
+             "army: Thanquol: matches template | verified"]
     assert failures(lines) == []
 
 
