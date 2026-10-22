@@ -941,6 +941,11 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
 LAST_NOTES: list = []     # the last run's result lines (its reasons for what it could not do)
 
 
+# the run's reasons for units it left (2026-10-22, turn 49: the verification run's "no gold to recruit this turn" was
+# not among them, so a treasury of 798 against 810-gold Stormfiends was reported MISSED)
+NOT_POSSIBLE = ("left for later turns", "could not", "not taken", "no gold", "in the treasury")
+
+
 def missed() -> list[str]:
     """The memory check after the step (player request 2026-10-19), from memory after the run. A ticked army that
     stands in a province able to recruit every unit it is missing must have them queued ([MF+0x6EC] queue, counted
@@ -964,8 +969,7 @@ def missed() -> list[str]:
         name = a.general_name
         notes = "; ".join(n for n in LAST_NOTES if n.startswith(f"{name}:"))
         left = ", ".join(f"{n} {unit_name(k)}" for k, n in d.missing.items())
-        why = next((x.strip() for x in notes.split(";") if "left for later turns" in x or "could not" in x
-                    or "not taken" in x), "")
+        why = next((x.strip() for x in notes.split(";") if any(r in x for r in NOT_POSSIBLE)), "")
         out.append(f"{name}: {left} not queued at a recruiting province"
                    + (f" (not possible: {why})" if why else ""))
         if d.disband:
