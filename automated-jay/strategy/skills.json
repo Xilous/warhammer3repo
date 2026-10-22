@@ -16,6 +16,8 @@
   "generic_lord": {
     "_note": "Player request 2026-10-22: every other lord (agent type general, read from memory: legendary or generic, e.g. Warlord, Grey Seer, Warlock Master, Queek, the other Verminlords) without a template under characters takes the bottom two rows (army and campaign) in the same order as Ikit and the Warpseer, plus Mentor asap. Skills are given by skill key, not node, because every lord's tree has its own nodes: each is looked up in that lord's node set and left out where the tree does not have it (the Masterplan schemer lords lack most of the campaign row). After the list the rest of the tree goes 'as fits' (after_list: passives first, top row first, active abilities last). Mounts are skipped (assistant decision 2026-10-22: a mount is the player's choice per lord; add the lord under characters with mounts.take to have one taken).",
     "skip_mounts": true,
+    "skip_skills": ["wh3_main_skill_all_army_of_renown_lord"],
+    "_skip_skills": "Never taken, not even as leftovers: Soldiers of Renown, as in the Warpseer's build (assistant decision 2026-10-22).",
     "order": [
       {"skill": "Route Marcher", "skill_key": "wh_main_skill_all_lord_campaign_route_marcher", "ranks": 1},
       {"skill": "Inspiring Presence", "skill_key": "wh_main_skill_all_lord_battle_inspiring_presence", "ranks": 1},
@@ -313,7 +315,9 @@
       "mounts": {
         "take": [],
         "skip": []
-      }
+      },
+      "skip": ["wh3_main_skill_node_all_army_of_renown_lord"],
+      "_skip": "Soldiers of Renown: not taken in the player's build (2026-10-20), so not among the leftovers either (2026-10-22)."
     },
     "thanquol": {
       "agent_subtype": "wh3_dlc29_skv_thanquol",

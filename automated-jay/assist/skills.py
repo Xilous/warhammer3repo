@@ -110,7 +110,9 @@ def character_orders(char_key: str) -> dict:
         if n:
             order.append({**i, "node": n})
     skip = [n for sk, n in by_skill.items() if "mount" in n or "mount" in sk] if g.get("skip_mounts") else []
-    return {"agent_subtype": sub, "node_set": node_set, "order": order, "mounts": {"take": [], "skip": skip}}
+    never = [by_skill[k] for k in g.get("skip_skills", []) if k in by_skill]
+    return {"agent_subtype": sub, "node_set": node_set, "order": order, "mounts": {"take": [], "skip": skip},
+            "skip": never}
 
 
 def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
@@ -133,7 +135,9 @@ def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
     for item in sorted(c["order"], key=lambda i: not i.get("asap")):   # stable: the order is kept within each group
         out.append((item["skill"], item["ranks"], nodes[item["node"]]["character_skill_key"]))
         listed.add(item["node"])
-    skip = set(mounts.get("skip", [])) | set(mounts.get("take", [])) | listed
+    # "skip": nodes never taken, not even as leftovers (2026-10-22: the Warpseer's Soldiers of Renown, "not taken" in
+    # the player's build, came first among the leftovers)
+    skip = set(mounts.get("skip", [])) | set(mounts.get("take", [])) | listed | set(c.get("skip", []))
     rest = []
     for n in set_items.get(c["node_set"], []):
         nd = nodes.get(n)
