@@ -119,6 +119,19 @@ def test_targets_ranked_by_income():
     assert sc["kak"] - sc["varenka"] == 700
 
 
+def test_shop_tab_counts_lines_not_levels():
+    """2026-10-22, turn 38: Grey Seer tab with Warlord Clan's Tunnel II and Superior Rats is 2 purchases (lines), so
+    Rictus Miners' Holes (needs 3) is locked; buying a new line's first level opens it."""
+    tunnel, rats = "wh3_dlc29_military_mod_pool_clanrats_grey_seer_3", "wh3_dlc29_military_action_skill_grey_seer_draw_units_2"
+    rictus = "wh3_dlc29_shop_economic_green_rictus_warpstone"
+    pusbags = "wh3_dlc29_shop_military_green_basic_pusbags"
+    seer = {"wh3_dlc29_skv_schemer_grey_seer"}
+    cfg = {"keep_warpstone": 0, "order": [{"chain": rictus, "levels": 1}]}
+    assert M.shop_plan(cfg, 5000, {tunnel, rats}, seer)[0] == []
+    cfg["order"].insert(0, {"chain": pusbags, "levels": 1})
+    assert [b[0] for b in M.shop_plan(cfg, 5000, {tunnel, rats}, seer)[0]] == [pusbags, rictus]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

@@ -369,12 +369,15 @@ def owned_levels(chain: str, inventory: set[str]) -> int:
 def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str]) -> tuple[list, str]:
     """([(chain, level index, cost, name)] to buy now, in order; why it stops), from memory. Strict order: the first
     entry that can be bought but not afforded is saved for and nothing below it is bought. Locked entries (the tab's
-    Underling not unlocked, or too few purchases in that tab yet) are skipped."""
+    Underling not unlocked, or too few purchases in that tab yet) are skipped. A tab's purchases are the lines owned
+    in it, not the levels (2026-10-22, turn 38, Grey Seer tab with Warlord Clan's Tunnel II and Superior Rats: every
+    line needing 2 was open, every one needing 3 locked; counted as 3 levels, Rictus Miners' Holes was tried and had
+    no Purchase button)."""
     keep = int(cfg.get("keep_warpstone", 50))
     tabs = shop_tabs()
     per_tab = defaultdict(int)
     for c in shop_objects():
-        per_tab[tabs.get(c)] += owned_levels(c, inventory)
+        per_tab[tabs.get(c)] += owned_levels(c, inventory) > 0
     have, buys, owned_now = warpstone, [], {}
     for entry in cfg.get("order", []):
         chain, want = entry["chain"], int(entry.get("levels", 1))
@@ -394,7 +397,7 @@ def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str]
                 return buys, f"saving for {name} ({o['cost']} Warpstone, have {have}, keeping {keep})"
             buys.append((chain, owned, o["cost"], name))
             have -= o["cost"]
-            per_tab[tab] += 1
+            per_tab[tab] += owned == 0
             owned += 1
             owned_now[chain] = owned
     return buys, "" if buys else "nothing on the list left to buy"
