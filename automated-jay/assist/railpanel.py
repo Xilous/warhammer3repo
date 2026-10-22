@@ -6,7 +6,7 @@ rail it never takes focus (the game stays in front while armies are ticked or bu
 while a pass runs, so it can never be under a click the assistant makes.
 
 Look: Clan Brass (player's pick 2026-10-18, assist/theme.py). Contents, top to bottom: Run now / Pause / Restart /
-Exit, treasury - income - Warpstone, "Ignore <id>" for popups that block a pass, this turn's step results, the
+Exit, treasury - income - Warpstone, "Ignore <id>" for popups that block a pass, what failed this turn and why (only failures, player request 2026-10-21), the
 armies with their army-builder tick boxes (saved exactly as the main window does: assist/army.py set_enabled) and
 what each costs now and once refilled, the next army (can you afford it: a bar of income against its cost, Create
 new playbook army, greyed out with a ✓/✗ list of what it needs), the settings (every option of the strategy files and which steps run when, changed with a click:
@@ -24,6 +24,31 @@ BAR_W = WIDTH - 40
 def _nice(text: str) -> str:
     from .app import nice
     return nice(text)
+
+
+FAIL = ("ERROR", "MISSED", "INTERRUPTED", "interrupted", "could not", "not started", "did not", "refused by the game",
+        "greyed out", "failed", "NOT confirmed", "still changing", "NOT ENDED")
+REASON = "not done, with a reason: "
+
+
+def failures(lines: list[str]) -> list[str]:
+    """The failed parts of a pass's step lines ("step: result | verified | MISSED (memory check): why"), each as
+    "step — why". Planned waits ("needs N gold", "saving for ...", "waits for ...") are not failures."""
+    out = []
+    for line in lines:
+        if line.startswith("turn ") or ": " not in line:
+            continue
+        step, rest = line.split(": ", 1)
+        for part in rest.split(" | "):
+            part = part.strip()
+            if part.startswith(REASON):
+                out += [f"{step} — {x.strip()}" for x in part[len(REASON):].split("; ") if x.strip()]
+            elif part.startswith("problems: "):
+                out += [f"{step} — {x.strip()}" for x in part[len("problems: "):].split("; ")
+                        if any(k in x for k in FAIL)]
+            elif any(k in part for k in FAIL):
+                out.append(f"{step} — {part}")
+    return out
 
 
 class RailPanel:
@@ -98,7 +123,7 @@ class RailPanel:
         self.ignore_row.pack(fill="x")
 
         self._rule()
-        self._heading("THIS TURN")
+        self._heading("THIS TURN  ·  only what failed, and why")
         self.log = tk.Label(self.body, text="", bg=T.PANEL, fg=T.TEXT2, font=self.f_body, anchor="nw",
                             justify="left", wraplength=WIDTH - 40)
         self.log.pack(fill="x")
@@ -224,8 +249,17 @@ class RailPanel:
         self.pause_btn.configure(text="RESUME" if paused else "PAUSE", fg=T.WARN if paused else T.INK)
 
     def show_log(self, lines: list[str]) -> None:
-        text = "\n".join(_nice(x).replace(": ", " — ", 1) for x in lines[-12:])
-        self.log.configure(text=text or "nothing yet")
+        """Only what failed this turn, each with the reason the step gave (player request 2026-10-21: the rest need
+        not be read at once; the full window and runs/assistant-*.jsonl keep everything)."""
+        head = next((x for x in lines if x.startswith("turn ")), None)
+        bad = failures(lines)
+        if not lines:
+            text, col = "nothing yet", T.MUTED
+        elif not bad:
+            text, col = (head + ": " if head else "") + "nothing failed", T.MUTED
+        else:
+            text, col = "\n".join(_nice(x) for x in bad[-12:]), T.RED
+        self.log.configure(text=text, fg=col)
         self.place()
 
     def _raise(self) -> None:
