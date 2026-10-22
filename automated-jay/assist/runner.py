@@ -646,6 +646,14 @@ class Runner:
                                         f"turn not ended: {getattr(self, 'end_turn_problem', '')}"]),
                       turn=turn)
         except InputAborted as ex:
+            if "another player" in str(ex):
+                # a multiplayer hold, not the player's hands: the press stands, queued, and the whole Build & End Turn
+                # runs again once the game is free (every step decides from memory), as a turn-start pass stays
+                # pending (2026-10-22)
+                self.end_request = (self.model, turn)
+                self.post("waiting", f"END TURN QUEUED (turn {turn})",
+                          f"{ex}: Build & End Turn goes on once the game is free", turn=turn)
+                return
             self.post("error", f"INTERRUPTED (turn {turn})",
                       f"interrupted: {ex}\nthe turn was not ended; Build & End Turn again to redo it", turn=turn)
         except Exception as ex:
