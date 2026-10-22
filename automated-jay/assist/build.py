@@ -139,24 +139,29 @@ def _actions(models, blocked: dict, override_blocked: bool = False):
                     todo.append((o, a, busy))
                 elif a.kind == "replace" and buildings_setting("off_list_buildings", "ask") == "replace"                         and replaceable(o, slot_index_for(o, a)):
                     todo.append((o, a, busy))
-    # No payback rule (player decision 2026-10-21): a 20-turn break-even filter was built and simulated (empty
+    # No payback filter (player decision 2026-10-21): a 20-turn break-even filter was built and simulated (empty
     # settlements built out at top tier): no slot stayed empty, but the upgrades it stopped (Breeding Pit and Scrap Heap
     # 3, Reactor 2-3) pay back in 21-24 turns, and a capital with two minors ended at 1,806 gold a turn instead of
-    # 2,400. Removed the same day; the settlement list alone decides.
+    # 2,400. Every building still reaches its highest tier; payback only orders the spending (spend_rank).
+    PROVINCE_MODELS.clear()
+    PROVINCE_MODELS.update({p: [o.model for o in owned] for p, owned in models.items()})
     todo.sort(key=lambda t: spend_rank(t[0], t[1]))
     return todo, skipped
 
 
-# Spending order across all provinces (player decision 2026-10-20). Before, the gold went province by province down
-# each list and anything affordable lower down was bought while a top item waited, so the recruit buildings and the
-# landmarks never got saved for. Now: main building (and port) upgrades, which unlock slots and tiers; the Warpstone
-# Reactor line (+30/40/50% income from every building in the province, paid back in about 6 turns, landmarks' income
-# included); landmarks; the army template's recruit buildings, the capital closest to tier 5 first; then the rest in
-# settlements.json order. The settlement list itself still decides which buildings get a slot.
+# Spending order across all provinces (player decisions 2026-10-20 and 2026-10-21: "growing my faction's income should
+# be its top priority"): main building (and port) upgrades first, which unlock the slots and tiers every income
+# building needs; then every other building and upgrade (Warpstone Reactor, landmarks and the army's recruit buildings
+# included) by how soon it pays for itself (assist/payback.py: cost / the gold per turn it adds, the province's
+# percentage bonuses and build time counted), the settlement list's order breaking ties; what adds no gold comes last
+# and is still built. The settlement list itself still decides
+# which buildings get a slot and how far they go: every building reaches its highest tier.
 RECRUIT_CHAINS = ("wh3_dlc29_skv_stormfiends", "wh2_main_skv_engineers")
 REACTOR_CHAIN = "wh2_main_skv_energy"
 SAVE_TURNS = 2              # a top item affordable within this many turns of net income is saved for
-SAVE_UP_TO = 3              # saving only for ranks 0-3 (main, Reactor, landmarks, recruit buildings), never fillers
+SAVE_UP_TO = 0              # saved for: main/port upgrades (0) ...
+SAVE_PAYBACK = 20           # ... and any other building paying for itself within this many turns (fillers never)
+PROVINCE_MODELS: dict = {}  # province -> its settlement models, set by _actions (the payback needs the whole province)
 SAVING: dict = {}           # this turn's saving: {"turn", "gold", "item", "rank", "net", "reserve", "held", "items"}
 
 
@@ -184,7 +189,8 @@ class Budget:
     def save(self, cost: int, rank: tuple, label: str) -> bool:
         """Queue an item the gold does not cover yet, when it is a top item reachable within SAVE_TURNS turns."""
         cum = (self.saved[-1][0] if self.saved else 0) + cost
-        if rank[0] > SAVE_UP_TO or self.net <= 0 or cum - self.gold > SAVE_TURNS * self.net:
+        worth = rank[0] <= SAVE_UP_TO or (rank[0] == 1 and len(rank) > 1 and rank[1] <= SAVE_PAYBACK)
+        if not worth or self.net <= 0 or cum - self.gold > SAVE_TURNS * self.net:
             return False
         self.saved.append((cum, max(1, -(-(cum - self.gold) // self.net)), label))
         return True
@@ -194,20 +200,15 @@ class Budget:
 
 
 def spend_rank(o: OwnedSettlement, a) -> tuple:
-    """Where an action stands in the spending order (lower first)."""
-    from .buildplan import current_tier
+    """Where an action stands in the spending order (lower first): (0, ...) main / port upgrades, (1, payback turns,
+    list position, cost) every other building."""
+    from .payback import payback
     if a.kind in ("upgrade_main", "upgrade_port"):
         return (0, 0, a.cost)
-    lv = level_of(a.level_key) if a.level_key else None
-    chain = lv[0] if lv else None
-    if chain == REACTOR_CHAIN:
-        return (1, 0, a.cost)
-    if chain is not None and chain in o.model.landmarks:
-        return (2, 0, a.cost)
-    if chain in RECRUIT_CHAINS:
-        return (3, -current_tier(o.model), o.province, RECRUIT_CHAINS.index(chain))
     names = [e["name"] for e in strategy()["priority"]]
-    return (4, names.index(a.item) if a.item in names else len(names), a.cost)
+    prov = PROVINCE_MODELS.get(o.province) or []
+    turns = payback(o.model, prov if any(m is o.model for m in prov) else [o.model], a)   # (only this pass's models)
+    return (1, turns, names.index(a.item) if a.item in names else len(names), a.cost)
 
 
 def saving_reserve(w: World, F: int | None = None) -> int:

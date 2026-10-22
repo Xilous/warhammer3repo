@@ -300,11 +300,13 @@ is used only to find what to click, to confirm a click took, and for what exists
 - Repairs first (`repair_damaged`): damaged buildings on the plan; estimate = cost x missing hp share > gold -> needs gold.
 - Construction Cavern (Ikit, workshop level 1, no Cavern standing, none planned): one temporary Cavern in a free
   slot, else an off-list slot, else the lowest-priority building; kept until it has counted, then released.
-- Spending, all provinces at once: main/port upgrades -> Reactor -> landmarks -> recruit buildings (capital closest
-  to tier 5 first) -> the rest in list order.
-- Saving: an item of the first four groups that is not affordable but reachable within 2 turns of net income is
-  saved for; anything cheaper is bought only if it does not push a saved item a turn later (else held); the army
-  keeps off what the saved items still need.
+- Spending, all provinces at once (income first): main/port upgrades (they unlock the slots) -> every other building
+  and upgrade by payback = build turns + cost / gold per turn it adds (game data: its income, the province's %
+  bonuses such as the Reactor's, an upgrade's difference, a replaced building's loss; `assist/payback.py`); ties by
+  list order; no gold added -> last, still built. Every building still reaches its highest tier.
+- Saving: a main/port upgrade, or a building paying back within 20 turns, not affordable but reachable within 2
+  turns of net income is saved for; anything cheaper is bought only if it does not push a saved item a turn later
+  (else held); the army keeps off what the saved items still need.
 - Per action, first match: no longer yours; slot changed since the plan; Cavern slot; under construction; locked
   by the game; main level too low; development points short; not affordable (held / saving / needs gold); no slot;
   damaged building (waits for repair); panel or slot not found; else act.

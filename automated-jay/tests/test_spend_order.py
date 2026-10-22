@@ -1,5 +1,5 @@
-"""The building step's spending order across provinces (player decision 2026-10-20): main building upgrades, the
-Reactor line, landmarks, the recruit buildings (capital closest to tier 5 first), then the settlement list's order.
+"""The building step's spending order across provinces (player decisions 2026-10-20, 2026-10-21): main building and
+port upgrades, then every other building by how soon it pays for itself (income growth first).
 
     python -X utf8 -m pytest tests -q
 """
@@ -28,7 +28,10 @@ def act(kind, item, key, cost=1000):
     return Action("c", kind, item, "", 3, cost, 1, key)
 
 
-def test_value_order():
+def test_main_first_then_fastest_payback():
+    """Player decisions 2026-10-21: income growth decides the order. Main building (and port) upgrades first (they
+    unlock the slots every income building needs), then every other building by how soon it pays for itself; what
+    adds no gold (this landmark) comes last and is still built."""
     o = owned(5, landmarks=[LANDMARK])
     todo = [
         (o, act("construct", "Spy Nests", first("wh2_main_foreign_slot_discovery_skv"))),
@@ -39,18 +42,19 @@ def test_value_order():
         (o, act("upgrade_main", "Main building", first(MAJOR), 12000)),
         (o, act("construct", "Temple of the Horned Rat", first("wh2_main_skv_order"))),
     ]
-    got = [a.item for o_, a in sorted(todo, key=lambda t: build.spend_rank(*t))]
-    assert got == ["Main building", "Warpstone Reactor", "Landmarks", "Warp-Turbine Plant",
-                   "Temple of the Horned Rat", "Breeding Pit", "Spy Nests"]
+    ranked = sorted(todo, key=lambda t: build.spend_rank(*t))
+    got = [a.item for o_, a in ranked]
+    assert got[0] == "Main building" and got[-1] == "Landmarks"
+    turns = [build.spend_rank(*t)[1] for t in ranked[1:]]
+    assert turns == sorted(turns)
+    assert got[1] == "Breeding Pit"                              # 250 gold for 80 a turn: about 4 turns
 
 
-def test_recruit_buildings_closest_capital_first():
-    far, near = owned(3, "a"), owned(5, "b")
-    todo = [(far, act("construct", "Equipment Warpforge", first("wh3_dlc29_skv_stormfiends"))),
-            (near, act("upgrade", "Warp-Turbine Plant", gd.chains()["wh2_main_skv_engineers"][-1].key)),
-            (near, act("construct", "Equipment Warpforge", first("wh3_dlc29_skv_stormfiends")))]
-    got = [(o.province, a.item) for o, a in sorted(todo, key=lambda t: build.spend_rank(*t))]
-    assert got == [("b", "Equipment Warpforge"), ("b", "Warp-Turbine Plant"), ("a", "Equipment Warpforge")]
+def test_recruit_buildings_compete_on_payback():
+    o = owned(5)
+    cheap = (o, act("construct", "Breeding Pit", first("wh2_main_skv_farm"), 250))
+    forge = (o, act("construct", "Equipment Warpforge", first("wh3_dlc29_skv_stormfiends"), 4000))
+    assert [a.item for _o, a in sorted([forge, cheap], key=lambda t: build.spend_rank(*t))] ==         ["Breeding Pit", "Equipment Warpforge"]
 
 
 # ---- saving that never idles gold (player decision 2026-10-20, after the 10-turn simulation)
@@ -62,38 +66,46 @@ def plan(gold, net, items):
             if cost <= b.gold:
                 held.append(label)
             else:
-                b.save(cost, (rank,), label)
+                b.save(cost, rank if isinstance(rank, tuple) else (rank,), label)
             continue
         b.spend(cost)
         bought.append(label)
     return bought, held, [l for _c, _k, l in b.saved], b.reserve()
 
 
-TURN_25 = [("landmark", 2, 10000), ("warpforge", 3, 8000), ("turbine", 3, 8000), ("temple GP", 4, 1000),
-           ("temple CD", 4, 1500), ("temple Z", 4, 2000), ("pit GP", 4, 500), ("pit KD", 4, 1000),
-           ("pit CD", 4, 1000), ("scrap KD", 4, 250), ("scrap Z", 4, 1000), ("sentry", 4, 4000)]
+# ranks as spend_rank makes them: (0,) main upgrade, (1, payback turns) the rest; slow payback (> 20) is never saved for
+SLOW = (1, 60.0)
+TURN_25 = [("main", (0,), 10000), ("warpforge", (1, 15.0), 8000), ("turbine", (1, 16.0), 8000),
+           ("temple GP", SLOW, 1000), ("temple CD", SLOW, 1500), ("temple Z", SLOW, 2000), ("pit GP", SLOW, 500),
+           ("pit KD", SLOW, 1000), ("pit CD", SLOW, 1000), ("scrap KD", SLOW, 250), ("scrap Z", SLOW, 1000),
+           ("sentry", SLOW, 4000)]
 
 
-def test_turn_25_spends_the_spare_gold_and_keeps_the_landmark_on_time():
+def test_turn_25_spends_the_spare_gold_and_keeps_the_saved_item_on_time():
     bought, held, saved, reserve = plan(3108, 3779, TURN_25)
-    assert saved == ["landmark"]                  # the Warpforge is not reachable within 2 turns after it
+    assert saved == ["main"]                      # the Warpforge is not reachable within 2 turns after it
     assert bought == ["pit GP"]                   # 666 spare: the landmark still comes in 2 turns
     assert "temple GP" in held and "scrap KD" in held
     assert 3108 - 500 + 2 * 3779 >= 10000 and reserve == 10000 - 2 * 3779
 
 
 def test_nothing_saved_buys_everything_affordable():
-    bought, held, saved, _r = plan(5000, 1000, [("a", 4, 2000), ("b", 4, 2000), ("c", 4, 2000)])
+    bought, held, saved, _r = plan(5000, 1000, [("a", SLOW, 2000), ("b", SLOW, 2000), ("c", SLOW, 2000)])
     assert bought == ["a", "b"] and not held and not saved
 
 
 def test_far_item_is_not_saved_for():
-    bought, _h, saved, reserve = plan(1000, 500, [("landmark", 2, 10000), ("pit", 4, 500)])
+    bought, _h, saved, reserve = plan(1000, 500, [("main", (0,), 10000), ("pit", SLOW, 500)])
     assert saved == [] and bought == ["pit"] and reserve == 0
 
 
 def test_second_saved_item_counts_the_first():
     # a: 6000 - 4000 -> next turn; b: 6000 + 9000 - 4000 = 11000 -> 2 turns of 6000; spare = 4000 + 12000 - 15000
-    bought, held, saved, reserve = plan(4000, 6000, [("a", 1, 6000), ("b", 3, 9000), ("pit", 4, 800),
-                                                     ("temple", 4, 500)])
+    bought, held, saved, reserve = plan(4000, 6000, [("a", (0,), 6000), ("b", (1, 12.0), 9000), ("pit", SLOW, 800),
+                                                     ("temple", SLOW, 500)])
     assert saved == ["a", "b"] and bought == ["pit"] and held == ["temple"] and reserve == 3000
+
+
+def test_slow_payback_is_never_saved_for():
+    _b, _h, saved, _r = plan(100, 5000, [("fast", (1, 8.0), 4000), ("slow", SLOW, 4000)])
+    assert saved == ["fast"]
