@@ -66,6 +66,13 @@ editing files: a new option read by code goes into `assist/settings.py` SETTINGS
 section; `tests/test_settings.py` checks it is in its strategy file), and the code reads it fresh at every pass (never
 cached for the session) so a change applies from the next pass.
 
+## Restart the running assistant after a change (player request, 2026-10-21)
+
+After committing a code change, restart the player's running assistant yourself so it runs the new code: wait
+until `%LOCALAPPDATA%\automated-jay\state.json` is not "automating" (never mid-pass), stop the process named in
+`runs/heartbeat.json` (`pid`), and start `run_assistant.bat` with `AJ_RESTARTED=1` set (the new copy then finishes
+an unfinished turn start, as the widget's Restart does). Confirm the new pid in the heartbeat and say so.
+
 ## Other standing rules
 - Player decisions are recorded where they apply (strategy/*.json `_doc` notes, code comments) with the date.
 - Kill-Stab Masterplans are the player's: never started, completed or abandoned by the assistant.
