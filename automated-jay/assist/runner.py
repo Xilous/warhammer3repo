@@ -1316,6 +1316,11 @@ class Runner:
             return
         if self.pending is not None:
             self._try_pass(self.pending)
+            # the turn start still to come while the others move: what holds them is checked too (2026-10-22: a copy
+            # restarted during the AI turns neither reported nor closed the notice that held them)
+            from bot.sensor import turn as turn_mem
+            if code == "not_mine" and turn_mem.players_turn(self.mem)[0] is False:
+                self._held_by_decision(s.turn)
         elif getattr(self, "auto_end", None) == s.turn:
             self.auto_end = None
             self.end_turn_now()                        # automation.json auto_end_turn (a test partner's PC)
