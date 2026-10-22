@@ -692,6 +692,14 @@ def engineer_candidates(w: World, F: int, army) -> list[str]:
     return sorted(regions, key=lambda k: order.get(k, (999, 0.0)))
 
 
+def engineer_cost() -> int:
+    """The Warlock Engineer's base recruitment cost (agent_subtypes_tables.cost: 400 on 9.0.4, the panel showed 400)."""
+    try:
+        return next(int(r.get("cost") or 0) for r in gd._load("agent_subtypes_tables") if r["key"] == ENGINEER)
+    except StopIteration:
+        return 0
+
+
 def get_engineer(ui: UI, w: World, F: int, army):
     """Recruit this army's Warlock Engineer at the nearest settlement that can, wherever the army is.
     Returns (log line, the new Character or None). Nothing is recruited while the faction cap is full."""
@@ -702,6 +710,12 @@ def get_engineer(ui: UI, w: World, F: int, army):
     cap, n = agent_cap(w, F, "engineer"), engineers_fielded(w, F)
     if cap is not None and n >= cap:
         return f"no Warlock Engineer yet: cap {n}/{cap} (raised by the Verminlord Warpseer skill Inscrutable Genius)", None
+    # gold from memory before any click (2026-10-22, turn 55: 399 in the treasury against the engineer's 400 left every
+    # candidate and the Recruit button inactive, reported as a cap refusal). The base cost (agent_subtypes.cost); cost
+    # modifiers from effects are not decoded yet, so a discount can only make this wait one turn too long.
+    cost, gold = engineer_cost(), spendable(w, F)
+    if cost and gold < cost:
+        return f"no Warlock Engineer yet: no gold this turn ({gold} to spend, {cost} needed)", None
     for region in engineer_candidates(w, F, army):        # (provinces whose buildings enable one: memory)
         status, msg, new = recruit_engineer(ui, w, F, region)
         if status == "ok":
@@ -709,7 +723,7 @@ def get_engineer(ui: UI, w: World, F: int, army):
         if status == "cap":                                # UI fallback: memory said there was room
             if cap is None:
                 save_caps(engineer_cap=n)
-            return (f"no Warlock Engineer yet: the game refused at cap {n}/{cap if cap is not None else n}"
+            return (f"no Warlock Engineer yet: the game refused ({msg}) at cap {n}/{cap if cap is not None else n}"
                     + (" (memory said there was room: reported)" if cap is not None else "")), None
         tried.append(msg)
         if status == "failed":
