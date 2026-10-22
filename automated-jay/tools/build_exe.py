@@ -3,7 +3,7 @@
     python -X utf8 -m tools.build_exe [--release automated-jay-vX.Y.Z]
                                                  (from automated-jay/, with the repo's game data in ../tww and ../re)
 
-1. data      the game DB tables the code reads (every "*_tables" name in assist/ and bot/, plus the campaign
+1. data      the game DB tables the code reads (every "*_tables" name in assist/, bot/ and automated_jay.py (its selftest), plus the campaign
              variables), the English localisation trimmed to the name keys the code shows (plus every key those
              names refer to with {{tr:...}}), the tech beeline and the RE outputs -> build/exe/data, shipped inside
              the exe (player decision 2026-10-17: game-derived data goes in the exe, never in the repo).
@@ -68,7 +68,7 @@ def defaults_history(release: str) -> list[str]:
 
 def tables() -> set[str]:
     found = set(EXTRA_TABLES)
-    for p in list((HERE / "assist").rglob("*.py")) + list((HERE / "bot").rglob("*.py")):
+    for p in list((HERE / "assist").rglob("*.py")) + list((HERE / "bot").rglob("*.py")) + [HERE / "automated_jay.py"]:
         found |= set(re.findall(r'"([a-z0-9_]+_tables)"', p.read_text(encoding="utf-8")))
     return found
 
