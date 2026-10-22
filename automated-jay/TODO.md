@@ -7,9 +7,11 @@ At the start of a session, remind the player of these, and say which need a mult
       (they were not unlocked yet in the 2026-10-19 campaign).
 - [ ] **Camera edge-scroll panning** (heroes.pan_by_edge, camera_pan auto/edge): never run live. Steal-Take targets
       and hero walks use it in multiplayer.
-- [ ] **Desync / reload recovery**: the turn record is keyed on the human factions so a reload of the same campaign
-      keeps queued requests and resumes an unfinished pass. Only an assistant restart was exercised; a real reload or
-      desync was not.
+- [x] **Desync / reload recovery** (2026-10-22, single player): a real reload was exercised twice (the turn-58
+      autosave loaded on turn 59, then on turn 58). A load shows no campaign for a moment, so it was taken for a new
+      campaign ("acts from next turn"); fixed: a save of the same campaign at the same or an earlier turn runs that
+      turn's start again ("the campaign was reloaded: running this turn's start again", checked live). A desync
+      reloads the same way; an actual desync is still unseen.
 - [ ] **auto_end_turn on a second PC** (strategy/automation.json): tested in single player only.
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
@@ -33,17 +35,17 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **Workshop level 2 from the planned Cavern line** (Ikit, workshop level 1, no Cavern yet): no temporary Cavern
       is built while a capital plans the Warp-Turbine Plant; the planned one counts once it stands.
 - [ ] **Skill prerequisites from memory** (skills.memory_state): runs next to the card states; every disagreement is
-      logged to runs/skills_check.jsonl. 2026-10-21: the log's "rank / no card" and "taken / maxed_hover" rows were
-      artefacts (fixed: no row without a card, the _hover suffix stripped, also where a full skill was clicked again).
-      One real disagreement is left: Thanquol's and the Warpseer's unique_0 (unlock rank 11 / 10, no parents) read
-      open in memory, locked on the card, at a rank at or above the unlock (the rank read was checked: memory 2 = panel
-      2). Some lock is not in the DB tables; needs a Thanquol at rank 11+. Until then the card check stays.
-- [ ] **The Lord's recruitment cost** for a new playbook army (new_army.create): not read from memory yet; the money
-      check uses the budget. 2026-10-21: the UI context function RecruitmentCost has two natives, 0x141EEF528 and
-      0x1408D3F90 (returns u32 [context+0x10]); the context is not the pool entry (its +0x10 is a pointer). Find
-      which context class registers 0x1403f6dd0 (Ghidra) and how it is made from a pool entry.
-- [ ] **Hero caps with bonuses** (world.agent_cap): only the base value was checked (1 each, turn 12). Check against
-      the Recruit Hero panel on a save with hero buildings.
+      logged to runs/skills_check.jsonl. 2026-10-22: the unique_0 disagreement was an off-by-one: unlocked_at_rank
+      counts from 0 (Mentor 29 showed "Available at rank 30" live); fixed, and the skill-locks table
+      (character_skill_nodes_skill_locks) is read too. One lock is still unexplained: Thanquol's Chittering Masses
+      (unique_4, REQUIRED parent unique_0 taken) reads locked on the card with no reason in its tooltip and nothing
+      in the DB. Until it is found the card check stays.
+- [x] **The Lord's recruitment cost** (2026-10-22): agent_subtypes.cost; the Recruit Lord panel showed exactly it for
+      every Lord type (Warpseer 1000, Grey Seer 850, Warlord 550, Warlock Master 1200), and the Warlock Engineer's 400
+      likewise. new_army.create and the engineer recruitment check the gold before any click. Cost modifiers from
+      effects are not decoded (none seen yet).
+- [x] **Hero caps with bonuses** (2026-10-22, turn 55): memory engineer cap 2 = the Recruit Hero panel's "1 / 2" (base
+      1 plus a bonus). The turn-55 "refused at cap 1/2" was gold (399 against 400): fixed, reported as no gold.
 - [ ] **Workshop (Ikit)** with the command pacing: not run since the change.
 - [ ] **Standing answers for routine decisions** (idea): strategy/decisions.json, the player's rules for AI diplomacy
       offers, captives, recurring dilemmas. Needs the player's rules.
