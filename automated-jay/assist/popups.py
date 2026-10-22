@@ -225,7 +225,12 @@ def dismiss_events(ui: UI | None = None) -> list[str]:
                 break
             c, cid, btn = todo[0]
             before = _shows(ui, c)
-            if cid == "diplomacy_dropdown":                # what was closed, to check it was never an offer
+            if cid == "diplomacy_dropdown":
+                # still OK alone a moment later (an offer's buttons could be filling in), then logged: what was
+                # closed, to check it was never an offer
+                _time.sleep(0.4)
+                if diplomacy_notice(ui, c) != btn:
+                    break
                 log_open(ui, None, "closing a diplomacy notice")
             _CLICKED[_sig(ui, cid, c)] = _time.time()
             # multiplayer (2026-10-18): a notice closes some seconds after its button, once the game has synced
