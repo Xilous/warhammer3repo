@@ -320,8 +320,8 @@ is used only to find what to click, to confirm a click took, and for what exists
 #### Army (`assist/army_builder.py`)
 - Ticked armies only. A tick counts only for the same general (id or name), set with a turn, at or before the
   army's turn and rank (another campaign's tick ignored).
-- Template: lord Verminlord Warpseer (only), 1 Warlock Engineer, 12 Stormfiend Ratling Cannons, 6 Warp-Doom
-  Magma-Cannons. Queued units count as present.
+- Template: lord Ikit Claw, Thanquol or Verminlord Warpseer (new armies are raised as Warpseers), 1 Warlock Engineer,
+  12 Stormfiend Ratling Cannons, 6 Warp-Doom Magma-Cannons. Queued units count as present.
 - Eligible province: recruits every template unit type (finished, active buildings in owned regions).
 - Engineers: free ones (not in an army) kept on or assigned to the nearest army that needs one
   (`runs/engineer_claims.json`).

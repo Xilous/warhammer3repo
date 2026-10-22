@@ -88,6 +88,8 @@
     ],
     "template": {
       "lord": [
+        "wh2_dlc12_skv_ikit_claw",
+        "wh3_dlc29_skv_thanquol",
         "wh3_dlc29_skv_verminlord_warpseer"
       ],
       "heroes": {
@@ -102,7 +104,7 @@
     "move_army_to_recruit": true,
     "auto_create": false,
     "income_reserve": 0,
-    "_template_lord": "The playbook armies are led by a Verminlord Warpseer (player decision 2026-10-21); a ticked army led by Ikit or Thanquol still has its units refilled to the template."
+    "_template_lord": "Playbook armies may be led by Ikit Claw, Thanquol or a Verminlord Warpseer (player decision 2026-10-21: a faction leader left without a playbook army is a lord adding Supply Lines for nothing). New playbook armies are raised as Verminlord Warpseers."
   },
   "done_indicator": "widget",
   "widget": {
