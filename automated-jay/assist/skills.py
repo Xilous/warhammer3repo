@@ -177,14 +177,22 @@ def _skill_targets():
 
 
 @lru_cache(maxsize=1)
-def _unlock_ranks() -> dict[str, int]:
-    """skill key -> the rank its first level unlocks at (character_skill_level_details_tables)."""
-    out: dict[str, int] = {}
+def _unlock_ranks() -> dict[tuple[str, int], int]:
+    """(skill key, level) -> unlocked_at_rank (character_skill_level_details_tables)."""
+    out: dict[tuple[str, int], int] = {}
     for r in gd._load("character_skill_level_details_tables"):
         k, lv, at = r.get("skill_key"), r.get("level"), r.get("unlocked_at_rank") or 0
-        if k and lv == 1 and (k not in out or at < out[k]):
-            out[k] = int(at)
+        if k and lv and ((k, int(lv)) not in out or at < out[(k, int(lv))]):
+            out[(k, int(lv))] = int(at)
     return out
+
+
+def _rank_locked(rank: int | None, sk: str, level: int = 1) -> bool:
+    """The skill's `level` is not open at this rank yet. unlocked_at_rank counts from 0: a level opens at the rank
+    above it (2026-10-22, live: Mentor, unlocked_at_rank 29, read locked on Thanquol at rank 29 and its tooltip said
+    "Available at rank 30"; the same off-by-one was behind Thanquol's and the Warpseer's unique_0 reading open in
+    memory and locked on the card at ranks 11 and 10)."""
+    return rank is not None and _unlock_ranks().get((sk, level), 0) >= rank
 
 
 def _rank(w, ptr: int) -> int | None:
@@ -368,6 +376,16 @@ def _links():
     return out
 
 
+@lru_cache(maxsize=1)
+def _locks():
+    """node -> [(skill key, level)]: taking that skill to that level locks the node (character_skill_nodes_skill_locks:
+    Corruptive / Dictatorial, a Warlock Master's three unique skills, mounts)."""
+    out: dict[str, list] = {}
+    for r in gd._load("character_skill_nodes_skill_locks_tables"):
+        out.setdefault(r["character_skill_node"], []).append((r["character_skill"], int(r.get("level") or 1)))
+    return out
+
+
 def memory_state(w, ptr: int, sk: str, ranks: int, node_set: str | None = None) -> str:
     """A skill's state from memory (player rule 2026-10-19: memory first): "taken" (at its planned rank: the
     character's skill list, army_builder.character_skills), "rank" (unlocks above the character's rank), "locked"
@@ -383,8 +401,7 @@ def memory_state(w, ptr: int, sk: str, ranks: int, node_set: str | None = None) 
     taken = character_skills(w, ptr)
     if taken.get(sk, 0) >= ranks:
         return "taken"
-    rank = _rank(w, ptr)
-    if rank is not None and _unlock_ranks().get(sk, 0) > rank:
+    if _rank_locked(_rank(w, ptr), sk, taken.get(sk, 0) + 1):
         return "rank"
     nodes, _e, _m, set_items = _tables()
     pool = set_items.get(node_set, []) if node_set else nodes
@@ -398,6 +415,8 @@ def memory_state(w, ptr: int, sk: str, ranks: int, node_set: str | None = None) 
         need = nodes[node].get("required_num_parents") or 0
         if sub and sum(tk(p) for p in sub) < max(1, need):
             return "locked"
+        if any(taken.get(k, 0) >= lv for k, lv in _locks().get(node, [])):
+            return "locked"                      # locked by a skill taken (2026-10-22)
     return "open"
 
 
@@ -441,8 +460,7 @@ def _walk(ui, w, ptr: int, plan, node_set, tree, out: list) -> bool:
             continue
         if (ptr, sk, _turn(w)) in NOT_TAKEN:
             continue
-        rank = _rank(w, ptr)
-        if rank is not None and _unlock_ranks().get(sk, 0) > rank:
+        if _rank_locked(_rank(w, ptr), sk):
             continue                             # not unlocked at this rank yet (a mount at rank 15): no click
                                                  # (2026-10-18: 2.5 s lost on it every multiplayer turn)
         if not tree.inside(card) and not tree.scroll_to(card):
@@ -523,7 +541,7 @@ def missed() -> list[str]:
     for ptr, key, _cid, pts, name in targets:
         taken, rank = character_skills(w, ptr), _rank(w, ptr)
         open_ = [(sname, sk) for sname, ranks, sk in attempt_list(key)
-                 if taken.get(sk, 0) < ranks and not (rank is not None and _unlock_ranks().get(sk, 0) > rank)]
+                 if taken.get(sk, 0) < ranks and not _rank_locked(rank, sk, taken.get(sk, 0) + 1)]
         refused = [s for s, sk in open_ if (ptr, sk, turn) in NOT_TAKEN or sk in LOCKED_UI.get((ptr, turn), ())]
         left = [s for s, _sk in open_ if s not in refused]
         if left:
