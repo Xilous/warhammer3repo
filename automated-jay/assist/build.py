@@ -369,6 +369,8 @@ def _slot_popup(ui, slot, cid: str, timeout: float = POPUP_TIMEOUT_S):
     pan = ui.first(PANEL)
     others = lambda: [c for c, n, _r in (ui.nodes(pan) if pan else []) if n in POPUPS
                       and ui.effective_visible(c) and ui.parent(c) != slot.ptr]
+    if others():                                  # it closes only once the cursor has left its slot (the wait
+        move_to(*PARK)                            # alone timed out after 1 s, 2026-10-21): park, then wait
     wait.wait_until(lambda: not others(), 1.0, "previous building popup closed", must=False)
     x, y = k.center
     move_to(x, y)
@@ -795,9 +797,25 @@ FAILED: dict = {}          # (region, item) -> why the last run did not get it u
 PROTECTED: set = set()     # (region, slot index) the last run kept for the Construction Cavern
 
 
+GREYED: dict = {"id": None, "items": {}}   # this turn's actions the game greyed out: (region, item, level) -> line
+
+
+def _greyed_now(w: World) -> dict:
+    """{(region, item, level): report line} for this campaign's current turn; another turn starts empty."""
+    try:
+        cid = (w.s.model, w.s.read().turn)
+    except Exception:
+        cid = None
+    if GREYED["id"] != cid:
+        GREYED.update(id=cid, items={})
+    return GREYED["items"]
+
+
 def _failed(problems: list, o, a, text: str) -> None:
     problems.append(text)
     FAILED[(o.region, a.item)] = text.split(": ", 1)[-1]
+    if "greyed out" in text:                     # the game will not take it this turn: not hovered again (player
+        GREYED["items"][(o.region, a.item, a.level_key)] = text    # report 2026-10-21: it re-scanned the province)
 
 
 def missed(w: World | None = None) -> list[str]:
@@ -1002,6 +1020,10 @@ def run(log=print, override_blocked: bool = False) -> str:
                 continue
             if a.kind not in ("construct", "replace") and damaged(w, S):   # (a replaced one goes anyway)
                 problems.append(f"{o.region}: {a.item} waits for a repair")
+                continue
+            seen = _greyed_now(w).get((o.region, a.item, a.level_key))
+            if seen is not None:                  # greyed out earlier this turn (a verification run, Run now): the
+                _failed(problems, o, a, seen)     # same answer, without opening the province again
                 continue
             if not ui_open_province(ui, o):
                 _failed(problems, o, a, f"{o.region}: could not open its province")

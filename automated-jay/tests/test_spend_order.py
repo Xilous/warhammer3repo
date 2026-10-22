@@ -118,3 +118,19 @@ def test_replacing_an_off_list_building_comes_right_after_main_upgrades():
     main = (o, act("upgrade_main", "Main building", first(MAJOR), 12000))
     got = [a.kind for _o, a in sorted([pit, rep, main], key=lambda t: build.spend_rank(*t))]
     assert got == ["upgrade_main", "replace", "construct"]
+
+
+def test_greyed_out_is_remembered_for_the_turn_only():
+    class S:
+        model, t = 1, 5
+
+        def read(self):
+            return type("St", (), {"turn": self.t})()
+    w = type("W", (), {"s": S()})()
+    build.GREYED.update(id=None, items={})
+    build._greyed_now(w)
+    o, a = type("O", (), {"region": "r"})(), act("upgrade_main", "Main building", "lvl")
+    build._failed([], o, a, "r: Main building not started (greyed out)")
+    assert build._greyed_now(w)[("r", "Main building", "lvl")]
+    w.s.t = 6
+    assert build._greyed_now(w) == {}
