@@ -1231,6 +1231,11 @@ class Runner:
         if self.last_turn is None:
             self.last_turn, self.model = s.turn, model
             prev, self.prev_state = self.prev_state, {}
+            # the saved record says the old copy ended that turn with Build & End Turn: the next turn start must not
+            # take it for a turn ended in the game and run the end-of-turn steps again (player report 2026-10-21: a
+            # building was upgraded at a turn start right after a restart)
+            if self.ts.end_done and self.ts.turn is not None and self.ts.campaign == self._cid():
+                self.end_done = (model, self.ts.turn)
             from bot.sensor import turn as turn_mem
             mine = turn_mem.players_turn(self.mem)[0]
             # started while the other factions move: the player's next turn start is still to come, and its pass is
