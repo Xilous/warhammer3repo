@@ -507,9 +507,15 @@ def move_to(ui: UI, w: World, army, region: str) -> str:
     if lab is None or not in_safe(lab):
         return f"could not bring {region} on screen"
     p0 = character_pos(w.pm, army.general_ptr)
-    click(ui, lab.ptr, right=True)
-    wait.wait_until(lambda: character_pos(w.pm, army.general_ptr) != p0, 1.5, "army on the march", must=False)
+    # paced by the game (bot/sensor/commands.py; 2026-10-22: the order was clicked and reported "ordered" whatever
+    # happened): clicked again only when no command reached the game, the march confirmed by the lord's position
+    from bot.sensor import commands
+    st, _v = commands.act_retry(w.pm, lambda: click(ui, lab.ptr, right=True) and None,
+                                lambda: character_pos(w.pm, army.general_ptr) != p0)
     park()
+    if st != "done":
+        why = "no order reached the game" if st == "missed" else "the game did not move it: no movement left?"
+        return f"not on the march to {region_name(region)} ({why})"
     return "ordered to " + region_name(region)
 
 
