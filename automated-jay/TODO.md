@@ -14,18 +14,11 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
 ## Any session (single player is fine)
-- [ ] **Diplomacy for gold: live checks (step written 2026-10-21, assist/diplomacy.py; player decisions in its
-      docstring and strategy/diplomacy.json)**. Checked live on turn 1 (Scruten, single player): three join-war deals
-      made (Wissenland 587, Karaz-a-Karak 1103, Sylvania 802), each the most the AI accepted, each confirmed in memory
-      (treasury, war); peace skipped when the AI values peace alone below 0. Still to see: (a) a peace deal the AI
-      accepts (the click on diplomatic_option_peace was never made: does it open a sub-window?); (b) what the answer
-      looks like when the AI turns a sent offer down; (c) a turn-start pass from the runner, the widget list and its
-      toggles in the app; (d) a multiplayer session (diplomacy with the AI while others play: needs multiplayer).
-      Added the same day (player decisions): join war also against majors at most half the player's strength
-      (faction_strength, memory); peace for gold with majors too; wiped-out factions (is_dead) dropped. Payment
-      search lowest first (a refusal at 1 gold costs nothing: 7 refusals took 8 s, were 59 s). Tribute (a demand
-      alone) was tried and dropped: it starts at -20 to the AI. faction_strength checked against the panel
-      2026-10-21: all 16 strength bars match memory (Zhufbar's 0 too); the panel's rank number follows another order.
+- [ ] **Diplomacy for gold: live checks (assist/diplomacy.py)**. Join-war deals only (peace for gold and tribute
+      removed 2026-10-21). Checked live on turn 1 (Scruten): three deals (Wissenland 587, Karaz-a-Karak 1103, Sylvania
+      802), each the most the AI accepted, each confirmed in memory; faction_strength matches the panel's bars. Still
+      to see: (a) what the answer looks like when the AI turns a sent offer down; (b) a turn-start pass from the app
+      with the widget's diplomacy list and toggles; (c) a weak major as a target; (d) multiplayer (needs multiplayer).
 - [ ] **Diplomacy evaluation from memory**: the AI's value of a proposal is read from the panel (UI stop-gap). It is
       computed on demand and only found on the stack (assist/diplomacy.py docstring): decode the evaluation function
       and its inputs (attitude, treasury, war state) to replace the panel read.

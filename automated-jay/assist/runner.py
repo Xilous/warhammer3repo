@@ -414,7 +414,7 @@ class Runner:
         if reset:
             end = set(schedule()["end_turn"]) - set(schedule()["turn_start"]) | {"end"}
             self.rail_steps = {k: ("later" if k in end else "pending")
-                               for k in ("events", "rites", "workshop", "tech", "skills", "masterplans", "buildings",
+                               for k in ("events", "rites", "workshop", "tech", "skills", "diplomacy", "masterplans", "buildings",
                                          "army", "end")}
         self.rail_steps.update(changes)
         if self.widget and hasattr(self.widget, "post_steps"):

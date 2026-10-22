@@ -81,69 +81,9 @@ something (a click that went astray, a construction that got cancelled), the lin
 ...` and it is checked once more. The army step's verification only redoes disbands and recruitment; march and
 walk orders are not issued twice.
 
-### What happens each turn
+### What it does
 
-1. New turn seen in memory -> wait until it is your turn (End Turn enabled, no AI-turn panel) and the turn start
-   has settled (camera still, no panel changing).
-2. Popups: event notices closed. Decisions (diplomacy offers, battles, dilemmas, confirmations, game menu, unknown
-   panels) are never touched: DECISION NEEDED, the pass waits. Global events and story panels: left to read.
-   Cinematic playing: no input.
-3. The pass. Steps are independent (one failing does not stop the next). Schedule set in the widget (SETTINGS,
-   Steps), saved in `automation.json` `schedule`:
-
-   | Step | Turn start | Build & End Turn |
-   |---|---|---|
-   | Rites | yes | yes |
-   | Workshop (Ikit) | yes | yes |
-   | Tech | yes | yes |
-   | Skills | yes | yes |
-   | Diplomacy | yes | |
-   | Masterplans (Thanquol) | | yes |
-   | Buildings | | yes |
-   | Army | | yes |
-
-   - **Rites**: complete provinces on Exploitative Planning; the first one on Expansionist Planning until the
-     Dominating Scheme has been cast once. Dominating Scheme cast when off cooldown and affordable; its Verminlord
-     choice: Verminlord Warpseer.
-   - **Workshop**: Ratling Cannon upgrades bought as soon as possible.
-   - **Tech**: research idle -> next bee-line target, then cheapest remaining.
-   - **Skills**: points spent in your order (Ikit, Thanquol, Warpseers, Warlock Engineers only).
-   - **Diplomacy**: join-war and peace deals for gold (see "Diplomacy for gold").
-   - **Buildings**: repairs first, then the settlement list, gold spent across provinces in value order. A
-     settlement next to an enemy-held region is skipped. A damaged building is never upgraded.
-   - **Army**: ticked armies only, refilled to the template (see "Army builder").
-4. YOUR TURN N, one line per step.
-
-- Game raised only while clicking; focus returned afterwards. Switching away = INTERRUPTED (Run now redoes it).
-- Never fights a battle. Ends a turn only on Build & End Turn (panels closed first). A turn ended in the game:
-  the next turn start runs the end-of-turn steps too.
-- Overlay: grey WAITING, amber AUTOMATING, green YOUR TURN, pink PAUSED / DECISION NEEDED, red ERROR /
-  INTERRUPTED. Click toggles pause (not while automating).
-
-### Playing Thanquol (Clan Scruten)
-
-The faction is read from memory (Clan Skryre or Clan Scruten); nothing to set. Differences:
-- **Masterplans** (Build & End Turn): every free Underling on a Steal-Take (best foreign settlement on screen:
-  highest level, not at war first, not on cooldown, not in or next to your provinces). A Steal-Take is completed
-  when waiting is worth less than completing (Risk x chance a Complication maxes Alarm, against next turn's loot).
-  Secrets bought in `shop.order`, 50 Warpstone kept. **Kill-Stabs are never touched.** All state from memory;
-  unlocks read live (same in single player and multiplayer). Underlings are not armies.
-- **Skills**: Route Marcher, Inspiring Presence, Blessings of the Horned Rat, Hasty Redirection, Insatiable Greed,
-  Replaceable Fodder, then army/campaign skills, Mentor last; Boneripper with Warpfire Projectors at rank 15.
-- **Buildings**: same list; Grey Seer Lair kept as a landmark; Morskittar Engine skipped (story-locked).
-- **No Workshop**. Rites, tech and army template the same.
-- **Warlock Engineers** come from the Warp-Turbine Plant line (Construction Cavern level).
-
-### The widget
-
-Bar over the game: **expand**, **restart**, **exit**. Never takes focus; hidden while a pass runs; drag to move.
-
-Expanded panel: Run now, Pause, Restart, Exit, treasury / income / Warpstone, this turn's results, armies with
-their tick boxes, Ignore buttons, next army, frontline, plus:
-- **DIPLOMACY FOR GOLD**: every faction a deal could be offered for, per kind of deal. Click = off (✗) / on (✓).
-  All on by default (`diplomacy.json` `off`).
-- **SETTINGS** (click to unfold): every option the steps read, click to change (numbers: − / +), and each step on
-  or off for turn start and Build & End Turn. Saved at once, applies from the next pass (`assist/settings.py`).
+Every rule, step by step, is in [Logic](#logic) below.
 
 ### The assistant window
 
@@ -151,7 +91,7 @@ their tick boxes, Ignore buttons, next army, frontline, plus:
 |---|---|
 | Status line | the same headline as the overlay |
 | **Build & End Turn** | for when you are done with your turn: runs the end-of-turn steps (tech if research is idle, skill points, repairs, buildings, upgrades, then the army builder) and then ends the turn like Shift+Enter does in the game: the game's End Turn warnings (unspent skill points, a building that could be constructed, an army that can still move) are skipped, because they are about things the assistant leaves alone on purpose. It does not wait for idle (you asked), but it checks it is your turn and leaves any decision popup to you; if a step is interrupted or the game asks you something, the turn is **not** ended. |
-| **Run now** | one full pass for the current turn, right away. It still checks that it is your turn and waits for 3 s without input. Use it after INTERRUPTED, SKIPPED or ERROR, after loading a save, or for a turn you paused through. |
+| **Run now** | one full pass for the current turn, right away. It still checks that it is your turn; your mouse and keyboard are yielded to click by click. Use it after INTERRUPTED, SKIPPED or ERROR, after loading a save, or for a turn you paused through. |
 | **Restart** | starts a fresh copy of the assistant (latest code and settings) and closes this one; refused while a pass runs. The window title shows the commit the running copy is on. |
 | **Pause / Resume** | while paused, turn starts are skipped (the overlay says so). Resuming does not redo a skipped turn; Run now does. |
 | Turn and treasury | read from memory every 4 s |
@@ -206,6 +146,274 @@ Do **not** run anything in `legacy/`. `legacy/run.py` is the old bot that ends t
 
 ---
 
+## Logic
+
+Every rule the assistant follows, top-down in the order it happens. All game state comes from memory; the UI tree
+is used only to find what to click, to confirm a click took, and for what exists only in the UI.
+
+### 1. Start-up
+- `--once` -> one Run now, no widget, exit. `--selftest` -> checks written to `runs/selftest.txt`, exit.
+- Single instance: mutex `Local\automated-jay-assistant`, 8 s wait; not obtained -> exit 3.
+- Restarted copy (`AJ_RESTARTED`) -> reads the old copy's `state.json` first; `AJ_FOCUS_GAME` -> game raised after 900 ms.
+- Loads `runs/turn_state.json` (the turn record). No game running -> waits for one. Kill switch installed.
+- Exe only: default strategy files seeded or merged into the player's (see 12).
+
+### 2. Main loop (`runner.loop`)
+- Each poll: `_tick`, `_watch`, sleep 0.1 s (pass pending or not your turn) or 0.5 s.
+- `InputAborted` -> INTERRUPTED (Run now redoes it). Other exception -> ERROR, loop goes on.
+
+### 3. Attaching and turn detection (`_tick`)
+- No campaign for 2 polls (or on the first poll) -> forget the turn, WAITING "no campaign loaded" / "game not running".
+- First campaign seen:
+  - pass owed now if it is not your turn yet, or if your turn is unfinished (record for this turn with turn start
+    not done, record from the previous turn, previous copy's state not YOUR TURN, or previous copy ended the last turn);
+  - otherwise "assistant started mid-turn / campaign changed: acts from next turn" (no pass this turn).
+- Model changed or turn jumped (save loaded):
+  - same campaign id (local faction + all human factions) and same turn -> carry on with what the turn owes;
+  - else "campaign changed; acts from next turn".
+- Turn +1 -> new turn: rail reset; paused -> "skipped"; else pass pending.
+- Record for another campaign or turn -> fresh record (owed requests dropped).
+- Turn already ended by the assistant but phase is free again (MP) -> TURN N REOPENED; End Turn never re-pressed by itself.
+- Owed request and phase free and not busy -> Build & End Turn first, else Run now.
+- Else: pending pass -> pass gate (4); auto_end due -> End Turn; your turn -> close notices; not your turn -> report
+  open decisions (5).
+
+### 4. Phase and the pass gate
+- **Phase** (`phase`), first match:
+  - memory "whose turn" list lacks the local faction (`[[G+0x2F60]+0x1C8]`) -> not mine (AI turns, sequential MP);
+  - no UI / cinematic / no campaign HUD -> held;
+  - `ai_turns` panel -> not mine;
+  - simultaneous MP ended (`mp_waiting`) -> ended;
+  - another player's battle or decision pending -> held;
+  - no End Turn button -> held; button selected -> ended;
+  - button inactive/disabled -> free if a Masterplan is at max Alarm, else held;
+  - otherwise free.
+- **MP ended check** (`mp_waiting`): ended list in memory (simultaneous mode only) vs your ready tick vs the End
+  Turn button. Button selected or tick on -> ended. List says ended but tick off or button active -> not ended
+  (after 2 s; at once when about to press End Turn); logged UNEXPECTED once.
+- **Pass gate** (`_try_pass`):
+  - busy -> wait; paused -> drop the pass;
+  - not free: "End Turn button is..." -> close notices first, re-check; still not free -> WAITING;
+  - first time free -> settle: camera still 250 ms (centre point moved < 0.1 px; your own panning ignored after
+    1 s idle) and root panels unchanged 500 ms; timeout 20 s -> go on; re-check free;
+  - no idle wait: your input is yielded to click by click (11);
+  - popups (5): decisions open -> DECISION NEEDED, stays pending; popup check failed -> SKIPPED;
+  - pass (6). Cinematic or another player's action -> stays pending.
+
+### 5. Popups and notices
+- Popup = visible root panel not in the normal HUD set, not in `popup_ignore.json`, not a tooltip or event-feed preview.
+- Notices closed (up to 24): event panels with a close button, no choice, not significant (episode, endgame,
+  end times, chaos invasion). Each close confirmed (gone or changed); one not confirmed stops the closing.
+  Re-click of the same notice within 8 s skipped.
+- Verminlord dilemma -> Verminlord Warpseer. Every other decision is never answered: diplomacy offers, battles,
+  dilemmas, message boxes, game menu, endgame, story events, unknown panels (unknown panels can be Ignored).
+  Headline: GLOBAL EVENT / GUIDED TOUR / DECISION NEEDED.
+- Your turn, no pass, game in front, `close_notices_during_turn` on -> notices closed as they come.
+- Not your turn -> open decisions posted every 3 s ("the other factions' turns are held until you answer").
+- Game notifications showing (not "end turn") -> notification settings: Disable all; still showing -> marked
+  unsuppressible.
+
+### 6. The pass (`automate`)
+- One `game_focus` for the whole pass (game raised once, focus returned after). Not raisable -> "could not bring
+  the game to the front".
+- Steps from the schedule (`automation.json` `schedule`, read every call):
+  - turn start: rites, workshop, tech, skills, diplomacy;
+  - Build & End Turn: rites, workshop, tech, skills, masterplans, buildings, army;
+  - turn start adds the end-turn steps when the previous turn was not ended by Build & End Turn, and masterplans
+    when an economic plan is at max Alarm.
+- Per step: leave the tactical view -> run -> verify -> memory check -> rail bar done / failed.
+  - Step exception -> "ERROR ..."; `InputAborted` stops the pass.
+  - **Verify** (up to 2 rounds): fingerprint from memory, rerun with `verify=True`, fingerprint again. Same ->
+    "verified"; changed -> "verification redid: ..."; still changing -> said so.
+    Fingerprints: buildings treasury; tech research; rites gold + cooldowns + commandments; workshop upgrades;
+    skills points per character; army treasury + unit and queue counts per force.
+  - **Memory check** (`missed()`, buildings tech skills diplomacy masterplans army): plan made again from memory;
+    anything left with "not possible" / "refused by the game" / "greyed out" -> "not done, with a reason"; anything
+    else -> "MISSED (memory check)" and the bar turns red.
+- After the steps: late notices closed; "paused Nx while you used the mouse/keyboard" if it yielded; Kill-Stab at
+  max Alarm -> "complete it yourself"; YOUR TURN N; `auto_end_turn` on -> End Turn pressed.
+- Logged to `runs/assistant-YYYYMMDD.jsonl`.
+
+### 7. Steps
+
+#### Rites (`assist/rites.py`)
+- Commandments: every complete province (all its regions owned) -> Exploitative Planning. Until the Dominating
+  Scheme has been cast once: the first complete province with Expansionist keeps it; none with any commandment ->
+  the first complete province gets Expansionist. Already picked -> skipped.
+- Pick: Regions tab -> province row -> hover the commandment slot -> the item -> click; confirmed in memory.
+- Dominating Scheme (Verminlord version first): not in your rites / on cooldown -> nothing. Waits when: no complete
+  province; Expansionist only picked (next turn); no Expansionist in effect. Cost from memory > treasury -> "needs X".
+  Perform greyed -> its requirement text. Click confirmed by the cooldown in memory. Verminlord dilemma -> Warpseer.
+
+#### Workshop (`assist/workshop.py`, Clan Skryre only)
+- Workshop level = highest `workshop_level_N` bundle. Upgrades not owned: type 0 and 1 (level 1), type 2 (level 2).
+- Reachable ones bought in the Weapon Teams tab; each confirmed by its bundle in memory. Locked -> waits for the level.
+
+#### Tech (`assist/tech.py`)
+- Researching -> nothing (a click would cancel it).
+- Click order: `tech.first`, then bee-line targets in order, then every other tech by (research points, tier, indent).
+  Candidates: not researched; locked ones stay (a click queues their prerequisites).
+- Panel open -> up to 4 candidates: dragged on screen, clicked; confirmed by research starting or the target
+  changing in memory. Missed click -> once more (never in multiplayer). Started -> stop.
+- Report: queued X (path to target, N locked techs queued: target's ancestors locked in memory).
+- Missed: nothing researching while candidates remain.
+
+#### Skills (`assist/skills.py`)
+- Characters with unspent points whose subtype is in `skills.json` (Ikit, Thanquol, Verminlord Warpseer, Warlock
+  Engineer). Others never touched.
+- Plan: mounts to take (1 rank) -> `order` (`asap` first) -> rest of the tree (not skipped mounts, not hidden):
+  passives before abilities, by indent, tier, name, each to its max.
+- Open: switch inside the open panel, else Lords & Heroes row -> skills.
+- Walk the plan from the top; after each skill taken, walk again from the top. Per skill:
+  - memory: taken (at planned rank) / rank (unlock rank above the character's) / locked (a required parent untaken,
+    or subset parents below `required_num_parents` points) / open;
+  - card: maxed, locked, locked_rank (hover suffix ignored) -> skipped; memory and card disagree -> logged;
+  - open on both -> click up to its ranks, each confirmed by the points dropping; not confirmed -> not again this turn.
+- Missed: points left while a planned skill is open and was not refused.
+
+#### Diplomacy for gold (`assist/diplomacy.py`)
+- Plan fresh from memory every turn start: you, every faction in your relationship list (major = `can_be_human`,
+  human, rebel, dead, regions, treasury, strength), treaties, borders.
+- Factions skipped: human, rebel, dead, not met, at war with you (no peace deals).
+- **Join war**: not at war with you, holds land, minor or a major at most `major_target_max_strength` (0.5) of your
+  strength (strength 0 never counts). Payers: major AI factions you have met, at peace with you, at war with it;
+  richest first. Skipped: treaty with you (trade, NAP, alliance, vassal), bordering you, treaty with a human.
+- Filters: join war switched off; faction turned off; a deal made with that faction this
+  turn; the same deal tried this turn (`runs/diplomacy_turn.json`). Up to 30 deals a pass, plan remade after each.
+- Offer: Diplomacy -> payer's row -> Negotiate -> tick the target in "Declare war against" -> deal value must be
+  positive -> payment as Demand:
+  - 1 gold refused -> next deal;
+  - +200 per arrow until refused (game maximum reached -> take it; payer's treasury reached -> take it);
+  - line fitted through every value seen -> probe its zero, then the edge of its error, then halve to 1 gold;
+  - deal still positive -> Send (never Threaten) -> confirmed: treasury up and the war started -> answer closed.
+- Missed: an allowed deal not offered; refusals reported with their reason.
+- Never offered: tribute (a bare demand starts at -20), peace (a faction past a buffer faction counts as not
+  bordering, so real enemies would be offered it), Threaten (refusal = war + treachery).
+
+#### Masterplans (`assist/masterplans.py`, Clan Scruten only)
+- Off, not found or not unlocked -> nothing. Panel opened only when something will be done.
+- Each economic plan (Steal-Take), never military or Great-Smart:
+  - not completable yet -> wait; Alarm at max -> complete (or abandon if `at_max_alarm` says so);
+  - V = Warpstone + gold / `gold_per_warpstone` (10); G = next turn's draws x expected card worth; q by Alarm
+    0, 0, 0.15, 0.99; V <= 0 -> wait; risk x q < G / (G + (1 - 0.25) V) -> wait; else complete.
+  - confirmed by the plan leaving memory.
+- Free Underlings (unlocked, idle, cooldown 0, unwounded) and 50+ Warpstone -> Steal-Take on the best target:
+  - targets: not in a plan, not on cooldown, not in or next to your provinces (`skip_near_provinces`), owned by
+    someone else, explored, has a main building;
+  - score: main level x 10, +5 major settlement, +100 not at war with you (`prefer_not_at_war`);
+  - on screen, or within `max_pan` (120) map units (2 pans); confirmed by the plan appearing in memory.
+- Secrets: walk `shop.order`; skip unknown chains, locked tabs (Underling not unlocked) and levels below their
+  unlock count; stop when buying would leave less than `keep_warpstone` (50). Each buy confirmed by Warpstone in memory.
+- Kill-Stabs never touched; one at max Alarm -> "complete it yourself".
+
+#### Buildings (`assist/build.py`, `assist/buildplan.py`)
+- Settlement skipped: next to a region held by an enemy you are at war with (any distance into your provinces).
+- Plan per province (settlement list):
+  - main building to max; port upgraded within the main tier;
+  - layout: the priority list top-down into the slots at max tier, each chain to its highest reachable level;
+    capital-only / minor-only entries; Equipment Warpforge once per province; standing landmarks keep their slots;
+    Morskittar Engine skipped;
+  - actions: main upgrade, port upgrade, then per layout item: upgrade / construct (free slot) / replace (off-list
+    slot) / wait (tier or slot).
+- Replace only when `off_list_buildings` = replace, in a secondary slot, never a special building (landmark,
+  legendary, unique, wonder).
+- Repairs first (`repair_damaged`): damaged buildings on the plan; estimate = cost x missing hp share > gold -> needs gold.
+- Construction Cavern (Ikit, workshop level 1, no Cavern standing, none planned): one temporary Cavern in a free
+  slot, else an off-list slot, else the lowest-priority building; kept until it has counted, then released.
+- Spending, all provinces at once: main/port upgrades -> Reactor -> landmarks -> recruit buildings (capital closest
+  to tier 5 first) -> the rest in list order.
+- Saving: an item of the first four groups that is not affordable but reachable within 2 turns of net income is
+  saved for; anything cheaper is bought only if it does not push a saved item a turn later (else held); the army
+  keeps off what the saved items still need.
+- Per action, first match: no longer yours; slot changed since the plan; Cavern slot; under construction; locked
+  by the game; main level too low; development points short; not affordable (held / saving / needs gold); no slot;
+  damaged building (waits for repair); panel or slot not found; else act.
+- Act: slot hovered, building card found (greyed -> its tooltip reason), click confirmed by construction in memory.
+  Replace: demolish confirmed first, then build.
+- Missed: a planned action not under way without a memory reason.
+
+#### Army (`assist/army_builder.py`)
+- Ticked armies only. A tick counts only for the same general (id or name), set with a turn, at or before the
+  army's turn and rank (another campaign's tick ignored).
+- Template: lord Ikit / Thanquol / Verminlord Warpseer, 1 Warlock Engineer, 12 Stormfiend Ratling Cannons, 6
+  Warp-Doom Magma-Cannons. Queued units count as present.
+- Eligible province: recruits every template unit type (finished, active buildings in owned regions).
+- Engineers: free ones (not in an army) kept on or assigned to the nearest army that needs one
+  (`runs/engineer_claims.json`).
+- Spendable = treasury - buildings' saving reserve - gold owed for units queued this turn.
+- Per army:
+  - extra heroes -> "remove it yourself" (heroes and lords never disbanded);
+  - off-template units: kept when no gold for a replacement or not at an eligible province; else disbanded
+    (cards checked against memory, selection checked, confirmed by the unit count);
+  - at an eligible province: missing units queued from the local pool only (never global), room = 20 - units -
+    queued - missing engineer; gold checked before each click; each click confirmed by the queue in memory;
+  - else marched to the closest eligible province (fewest region hops, then distance, then most missing units
+    covered; not within 1.5 of another army); re-chosen every turn;
+  - engineer missing and none free: recruited at the nearest settlement that can, if the cap (memory) allows;
+  - assigned engineers walked into the army every turn until they join (not with no movement left or the army full).
+- Refilled (nothing missing, nothing to disband) -> tick cleared.
+- Missed: a ticked army at an eligible province with units not queued or off-template units left.
+- **New playbook army** (button, or `auto_create`): an eligible province, an engineer (free or cap room), a
+  Verminlord Warpseer in the Recruit Lord pool, and (auto only) income after it >= `income_reserve`; raised at a
+  free settlement of an eligible province, capitals first; confirmed by the new army in memory; ticked and built
+  the same pass.
+- **Finances**: upkeep = base x (1 + Supply Lines % x (armies - 1)); Supply Lines 1% easy/normal, 2% hard, 4% very
+  hard/legendary; verdict = income after ticked refills and the next army.
+
+### 8. Run now
+- Busy -> ignored. No campaign -> said so.
+- Not free: panels put away (campaign map hidden) / notices cleared (End Turn greyed), then re-check; held ->
+  RUN NOW QUEUED; not your turn -> refused.
+- Decisions open -> queued until answered. Else the pass (turn-start steps, plus end-turn steps when the last turn
+  was not ended by the app).
+
+### 9. Build & End Turn
+- Busy or campaign map down (battle, load) -> END TURN QUEUED, runs once possible; a new turn drops it.
+- Tactical view left; panels put away / notices cleared; not free but your turn -> queued, else refused.
+- Panels closed; decisions open -> queued.
+- Steps: turn-start steps still owed + the end-turn steps.
+- Panels closed again; popups again (decision -> queued).
+- **End Turn press** (`press_end_turn`):
+  - ended = turn moved, or not your turn in memory, or MP ended, or your ready tick on;
+  - waits until End Turn is allowed (up to 3 min, other players' actions);
+  - Shift+Enter (game warnings skipped), wait 8 s for ended; another player's action -> wait up to 3 min;
+  - up to 2 tries, panels it opened closed in between; then the End Turn button itself;
+  - TURN N ENDED, or NOT ENDED with the reason.
+- **Close panels**: tactical view left; tour, Masterplans, Hero Actions closed with their X (decline); then Escape
+  (up to 6) on character, settlement, technology, recruitment, units, diplomacy panels; a game menu opened by
+  Escape is resumed.
+
+### 10. Confirming a click (`commands.act`)
+- The game's outgoing command stream is watched during the click.
+- Effect in memory -> done. No command within 0.6 s -> missed (safe to click again, after 2.5 s more without the
+  effect). Command sent, no effect within 15 s -> refused (never clicked again). Stream unreadable -> refused after 15 s.
+
+### 11. Input safety
+- Every input inside `game_focus`: system mutex (one input sender), your mouse and keys held off (releases pass,
+  300 s cap), game raised (8 tries, then forced); exit: previous window and cursor restored.
+- Before every click / key: game in front, window under the cursor is the game, no cinematic -> else INTERRUPTED.
+- Target hovered until it shows its hover state (40 frames, 1 px nudges, re-aim up to 3x).
+- You moved the mouse or pressed a key -> it waits until 1 s idle (2 min cap), then re-aims. Another player's
+  pending action -> waits (3 min cap).
+- Pause after every click / key: `pace_ms` (120).
+- Waits poll game state every 2 ms (never fixed sleeps); frame waits follow the UI's frame counter.
+- Shift+Esc (physical) -> buttons and keys released, the assistant exits at once.
+
+### 12. Widget, window, settings, files
+- **Rail**: compact over the game, full while automating; bars per step (done / active / failed / later / pending);
+  button RUN NOW (after an error), QUEUED (End Turn owed), else BUILD & END TURN; click elsewhere = pause; clicks
+  pass through while the assistant is acting; position saved.
+- **Panel** (expand): Run now, Pause, Restart (fresh copy, refused while busy), Exit, treasury / income /
+  Warpstone, this turn, armies with ticks (a tick that cannot refill is disabled; a tick can always be removed),
+  next army, diplomacy list (click = off / on per faction), SETTINGS, frontline. Refreshed every 4 s from
+  memory only.
+- **SETTINGS**: every option in `assist/settings.py` (switch: click; choice: click cycles; number: - / + within its
+  limits) and each step on/off per phase; written at once (atomic), read fresh by the next pass.
+- **Exe defaults** (once per release): missing strategy files copied; changed defaults merged into the player's
+  (the player's own changes kept), backup in `runs/upgrade_backup/`.
+- **Logs**: `state.json` (status), `runs/assistant-*.jsonl` (passes), `runs/timeline.jsonl` (phases),
+  `runs/heartbeat.json`, UNEXPECTED / RESOLVED self-checks (widget stalled, out of sync, press unhandled).
+
 ## Overview
 
 The player makes the decisions. The assistant applies rules the player already follows every campaign:
@@ -223,7 +431,7 @@ player.
 | Rites and commandments (`assist/rites.py`) | Working: commandments and the Dominating Scheme from memory, before any gold is spent. |
 | Forbidden Workshop (`assist/workshop.py`, Ikit) | Working: Ratling Cannon upgrades as soon as they can be bought. |
 | Masterplans (`assist/masterplans.py`, `bot/sensor/masterplans.py`, Thanquol) | Working: Steal-Takes and Secrets from memory; Kill-Stabs stay the player's. Multiplayer not yet exercised. |
-| Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`, `strategy/diplomacy.json`) | Working (2026-10-21), at turn start: join-war offers to major factions against minors and much weaker majors, peace for gold with factions at war with you that do not border you, each for the most gold the AI accepts; treaty partners, other humans' friends, neighbours, humans and wiped-out factions never. Major, strength, treaties, wars, treasuries, borders and deaths from memory; every deal confirmed in memory. The AI's evaluation is still read from the panel (stop-gap). Verified live: three join-war deals (587, 1103, 802 gold); a peace deal the AI accepts not seen yet. |
+| Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`, `strategy/diplomacy.json`) | Working (2026-10-21), at turn start: join-war offers to major factions against minors and much weaker majors, each for the most gold the AI accepts; treaty partners, other humans' friends, neighbours, humans and wiped-out factions never; no peace or tribute deals. All facts from memory; every deal confirmed in memory. The AI's evaluation is read from the panel (stop-gap). Verified live: three join-war deals (587, 1103, 802 gold). |
 | Widget settings (`assist/settings.py`, `assist/railpanel.py`) | Working (2026-10-21): every option and each step's schedule changed with a click in the expanded widget. |
 | Building automation (`assist/build.py`) | Working: state from memory, provinces next to an enemy at war are skipped; damaged buildings repaired first, then upgrades and constructions through the province panel, each verified in memory. Repairs verified live 2026-10-16. |
 | Army builder (`assist/army_builder.py`, `assist/army.py`, `assist/recruit.py`, `assist/heroes.py`) | Built: per-army tick in the window. For a ticked army: disband off-template units, recruit missing units from the local pool, recruit a Warlock Engineer, move toward the closest province that can recruit what is missing, walk free heroes in (see "Army builder"). Walking heroes in was verified live. |
@@ -253,7 +461,7 @@ assist/app.py          the assistant window and the overlay (colours in assist/w
 assist/popups.py       turn-start popups: closes event notices, holds the pass for decisions
 assist/tech.py         tech step
 assist/skills.py       skill step
-assist/diplomacy.py    diplomacy step: join-war and peace offers for gold
+assist/diplomacy.py    diplomacy step: join-war offers for gold
 assist/build.py        building step: repairs, upgrades, constructions (plan: assist/buildplan.py)
 assist/army_builder.py army step (template compare: army.py, recruitable units: recruit.py, heroes: heroes.py)
 assist/gamedata.py     static game data from ../tww/db and ../tww/loc_en.json
@@ -350,26 +558,7 @@ turns by itself, and drafts the assistant replaced. Nothing imports it and it mu
 
 ## Settlement build planner
 
-`strategy/settlements.json` is the priority list; `assist/buildplan.py` applies it per province.
-
-- Slot 1: main building, to the maximum (capital tier 5, minor tier 3; Skavenblight 12 slots).
-- Port settlements: port in slot 2, upgraded as far as the main building allows.
-- Other slots: filled top-down from the list, each chain to the highest level allowed. Lower entries dropped when
-  slots run out.
-- List order: landmarks, Equipment Warpforge, Warp-Turbine Plant (tier 5: capitals only), tier-5 chains (Reactor,
-  Temple), tier-3 chains (Breeding Pit, Scrap Heap), fillers (Sentry Beasts, Spy Nests). Minors: Breeding Pit,
-  Scrap Heap, Overseer's Lookout.
-- Capitals give up, in order: Spy Nests (no port), Sentry Beasts (port or a landmark), Scrap Heap (port +
-  landmark), Breeding Pit (port + 2 landmarks).
-- Equipment Warpforge: one per province. Warp-Turbine Plant: capitals only. Clan Armoury: off the list.
-- Off-list buildings: replaced when their slot is needed (`off_list_buildings: replace`); ports, main buildings
-  and specials never.
-- Nothing above the current main-building tier.
-- Spending (all provinces at once): main/port upgrades -> Reactor -> landmarks -> recruit buildings (capital
-  closest to tier 5 first) -> the rest in list order.
-- Saving: a top item affordable within 2 turns of net income is saved for; spare gold that does not delay it is
-  spent now. The army step leaves what the saved items still need.
-- No payback rule (simulated 2026-10-21 and removed: it cost a quarter of a province's building income).
+`strategy/settlements.json` is the priority list; `assist/buildplan.py` applies it per province (rules: [Logic](#logic), Buildings).
 
 | Rule | Source |
 |---|---|
@@ -389,20 +578,7 @@ python -X utf8 tests/test_buildplan.py    # rule checks
 
 ## Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`)
 
-Every turn start, planned fresh from memory (works from any point of a campaign).
-
-- **Peace**: AI faction at war with you, not bordering you -> peace + payment to you.
-- **Join war**: target = minor with land, or major at most 50% of your strength (`major_target_max_strength`).
-  Payer = major AI faction you have met, at peace with you, at war with the target. Richest payer first.
-- **Never**: humans, rebels, dead factions; join-war targets with a treaty with you (trade, NAP, alliance,
-  vassal), a treaty/alliance with another human, or bordering you.
-- One deal per faction per turn. Order: peace, then join war.
-- **Amount**: start at 1 gold (refused -> next deal), +200 per arrow until refused, then narrow the last 200 from a
-  line fitted to the values seen. Highest accepted amount sent with Send (never Threaten).
-- **Check**: treasury up and war started / ended, in memory. This turn's tries in `runs/diplomacy_turn.json`.
-- Dropped: tribute (bare demand starts at -20), Threaten (refusal = war + treachery).
-- UI stop-gap: AI acceptance read from the panel (`label_deal_success_chance` / `label_payment_success_chance`
-  positive). The value exists only on the stack.
+Rules: [Logic](#logic), Diplomacy for gold.
 
 | Memory (9.0.4) | Where |
 |---|---|
@@ -661,17 +837,7 @@ about 7 s per point, and 90 s per character before that), following the order ex
 
 ## Army builder (`assist/army_builder.py`)
 
-Build & End Turn, after buildings (buildings take the gold first). Ticked armies only. Per army:
-
-1. Disband units not in the template, only once the army stands where its missing units are recruited locally.
-   Heroes never disbanded.
-2. In such a province: queue missing units from the **local** pool only (never global). Each click confirmed in
-   the recruitment queue in memory; gold checked before every click; stops when capacity or gold runs out.
-3. No Warlock Engineer and none free or on the way: recruit one at the nearest settlement that can, as soon as the
-   cap allows; it walks to the army, re-ordered every turn. The engineer never decides where the army goes.
-4. Otherwise: march to the closest eligible province (fewest region hops, then distance, then most missing units
-   covered). Re-chosen every turn.
-5. Free Warlock Engineers walked into the army.
+Rules: [Logic](#logic), Army.
 
 ## Turn-start popups (`assist/popups.py`)
 

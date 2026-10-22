@@ -28,7 +28,7 @@ _MEASURE: dict = {}              # font description -> tkfont.Font, for _fit
 GRIP_W = 12                     # the drag handle on the left edge (move cursor)
 KEY = "#010203"                 # transparent colour key (the cut-out corners)
 NODES = [("events", "Events"), ("rites", "Rites"), ("workshop", "Shop"), ("tech", "Tech"), ("skills", "Skills"),
-         ("masterplans", "Plans"), None,
+         ("diplomacy", "Gold"), ("masterplans", "Plans"), None,
          ("buildings", "Build"), ("army", "Army"), ("end", "End")]
 
 from . import theme as T

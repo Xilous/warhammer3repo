@@ -1,5 +1,4 @@
-"""Diplomacy for gold (player decisions 2026-10-21): which peace and join-war offers the plan makes, from memory
-facts.
+"""Diplomacy for gold (player decisions 2026-10-21): which join-war offers the plan makes, from memory facts.
 
     python -X utf8 -m pytest tests -q
 """
@@ -65,22 +64,19 @@ def test_never_against_treaty_partners_borders_or_other_humans_friends():
     assert skipped[("join_war", "h")].startswith("a treaty with")
 
 
-def test_peace_with_minors_at_war_with_me_not_bordering():
-    me, others = world(fac("far"), fac("near"), fac("big", major=True), fac("rebels", rebel=True),
-                       fac("friend", major=True, human=True),
-                       me_rels={"far": WAR, "near": WAR, "big": WAR, "rebels": WAR, "friend": WAR})
-    deals, skipped = plan(me, others, border=["near"])
-    assert deals == [("peace", "big", "big"), ("peace", "far", "far")]      # majors too; rebels, humans never
-    assert skipped[("peace", "near")] == "borders your territory"
-
-
 def test_wiped_out_factions_are_dropped():
-    me, others = world(fac("big", major=True), fac("gone", dead=True, regions=0, big=WAR),
-                       fac("gone_enemy", dead=True, regions=0), fac("horde", regions=0),
-                       me_rels={"gone_enemy": WAR, "horde": WAR})
+    me, others = world(fac("big", major=True), fac("gone", dead=True, regions=0, big=WAR))
     deals, skipped = plan(me, others)
-    assert deals == [("peace", "horde", "horde")]                     # alive without land: still offered peace
-    assert not [k for k in skipped if k[1].startswith("gone")]
+    assert deals == [] and not [k for k in skipped if k[1] == "gone"]
+
+
+def test_no_peace_offers():
+    """Peace for gold removed (2026-10-21): a faction at war with the player is never offered anything, bordering
+    or not (a third faction in between made real enemies count as not bordering)."""
+    me, others = world(fac("enemy"), fac("far_enemy"), fac("big", major=True, strength=3000, enemy=WAR),
+                       me_rels={"enemy": WAR, "far_enemy": WAR})
+    deals, skipped = plan(me, others, border=["enemy"])
+    assert deals == [] and skipped == {}
 
 
 def test_no_tribute():
@@ -94,13 +90,6 @@ def test_join_war_against_weak_majors_only():
                        fac("big_major", major=True, strength=800, payer=WAR))
     deals, _ = plan(me, others)
     assert [x for x in deals if x[0] == "join_war"] == [("join_war", "weak_major", "payer")]
-
-
-def test_order_peace_then_join_war():
-    me, others = world(fac("big", major=True, strength=3000), fac("a", strength=100, big=WAR), fac("z"),
-                       me_rels={"z": WAR})
-    deals, _ = plan(me, others)
-    assert [k for k, _t, _p in deals] == ["peace", "join_war"]
 
 
 def test_unmet_and_landless_minors_left_out():
@@ -122,10 +111,11 @@ def test_one_deal_per_minor_a_turn(monkeypatch, tmp_path):
     monkeypatch.setattr(d, "TRIED_FILE", tmp_path / "t.json")
     monkeypatch.setattr(d, "SETTINGS", tmp_path / "s.json")
     monkeypatch.setattr(d.dip, "read", lambda _w, _F: (me, others, set()))
-    d._record(w, d.Deal("peace", "small", "small", 0), "Small: peace: +300 gold")
+    d._record(w, d.Deal("join_war", "small", "big", 0), "Big: join their war against Small: +300 gold")
     deals, skipped = d.plan(w, 1)
     assert [(x.kind, x.target) for x in deals] == [("join_war", "other")]
-    assert ("join_war", "small", "a deal with it was made this turn") in skipped
+    assert ("join_war", "small", "a deal with it was made this turn") in skipped or \
+        not [x for x in deals if x.target == "small"]
     d.set_on("join_war", "other", False)
     deals, skipped = d.plan(w, 1)
     assert deals == [] and ("join_war", "other", "turned off") in skipped

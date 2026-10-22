@@ -51,7 +51,7 @@ def test_clicks_change_the_file(tmp_strategy):
     for _ in range(30):
         S.nudge(share, +1)
     assert S.get(share) == share.hi
-    flag = next(s for s in S.SETTINGS if s.path == ("enabled", "peace"))
+    flag = next(s for s in S.SETTINGS if s.path == ("enabled", "join_war"))
     before = S.get(flag)
     S.nudge(flag, +1)
     assert S.get(flag) is (not before)
@@ -82,6 +82,6 @@ def test_step_switches_keep_run_order(tmp_strategy):
 def test_diplomacy_reads_its_settings(tmp_strategy, monkeypatch):
     from assist import diplomacy as d
     monkeypatch.setattr(d, "SETTINGS", tmp_strategy / "diplomacy.json")
-    assert d.weak_share() == 0.5 and d.kind_on("peace") and d.kind_on("join_war")
+    assert d.weak_share() == 0.5 and d.kind_on("join_war")
     S.nudge(next(s for s in S.SETTINGS if s.path == ("enabled", "join_war")), +1)
     assert not d.kind_on("join_war")

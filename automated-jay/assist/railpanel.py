@@ -400,7 +400,7 @@ class RailPanel:
         self._render_diplomacy()
 
     def _render_diplomacy(self) -> None:
-        """The factions a peace or join-war deal could be offered for (player request 2026-10-21): each a
+        """The factions a join-war deal could be offered for (player request 2026-10-21): each a
         click to turn it off or on (strategy/diplomacy.json), all on by default. Rebuilt only when the list changed."""
         from .diplomacy import name
         sig = tuple(self.diplo_rows)
@@ -412,7 +412,7 @@ class RailPanel:
         if not self.diplo_rows:
             tk.Label(self.diplo, text="no deal to offer", bg=T.PANEL, fg=T.MUTED, font=self.f_body).pack(anchor="w")
         for kind, minor, on in self.diplo_rows:
-            what = {"join_war": "join war against", "peace": "peace with"}[kind]
+            what = {"join_war": "join war against"}.get(kind, kind)
             row = tk.Label(self.diplo, text=f"{'✓' if on else '✗'}  {what} {name(minor)}" + ("" if on else "  · off"),
                            bg=T.PANEL, fg=T.INK if on else T.MUTED, font=self.f_body, anchor="w", cursor="hand2")
             row.pack(fill="x", pady=(2, 0))

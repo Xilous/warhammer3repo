@@ -1,15 +1,14 @@
 """Diplomacy for gold (player decisions 2026-10-21): at the start of every turn, until no deal is left, read fresh
 from memory every turn (so it works the same from any point of a campaign, and factions met later join in):
 
-  peace      for each AI faction the player is at war with that does not border the player's territory (minor or
-             major), offer peace for a payment to the player
   join war   for each AI faction the player has met that is a minor faction, or a major at most half the player's
              strength, and is at war with a major faction the player has met: offer the major "I join your war
              against <it>" for a payment to the player
 
-A wiped-out faction (is_dead) is never offered anything, so the list shrinks as factions die. Tribute (a payment
-demand alone) was tried and dropped the same day (player decision 2026-10-21): a demand with nothing in return starts
-at -20 to the AI, so no faction would ever accept it.
+A wiped-out faction (is_dead) is never offered anything, so the list shrinks as factions die. Tried and dropped the
+same day (player decisions 2026-10-21): tribute (a payment demand alone starts at -20 to the AI, so no faction would
+ever accept it) and peace for gold (a faction counted as "not bordering" whenever a third faction sat between, so the
+player's real enemies would have been offered peace).
 
 asking for the most gold the AI accepts. Never a war against a faction with a treaty with the player (trade,
 non-aggression, alliance, vassal), with a treaty or alliance with another human, or bordering the player; never a
@@ -20,7 +19,7 @@ Never Threaten (button_threat_of_force): the game's tooltip says a rejected thre
 (reliability down), so it is not a safe deal.
 
 Major = faction:can_be_human, strength = faction_strength (bot/sensor/diplomacy.py); every fact the plan stands on is read from memory. Each deal is
-checked in memory: the treasury goes up and the war starts (join war) or ends (peace).
+checked in memory: the treasury goes up and the war starts.
 
 UI stop-gap: the AI's evaluation of a proposal (label_deal_success_chance, label_payment_success_chance: positive =
 they accept) is read from the panel, memory reader pending. Decoded so far (9.0.4, 2026-10-21): the evaluation is
@@ -31,8 +30,7 @@ Diplomacy panel (9.0.4, 2026-10-21, checked live with a join-war deal: Wissenlan
 Court of Night, the most it accepted, found by this search):
   diplomacy_dropdown (root child) / sortable_list_factions / faction_row_entry_<key>; Negotiate = button_ok under
   faction_panel_bottom/both_buttongroup; the offer screen: list_possible_actions/diplomatic_option_<kind> (join_war,
-  payment, peace ...; label_success_chance_for_action = the AI's value of that item alone, peace shows it before it is
-  added); join war opens diplomacy_hud_request_join_war: list_offers rows list_box_<n> (text = the faction's screen
+  payment ...; label_success_chance_for_action = the AI's value of that item alone, for items that show it); join war opens diplomacy_hud_request_join_war: list_offers rows list_box_<n> (text = the faction's screen
   name) with a checkbox, ok_request; payments opens diplomacy_hud_payments: pay_demand / pay_offer, amount (a text
   label: typed text is taken by the next arrow click, an arrow moves it 200), l_/r_arrow_amount, ok_payments;
   button_send under button_set_holder; the answer: dy_text state they_accepted, closed with button_accept; the
@@ -57,7 +55,7 @@ from tools.ui import click, press, type_text
 from . import gamedata as gd
 
 SETTINGS = config.STRATEGY_DIR / "diplomacy.json"
-KINDS = ("peace", "join_war")    # also the order deals are offered in
+KINDS = ("join_war",)          # the kinds of deal (peace for gold removed 2026-10-21)
 WEAK = 0.5                     # "much weaker": strength at most this share of the player's (player decision 2026-10-21;
                                # diplomacy.json "major_target_max_strength", set in the widget)
 MAX_DEALS = 30                 # per pass: a guard, the plan normally runs out long before
@@ -66,10 +64,9 @@ STEP = 200                     # the payment arrows move the amount by 200
 
 @dataclass(frozen=True)
 class Deal:
-    kind: str                  # "peace" or "join_war"
-    target: str                # the faction the deal is about: the war is against it (join war) or made with it
-                               # (peace)
-    payer: str                 # who pays: the major (join war), the target itself (peace)
+    kind: str                  # "join_war"
+    target: str                # the faction the war is against
+    payer: str                 # the major that pays
     treasury: int              # the payer's treasury (memory)
 
     def line(self) -> str:
@@ -128,12 +125,11 @@ def set_on(kind: str, target: str, on: bool) -> None:
     tmp.replace(SETTINGS)
 
 
-DOC = ["Diplomacy for gold (assist/diplomacy.py), player decisions 2026-10-21: peace for gold with AI factions at war "
-       "with the player that do not border them, join-war offers to major factions against minors and majors at most "
-       "half the player's strength; always the most gold the AI accepts.",
+DOC = ["Diplomacy for gold (assist/diplomacy.py), player decisions 2026-10-21: join-war offers to major factions "
+       "against minors and majors at most half the player's strength; always the most gold the AI accepts.",
        "'off': faction keys the player turned off in the expanded widget, per kind of deal; every faction is on "
        "unless listed here.",
-       "'enabled': each kind of deal on or off; 'major_target_max_strength': a major faction is a join-war target "
+       "'enabled': join-war deals on or off; 'major_target_max_strength': a major faction is a join-war target "
        "only at most this share of the player's strength (0.5 = half). Both set in the expanded widget."]
 
 
@@ -148,13 +144,7 @@ def candidates(me: dip.Faction, others: dict[str, dip.Faction], border: set[str]
     weak = lambda f: 0 < f.strength <= share * me.strength
     for k, t in sorted(others.items()):
         r = me.rels.get(k)
-        if t.human or t.rebel or t.dead or r is None or not r.met:
-            continue
-        if r.war:
-            if k in border:
-                skipped.append(("peace", k, "borders your territory"))
-            else:
-                deals.append(Deal("peace", k, k, t.treasury))
+        if t.human or t.rebel or t.dead or r is None or not r.met or r.war:
             continue
         if not t.regions or (t.major and not weak(t)):
             continue
@@ -185,8 +175,8 @@ def plan(w: World | None = None, F: int | None = None) -> tuple[list[Deal], list
     deals = [d for d in deals if kind_on(d.kind)]
     off = load_off()
     tried = _tried(w)
-    made = {k[1] for k, line in tried.items() if _made(line)}   # one deal per faction a turn: peace for gold and
-    out = []                                                    # then a paid war on it again would flip it every pass
+    made = {k[1] for k, line in tried.items() if _made(line)}   # one deal per faction a turn
+    out = []
     for d in deals:
         if d.target in off[d.kind]:
             skipped.append((d.kind, d.target, "turned off"))
@@ -325,19 +315,6 @@ def add_join_war(ui: UI, target: str) -> str | None:
     click(ui, ui.first("ok_request"))
     if not wait.wait_until(lambda: _offered(ui, "join_war"), 2.0, "join war offered", must=False):
         return "join war was not added to the offer"
-    return None
-
-
-def add_peace(ui: UI) -> str | None:
-    opt = _option(ui, "peace")
-    if opt is None or (ui.state(opt) or "") == "inactive":
-        return "not possible: peace is not offered"
-    lab = ui.child(opt, "label_success_chance_for_action")
-    if lab is not None and (ui.state(lab) or "") == "negative":       # UI stop-gap: the AI's value of peace alone
-        return f"not possible: they would not take peace even for nothing ({ui.text(lab)})"
-    click(ui, opt)
-    if not wait.wait_until(lambda: _offered(ui, "peace"), 2.0, "peace offered", must=False):
-        return "peace was not added to the offer"
     return None
 
 
@@ -492,7 +469,7 @@ def offer(ui: UI, w: World, F: int, d: Deal) -> tuple[bool, str]:
     why = negotiate(ui, whom)
     if why:
         return False, f"{d.line()}: {why}"
-    why = add_join_war(ui, d.target) if d.kind == "join_war" else add_peace(ui)
+    why = add_join_war(ui, d.target)
     if why:
         open_list(ui)
         return False, f"{d.line()}: {why}"
@@ -515,11 +492,10 @@ def offer(ui: UI, w: World, F: int, d: Deal) -> tuple[bool, str]:
         return False, f"{d.line()}: the Send button is greyed out"
     t0 = dip.treasury(w, F)
     M = next((o for o in dip.relations(w, F) if w.faction_name(o) == d.target), None)
-    want_war = d.kind == "join_war"
 
     def effect():
         r = dip.relations(w, F, {M}).get(M) if M else None
-        return r is not None and r.war == want_war and dip.treasury(w, F) > t0
+        return r is not None and r.war and dip.treasury(w, F) > t0
 
     st, _v = commands.act(w.pm, lambda: click(ui, send) and None, effect)
     _answer(ui)

@@ -33,7 +33,6 @@ class Setting:
 
 SETTINGS: list[Setting] = [
     # diplomacy (assist/diplomacy.py)
-    Setting("diplomacy.json", ("enabled", "peace"), "Peace for gold", "Diplomacy", default=True),
     Setting("diplomacy.json", ("enabled", "join_war"), "Join wars for gold", "Diplomacy", default=True),
     Setting("diplomacy.json", ("major_target_max_strength",), "Major as a join-war target at most", "Diplomacy",
             "float", 0.5, 0.05, 0.05, 1.0, fmt="{:.0%} of your strength"),

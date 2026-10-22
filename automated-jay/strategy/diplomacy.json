@@ -1,16 +1,14 @@
 {
   "_doc": [
-    "Diplomacy for gold (assist/diplomacy.py), player decisions 2026-10-21: peace for gold with AI factions at war with the player that do not border them, join-war offers to major factions against minors and majors at most half the player's strength; always the most gold the AI accepts.",
+    "Diplomacy for gold (assist/diplomacy.py), player decisions 2026-10-21: join-war offers to major factions against minors and majors at most half the player's strength; always the most gold the AI accepts.",
     "'off': faction keys the player turned off in the expanded widget, per kind of deal; every faction is on unless listed here.",
-    "'enabled': each kind of deal on or off; 'major_target_max_strength': a major faction is a join-war target only at most this share of the player's strength (0.5 = half). Both set in the expanded widget."
+    "'enabled': join-war deals on or off; 'major_target_max_strength': a major faction is a join-war target only at most this share of the player's strength (0.5 = half). Both set in the expanded widget."
   ],
   "enabled": {
-    "peace": true,
     "join_war": true
   },
   "major_target_max_strength": 0.5,
   "off": {
-    "join_war": [],
-    "peace": []
+    "join_war": []
   }
 }
