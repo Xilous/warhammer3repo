@@ -3,10 +3,14 @@
 At the start of a session, remind the player of these, and say which need a multiplayer session.
 
 ## Needs a multiplayer session
-- [ ] **Steal-Takes in multiplayer**: start, complete and abandon a Steal-Take with the command-paced clicks
-      (they were not unlocked yet in the 2026-10-19 campaign).
-- [ ] **Camera edge-scroll panning** (heroes.pan_by_edge, camera_pan auto/edge): never run live. Steal-Take targets
-      and hero walks use it in multiplayer.
+- [ ] **Steal-Takes in multiplayer**: start, complete and abandon a Steal-Take with the command-paced clicks.
+      2026-10-22, single player: started and completed live with the command pacing on turns 50-58 (Castle
+      Templehof, King's Glade, Waldenhof, Waterfall Palace, Vaul's Anvil), each confirmed in memory. Abandon (only
+      with at_max_alarm "abandon") takes the same board and confirm path; not run live. What is left: the multiplayer
+      sync of those clicks.
+- [x] **Camera edge-scroll panning** (2026-10-22, single player with edge forced): bring_into_view brought 10
+      settlement labels on screen by edge scrolling, near and far, as fast as WASD (0.7-4.8 s each). Steal-Take
+      targets and hero walks use the same call.
 - [x] **Desync / reload recovery** (2026-10-22, single player): a real reload was exercised twice (the turn-58
       autosave loaded on turn 59, then on turn 58). A load shows no campaign for a moment, so it was taken for a new
       campaign ("acts from next turn"); fixed: a save of the same campaign at the same or an earlier turn runs that
@@ -14,14 +18,21 @@ At the start of a session, remind the player of these, and say which need a mult
       reloads the same way; an actual desync is still unseen.
 - [ ] **auto_end_turn on a second PC** (strategy/automation.json): tested in single player only.
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
+      2026-10-22 review: the hold raises InputAborted after 3 minutes (tools/ui.wait_for_other_players), a
+      BaseException no step can swallow; the turn-start pass stays pending. A Build & End Turn cut short that way
+      was dropped; now it stays queued and runs again once the game is free. Not seen live.
 
 - [ ] **Secrets shop from memory in multiplayer (2026-10-22)**: the shop's offer is read per player (each player's
       own DLCs, bot/sensor/masterplans.shop: the entitlement entry is found by [faction+0xD88] -> player slot +0x398).
       Check that the local player's entry is the one read and that runs/masterplans.jsonl has no "shop_check" rows.
+      2026-10-22, single player: 3 entries (one more per load, it seems), all with the local player's slot (420) and
+      the same bits.
 
 ## Any session (single player is fine)
 - [ ] **Secrets shop from memory (2026-10-22)**: after a few Build & End Turn passes that open the shop, runs/
       masterplans.jsonl should have no "shop_check" rows (panel and memory listing the same lines per tab).
+      Turn 56: one row, a false one (a tab checked again after its last line was bought, against the reading from
+      before the purchase); fixed: each tab is checked once, before anything is bought in it. Watch a few more.
 - [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ... in N turn(s)" appears for a top item,
       cheap items are still bought with the spare gold, the saved item is bought on the turn it said, and the army
       still recruits with what is beyond the reserve.
