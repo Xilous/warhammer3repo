@@ -339,6 +339,155 @@ class Reader:
         return out
 
 
+# ------------------------------------------------------------------ the Clan Scruten Secrets shop
+# What the shop offers, decided as the game decides it (2026-10-22, 9.0.4; the shop's Cco context functions ->
+# native -> Ghidra, tools/ghidra_quick/decomp_shop*): GetShopObjectChainContexts 0x1420BA3C8 (the lines a tab
+# lists), IsAnyObjectAvailableToBuy 0x1420C1D54, GetCurrentlyAvailableToBuyObject 0x1420B6ABC, IsAllowedToBuy
+# 0x1420C1CF4, IsUnlocked 0x1420C3AC0, OwnedTokensCountFromSameCategory 0x1420CD9F4, OwnedCount 0x1420CD9AC.
+#
+# DB:          [[0x143F69AE8]+0x360], or [[[0x144480D20]+0x78]+0x20] when that global is 0; categories (tabs)
+#              [DB+0xD90]: count u32 +0xC, array [+0x10]
+# category C:  key string object C+0x10; lines: count u32 C+0x3C, array [C+0x40]
+# line L:      key L+0; category [L+0x18]; levels: count u32 L+0x24, array [L+0x28]
+# level O:     key O+0x10; token record [O+8]; needed (purchases in the tab) i32 O+0x28; ownership limit i32 O+0x30;
+#              line [O+0x38]; previous level [O+0x40]; order i32 O+0x50
+# token T:     key T+0x48; the shop level that sells it [T+0x70]; listing gate record [T+0x60]; requirement lists
+#              T+0x88 (count u32 +0x84) -> each E: E+0x80 (count u32 +0x7C) -> each [P+0x10] = requirement record X;
+#              linked tokens: arrays T+0xA8 (u32 +0xA4), T+0x98 (+0x94), T+0xC8 (+0xC4, stride 0x10), map T+0xD8
+# inventory:   V (the faction's Secrets inventory, as in State.inventory): list sentinel V+0x10 (first [V+0x18],
+#              node+8 next, token [node+0x18]) and maps V+0x40, V+0x70, V+0xA0 (first [H+0x10], sentinel H+8)
+# content:     X is available to faction F unless F has a player ([F+0xD88]) whose entitlement entry (table
+#              [[[[0x144480D88]+0x5BB0]+0xA0]+0x78]: count u32 +0x54, array [+0x58], stride 0x28, player slot u32 +4
+#              = [player+0x398]) has a bitset at entry+8 sharing no bit with X's required-content bitset X+0x4C0;
+#              a requirement equal to the base bitset (global 0x14408C6D0) is always available. Bitset: bits u32 +4,
+#              words [+8]. Per player: in multiplayer each player's own DLCs decide his shop.
+# gate:        Y = [T+0x60] of a line's first level: listed unless the faction's list in the plans manager map
+#              M+0x218 (key faction id; array [node+0x20], count u32 node+0x1C) is non-empty and lacks Y (and Y+0x50
+#              is not 4)
+# Rules:       count(tab) = distinct owned tokens whose [[T+0x70]+0x38]+0x18 is the tab (an upgrade replaces its
+#              line's token, so this is the lines owned); hi = highest order of an owned token of the line (-1: none);
+#              a level is allowed when (hi = -1: it has no previous level; else: its order >= hi and hi >= its
+#              previous level's order) and owned copies < limit (limit < 1: none). Blocked: a requirement of its token
+#              or of a linked token is not available. The line's offer = its first level allowed and not blocked; it
+#              is listed when there is an offer and the gate passes; the offer can be bought when needed <= count(tab).
+# Checked live 2026-10-22 (turn 53+): Warp-Grinders and Mass Production Lines blocked as the Warlock tab hid them,
+# the Grey Seer tab's open and greyed lines matched the needed counts, fully bought lines unlisted.
+@dataclass
+class ShopLine:
+    chain: str
+    tab: str
+    listed: bool                 # the tab shows it
+    offer: str | None            # the shop level (key) on offer, None when nothing is
+    needed: int                  # purchases in the tab its offer needs
+    unlocked: bool               # needed <= the tab's count: the offer can be bought (Warpstone permitting)
+    blocked: bool                # a level needs content this player does not own (a DLC)
+
+
+def _walk(w: World, sentinel: int, first: int, limit: int = 5000):
+    n = first
+    for _ in range(limit):
+        if not n or n == sentinel:
+            return
+        yield n
+        n = w.q(n + 8)
+
+
+def shop_db(w: World) -> int:
+    alt = w.q(0x143F69AE8)
+    return w.q(alt + 0x360) if alt else w.q(w.q(w.q(0x144480D20) + 0x78) + 0x20)
+
+
+def shop(w: World | None = None, F: int | None = None) -> tuple[dict[str, ShopLine], dict[str, int]] | None:
+    """(chain -> ShopLine, tab -> its purchase count) as the game offers the shop to faction F now, from memory."""
+    w = w or World()
+    F = F or find_player_faction(w)
+    m = w.s.model
+    if not (F and m):
+        return None
+    q, u32 = w.q, w.u32
+    i32 = lambda a: struct.unpack("<i", w.pm.read_bytes(a, 4))[0]
+    M = q(m + 0x6DC8)
+    if not M:
+        return None
+    fid = u32(F + 8)
+    V = next((n + 0x18 for n in _walk(w, M + 0xF0, q(M + 0xF0 + 8)) if u32(n + 0x10) == fid), None)
+    inv: list[int] = []
+    if V:
+        inv = [q(n + 0x18) for n in _walk(w, V + 0x10, q(V + 0x18)) if q(n + 0x18)]
+        for H in (V + 0x40, V + 0x70, V + 0xA0):
+            inv += [q(n + 0x18) for n in _walk(w, H + 8, q(H + 0x10)) if q(n + 0x18)]
+    player = q(F + 0xD88)
+    entry = None
+    if player:
+        db2 = q(q(q(q(0x144480D88) + 0x5BB0) + 0xA0) + 0x78)
+        slot, arr = u32(player + 0x398), q(db2 + 0x58)
+        entry = next((arr + 0x28 * i for i in range(min(u32(db2 + 0x54), 64)) if u32(arr + 0x28 * i + 4) == slot),
+                     None)
+
+    def bits(b: int) -> tuple[int, list[int]]:
+        nb, p = u32(b + 4), q(b + 8)
+        return nb, ([u32(p + 4 * i) for i in range((min(nb, 4096) + 31) // 32)] if p else [])
+    base = bits(0x14408C6D0)
+    own = bits(entry + 8) if entry else None
+
+    def available(X: int) -> bool:
+        if own is None:
+            return True
+        xb = bits(X + 0x4C0)
+        return xb == base or any(a & b for a, b in zip(xb[1], own[1]))
+
+    def req_fail(T: int) -> bool:
+        for i in range(min(u32(T + 0x84), 64)):
+            E = q(q(T + 0x88) + 8 * i)
+            for j in range(min(u32(E + 0x7C), 256)):
+                if not available(q(q(q(E + 0x80) + 8 * j) + 0x10)):
+                    return True
+        return False
+
+    def blocked(O: int) -> bool:
+        T = q(O + 8)
+        if req_fail(T):
+            return True
+        for cnt, arr, stride in ((0xA4, 0xA8, 8), (0x94, 0x98, 8), (0xC4, 0xC8, 16)):
+            if any(req_fail(q(q(T + arr) + stride * i)) for i in range(min(u32(T + cnt), 64))):
+                return True
+        return any(req_fail(q(n + 0x18)) for n in _walk(w, T + 0xD8, q(T + 0xE0)))
+    gates = {u32(n + 0x10): {q(q(n + 0x20) + 8 * i) for i in range(min(u32(n + 0x1C), 512))}
+             for n in _walk(w, M + 0x220, q(M + 0x228))}
+    allow = gates.get(fid)
+    sold = {t: q(t + 0x70) for t in inv}
+    lines, counts = {}, {}
+    cats = q(shop_db(w) + 0xD90)
+    for i in range(min(u32(cats + 0xC), 16)):
+        C = q(q(cats + 0x10) + 8 * i)
+        tab = string_object(w.pm, C + 0x10) or "?"
+        counts[tab] = n_tab = len({t for t, O in sold.items() if O and q(O + 0x38) and q(q(O + 0x38) + 0x18) == C})
+        for k in range(min(u32(C + 0x3C), 64)):
+            L = q(q(C + 0x40) + 8 * k)
+            levels = [q(q(L + 0x28) + 8 * j) for j in range(min(u32(L + 0x24), 16))]
+            if not levels:
+                continue
+            hi = max([u32(O + 0x50) for O in sold.values() if O and q(O + 0x38) == L] or [-1])
+
+            def allowed(O: int) -> bool:
+                prev, order = q(O + 0x40), u32(O + 0x50)
+                if hi == -1 and prev:
+                    return False
+                if hi != -1 and (order < hi or (prev and hi < u32(prev + 0x50))):
+                    return False
+                lim = i32(O + 0x30)
+                return lim < 1 or sum(1 for t in inv if t == q(O + 8)) < lim
+            offer = next((O for O in levels if allowed(O) and not blocked(O)), None)
+            Y = q(q(levels[0] + 8) + 0x60)
+            gate = not Y or u32(Y + 0x50) == 4 or not allow or Y in allow
+            needed = i32(offer + 0x28) if offer else 0
+            key = string_object(w.pm, L) or "?"
+            lines[key] = ShopLine(key, tab, bool(gate and offer),
+                                  string_object(w.pm, offer + 0x10) if offer else None, needed,
+                                  bool(offer) and (needed < 1 or needed <= n_tab), any(blocked(O) for O in levels))
+    return lines, counts
+
+
 def read(w: World | None = None) -> State | None:
     return Reader(w).state()
 

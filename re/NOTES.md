@@ -26,6 +26,16 @@
 - DB table getters: 45-byte stubs (`re/table_getters.json`, addresses are +1 off: subtract 1), slow accessors cache at db+slot (lookups 0xc860/0xc908, group_to_modifiers 0xc898, battle_types 0xc978, ai_usage_cp 0xba60, usage_flags 0xadb0, skirmish 0xe700).
 - Frontend lobby CCO: AutoresolveBattleResultsContext getter 0x141f2a11c, LocalBalanceOfPowerPercent 0x141f4afc0, CanAutoResolve 0x141f2c030 (virtual slots 0x1c8/0x1a8 on lobby object *(*(g_144480d40+0x4f0)+0x88)).
 
+- Clan Scruten Secrets shop (2026-10-22, 9.0.4): Cco natives GetShopObjectChainContexts 0x1420ba3c8 (lines a tab
+  lists), IsAnyObjectAvailableToBuy 0x1420c1d54, GetCurrentlyAvailableToBuyObject 0x1420b6abc, IsAllowedToBuy
+  0x1420c1cf4, IsUnlocked 0x1420c3ac0, OwnedTokensCountFromSameCategory 0x1420cd9f4, OwnedCount 0x1420cd9ac,
+  GetShopCategoryRecords 0x1420ba318 (categories [DB+0xd90], DB = [[0x143f69ae8]+0x360] or [[[0x144480d20]+0x78]+0x20]).
+  Content check FUN_1426bb064(faction, requirement): per player ([faction+0xd88], slot +0x398) entitlement bitset in
+  [[[[0x144480d88]+0x5bb0]+0xa0]+0x78] (+0x54 count, +0x58 array, stride 0x28) vs the requirement's bitset +0x4c0.
+  Full layout and rules: automated-jay/bot/sensor/masterplans.py (shop). Decompiles: ghidra_quick/decomp_shop..5.
+  Cco registration pattern: LEA name; build a 0x28 object; native stored at +0x20 (scratch finder: LEA xrefs of the
+  name string, then the first `lea rax, [rip+X]; mov [rbx+0x20], rax`).
+
 ## Tooling
 - Ghidra quick project C:\Users\jaymi\tools\ghidra_quick (WH3Q, no analysis); DumpAutoresolver.java with -Dar.depth/-Dar.cap; outputs decomp*/ 
 - Full-analysis project C:\Users\jaymi\tools\ghidra_proj (WH3) still analyzing.

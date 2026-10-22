@@ -283,8 +283,12 @@ is used only to find what to click, to confirm a click took, and for what exists
   - score: the region's income (region:gdp(), the loot is a share of it), not-at-war owners first
     (`prefer_not_at_war`);
   - on screen, or within `max_pan` (120) map units (2 pans); confirmed by the plan appearing in memory.
-- Secrets: walk `shop.order`; skip unknown chains, locked tabs (Underling not unlocked) and levels below their
-  unlock count; stop when buying would leave less than `keep_warpstone` (50). Each buy confirmed by Warpstone in memory.
+- Secrets: what the shop offers is read from memory as the game decides it (`bot/sensor/masterplans.shop`): the
+  lines each tab lists (fully bought lines and lines needing content this player does not own, a DLC, are not),
+  the level each line offers, and whether it is unlocked (the tab's purchases = lines owned). Walk `shop.order`;
+  skip what is not offered, locked tabs (Underling not unlocked) and locked levels (a line bought earlier in the
+  pass counts); stop when buying would leave less than `keep_warpstone` (50). Each buy confirmed by Warpstone in
+  memory; each tab opened is compared with memory (differences logged as `shop_check` in runs/masterplans.jsonl).
 - Kill-Stabs never touched; one at max Alarm -> "complete it yourself".
 
 #### Buildings (`assist/build.py`, `assist/buildplan.py`)

@@ -132,14 +132,40 @@ def test_shop_tab_counts_lines_not_levels():
     assert [b[0] for b in M.shop_plan(cfg, 5000, {tunnel, rats}, seer)[0]] == [pusbags, rictus]
 
 
-def test_shop_skips_lines_not_offered():
-    """2026-10-22, turn 53: Warp-Grinders was not listed in the Warlock tab; it is skipped and the next line bought."""
+def _offer(chain, tab, listed=True, level=0, unlocked=True, blocked=False):
+    from bot.sensor.masterplans import ShopLine
+    lv = M.shop_objects()[chain]
+    return ShopLine(chain, tab, listed, lv[level]["key"] if listed else None, lv[level]["needed"], unlocked, blocked)
+
+
+def test_shop_follows_the_memory_offer():
+    """2026-10-22, turn 53: Warp-Grinders (a DLC unit not owned) was not offered in the Warlock tab; with the offer read
+    from memory it is skipped and the next line bought, and the game's own unlocked answer is used."""
     grinders, drillers = "wh3_dlc29_shop_military_green_warp_grinders_dlc", "wh3_dlc29_shop_economic_green_skryre_warpstone"
+    tab = "wh3_dlc29_skv_shop_warlock"
     warlock = {"wh3_dlc29_skv_schemer_warlock_master"}
     owned = {"wh3_dlc29_military_mod_pool_skryre_warpfire_throwers_1"}
-    cfg = {"keep_warpstone": 0, "order": [{"chain": grinders, "levels": 1}, {"chain": drillers, "levels": 1}]}
-    assert [b[0] for b in M.shop_plan(cfg, 5000, owned, warlock)[0]] == [grinders, drillers]
-    assert [b[0] for b in M.shop_plan(cfg, 5000, owned, warlock, {grinders})[0]] == [drillers]
+    cfg = {"keep_warpstone": 0, "order": [{"chain": grinders, "levels": 1}, {"chain": drillers, "levels": 3}]}
+    assert [b[0] for b in M.shop_plan(cfg, 5000, owned, warlock)[0]] == [grinders, drillers, drillers, drillers]
+    offered = ({grinders: _offer(grinders, tab, listed=False, blocked=True), drillers: _offer(drillers, tab)}, {tab: 1})
+    assert [(b[0], b[1]) for b in M.shop_plan(cfg, 5000, owned, warlock, offered)[0]] == \
+        [(drillers, 0), (drillers, 1), (drillers, 2)]
+    # the level on offer is the game's (Veteran Drillers next), and its lock is the game's answer
+    offered = ({drillers: _offer(drillers, tab, level=1)}, {tab: 1})
+    assert [b[1] for b in M.shop_plan(cfg, 5000, owned, warlock, offered)[0]] == [1, 2]
+    offered = ({drillers: _offer(drillers, tab, level=1, unlocked=False)}, {tab: 1})
+    assert M.shop_plan(cfg, 5000, owned, warlock, offered)[0] == []
+
+
+def test_shop_line_bought_earlier_in_the_pass_opens_a_lock():
+    """Grey Seer tab at 4 lines: Pox-Cauldron Offering (needs 5) is locked now, opened by Testing Grounds (a new line)
+    bought before it in the same pass."""
+    pusbags, poxes = "wh3_dlc29_shop_military_green_basic_pusbags", "wh3_dlc29_shop_military_action_skill_spawn_cauldron_poxes"
+    tab, seer = "wh3_dlc29_skv_shop_grey_seer", {"wh3_dlc29_skv_schemer_grey_seer"}
+    cfg = {"keep_warpstone": 0, "order": [{"chain": poxes, "levels": 1}, {"chain": pusbags, "levels": 1},
+                                          {"chain": poxes, "levels": 1}]}
+    offered = ({pusbags: _offer(pusbags, tab), poxes: _offer(poxes, tab, unlocked=False)}, {tab: 4})
+    assert [b[0] for b in M.shop_plan(cfg, 5000, set(), seer, offered)[0]] == [pusbags, poxes]
 
 
 if __name__ == "__main__":

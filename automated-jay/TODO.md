@@ -13,7 +13,13 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **auto_end_turn on a second PC** (strategy/automation.json): tested in single player only.
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
+- [ ] **Secrets shop from memory in multiplayer (2026-10-22)**: the shop's offer is read per player (each player's
+      own DLCs, bot/sensor/masterplans.shop: the entitlement entry is found by [faction+0xD88] -> player slot +0x398).
+      Check that the local player's entry is the one read and that runs/masterplans.jsonl has no "shop_check" rows.
+
 ## Any session (single player is fine)
+- [ ] **Secrets shop from memory (2026-10-22)**: after a few Build & End Turn passes that open the shop, runs/
+      masterplans.jsonl should have no "shop_check" rows (panel and memory listing the same lines per tab).
 - [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ... in N turn(s)" appears for a top item,
       cheap items are still bought with the spare gold, the saved item is bought on the turn it said, and the army
       still recruits with what is beyond the reserve.

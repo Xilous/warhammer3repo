@@ -337,8 +337,8 @@ def board_from(plan, w) -> dict:
 
 @lru_cache(maxsize=1)
 def shop_objects() -> dict[str, list[dict]]:
-    """shop chain -> [{"token", "cost", "needed"} per level, in order] (cost in Warpstone; needed = purchases in
-    that tab before the level can be bought)."""
+    """shop chain -> [{"key", "token", "cost", "needed"} per level, in order] (key: the shop level's record; cost in
+    Warpstone; needed = purchases in that tab before the level can be bought)."""
     from . import gamedata as gd
     price = defaultdict(int)
     for r in gd._load("resource_cost_pooled_resource_junctions_tables"):
@@ -349,7 +349,8 @@ def shop_objects() -> dict[str, list[dict]]:
     for r in gd._load("chaotic_plan_shop_category_chain_to_object_junctions_tables"):
         o = objs.get(r["category_object"])
         if o:
-            ch[r["category_chain"]].append((r["order"], {"token": o["token"], "cost": price.get(o["shop_price"], 0),
+            ch[r["category_chain"]].append((r["order"], {"key": o["key"], "token": o["token"],
+                                                         "cost": price.get(o["shop_price"], 0),
                                                          "needed": int(o.get("amount_needed_to_unlock") or 0)}))
     return {c: [x for _o, x in sorted(v, key=lambda t: t[0])] for c, v in ch.items()}
 
@@ -367,33 +368,58 @@ def owned_levels(chain: str, inventory: set[str]) -> int:
 
 
 def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str],
-              hidden: set[str] | frozenset = frozenset()) -> tuple[list, str]:
-    """([(chain, level index, cost, name)] to buy now, in order; why it stops), from memory. Strict order: the first
-    entry that can be bought but not afforded is saved for and nothing below it is bought. Locked entries (the tab's
-    Underling not unlocked, or too few purchases in that tab yet) are skipped. A tab's purchases are the lines owned
-    in it, not the levels (2026-10-22, turn 38, Grey Seer tab with Warlord Clan's Tunnel II and Superior Rats: every
-    line needing 2 was open, every one needing 3 locked; counted as 3 levels, Rictus Miners' Holes was tried and had
-    no Purchase button). Lines the game does not list (hidden: NOT_OFFERED) are skipped."""
+              offered: tuple[dict, dict] | None = None) -> tuple[list, str]:
+    """([(chain, level index, cost, name)] to buy now, in order; why it stops). Strict order: the first entry that can
+    be bought but not afforded is saved for and nothing below it is bought; entries that cannot be bought are skipped.
+
+    offered = bot/sensor/masterplans.shop(): what the game offers this faction now, decided as the game decides it
+    (player request 2026-10-22: buy from what memory says is available, so multiplayer, DLCs and story or turn
+    unlocks need no rule of ours): a line it does not list (fully bought, a DLC this player does not own, a gate) is
+    skipped, its offered level is the next one, and whether that level is unlocked is the game's. Levels planned
+    after it are judged by the game's rule: needed <= the tab's count, the count being the lines owned (a new line
+    adds one, an upgrade none). Without it (memory unreadable, tests) the same rule runs on the game tables and the
+    Secrets inventory."""
     keep = int(cfg.get("keep_warpstone", 50))
     tabs = shop_tabs()
-    per_tab = defaultdict(int)
-    for c in shop_objects():
-        per_tab[tabs.get(c)] += owned_levels(c, inventory) > 0
+    lines = None
+    if offered is not None:
+        lines, counts = offered
+        per_tab = defaultdict(int, counts)
+    else:
+        per_tab = defaultdict(int)
+        for c in shop_objects():
+            per_tab[tabs.get(c)] += owned_levels(c, inventory) > 0
     have, buys, owned_now = warpstone, [], {}
     for entry in cfg.get("order", []):
         chain, want = entry["chain"], int(entry.get("levels", 1))
         lv, tab = shop_objects().get(chain), tabs.get(chain)
-        if not lv or tab is None or chain in hidden:
+        if not lv or tab is None:
             continue
         if tab in TAB_UNDERLING and TAB_UNDERLING[tab] not in unlocked:
             continue
+        line = lines.get(chain) if lines is not None else None
+        if lines is not None:
+            if line is None or not line.listed:
+                continue                               # not offered: fully bought, a DLC not owned, or gated
+            offer = next((i for i, o in enumerate(lv) if o["key"] == line.offer), None)
+            if offer is None:
+                continue
+            owned = owned_now.get(chain, offer)
+        else:
+            offer, owned = None, owned_now.get(chain, owned_levels(chain, inventory))
         names = entry.get("_what", chain).split(" / ")
-        owned = owned_now.get(chain, owned_levels(chain, inventory))
         while owned < min(want, len(lv)):
             o = lv[owned]
             name = names[owned] if owned < len(names) else names[0]
-            if per_tab[tab] < o["needed"]:
-                break                                  # locked: too few purchases in that tab yet
+            if line is not None and owned == offer:
+                # the game's own answer for the level on offer, unless lines bought earlier in this pass open it
+                locked = not line.unlocked and (per_tab[tab] == counts.get(tab, 0) or per_tab[tab] < o["needed"])
+            else:
+                if line is not None and line.blocked:
+                    break                              # a later level may need the DLC too: one level per pass
+                locked = 0 < o["needed"] and per_tab[tab] < o["needed"]
+            if locked:
+                break                                  # too few purchases in that tab yet
             if have - o["cost"] < keep:
                 return buys, f"saving for {name} ({o['cost']} Warpstone, have {have}, keeping {keep})"
             buys.append((chain, owned, o["cost"], name))
@@ -790,26 +816,24 @@ def _open_shop(ui) -> bool:
 
 
 
-# Shop lines the game does not list in their tab this session (2026-10-22, turn 53: Warp-Grinders, a unit of The
-# Shadow & The Blade DLC, and Mass Production Lines, unlocked by its count, were not in the Warlock tab while every
-# other line not fully bought was). UI stop-gap: DLC ownership and story locks are not read from memory yet (memory
-# reader pending); a line found missing is skipped for the session and checked again after a restart.
-NOT_OFFERED: set[str] = set()
-
-
-def _tab_listed(ui, tab: str) -> bool:
-    """The shop's list shows this tab's lines (at least one line of it is listed), so a line missing from it is not
-    offered, not still loading."""
+def _check_tab(ui, tab: str, offered: tuple[dict, dict] | None) -> None:
+    """The repeatable check of the shop reader (player rule 2026-10-18): the lines the open tab lists against the
+    lines memory says the game offers in it; a difference is logged to runs/masterplans.jsonl ("shop_check")."""
+    if offered is None:
+        return
     lst = _under(ui, "tokens_list", PANEL)
     pre = "CcoCampaignChaoticPlanShopObjectChain"
-    tabs = shop_tabs()
-    return any(tabs.get((ui.id(c) or "")[len(pre):]) == tab
-               for c in (ui.children(lst) if lst else []) if (ui.id(c) or "").startswith(pre))
+    shown = {(ui.id(c) or "")[len(pre):] for c in (ui.children(lst) if lst else []) if (ui.id(c) or "").startswith(pre)}
+    if not shown:
+        return                                         # the list not filled in yet: nothing to compare
+    want = {k for k, ln in offered[0].items() if ln.tab == tab and ln.listed}
+    if shown != want:
+        _log({"shop_check": tab, "panel_only": sorted(shown - want), "memory_only": sorted(want - shown)})
 
 
-def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
-    """Buy what shop_plan picked (memory): one click per level, each confirmed by the Warpstone spent (memory). A line
-    the game does not list (its tab selected, the other lines shown) is not offered: added to NOT_OFFERED, skipped."""
+def buy_secrets(ui, buys: list, w, F: int, offered: tuple[dict, dict] | None = None) -> list[str]:
+    """Buy what shop_plan picked (memory): one click per level, each confirmed by the Warpstone spent (memory). Each
+    tab opened is compared with what memory says it offers (_check_tab)."""
     from tools import wait
     from tools.ui import click
     from bot.sensor import masterplans as mem
@@ -820,8 +844,6 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
     if not _open_shop(ui):
         return ["the Secrets shop did not open"]
     for chain, level, cost, name in buys:
-        if chain in NOT_OFFERED:
-            continue
         tab = wait.wait_until(lambda: _under(ui, f"CcoChaoticPlanShopCategoryRecord{shop_tabs().get(chain)}", PANEL),
                               2.0, "shop tab shown", must=False)
         if tab is None:
@@ -832,10 +854,7 @@ def buy_secrets(ui, buys: list, w, F: int) -> list[str]:
             wait.wait_until(lambda: (ui.state(tab) or "").startswith("selected"), 2.0, "shop tab", must=False)
         line = wait.wait_until(lambda: _under(ui, f"CcoCampaignChaoticPlanShopObjectChain{chain}", PANEL), 2.0,
                                f"{chain} listed", must=False)
-        if line is None and (ui.state(tab) or "").startswith("selected") and _tab_listed(ui, shop_tabs().get(chain)):
-            NOT_OFFERED.add(chain)
-            out.append(f"{name}: not offered by the game (its line is not listed: a DLC not owned or a story lock)")
-            continue
+        _check_tab(ui, shop_tabs().get(chain), offered)
         if line is None or not _scroll_into_clip(ui, line, "Secrets list"):
             out.append(f"{name}: its line is not shown")
             break
@@ -909,7 +928,7 @@ def missed() -> list[str]:
                        + (f" (not possible: {notes})" if hit else ""))
     if shop.get("enabled", True):
         unlocked = {u.subtype for u in state.underlings if u.unlocked}
-        buys, _why = shop_plan(shop, state.warpstone, set(state.inventory), unlocked, NOT_OFFERED)
+        buys, _why = shop_plan(shop, state.warpstone, set(state.inventory), unlocked, mem.shop(w, F))
         if buys:
             out.append("Secrets not bought: " + ", ".join(b[3] for b in buys))
     return out
@@ -948,7 +967,7 @@ def run(log=print, verify: bool = False) -> str:
     if shop_on:
         unlocked = {u.subtype for u in state.underlings if u.unlocked}
         buys, why = shop_plan(shop, state.warpstone - (50 if starting else 0), set(state.inventory), unlocked,
-                              NOT_OFFERED)
+                              mem.shop(w, F))
     out = []
     if not acting:
         for p, b in plans:
@@ -975,17 +994,9 @@ def run(log=print, verify: bool = False) -> str:
                 # after the list was made, the Veteran Drillers were not bought and the check reported them missed)
                 now = mem.read(w) or state
                 buys, why = shop_plan(shop, now.warpstone, set(now.inventory),
-                                      {u.subtype for u in now.underlings if u.unlocked}, NOT_OFFERED)
-            for _ in range(3):                      # again after a line found not offered: what follows it is bought
-                if not buys:
-                    break
-                hidden0 = set(NOT_OFFERED)
-                out += buy_secrets(ui, buys, w, F)
-                if NOT_OFFERED == hidden0:
-                    break
-                now = mem.read(w) or state
-                buys, why = shop_plan(shop, now.warpstone, set(now.inventory),
-                                      {u.subtype for u in now.underlings if u.unlocked}, NOT_OFFERED)
+                                      {u.subtype for u in now.underlings if u.unlocked}, mem.shop(w, F))
+            if buys:
+                out += buy_secrets(ui, buys, w, F, mem.shop(w, F))     # read again: the check compares it as is
             if why:
                 out.append(why)
         finally:

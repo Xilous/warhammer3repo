@@ -65,8 +65,19 @@ def selftest() -> int:
                     f"{len(m.inventory)} Secrets, {len(m.region_cooldowns)} settlements on cooldown")
         from bot.sensor.world import World, find_player_faction
         _w = World(s)
+        def secrets_shop():
+            from bot.sensor import masterplans as mem
+            r = mem.shop(_w)
+            if r is None:
+                return "not found in memory"
+            lines, counts = r
+            listed = [k for k, l in lines.items() if l.listed]
+            blocked = sorted(k.replace("wh3_dlc29_", "") for k, l in lines.items() if l.blocked)
+            return (f"{len(lines)} lines in {len(counts)} tabs, {len(listed)} offered, purchases per tab {counts}, "
+                    f"needing content not owned: {blocked}")
         if (_w.faction_name(find_player_faction(_w) or 0) or "") == "wh3_dlc29_skv_clan_scruten":
             check("masterplans (memory)", plans)
+            check("Secrets shop (memory)", secrets_shop)
 
     text = "\n".join(lines)
     config.RUNS_DIR.mkdir(parents=True, exist_ok=True)
