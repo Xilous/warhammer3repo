@@ -515,6 +515,11 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
             out.append(f"Steal-Take {place}: {act} decided, but its board did not open")
             continue
         board_btn = _under(ui, "trigger_plan_button" if act == "complete" else "abandon_button", PANEL)
+        if board_btn is None:                  # (a click on None raised and ended the whole step)
+            out.append(f"Steal-Take {place}: {act} decided, but its board shows no "
+                       f"{'Trigger' if act == 'complete' else 'Abandon'} button")
+            open_main(ui)
+            continue
         click(ui, board_btn)
         running = lambda: any(p.region == plan.region and p.type == "economic" for p in (mem.read(w) or state).plans)
         if act == "complete":
