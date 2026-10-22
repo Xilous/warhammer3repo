@@ -154,16 +154,20 @@ def attempt_list(char_key: str) -> list[tuple[str, int, str]]:
 
 def _skill_targets():
     """[(character ptr, char_key, character id, points, name)] for characters the orders cover that have points."""
-    from bot.sensor.world import World, characters, find_player_faction
+    from bot.sensor.world import World, armies, characters, find_player_faction
     w = World()
     F = find_player_faction(w)
     o = orders()
     by_subtype = {c["agent_subtype"]: k for k, c in o["characters"].items()}
+    leading = {a.general_ptr for a in armies(w, F)} if GENERIC in o else set()
     out = []
     for c in characters(w, F):
         k = by_subtype.get(c.subtype)
-        if not k and GENERIC in o and c.agent == "general" and c.subtype in _node_sets():
-            k = f"{GENERIC}:{c.subtype}"        # a lord without a template of its own (agent type from memory)
+        # a lord without a template of its own (agent type from memory), leading an army: the Masterplan Underlings
+        # are "general" too but lead none and are not in the Lords & Heroes list (2026-10-22, turn 55: two of them
+        # had 14 and 10 points); garrison commanders are "colonel"
+        if not k and c.agent == "general" and c.ptr in leading and c.subtype in _node_sets():
+            k = f"{GENERIC}:{c.subtype}"
         if not k:
             continue
         pts = w.u32(w.q(c.ptr + 0x3F0) + POINTS_OFF)
