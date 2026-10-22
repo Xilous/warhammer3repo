@@ -1338,6 +1338,23 @@ class Runner:
             return
         self._held_check_t = now
         from . import popups
+        # a diplomacy panel that only tells something (OK alone, popups.diplomacy_notice) holds the AI turns too
+        # (2026-10-22, turn 57: Ikit Claw ending a non-aggression pact): closed like an event notice, never an offer
+        try:
+            if (not self.paused and any(cid == "diplomacy_dropdown" for _c, cid, _b in popups._closable(self.ui))
+                    and self.busy.acquire(blocking=False)):
+                try:
+                    closed = popups.dismiss_events(self.ui)
+                finally:
+                    self.busy.release()
+                if closed:
+                    print(f"[{datetime.now():%H:%M:%S}] closed {len(closed)} notice(s) that held the other factions' "
+                          "turns", flush=True)
+                    return
+        except InputAborted:
+            return
+        except Exception:
+            traceback.print_exc()
         try:
             need = [(cid, d, ig) for cid, d, ig in popups.open_decisions(self.ui)
                     if not ig and cid not in self.OWN_MENUS]     # the player's own menus hold nobody
