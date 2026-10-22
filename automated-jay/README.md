@@ -83,126 +83,67 @@ walk orders are not issued twice.
 
 ### What happens each turn
 
-1. The assistant sees the turn counter go up. It waits until it really is your turn (End Turn button shown and
-   enabled, no AI-turn panel; in sequential multiplayer, once the others are done), lets the turn start settle
-   (camera still, no panel coming or going), then takes over at once.
-2. **Popups.** Event notices are closed. Anything that needs a decision is **always left to you**: diplomacy
-   offers, battles, dilemmas, confirmation boxes, the game menu, and any panel it does not recognise. The overlay
-   says **DECISION NEEDED** and nothing is clicked. Once you close the popup, the pass starts (it checks every 2 s).
-   Popups about significant global events (the endgame) and story panels that only have "Continue" (Thanquol's
-   story chapters) are left for you to read: **GLOBAL EVENT**. A guided tour of a panel: **GUIDED TOUR**.
-   **While a cinematic plays** (a movie or an in-game cut-scene) nothing is clicked or pressed at all; a pass that
-   a cinematic interrupts waits and runs again when it is over.
-3. **The pass**, in this order. Each step is independent: one that fails is reported and the next still runs.
-   Which steps run at turn start and which at **Build & End Turn** is set in the widget's SETTINGS (Steps), saved
-   in `strategy/automation.json` (`schedule`). By default:
+1. New turn seen in memory -> wait until it is your turn (End Turn enabled, no AI-turn panel) and the turn start
+   has settled (camera still, no panel changing).
+2. Popups: event notices closed. Decisions (diplomacy offers, battles, dilemmas, confirmations, game menu, unknown
+   panels) are never touched: DECISION NEEDED, the pass waits. Global events and story panels: left to read.
+   Cinematic playing: no input.
+3. The pass. Steps are independent (one failing does not stop the next). Schedule set in the widget (SETTINGS,
+   Steps), saved in `automation.json` `schedule`:
 
    | Step | Turn start | Build & End Turn |
    |---|---|---|
-   | Rites and commandments | yes | yes |
+   | Rites | yes | yes |
    | Workshop (Ikit) | yes | yes |
    | Tech | yes | yes |
    | Skills | yes | yes |
-   | Diplomacy for gold | yes | |
+   | Diplomacy | yes | |
    | Masterplans (Thanquol) | | yes |
    | Buildings | | yes |
    | Army | | yes |
 
-   Buildings and Army wait for **Build & End Turn**, so settlements you take during the turn are built on the same
-   turn; Tech and Skills run at both, so a campaign's very first turn is covered too (there is no turn start to act
-   on there; unspent skill points would make the game stop at its End Turn warning). Before pressing End Turn every
-   open panel is closed, so it is only ever clicked on the bare campaign map. If you end a turn in the game
-   instead, the next turn start runs the end-of-turn steps too, so nothing waits a turn.
-   0. **Rites and commandments** (runs first, before any gold is spent): every complete province is kept on
-      **Exploitative Planning**. On a fresh campaign the first complete province gets **Expansionist Planning**
-      first, the requirement of the rite **The Dominating Scheme**, and keeps it until the rite has been cast once.
-      The Dominating Scheme is cast whenever it is off cooldown and affordable; after Horned One's Approval its
-      Verminlord choice is answered with **A Verminlord Warpseer** (that dilemma only). Cooldowns and commandments
-      are read from memory (assist/rites.py).
-   1. **Workshop** (Ikit's Forbidden Workshop, assist/workshop.py): the Stormfiend Ratling Cannon upgrades are
-      bought as soon as they can be. Nothing for Thanquol.
-   2. **Tech**: if research is idle, start the next tech on the bee-line, after that the cheapest remaining one.
-      The report says how many locked techs the click queued on the way (worked out from memory and the tech tree).
-   3. **Skills**: spend skill points on Ikit Claw, Thanquol, Verminlord Warpseers and Warlock Engineers in your order.
-      Other characters are left alone.
-   4. **Diplomacy for gold** (turn start, see "Diplomacy for gold" below): every safe deal the AI pays you for,
-      for the most gold it accepts: joining a major faction's war against a minor (or a much weaker major), and
-      peace with factions at war with you that do not border you.
-   5. **Masterplans** (Thanquol only, see "Playing Thanquol" below).
-   6. **Buildings**: first every damaged building is repaired, then upgrades and constructions from your
-      settlement priority list, the gold spent across all provinces in value order (see "Settlement build planner").
-      A settlement next to a region held by an enemy you are at war with is left to you, repairs included; the rest
-      of its province is built. A damaged building is never upgraded (the game would halt the upgrade).
-   7. **Army**: only armies you ticked. Each is made to match the doomstack template (since
-      2026-10-20: lord, 1 Warlock Engineer, 12 Stormfiends with Ratling Cannons, 6 Warp-Doom Magma-Cannons; pure
-      ranged, the cannons fire over the Stormfiends): extra units
-      are disbanded once the army stands where its missing units can be recruited locally, missing units are
-      recruited from the local pool (never the global one), the army is moved toward the nearest such province,
-      and free Warlock Engineers are walked in. It spends the gold the buildings left.
-4. The overlay turns green: **YOUR TURN N**, with one line per step. The window's "This turn" box shows the same.
+   - **Rites**: complete provinces on Exploitative Planning; the first one on Expansionist Planning until the
+     Dominating Scheme has been cast once. Dominating Scheme cast when off cooldown and affordable; its Verminlord
+     choice: Verminlord Warpseer.
+   - **Workshop**: Ratling Cannon upgrades bought as soon as possible.
+   - **Tech**: research idle -> next bee-line target, then cheapest remaining.
+   - **Skills**: points spent in your order (Ikit, Thanquol, Warpseers, Warlock Engineers only).
+   - **Diplomacy**: join-war and peace deals for gold (see "Diplomacy for gold").
+   - **Buildings**: repairs first, then the settlement list, gold spent across provinces in value order. A
+     settlement next to an enemy-held region is skipped. A damaged building is never upgraded.
+   - **Army**: ticked armies only, refilled to the template (see "Army builder").
+4. YOUR TURN N, one line per step.
 
-The game is brought to the front only while the pass clicks. Afterwards, focus goes back to the window you were
-using. **If you switch away from the game during a pass, the pass stops at once (INTERRUPTED)**; press Run now to
-redo it. The assistant never fights a battle, and ends a turn only when you press **Build & End Turn**.
+- Game raised only while clicking; focus returned afterwards. Switching away = INTERRUPTED (Run now redoes it).
+- Never fights a battle. Ends a turn only on Build & End Turn (panels closed first). A turn ended in the game:
+  the next turn start runs the end-of-turn steps too.
+- Overlay: grey WAITING, amber AUTOMATING, green YOUR TURN, pink PAUSED / DECISION NEEDED, red ERROR /
+  INTERRUPTED. Click toggles pause (not while automating).
 
-Overlay colours: grey WAITING, amber AUTOMATING, green YOUR TURN, pink PAUSED and DECISION NEEDED, red ERROR and
-INTERRUPTED. Clicking the overlay toggles pause, except while automating (then clicks go through to the game).
+### Playing Thanquol (Clan Scruten)
 
-### Playing Thanquol (Clan Scruten), the backup faction
+The faction is read from memory (Clan Skryre or Clan Scruten); nothing to set. Differences:
+- **Masterplans** (Build & End Turn): every free Underling on a Steal-Take (best foreign settlement on screen:
+  highest level, not at war first, not on cooldown, not in or next to your provinces). A Steal-Take is completed
+  when waiting is worth less than completing (Risk x chance a Complication maxes Alarm, against next turn's loot).
+  Secrets bought in `shop.order`, 50 Warpstone kept. **Kill-Stabs are never touched.** All state from memory;
+  unlocks read live (same in single player and multiplayer). Underlings are not armies.
+- **Skills**: Route Marcher, Inspiring Presence, Blessings of the Horned Rat, Hasty Redirection, Insatiable Greed,
+  Replaceable Fodder, then army/campaign skills, Mentor last; Boneripper with Warpfire Projectors at rank 15.
+- **Buildings**: same list; Grey Seer Lair kept as a landmark; Morskittar Engine skipped (story-locked).
+- **No Workshop**. Rites, tech and army template the same.
+- **Warlock Engineers** come from the Warp-Turbine Plant line (Construction Cavern level).
 
-The assistant finds out from memory which faction you play (the human faction that is Ikit's Clan Skryre or
-Thanquol's Clan Scruten); there is nothing to set. What is different with Thanquol:
-- **Masterplans** (`assist/masterplans.py`, `strategy/masterplans.json`), at Build & End Turn only: every free
-  Underling is sent on a Steal-Take (the best foreign settlement on screen: highest settlement level, factions you
-  are not at war with first, none on a Masterplans cooldown, none in one of your provinces or a province bordering
-  one); each running Steal-Take is completed once waiting
-  another turn is worth less than completing (Risk x the chance one Complication maxes the Alarm, against the loot
-  the next turn adds over the loot gathered; at maximum Alarm a plan pays 25%), and Clan Scruten Secrets are bought
-  in the file's `shop.order`, keeping 50 Warpstone for a Kill-Stab. **Kill-Stab plans stay yours**: the assistant
-  never starts, completes or abandons one. Everything it decides on is read from memory (`bot/sensor/masterplans.py`:
-  plans, Risk, Alarm, loot, cards, Underlings, cooldowns, Warpstone, Secrets owned); the panel is opened only to click,
-  and every action is confirmed in memory. Single player and multiplayer work the same: what is unlocked (the
-  Masterplans, each Underling, each Secrets line) is read from the game every time, never from the mode, the turn or
-  the story, so whatever unlocks later is used from that turn on. Every board it reads is logged to
-  `runs/masterplans.jsonl`. Run now and
-  Build & End Turn close the panel (and its guided tour) before they start. Underlings are not armies to it: they
-  are never listed for ticking and the army builder ignores them.
-- **Skills** (`strategy/skills.json`, "thanquol"): Route Marcher, Inspiring Presence, then his unique Blessings of
-  the Horned Rat (required by the next three), Hasty Redirection, Insatiable Greed and Replaceable Fodder (his
-  unique row unlocks at rank 11), then Ikit's army and campaign skills, Mentor last; Boneripper with **Warpfire
-  Projectors** as soon as rank 15 allows, Warpfire Braziers never.
-- **Buildings**: the same settlement list. His Grey Seer Lair in Karag Dromar is kept and upgraded as a landmark;
-  the Morskittar Engine is left out (single player only, story-locked until mission 5): Zhufbar's slot takes the
-  next building on the list. Frontline provinces stay yours, as with
-  Ikit (Black Water is one while Zhufbar is an enemy's).
-- **No Forbidden Workshop**: the Workshop step does nothing.
-- Rites, tech tree and the army template are the same (Thanquol is an allowed lord); Ferocious Plans comes
-  researched.
-- **Warlock Engineers**: his capitals build the Warp-Turbine Plant line like Ikit's (it recruits the Magma Cannons),
-  and its Construction Cavern level is what recruits Warlock Engineers. Until one stands the army builder says so.
+### The widget
 
-### The widget (everything without alt-tab)
+Bar over the game: **expand**, **restart**, **exit**. Never takes focus; hidden while a pass runs; drag to move.
 
-The bar over the game (the Turn rail, compact while you play, full while a pass runs) has three small buttons
-at its right end: **expand** (fold-out panel), **restart** (a fresh copy with the latest code) and **exit**.
-The panel holds what the full window has: Run now, Pause/Resume, Restart, Exit, turn and treasury, this turn's
-results, the armies with their army-builder tick boxes, Ignore buttons for blocking popups, the frontline
-provinces, and a "full window" link. Neither takes focus, so the game stays in front; the panel hides itself
-while a pass runs. Drag the bar to move both. Restart and Exit are refused while a pass runs.
-
-Two parts of the panel change settings with a click (player rule 2026-10-21: everything adjustable between turns
-without editing files):
-- **DIPLOMACY FOR GOLD**: every faction a deal could be offered for right now, one line per kind of deal ("join war
-  against Bloody Spearz", "peace with The Court of Night"). Click a line to turn that faction off (✗) or back on
-  (✓) for that kind of deal; all are on by default. Saved in `strategy/diplomacy.json` (`off`).
-- **SETTINGS** (click the heading to unfold): every option the steps read, by group, with its value. A switch or
-  a choice changes with a click; a number has − and +. Diplomacy (peace for gold, join wars for gold, how much
-  weaker a major must be to be a join-war target), Turn (end every turn by itself, close event notices during your
-  turn, the pause after every click, camera panning), Buildings (repairs, buildings not on the list), Army (raise
-  new armies by itself, the income kept after a new army), Masterplans (Steal-Takes, their targets, at maximum
-  Alarm, the Gold-per-Warpstone rate, buying Secrets, the Warpstone kept). Under Steps, each step is switched on or
-  off for turn start and for Build & End Turn. Changes are saved at once and apply from the next pass
-  (`assist/settings.py` lists them all).
+Expanded panel: Run now, Pause, Restart, Exit, treasury / income / Warpstone, this turn's results, armies with
+their tick boxes, Ignore buttons, next army, frontline, plus:
+- **DIPLOMACY FOR GOLD**: every faction a deal could be offered for, per kind of deal. Click = off (✗) / on (✓).
+  All on by default (`diplomacy.json` `off`).
+- **SETTINGS** (click to unfold): every option the steps read, click to change (numbers: − / +), and each step on
+  or off for turn start and Build & End Turn. Saved at once, applies from the next pass (`assist/settings.py`).
 
 ### The assistant window
 
@@ -409,35 +350,26 @@ turns by itself, and drafts the assistant replaced. Nothing imports it and it mu
 
 ## Settlement build planner
 
-`strategy/settlements.json` is the player's priority list. `assist/buildplan.py` applies it per province:
+`strategy/settlements.json` is the priority list; `assist/buildplan.py` applies it per province.
 
-- Slot 1 is the main building, upgraded to the maximum: tier 5 in a capital, tier 3 in a minor settlement.
-  Skavenblight uses its own main-building chain with 12 slots at tier 5.
-- Port settlements keep the port in slot 2 and upgrade it as far as the main building allows.
-- The rest of the slots are filled top to bottom from the list, each chain to the highest level the
-  settlement allows. Lower entries are dropped when slots run out.
-- The order (player decision 2026-10-20): landmarks, then the two buildings that recruit the army template
-  (Equipment Warpforge, Warp-Turbine Plant, both tier 5, so capital only), then chains that reach tier 5
-  (Warpstone Reactor, Temple of the Horned Rat) before the tier-3 ones (Breeding Pit, Scrap Heap), fillers last
-  (Chained Sentry Beasts, Spy Nests). Minor settlements keep Breeding Pit, Scrap Heap, Overseer's Lookout.
-- What a capital lets go: no port: Spy Nests; one landmark or a port: also Sentry Beasts; port + landmark: also
-  the Scrap Heap; port + two landmarks: also the Breeding Pit. Every capital can recruit the template.
-- Equipment Warpforge is one per province. The Warp-Turbine Plant is capital only (never a lone Cavern in a minor);
-  a Construction Cavern left in a minor is off the list there and replaced.
-- Clan Armoury (Stormvermin) is off the list since 2026-10-20; a standing one is replaced when its slot is needed.
-- Spending (2026-10-20, `assist/build.py` `spend_rank`): the gold goes across all provinces at once, in value order:
-  main building and port upgrades; the Warpstone Reactor line (+30/40/50% income from every building in the
-  province, paid back in about 6 turns); landmarks; the template's recruit buildings, the capital closest to tier 5
-  first; then the rest in list order. Top items affordable within 2 turns of net income are saved for, and the
-  rest is bought with the spare gold: anything that does not push a saved item a turn later (player decision
-  2026-10-20; holding all the gold idled it while cheap upgrades waited). The army step leaves only what the saved
-  items still need ("saving for ... in N turn(s)" in the result).
-- The army step checks the gold before every recruit click (base price until a click shows the real one), so it
-  never clicks on with an empty treasury.
-- Nothing is planned above the current main-building tier. Buildings that are not on the list are only
-  offered for replacement, never demolished silently.
-
-Facts taken from the game data rather than assumed:
+- Slot 1: main building, to the maximum (capital tier 5, minor tier 3; Skavenblight 12 slots).
+- Port settlements: port in slot 2, upgraded as far as the main building allows.
+- Other slots: filled top-down from the list, each chain to the highest level allowed. Lower entries dropped when
+  slots run out.
+- List order: landmarks, Equipment Warpforge, Warp-Turbine Plant (tier 5: capitals only), tier-5 chains (Reactor,
+  Temple), tier-3 chains (Breeding Pit, Scrap Heap), fillers (Sentry Beasts, Spy Nests). Minors: Breeding Pit,
+  Scrap Heap, Overseer's Lookout.
+- Capitals give up, in order: Spy Nests (no port), Sentry Beasts (port or a landmark), Scrap Heap (port +
+  landmark), Breeding Pit (port + 2 landmarks).
+- Equipment Warpforge: one per province. Warp-Turbine Plant: capitals only. Clan Armoury: off the list.
+- Off-list buildings: replaced when their slot is needed (`off_list_buildings: replace`); ports, main buildings
+  and specials never.
+- Nothing above the current main-building tier.
+- Spending (all provinces at once): main/port upgrades -> Reactor -> landmarks -> recruit buildings (capital
+  closest to tier 5 first) -> the rest in list order.
+- Saving: a top item affordable within 2 turns of net income is saved for; spare gold that does not delay it is
+  spent now. The army step leaves what the saved items still need.
+- No payback rule (simulated 2026-10-21 and removed: it cost a quarter of a province's building income).
 
 | Rule | Source |
 |---|---|
@@ -448,8 +380,7 @@ Facts taken from the game data rather than assumed:
 | Equipment Warpforge and Warp-Turbine Plant need tier 5, so they can only go in a capital | building levels |
 | Breeding Pit and Scrap Heap stop at tier 3; Reactor, Temple and Sentry Beasts reach tier 5 | building levels |
 
-Unverified: whether the port occupies one of the slots the main building unlocks. The planner assumes
-it does (`PORT_TAKES_A_SLOT`).
+Unverified: whether the port takes one of the main building's slots (assumed yes, `PORT_TAKES_A_SLOT`).
 
 ```
 python -X utf8 -m assist.buildplan        # demo on example provinces
@@ -458,54 +389,37 @@ python -X utf8 tests/test_buildplan.py    # rule checks
 
 ## Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`)
 
-Player decisions 2026-10-21. At every turn start the plan is made fresh from memory, so it works the same from any
-point of a campaign: factions met later join in, borders that move change the neighbours that turn, and a
-wiped-out faction drops out.
+Every turn start, planned fresh from memory (works from any point of a campaign).
 
-| Deal | Who is asked | Rules |
-|---|---|---|
-| Peace | an AI faction at war with you (minor or major) | not bordering your territory; you ask for a payment with the peace |
-| Join war | a major AI faction you have met and are not at war with, at war with the target | the target is a minor faction (with land), or a major at most half your strength (`major_target_max_strength`, 0.5); never a target with a treaty with you (trade, non-aggression, alliance, vassal), a treaty or alliance with another human, or bordering you (those wars are yours to start); the richest payer is asked first, the next one if it refuses |
+- **Peace**: AI faction at war with you, not bordering you -> peace + payment to you.
+- **Join war**: target = minor with land, or major at most 50% of your strength (`major_target_max_strength`).
+  Payer = major AI faction you have met, at peace with you, at war with the target. Richest payer first.
+- **Never**: humans, rebels, dead factions; join-war targets with a treaty with you (trade, NAP, alliance,
+  vassal), a treaty/alliance with another human, or bordering you.
+- One deal per faction per turn. Order: peace, then join war.
+- **Amount**: start at 1 gold (refused -> next deal), +200 per arrow until refused, then narrow the last 200 from a
+  line fitted to the values seen. Highest accepted amount sent with Send (never Threaten).
+- **Check**: treasury up and war started / ended, in memory. This turn's tries in `runs/diplomacy_turn.json`.
+- Dropped: tribute (bare demand starts at -20), Threaten (refusal = war + treachery).
+- UI stop-gap: AI acceptance read from the panel (`label_deal_success_chance` / `label_payment_success_chance`
+  positive). The value exists only on the stack.
 
-Never with or against a human faction, a rebel faction or a dead one. At most one deal per faction a turn (peace
-for gold and then a paid war on the same faction would flip it every pass). Peace, then join war, in that order.
-Tribute (a payment demand alone) was tried and dropped: the AI starts a bare demand at -20, so no faction ever
-pays. **Threaten** is never used: a refused threat means war and counts as treachery.
-
-How an offer is made: Diplomacy, the faction's row, Negotiate; the deal item (join war: the target ticked in the
-"Declare war against" list; peace) on your side; Payment as **Demand payment** on theirs. The amount is searched
-lowest first: the window opens at 1 gold, so a refusal there costs nothing (a turn's seven refusals took 8 s);
-then +200 per arrow click until they refuse; then the last 200 narrowed with typed amounts, starting where a line
-through every value seen crosses zero (the payment's value to the AI is linear in the amount). The most they
-accept is sent with **Send**, never Threaten, and only when the panel shows the deal positive. The effect is
-checked in memory: your treasury up and the war started (join war) or ended (peace). What was tried this turn is
-kept in `runs/diplomacy_turn.json` (a restart does not ask again); the memory check after the step reports a deal
-not offered as MISSED and one the AI refused with its reason.
-
-UI stop-gap: the AI's evaluation of a proposal is read from the panel (`label_deal_success_chance`,
-`label_payment_success_chance`: positive = they accept). It is computed on demand and found only on the stack
-(payment value -0.00653 per gold for Wissenland, linear), never on the heap; decoding the evaluation is open.
-
-Memory (9.0.4, from the Lua bindings' natives, checked live 2026-10-21):
-
-| Fact | Where |
+| Memory (9.0.4) | Where |
 |---|---|
-| major faction (can a player pick it) | `faction:can_be_human`, byte F+0xEB5 != 0: 1 for all 109 lord-select factions (landless hordes too), 0 for the 451 others |
-| dead | `is_dead`, byte F+0x10C0 != 0 |
+| major (`can_be_human`) | byte F+0xEB5 != 0 |
+| dead (`is_dead`) | byte F+0x10C0 != 0 |
 | treasury | i32 F+0xD58 |
-| relationship with another faction | entry e in [F+0xDB8] (count u32 +4, base +8, stride 0x78, other faction e+0x28): state i32 [[e+0x30]+0x20] = 0 war, 1 peace, 2 defensive alliance, 3 military alliance, 2..7 ally / vassal / client, 7 vassal of; byte e+0x74: bit 0 trade agreement, bit 2 met, bit 3 non-aggression pact |
-| strength | `faction_strength`: B = [[[[[F+0x3A8]+0x90]+0x6CD0]+0x990]+0x10]; table [[B+0xE0]+0x280] (capacity u32 +0x80, empty key u32 +0x84, 16-byte entries [+0x78] probed from u32 F+8 % capacity) -> E; map [B+0x1D8]+0x1E8, node list from [M+8], key u32 E+0x40 -> strength u32 node+0x14. Matches the diplomacy panel's strength bars for all 16 factions checked |
+| relationship | entry e in [F+0xDB8] (count +4, base +8, stride 0x78, other faction e+0x28); state i32 [[e+0x30]+0x20]: 0 war, 1 peace, 2 defensive, 3 military alliance, 2..7 ally/vassal/client, 7 vassal; byte e+0x74: bit 0 trade, bit 2 met, bit 3 NAP |
+| strength (`faction_strength`) | B = [[[[[F+0x3A8]+0x90]+0x6CD0]+0x990]+0x10]; table [[B+0xE0]+0x280] keyed u32 F+8 -> E; map [B+0x1D8]+0x1E8 keyed u32 E+0x40 -> u32 node+0x14 |
 
-Panel: `diplomacy_dropdown` / `sortable_list_factions` / `faction_row_entry_<key>`; Negotiate = `button_ok` under
-`faction_panel_bottom`; options `diplomatic_option_<kind>` under `list_possible_actions` (peace shows the AI's value
-of peace alone as `label_success_chance_for_action`); join war opens `diplomacy_hud_request_join_war` (rows
-`list_box_<n>` by screen name, a `checkbox`, `ok_request`); payments `diplomacy_hud_payments` (`pay_demand`,
-`amount`: typed text is taken by the next arrow click, `r_`/`l_arrow_amount` step 200, `ok_payments`);
-`button_send` under `button_set_holder`; the answer `dy_text` (state `they_accepted`) closed with `button_accept`;
-`button_cancel` back to the list; Escape closes the panel from the list.
+Panel: `diplomacy_dropdown` > `faction_row_entry_<key>` > Negotiate (`button_ok`) > `diplomatic_option_<kind>`;
+join war: `diplomacy_hud_request_join_war` row by screen name > `checkbox` > `ok_request`; payment:
+`diplomacy_hud_payments` > `pay_demand`, `amount` (typed text taken by the next arrow), `r_`/`l_arrow_amount` (±200),
+`ok_payments`; `button_send`; answer `dy_text` (`they_accepted`) > `button_accept`; `button_cancel` back; Escape
+closes.
 
 ```
-python -X utf8 -m assist.diplomacy plan   # memory only: the deals that would be offered, and why others are not
+python -X utf8 -m assist.diplomacy plan   # the deals that would be offered, and why others are not
 python -X utf8 -m assist.diplomacy run    # offer them now
 ```
 
@@ -747,31 +661,17 @@ about 7 s per point, and 90 s per character before that), following the order ex
 
 ## Army builder (`assist/army_builder.py`)
 
-Runs at turn start for armies ticked in the window, after the building step: building upgrades (in provinces
-not next to an enemy at war) take precedence over refilling armies, so the builder recruits with what is left. Per army:
+Build & End Turn, after buildings (buildings take the gold first). Ticked armies only. Per army:
 
-1. Disband units not in the template, but only once the army stands in a province that can recruit its
-   missing units locally (player rule: a stripped lord on the march gets attacked). Contiguous cards: click
-   the first, Shift-click the last. Scattered cards: Ctrl-click. Heroes one at a time, because the game leaves
-   embedded heroes out of a group disband. The clicked cards are checked in memory (unit card +0x1B8 is 2
-   when selected; Shift-range members are not flagged), and what was disbanded is verified in memory.
-2. If the army stands in an eligible province, queue the missing units from the **local** recruitment pool
-   only (`local1/<unit>_recruitable`), never the global pool, which costs far more. Each click is confirmed by
-   the treasury going down; when it stops going down, local capacity or gold has run out and the rest waits
-   for later turns. The local pool is a horizontal list that scrolls: a card past the `list_clip` window
-   still reads as visible but its centre can be off screen (the click lands on the map), so each card is
-   first wheeled into view inside its `list_clip` (one notch = about 82 px). A Warlock Engineer never decides where the army goes (player rule): when the army has none and
-   none is free or already walking to it, one is recruited as soon as the faction-wide cap allows, at the
-   settlement nearest the army that can recruit one (settlement > `button_agents` > engineer tab > first
-   candidate > confirm), and it walks to wherever the army is, re-ordered every turn until it joins. The cap
-   rises +2 per Verminlord Warpseer with Inscrutable Genius; while it is full the widget says so. Heroes are
-   never disbanded automatically.
-3. Otherwise order the army to the closest eligible province: fewest region hops over the land adjacency
-   graph, ties broken by straight-line distance, preferring provinces that cover more of the missing units.
-   Re-evaluated every turn, so a province that becomes eligible mid-march takes over if it is closer.
-   The order is a right-click on the settlement's nameplate component after panning the camera to it.
-4. Walk free Warlock Engineers into the army: double-click the hero's row, pan until the lord's flag
-   component (`label_<lord id>`) is on screen, right-click it, take the Hero Actions card.
+1. Disband units not in the template, only once the army stands where its missing units are recruited locally.
+   Heroes never disbanded.
+2. In such a province: queue missing units from the **local** pool only (never global). Each click confirmed in
+   the recruitment queue in memory; gold checked before every click; stops when capacity or gold runs out.
+3. No Warlock Engineer and none free or on the way: recruit one at the nearest settlement that can, as soon as the
+   cap allows; it walks to the army, re-ordered every turn. The engineer never decides where the army goes.
+4. Otherwise: march to the closest eligible province (fewest region hops, then distance, then most missing units
+   covered). Re-chosen every turn.
+5. Free Warlock Engineers walked into the army.
 
 ## Turn-start popups (`assist/popups.py`)
 
