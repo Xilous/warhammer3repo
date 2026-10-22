@@ -1245,13 +1245,18 @@ class Runner:
             # restarted on the player's turn whose pass the old copy left to do: unfinished (waiting / interrupted /
             # error), or never begun because the old copy ended the turn before and was stopped during the AI moves
             rec = self.ts                     # the saved record (assist/turnstate.py): this turn's pass not done yet
+            # the record of this very turn decides when there is one (2026-10-21: a copy restarted while the player
+            # waited for the others after ending turn 19 took the old copy's "waiting" for an unfinished start and
+            # ran every step again); the old copy's last status is only a fallback without one
+            this_turn = rec.campaign == self._cid() and rec.turn == s.turn
             unfinished = mine is True and (
-                (rec.campaign == self._cid() and rec.turn == s.turn and not rec.start_done)
+                (this_turn and not rec.start_done)
                 # the record still on the previous turn: this turn started after the old copy's last write, so its
                 # pass has not run (a restart in the moment between the turn change and the pass)
                 or (rec.campaign == self._cid() and rec.turn == s.turn - 1)
-                or (prev.get("turn") == s.turn and prev.get("state") != "your turn")
-                or (prev.get("turn") == s.turn - 1 and str(prev.get("headline", "")).startswith(f"TURN {s.turn - 1} ENDED")))
+                or (not this_turn and prev.get("turn") == s.turn and prev.get("state") != "your turn")
+                or (not this_turn and prev.get("turn") == s.turn - 1
+                    and str(prev.get("headline", "")).startswith(f"TURN {s.turn - 1} ENDED")))
             if (coming or unfinished) and not self.campaign_lost:
                 self.pending = s.turn
                 self.turn_seen_at = time.monotonic()
