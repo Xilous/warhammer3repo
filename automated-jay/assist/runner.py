@@ -32,7 +32,7 @@ from bot.focus import CinematicPlaying, InputAborted, idle_seconds, return_to_te
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
 from tools import timing
-from . import army_builder, build, diplomacy, masterplans, rites, skills, tech, workshop
+from . import army_builder, build, masterplans, rites, skills, tech, workshop
 
 # Turn-start settle, by condition (was a fixed 4 s): the pass starts once the turn-start camera pan has finished (the
 # map point at the screen centre moves less than SETTLE_CAMERA_PX per frame for SETTLE_CAMERA_MS) AND no root panel
@@ -61,7 +61,6 @@ STEP_FNS = {
     "workshop": workshop.run,            # the Stormfiend Ratling Cannon upgrades, as soon as they can be bought
     "tech": tech.run,
     "skills": skills.run,
-    "diplomacy": diplomacy.run,          # join-war and peace offers for gold (turn start, player decision 2026-10-21)
     "masterplans": masterplans.run,      # Thanquol: Steal-Takes and Clan Scruten Secrets (end of turn only, 2026-10-18)
     "buildings": build.run,             # player rule: building upgrades take precedence over refilling armies
     "army": army_builder.run,            # recruits with whatever gold the building step left
@@ -71,14 +70,13 @@ MISSED_FNS = {
     "buildings": build.missed,
     "tech": tech.missed,
     "skills": skills.missed,
-    "diplomacy": diplomacy.missed,
     "masterplans": masterplans.missed,
     "army": army_builder.missed,
 }
 # Player decision (2026-10-16): building moves to the end of the turn ("Build & End Turn" in the app), so that
 # settlements taken during the turn are built on the same turn; the army step goes with it, after the buildings, so
 # that buildings keep precedence over armies for the gold. strategy/automation.json "schedule" overrides this.
-DEFAULT_SCHEDULE = {"turn_start": ["rites", "workshop", "tech", "skills", "diplomacy"],
+DEFAULT_SCHEDULE = {"turn_start": ["rites", "workshop", "tech", "skills"],
                     "end_turn": ["rites", "workshop", "tech", "skills", "masterplans", "buildings", "army"]}
 # masterplans at the end of the turn only (player decision, 2026-10-18): Underlings the player sends on a Kill-Stab during
 # the turn are never taken for a Steal-Take first; before buildings, so a completed Steal-Take's gold is spent this turn
@@ -414,7 +412,7 @@ class Runner:
         if reset:
             end = set(schedule()["end_turn"]) - set(schedule()["turn_start"]) | {"end"}
             self.rail_steps = {k: ("later" if k in end else "pending")
-                               for k in ("events", "rites", "workshop", "tech", "skills", "diplomacy", "masterplans", "buildings",
+                               for k in ("events", "rites", "workshop", "tech", "skills", "masterplans", "buildings",
                                          "army", "end")}
         self.rail_steps.update(changes)
         if self.widget and hasattr(self.widget, "post_steps"):

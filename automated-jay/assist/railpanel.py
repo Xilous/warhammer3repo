@@ -8,8 +8,7 @@ while a pass runs, so it can never be under a click the assistant makes.
 Look: Clan Brass (player's pick 2026-10-18, assist/theme.py). Contents, top to bottom: Run now / Pause / Restart /
 Exit, treasury - income - Warpstone, "Ignore <id>" for popups that block a pass, this turn's step results, the
 armies with their army-builder tick boxes (saved exactly as the main window does: assist/army.py set_enabled) and
-what each costs now and once refilled, the factions a diplomacy deal could be offered for (a click turns one off or
-on), the next army (can you afford it: a bar of income against its cost, Create
+what each costs now and once refilled, the next army (can you afford it: a bar of income against its cost, Create
 new playbook army, greyed out with a ✓/✗ list of what it needs), the settings (every option of the strategy files and which steps run when, changed with a click:
 assist/settings.py), the frontline settlements, and a link to the full window.
 """
@@ -133,12 +132,6 @@ class RailPanel:
             self.raise_btn.pack(fill="x", pady=(10, 6))
             self.checks.pack(fill="x")
         self._style_raise(False)
-
-        self._rule()
-        self._heading("DIPLOMACY FOR GOLD  ·  click one to turn it off or on")
-        self.diplo = tk.Frame(self.body, bg=T.PANEL)
-        self.diplo.pack(fill="x")
-        self.diplo_rows: list = []                  # (kind, minor key, on) from the last read (assist/diplomacy.listed)
 
         self._rule()
         self.settings_head = tk.Label(self.body, text="", bg=T.PANEL, fg=T.BRASS, font=self.f_head, anchor="w",
@@ -389,36 +382,6 @@ class RailPanel:
                              fg=T.BRASS if on else T.MUTED, font=self.f_mono, cursor="hand2", padx=6)
                 b.pack(side="right")
                 b.bind("<Button-1>", lambda e, ph=phase, n=name: flip(ph, n))
-
-    def show_diplomacy(self, rows) -> None:
-        self.diplo_rows = list(rows)
-        self._render_diplomacy()
-        self.place()
-
-    def _toggle_deal(self, kind: str, minor: str, on: bool) -> None:
-        from .diplomacy import set_on
-        set_on(kind, minor, on)
-        self.diplo_rows = [(k, m, on if (k, m) == (kind, minor) else o) for k, m, o in self.diplo_rows]
-        self._render_diplomacy()
-
-    def _render_diplomacy(self) -> None:
-        """The factions a join-war deal could be offered for (player request 2026-10-21): each a
-        click to turn it off or on (strategy/diplomacy.json), all on by default. Rebuilt only when the list changed."""
-        from .diplomacy import name
-        sig = tuple(self.diplo_rows)
-        if sig == getattr(self, "_diplo_sig", None):
-            return
-        self._diplo_sig = sig
-        for c in self.diplo.winfo_children():
-            c.destroy()
-        if not self.diplo_rows:
-            tk.Label(self.diplo, text="no deal to offer", bg=T.PANEL, fg=T.MUTED, font=self.f_body).pack(anchor="w")
-        for kind, minor, on in self.diplo_rows:
-            what = {"join_war": "join war against"}.get(kind, kind)
-            row = tk.Label(self.diplo, text=f"{'✓' if on else '✗'}  {what} {name(minor)}" + ("" if on else "  · off"),
-                           bg=T.PANEL, fg=T.INK if on else T.MUTED, font=self.f_body, anchor="w", cursor="hand2")
-            row.pack(fill="x", pady=(2, 0))
-            row.bind("<Button-1>", lambda e, k=kind, m=minor, o=on: self._toggle_deal(k, m, not o))
 
     def _render_armies(self) -> None:
         """Rebuilt only when what it shows changed (2026-10-18: rebuilt on every refresh, a new tick box flashed

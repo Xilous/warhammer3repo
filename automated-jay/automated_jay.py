@@ -68,26 +68,6 @@ def selftest() -> int:
         if (_w.faction_name(find_player_faction(_w) or 0) or "") == "wh3_dlc29_skv_clan_scruten":
             check("masterplans (memory)", plans)
 
-        def majors():
-            """can_be_human (F+0xEB5) against the lord-select table: every faction a lord can be picked for is major,
-            none other (2026-10-21: 109 of 109, 0 of 451)."""
-            from bot.sensor import diplomacy as dip
-            F = find_player_faction(_w)
-            picks = {r["faction"] for r in gd._load("frontend_faction_leaders_tables")}
-            fs = [F] + list(dip.relations(_w, F))
-            got = {_w.faction_name(f) for f in fs if dip.can_be_human(_w, f)}
-            have = {_w.faction_name(f) for f in fs} & picks
-            if got != have:
-                raise AssertionError(f"major but not at lord select: {sorted(got - have)[:5]}; "
-                                     f"at lord select but not major: {sorted(have - got)[:5]}")
-            return f"{len(got)} major factions, all of them at lord select"
-        check("major factions (memory)", majors)
-
-        def deals():
-            from assist import diplomacy
-            ds, skipped = diplomacy.plan(_w)
-            return f"{[x.line() for x in ds]}; left out: {[(k, t, why) for k, t, why in skipped]}"
-        check("diplomacy plan", deals)
     text = "\n".join(lines)
     config.RUNS_DIR.mkdir(parents=True, exist_ok=True)
     (config.RUNS_DIR / "selftest.txt").write_text(text + "\n", encoding="utf-8")

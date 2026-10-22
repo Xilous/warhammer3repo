@@ -47,11 +47,11 @@ def test_clicks_change_the_file(tmp_strategy):
     v = S.get(pace)
     assert S.nudge(pace, +1) == v + pace.step
     assert json.load(open(tmp_strategy / "automation.json", encoding="utf-8"))["pace_ms"] == v + pace.step
-    share = next(s for s in S.SETTINGS if s.path == ("major_target_max_strength",))
-    for _ in range(30):
-        S.nudge(share, +1)
-    assert S.get(share) == share.hi
-    flag = next(s for s in S.SETTINGS if s.path == ("enabled", "join_war"))
+    keep = next(s for s in S.SETTINGS if s.path == ("shop", "keep_warpstone"))
+    for _ in range(200):
+        S.nudge(keep, +1)
+    assert S.get(keep) == keep.hi
+    flag = next(s for s in S.SETTINGS if s.path == ("auto_end_turn",))
     before = S.get(flag)
     S.nudge(flag, +1)
     assert S.get(flag) is (not before)
@@ -73,15 +73,7 @@ def test_step_switches_keep_run_order(tmp_strategy):
     S.set_step("turn_start", "tech", False)
     assert "tech" not in runner.schedule()["turn_start"]
     S.set_step("turn_start", "tech", True)
-    assert runner.schedule()["turn_start"] == ["rites", "workshop", "tech", "skills", "diplomacy"]
-    S.set_step("end_turn", "diplomacy", True)
-    end = runner.schedule()["end_turn"]
-    assert end.index("diplomacy") < end.index("masterplans")
-
-
-def test_diplomacy_reads_its_settings(tmp_strategy, monkeypatch):
-    from assist import diplomacy as d
-    monkeypatch.setattr(d, "SETTINGS", tmp_strategy / "diplomacy.json")
-    assert d.weak_share() == 0.5 and d.kind_on("join_war")
-    S.nudge(next(s for s in S.SETTINGS if s.path == ("enabled", "join_war")), +1)
-    assert not d.kind_on("join_war")
+    assert runner.schedule()["turn_start"] == ["rites", "workshop", "tech", "skills"]
+    S.set_step("turn_start", "buildings", True)
+    start = runner.schedule()["turn_start"]
+    assert start.index("skills") < start.index("buildings")

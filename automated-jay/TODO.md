@@ -14,21 +14,11 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
 ## Any session (single player is fine)
-- [ ] **Diplomacy for gold: live checks (assist/diplomacy.py)**. Join-war deals only (peace for gold and tribute
-      removed 2026-10-21). Checked live on turn 1 (Scruten): three deals (Wissenland 587, Karaz-a-Karak 1103, Sylvania
-      802), each the most the AI accepted, each confirmed in memory; faction_strength matches the panel's bars. Still
-      to see: (a) what the answer looks like when the AI turns a sent offer down; (b) a turn-start pass from the app
-      with the widget's diplomacy list and toggles; (c) a weak major as a target; (d) multiplayer (needs multiplayer).
-- [ ] **Diplomacy evaluation from memory**: the AI's value of a proposal is read from the panel (UI stop-gap). It is
-      computed on demand and only found on the stack (assist/diplomacy.py docstring): decode the evaluation function
-      and its inputs (attitude, treasury, war state) to replace the panel read.
-- [ ] **A "recruiter" lord: answered 2026-10-21, the player decides**. Supply Lines (game script
-      wh_campaign_setup.lua): every army from the 2nd on adds +1% (normal) / 2% (hard) / 4% (very hard, legendary)
-      upkeep to every unit; a lord-only army counts. A permanent recruiter costs about 320 (1 army, normal) to 1,150
-      gold (3 armies, legendary) a turn and pays only with heavy losses far from a recruiting province. The cheap form:
-      a 250-upkeep lord hired with the units queued, walked over, merged, disbanded at once (Supply Lines drops on the
-      disband). With Thanquol's "Replaceable Fodder" (global recruitment -2 turns, -50% cost) global recruitment does
-      the job. Not built into the army builder unless the player wants the temporary form.
+- [ ] **Army courier: live checks and the hand-over (built 2026-10-21, assist/courier.py)**. Ikit's / Thanquol's
+      army recruits the playbook armies' losses and walks them to the front; the template's lord is the Warpseer
+      only. To do with the game: the unit exchange panel the game opens on arrival (its id is logged to
+      runs/courier_panels.jsonl the first time) -> decode it and move the carried units across; then check a whole
+      round trip (recruit, walk, hand over, back to a recruiting province).
 - [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ... in N turn(s)" appears for a top item,
       cheap items are still bought with the spare gold, the saved item is bought on the turn it said, and the army
       still recruits with what is beyond the reserve.

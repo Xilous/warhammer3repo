@@ -858,6 +858,16 @@ def walk_engineer(ui: UI, w: World, F: int, hero, army, log) -> str:
 
 # ------------------------------------------------------------------ the step
 
+def courier_serves(w: World, F: int, army) -> bool:
+    """A playbook army (the template's lord) waits at the front for the courier instead of marching back to recruit,
+    while the courier is on and the faction leader's army exists (assist/courier.py)."""
+    from . import courier
+    if not courier.enabled() or army.general_subtype not in load_automation()["army_builder"]["template"]["lord"]:
+        return False
+    c = courier.find(w, F)
+    return c is not None and c.cqi != army.cqi
+
+
 def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = False):
     """One ticked army. mine: the free engineers that count as its engineer. Returns (log lines, the engineer
     recruited for it this turn or None). Everything is decided from memory first; the army is selected (a single
@@ -912,6 +922,8 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
                 if not select_army(ui, army):
                     return [f"{name}: could not select the army"], None
                 out += recruit_local(ui, w, F, want, log, mf=army.force_ptr)
+        elif courier_serves(w, F, army):
+            out.append("waits for the courier at the front (it brings the missing units)")
         else:
             tgt = closest_target(w, F, army, elig)
             if tgt is None:
@@ -987,9 +999,13 @@ def run(log=print, verify: bool = False) -> str:
     ui.find_root()
     out, acting = [], []
     present = armies(w, F)
+    from . import courier
+    carrier = courier.find(w, F) if courier.enabled() else None
     for a in present:
         ok, why = tick_for(a, ticked)
-        if ok:
+        if ok and carrier is not None and a.cqi == carrier.cqi:
+            out.append(f"{a.general_name}: the courier; not refilled to the template")
+        elif ok:
             acting.append(a)
         elif why:
             out.append(f"{a.general_name}: {why}")
@@ -1009,7 +1025,7 @@ def run(log=print, verify: bool = False) -> str:
             out += lines
             if new is not None:
                 acting.append(new)
-        if not acting:
+        if not acting and carrier is None:
             return "; ".join(out) or "no ticked army here"
         mine = assign_engineers(w, F, acting)
         for a in acting:
@@ -1020,6 +1036,13 @@ def run(log=print, verify: bool = False) -> str:
                 traceback.print_exc()
                 lines = [f"{a.general_name}: ERROR {ex}"]
             out += lines
+        if carrier is not None:                         # the courier last: it carries what the armies still miss
+            try:
+                out += courier.run(ui, w, F, log, verify=verify)
+            except Exception as ex:
+                import traceback
+                traceback.print_exc()
+                out.append(f"courier {carrier.general_name}: ERROR {ex}")
     out += untick_refilled(w, F, acting)
     LAST_NOTES[:] = out
     return "; ".join(out)

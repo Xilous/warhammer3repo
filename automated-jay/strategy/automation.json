@@ -12,8 +12,7 @@
       "rites",
       "workshop",
       "tech",
-      "skills",
-      "diplomacy"
+      "skills"
     ],
     "end_turn": [
       "rites",
@@ -25,7 +24,7 @@
       "army"
     ],
     "_masterplans": "Thanquol's Masterplans (assist/masterplans.py, strategy/masterplans.json): Steal-Takes on every free Underling and Clan Scruten Secrets. End of turn only (player decision, 2026-10-18): an Underling you send on a Kill-Stab during your turn is never taken first. Before buildings, so a completed Steal-Take's gold is spent the same turn.",
-    "_doc": "turn_start runs when your turn starts. end_turn runs when you press Build & End Turn in the app, right before it presses End Turn, so settlements taken during the turn are built on the same turn (player decision, 2026-10-16). Buildings stay before the army step: buildings take precedence for the gold. If a turn is ended in the game instead, the next turn start runs the end_turn steps too. Tech and skills run at both (2026-10-17): on a campaign's first turn there is no turn start to act on, so research would wait a whole turn, and unspent skill points make the game stop at its End Turn warning (it opens the character panel instead of ending the turn); with nothing to do both steps send no input. rites (commandments + the Dominating Scheme, assist/rites.py) goes first at both: it must be cast before buildings and the army spend the gold (player rule, 2026-10-17). diplomacy (join-war and peace offers for gold, assist/diplomacy.py) runs at turn start only, after the other turn-start steps, so the gold is there before buildings and the army spend at the end of the turn (player decision, 2026-10-21). Step names: rites, workshop, tech, skills, diplomacy, masterplans, buildings, army."
+    "_doc": "turn_start runs when your turn starts. end_turn runs when you press Build & End Turn in the app, right before it presses End Turn, so settlements taken during the turn are built on the same turn (player decision, 2026-10-16). Buildings stay before the army step: buildings take precedence for the gold. If a turn is ended in the game instead, the next turn start runs the end_turn steps too. Tech and skills run at both (2026-10-17): on a campaign's first turn there is no turn start to act on, so research would wait a whole turn, and unspent skill points make the game stop at its End Turn warning (it opens the character panel instead of ending the turn); with nothing to do both steps send no input. rites (commandments + the Dominating Scheme, assist/rites.py) goes first at both: it must be cast before buildings and the army spend the gold (player rule, 2026-10-17). Step names: rites, workshop, tech, skills, masterplans, buildings, army."
   },
   "auto_end_turn": false,
   "_auto_end_turn": "true: every turn is ended on its own once the turn-start pass is done. For the second PC of a 2-player test campaign (player plan 2026-10-19): set this to true and both schedule lists to [] and that PC only ends its turns, whatever faction it plays.",
@@ -89,8 +88,6 @@
     ],
     "template": {
       "lord": [
-        "wh2_dlc12_skv_ikit_claw",
-        "wh3_dlc29_skv_thanquol",
         "wh3_dlc29_skv_verminlord_warpseer"
       ],
       "heroes": {
@@ -104,7 +101,9 @@
     "disband_off_template": true,
     "move_army_to_recruit": true,
     "auto_create": false,
-    "income_reserve": 0
+    "income_reserve": 0,
+    "courier": true,
+    "_courier": "The army courier (player decisions 2026-10-21, assist/courier.py): the faction leader's own army (Ikit Claw or Thanquol) recruits the units the playbook armies have lost and walks them to the front; playbook armies (led by a Verminlord Warpseer, the template's only lord) never walk back to recruit. false: they march back to recruit as before. In the widget's settings."
   },
   "done_indicator": "widget",
   "widget": {

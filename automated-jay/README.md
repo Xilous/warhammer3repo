@@ -115,7 +115,6 @@ order, the army template) are edited here.
 | `strategy/settlements.json` | building priority list (main building, port, then the rest in order) |
 | `strategy/skills.json` | skill order per character type |
 | `strategy/automation.json` | how the assistant acts (`schedule`: which steps run when; `buildings.repair_damaged`: repairs on or off; pacing, camera), the doomstack template (units and heroes), the ticked armies |
-| `strategy/diplomacy.json` | diplomacy for gold: each kind of deal on or off, how weak a major must be to be a join-war target, the factions you turned off |
 | `strategy/masterplans.json` | Thanquol's Masterplans: Steal-Take rules and the Clan Scruten Secrets shop order |
 | `strategy/popup_ignore.json` | panels you marked harmless with Ignore |
 | `../tww/skv_beeline.json` | tech bee-line targets in click order (made by `../scripts/game/skv_beeline.py`, explained in `../GUIDE_Skryre_Tech_Beeline.md`) |
@@ -217,7 +216,7 @@ is used only to find what to click, to confirm a click took, and for what exists
 - One `game_focus` for the whole pass (game raised once, focus returned after). Not raisable -> "could not bring
   the game to the front".
 - Steps from the schedule (`automation.json` `schedule`, read every call):
-  - turn start: rites, workshop, tech, skills, diplomacy;
+  - turn start: rites, workshop, tech, skills;
   - Build & End Turn: rites, workshop, tech, skills, masterplans, buildings, army;
   - turn start adds the end-turn steps when the previous turn was not ended by Build & End Turn, and masterplans
     when an economic plan is at max Alarm.
@@ -227,7 +226,7 @@ is used only to find what to click, to confirm a click took, and for what exists
     "verified"; changed -> "verification redid: ..."; still changing -> said so.
     Fingerprints: buildings treasury; tech research; rites gold + cooldowns + commandments; workshop upgrades;
     skills points per character; army treasury + unit and queue counts per force.
-  - **Memory check** (`missed()`, buildings tech skills diplomacy masterplans army): plan made again from memory;
+  - **Memory check** (`missed()`, buildings tech skills masterplans army): plan made again from memory;
     anything left with "not possible" / "refused by the game" / "greyed out" -> "not done, with a reason"; anything
     else -> "MISSED (memory check)" and the bar turns red.
 - After the steps: late notices closed; "paused Nx while you used the mouse/keyboard" if it yielded; Kill-Stab at
@@ -270,25 +269,6 @@ is used only to find what to click, to confirm a click took, and for what exists
   - card: maxed, locked, locked_rank (hover suffix ignored) -> skipped; memory and card disagree -> logged;
   - open on both -> click up to its ranks, each confirmed by the points dropping; not confirmed -> not again this turn.
 - Missed: points left while a planned skill is open and was not refused.
-
-#### Diplomacy for gold (`assist/diplomacy.py`)
-- Plan fresh from memory every turn start: you, every faction in your relationship list (major = `can_be_human`,
-  human, rebel, dead, regions, treasury, strength), treaties, borders.
-- Factions skipped: human, rebel, dead, not met, at war with you (no peace deals).
-- **Join war**: not at war with you, holds land, minor or a major at most `major_target_max_strength` (0.5) of your
-  strength (strength 0 never counts). Payers: major AI factions you have met, at peace with you, at war with it;
-  richest first. Skipped: treaty with you (trade, NAP, alliance, vassal), bordering you, treaty with a human.
-- Filters: join war switched off; faction turned off; a deal made with that faction this
-  turn; the same deal tried this turn (`runs/diplomacy_turn.json`). Up to 30 deals a pass, plan remade after each.
-- Offer: Diplomacy -> payer's row -> Negotiate -> tick the target in "Declare war against" -> deal value must be
-  positive -> payment as Demand:
-  - 1 gold refused -> next deal;
-  - +200 per arrow until refused (game maximum reached -> take it; payer's treasury reached -> take it);
-  - line fitted through every value seen -> probe its zero, then the edge of its error, then halve to 1 gold;
-  - deal still positive -> Send (never Threaten) -> confirmed: treasury up and the war started -> answer closed.
-- Missed: an allowed deal not offered; refusals reported with their reason.
-- Never offered: tribute (a bare demand starts at -20), peace (a faction past a buffer faction counts as not
-  bordering, so real enemies would be offered it), Threaten (refusal = war + treachery).
 
 #### Masterplans (`assist/masterplans.py`, Clan Scruten only)
 - Off, not found or not unlocked -> nothing. Panel opened only when something will be done.
@@ -335,8 +315,8 @@ is used only to find what to click, to confirm a click took, and for what exists
 #### Army (`assist/army_builder.py`)
 - Ticked armies only. A tick counts only for the same general (id or name), set with a turn, at or before the
   army's turn and rank (another campaign's tick ignored).
-- Template: lord Ikit / Thanquol / Verminlord Warpseer, 1 Warlock Engineer, 12 Stormfiend Ratling Cannons, 6
-  Warp-Doom Magma-Cannons. Queued units count as present.
+- Template: lord Verminlord Warpseer (only), 1 Warlock Engineer, 12 Stormfiend Ratling Cannons, 6 Warp-Doom
+  Magma-Cannons. Queued units count as present. The courier's army (Ikit / Thanquol) is never refilled to it.
 - Eligible province: recruits every template unit type (finished, active buildings in owned regions).
 - Engineers: free ones (not in an army) kept on or assigned to the nearest army that needs one
   (`runs/engineer_claims.json`).
@@ -347,11 +327,24 @@ is used only to find what to click, to confirm a click took, and for what exists
     (cards checked against memory, selection checked, confirmed by the unit count);
   - at an eligible province: missing units queued from the local pool only (never global), room = 20 - units -
     queued - missing engineer; gold checked before each click; each click confirmed by the queue in memory;
+  - else, courier on and alive: waits at the front for the courier;
   - else marched to the closest eligible province (fewest region hops, then distance, then most missing units
     covered; not within 1.5 of another army); re-chosen every turn;
   - engineer missing and none free: recruited at the nearest settlement that can, if the cap (memory) allows;
   - assigned engineers walked into the army every turn until they join (not with no movement left or the army full).
 - Refilled (nothing missing, nothing to disband) -> tick cleared.
+- **Courier** (`assist/courier.py`, `army_builder.courier`, after the playbook armies): the faction leader's own army
+  (Ikit Claw or Thanquol; no extra Supply Lines). One action a turn, first match:
+  - units in its recruitment queue -> wait;
+  - target = ticked playbook army missing template units outside a recruiting province, nearest by region hops
+    (then most missing);
+  - no target -> wait in a recruiting province, or march to the nearest one (carrying nothing);
+  - in a recruiting province with room and gold -> recruit what the target needs beyond its cargo (template order,
+    up to 20 units);
+  - carrying units the target needs -> walk to the target (right-click its lord's flag; continues next turn);
+  - else -> march to the nearest recruiting province.
+  - On arrival the game's unit exchange panel opens: the hand-over is not automated yet (the panel is recorded in
+    `runs/courier_panels.jsonl` and closed; "merge the units yourself").
 - Missed: a ticked army at an eligible province with units not queued or off-template units left.
 - **New playbook army**: the button is never locked (the ✓/✗ checks are information). Pressed: needs an eligible
   province, a Verminlord Warpseer in the Recruit Lord pool and a free settlement there; income after it and a
@@ -406,7 +399,7 @@ is used only to find what to click, to confirm a click took, and for what exists
   pass through while the assistant is acting; position saved.
 - **Panel** (expand): Run now, Pause, Restart (fresh copy, refused while busy), Exit, treasury / income /
   Warpstone, this turn, armies with ticks (a tick that cannot refill is disabled; a tick can always be removed),
-  next army, diplomacy list (click = off / on per faction), SETTINGS, frontline. Refreshed every 4 s from
+  next army, SETTINGS, frontline. Refreshed every 4 s from
   memory only.
 - **SETTINGS**: every option in `assist/settings.py` (switch: click; choice: click cycles; number: - / + within its
   limits) and each step on/off per phase; written at once (atomic), read fresh by the next pass.
@@ -432,7 +425,7 @@ player.
 | Rites and commandments (`assist/rites.py`) | Working: commandments and the Dominating Scheme from memory, before any gold is spent. |
 | Forbidden Workshop (`assist/workshop.py`, Ikit) | Working: Ratling Cannon upgrades as soon as they can be bought. |
 | Masterplans (`assist/masterplans.py`, `bot/sensor/masterplans.py`, Thanquol) | Working: Steal-Takes and Secrets from memory; Kill-Stabs stay the player's. Multiplayer not yet exercised. |
-| Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`, `strategy/diplomacy.json`) | Working (2026-10-21), at turn start: join-war offers to major factions against minors and much weaker majors, each for the most gold the AI accepts; treaty partners, other humans' friends, neighbours, humans and wiped-out factions never; no peace or tribute deals. All facts from memory; every deal confirmed in memory. The AI's evaluation is read from the panel (stop-gap). Verified live: three join-war deals (587, 1103, 802 gold). |
+| Army courier (`assist/courier.py`) | Built (2026-10-21): Ikit's or Thanquol's army recruits the playbook armies' losses and walks them to the front; playbook armies (Warpseer-led) wait for it. The hand-over on arrival is not automated yet (merge the units yourself). |
 | Widget settings (`assist/settings.py`, `assist/railpanel.py`) | Working (2026-10-21): every option and each step's schedule changed with a click in the expanded widget. |
 | Building automation (`assist/build.py`) | Working: state from memory, provinces next to an enemy at war are skipped; damaged buildings repaired first, then upgrades and constructions through the province panel, each verified in memory. Repairs verified live 2026-10-16. |
 | Army builder (`assist/army_builder.py`, `assist/army.py`, `assist/recruit.py`, `assist/heroes.py`) | Built: per-army tick in the window. For a ticked army: disband off-template units, recruit missing units from the local pool, recruit a Warlock Engineer, move toward the closest province that can recruit what is missing, walk free heroes in (see "Army builder"). Walking heroes in was verified live. |
@@ -462,7 +455,7 @@ assist/app.py          the assistant window and the overlay (colours in assist/w
 assist/popups.py       turn-start popups: closes event notices, holds the pass for decisions
 assist/tech.py         tech step
 assist/skills.py       skill step
-assist/diplomacy.py    diplomacy step: join-war offers for gold
+assist/courier.py      the army courier
 assist/build.py        building step: repairs, upgrades, constructions (plan: assist/buildplan.py)
 assist/army_builder.py army step (template compare: army.py, recruitable units: recruit.py, heroes: heroes.py)
 assist/gamedata.py     static game data from ../tww/db and ../tww/loc_en.json
@@ -577,28 +570,18 @@ python -X utf8 -m assist.buildplan        # demo on example provinces
 python -X utf8 tests/test_buildplan.py    # rule checks
 ```
 
-## Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`)
+## Faction facts in memory (9.0.4, decoded 2026-10-21)
 
-Rules: [Logic](#logic), Diplomacy for gold.
+From the faction script interface's Lua bindings (natives disassembled), checked live. Not used by any step now
+(the diplomacy automation they were decoded for was removed); kept for later use.
 
-| Memory (9.0.4) | Where |
+| Fact | Where |
 |---|---|
-| major (`can_be_human`) | byte F+0xEB5 != 0 |
+| can a player pick it (`can_be_human`, "major") | byte F+0xEB5 != 0: all 109 lord-select factions, none of the 451 others |
 | dead (`is_dead`) | byte F+0x10C0 != 0 |
 | treasury | i32 F+0xD58 |
 | relationship | entry e in [F+0xDB8] (count +4, base +8, stride 0x78, other faction e+0x28); state i32 [[e+0x30]+0x20]: 0 war, 1 peace, 2 defensive, 3 military alliance, 2..7 ally/vassal/client, 7 vassal; byte e+0x74: bit 0 trade, bit 2 met, bit 3 NAP |
-| strength (`faction_strength`) | B = [[[[[F+0x3A8]+0x90]+0x6CD0]+0x990]+0x10]; table [[B+0xE0]+0x280] keyed u32 F+8 -> E; map [B+0x1D8]+0x1E8 keyed u32 E+0x40 -> u32 node+0x14 |
-
-Panel: `diplomacy_dropdown` > `faction_row_entry_<key>` > Negotiate (`button_ok`) > `diplomatic_option_<kind>`;
-join war: `diplomacy_hud_request_join_war` row by screen name > `checkbox` > `ok_request`; payment:
-`diplomacy_hud_payments` > `pay_demand`, `amount` (typed text taken by the next arrow), `r_`/`l_arrow_amount` (±200),
-`ok_payments`; `button_send`; answer `dy_text` (`they_accepted`) > `button_accept`; `button_cancel` back; Escape
-closes.
-
-```
-python -X utf8 -m assist.diplomacy plan   # the deals that would be offered, and why others are not
-python -X utf8 -m assist.diplomacy run    # offer them now
-```
+| strength (`faction_strength`) | B = [[[[[F+0x3A8]+0x90]+0x6CD0]+0x990]+0x10]; table [[B+0xE0]+0x280] keyed u32 F+8 -> E; map [B+0x1D8]+0x1E8 keyed u32 E+0x40 -> u32 node+0x14 (matches the diplomacy panel's strength bars) |
 
 ## Running the assistant
 

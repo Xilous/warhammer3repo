@@ -32,10 +32,6 @@ class Setting:
 
 
 SETTINGS: list[Setting] = [
-    # diplomacy (assist/diplomacy.py)
-    Setting("diplomacy.json", ("enabled", "join_war"), "Join wars for gold", "Diplomacy", default=True),
-    Setting("diplomacy.json", ("major_target_max_strength",), "Major as a join-war target at most", "Diplomacy",
-            "float", 0.5, 0.05, 0.05, 1.0, fmt="{:.0%} of your strength"),
     # turn and pacing (assist/runner.py, tools/ui.py, assist/heroes.py)
     Setting("automation.json", ("auto_end_turn",), "End every turn by itself", "Turn", default=False),
     Setting("automation.json", ("close_notices_during_turn",), "Close event notices during your turn", "Turn",
@@ -48,6 +44,8 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("buildings", "off_list_buildings"), "Buildings not on the list", "Buildings",
             "choice", "replace", choices=("replace", "ask")),
     # army (assist/new_army.py)
+    Setting("automation.json", ("army_builder", "courier"), "Courier (Ikit / Thanquol) brings the lost units", "Army",
+            default=True),
     Setting("automation.json", ("army_builder", "auto_create"), "Raise new armies by itself", "Army", default=False),
     Setting("automation.json", ("army_builder", "income_reserve"), "Income kept after a new army", "Army", "int", 0,
             50, 0, 5000, unit=" /turn"),
