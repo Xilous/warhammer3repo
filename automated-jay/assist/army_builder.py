@@ -993,7 +993,11 @@ def missed() -> list[str]:
         out.append(f"{name}: {left} not queued at a recruiting province"
                    + (f" (not possible: {why})" if why else ""))
         if d.disband:
-            out.append(f"{name}: off-template units still in the army at a recruiting province")
+            # kept on purpose until their replacements can be paid (2026-10-22, turn 57: "keeping off-template units:
+            # no gold for a replacement" was reported MISSED)
+            keep = next((x.strip() for x in notes.split(";") if "keeping off-template units" in x), "")
+            out.append(f"{name}: off-template units still in the army at a recruiting province"
+                       + (f" (not possible: {keep.split(': ', 1)[-1]})" if keep else ""))
     return out
 
 
