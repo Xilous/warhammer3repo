@@ -843,6 +843,10 @@ def buy_secrets(ui, buys: list, w, F: int, offered: tuple[dict, dict] | None = N
     out = []
     if not _open_shop(ui):
         return ["the Secrets shop did not open"]
+    # each tab is checked once, before anything is bought in it: `offered` was read before the purchases (2026-10-22,
+    # turn 56: the Grey Seer tab checked again after its Rictus line's last level was bought showed the line gone, and
+    # the stale reading still listed it)
+    checked: set = set()
     for chain, level, cost, name in buys:
         tab = wait.wait_until(lambda: _under(ui, f"CcoChaoticPlanShopCategoryRecord{shop_tabs().get(chain)}", PANEL),
                               2.0, "shop tab shown", must=False)
@@ -854,7 +858,9 @@ def buy_secrets(ui, buys: list, w, F: int, offered: tuple[dict, dict] | None = N
             wait.wait_until(lambda: (ui.state(tab) or "").startswith("selected"), 2.0, "shop tab", must=False)
         line = wait.wait_until(lambda: _under(ui, f"CcoCampaignChaoticPlanShopObjectChain{chain}", PANEL), 2.0,
                                f"{chain} listed", must=False)
-        _check_tab(ui, shop_tabs().get(chain), offered)
+        if shop_tabs().get(chain) not in checked:
+            checked.add(shop_tabs().get(chain))
+            _check_tab(ui, shop_tabs().get(chain), offered)
         if line is None or not _scroll_into_clip(ui, line, "Secrets list"):
             out.append(f"{name}: its line is not shown")
             break
