@@ -149,6 +149,15 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
     b = budget(w, F)
     if b[0] < 0 and ab.get("auto_create", False):          # raised by itself: only when it pays; asked for: shown
         return [f"new army: not affordable yet ({b[1]})"], None
+    # the Lord's recruitment cost, before any click: agent_subtypes.cost (2026-10-22, live: the Recruit Lord panel showed
+    # exactly the table's cost for every Lord type, Warpseer 1000, Grey Seer 850, Warlord 550, Warlock Master 1200, and
+    # "You have insufficient funds" against the treasury). Asked for by the player the whole treasury may pay for it;
+    # raised by itself, only what the buildings and queued units leave (army_builder.spendable).
+    from .army_builder import spendable, treasury
+    cost = next((int(r.get("cost") or 0) for r in gd._load("agent_subtypes_tables") if r["key"] == WARPSEER), 0)
+    gold = spendable(w, F) if ab.get("auto_create", False) else treasury(w, F)
+    if cost and gold < cost:
+        return [f"new army: no gold for the Verminlord Warpseer ({gold} to spend, {cost} needed)"], None
     site = raise_site(w, F, elig)
     if site is None:
         return ["new army: every settlement of the recruiting provinces has an army in it"], None
