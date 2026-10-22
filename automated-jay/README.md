@@ -94,26 +94,46 @@ walk orders are not issued twice.
    **While a cinematic plays** (a movie or an in-game cut-scene) nothing is clicked or pressed at all; a pass that
    a cinematic interrupts waits and runs again when it is over.
 3. **The pass**, in this order. Each step is independent: one that fails is reported and the next still runs.
-   Which steps run at turn start and which at **Build & End Turn** is set in `strategy/automation.json`
-   (`schedule`). By default Rites, Tech and Skills run at turn start; Rites, Tech, Skills, Buildings and Army run when you press
-   **Build & End Turn**, so settlements you take during the turn are built on the same turn, and research and skill
-   points are handled on a campaign's very first turn too (there is no turn start to act on there; unspent skill
-   points would make the game stop at its End Turn warning). Before pressing End Turn every open panel is closed,
-   so it is only ever clicked on the bare campaign map. If you end a
-   turn in the game instead, the next turn start runs Buildings and Army too, so nothing waits a turn.
+   Which steps run at turn start and which at **Build & End Turn** is set in the widget's SETTINGS (Steps), saved
+   in `strategy/automation.json` (`schedule`). By default:
+
+   | Step | Turn start | Build & End Turn |
+   |---|---|---|
+   | Rites and commandments | yes | yes |
+   | Workshop (Ikit) | yes | yes |
+   | Tech | yes | yes |
+   | Skills | yes | yes |
+   | Diplomacy for gold | yes | |
+   | Masterplans (Thanquol) | | yes |
+   | Buildings | | yes |
+   | Army | | yes |
+
+   Buildings and Army wait for **Build & End Turn**, so settlements you take during the turn are built on the same
+   turn; Tech and Skills run at both, so a campaign's very first turn is covered too (there is no turn start to act
+   on there; unspent skill points would make the game stop at its End Turn warning). Before pressing End Turn every
+   open panel is closed, so it is only ever clicked on the bare campaign map. If you end a turn in the game
+   instead, the next turn start runs the end-of-turn steps too, so nothing waits a turn.
    0. **Rites and commandments** (runs first, before any gold is spent): every complete province is kept on
       **Exploitative Planning**. On a fresh campaign the first complete province gets **Expansionist Planning**
       first, the requirement of the rite **The Dominating Scheme**, and keeps it until the rite has been cast once.
       The Dominating Scheme is cast whenever it is off cooldown and affordable; after Horned One's Approval its
       Verminlord choice is answered with **A Verminlord Warpseer** (that dilemma only). Cooldowns and commandments
       are read from memory (assist/rites.py).
-   1. **Tech**: if research is idle, start the next tech on the bee-line, after that the cheapest remaining one.
-   2. **Skills**: spend skill points on Ikit Claw, Thanquol, Verminlord Warpseers and Warlock Engineers in your order.
+   1. **Workshop** (Ikit's Forbidden Workshop, assist/workshop.py): the Stormfiend Ratling Cannon upgrades are
+      bought as soon as they can be. Nothing for Thanquol.
+   2. **Tech**: if research is idle, start the next tech on the bee-line, after that the cheapest remaining one.
+      The report says how many locked techs the click queued on the way (worked out from memory and the tech tree).
+   3. **Skills**: spend skill points on Ikit Claw, Thanquol, Verminlord Warpseers and Warlock Engineers in your order.
       Other characters are left alone.
-   3. **Buildings**: first every damaged building is repaired, then upgrades and constructions from your
-      settlement priority list. Provinces where an enemy you are at war with holds a region, or that border one,
-      are skipped, repairs included. A damaged building is never upgraded (the game would halt the upgrade).
-   4. **Army**: only armies you ticked in the window. Each is made to match the doomstack template (since
+   4. **Diplomacy for gold** (turn start, see "Diplomacy for gold" below): every safe deal the AI pays you for,
+      for the most gold it accepts: joining a major faction's war against a minor (or a much weaker major), and
+      peace with factions at war with you that do not border you.
+   5. **Masterplans** (Thanquol only, see "Playing Thanquol" below).
+   6. **Buildings**: first every damaged building is repaired, then upgrades and constructions from your
+      settlement priority list, the gold spent across all provinces in value order (see "Settlement build planner").
+      A settlement next to a region held by an enemy you are at war with is left to you, repairs included; the rest
+      of its province is built. A damaged building is never upgraded (the game would halt the upgrade).
+   7. **Army**: only armies you ticked. Each is made to match the doomstack template (since
       2026-10-20: lord, 1 Warlock Engineer, 12 Stormfiends with Ratling Cannons, 6 Warp-Doom Magma-Cannons; pure
       ranged, the cannons fire over the Stormfiends): extra units
       are disbanded once the army stands where its missing units can be recruited locally, missing units are
@@ -155,7 +175,7 @@ Thanquol's Clan Scruten); there is nothing to set. What is different with Thanqu
   the Morskittar Engine is left out (single player only, story-locked until mission 5): Zhufbar's slot takes the
   next building on the list. Frontline provinces stay yours, as with
   Ikit (Black Water is one while Zhufbar is an enemy's).
-- **No Forbidden Workshop**: the Shop step does nothing.
+- **No Forbidden Workshop**: the Workshop step does nothing.
 - Rites, tech tree and the army template are the same (Thanquol is an allowed lord); Ferocious Plans comes
   researched.
 - **Warlock Engineers**: his capitals build the Warp-Turbine Plant line like Ikit's (it recruits the Magma Cannons),
@@ -169,6 +189,20 @@ The panel holds what the full window has: Run now, Pause/Resume, Restart, Exit, 
 results, the armies with their army-builder tick boxes, Ignore buttons for blocking popups, the frontline
 provinces, and a "full window" link. Neither takes focus, so the game stays in front; the panel hides itself
 while a pass runs. Drag the bar to move both. Restart and Exit are refused while a pass runs.
+
+Two parts of the panel change settings with a click (player rule 2026-10-21: everything adjustable between turns
+without editing files):
+- **DIPLOMACY FOR GOLD**: every faction a deal could be offered for right now, one line per kind of deal ("join war
+  against Bloody Spearz", "peace with The Court of Night"). Click a line to turn that faction off (✗) or back on
+  (✓) for that kind of deal; all are on by default. Saved in `strategy/diplomacy.json` (`off`).
+- **SETTINGS** (click the heading to unfold): every option the steps read, by group, with its value. A switch or
+  a choice changes with a click; a number has − and +. Diplomacy (peace for gold, join wars for gold, how much
+  weaker a major must be to be a join-war target), Turn (end every turn by itself, close event notices during your
+  turn, the pause after every click, camera panning), Buildings (repairs, buildings not on the list), Army (raise
+  new armies by itself, the income kept after a new army), Masterplans (Steal-Takes, their targets, at maximum
+  Alarm, the Gold-per-Warpstone rate, buying Secrets, the Warpstone kept). Under Steps, each step is switched on or
+  off for turn start and for Build & End Turn. Changes are saved at once and apply from the next pass
+  (`assist/settings.py` lists them all).
 
 ### The assistant window
 
@@ -191,13 +225,17 @@ The window only reads memory. It never sends input to the game.
 
 ### Your strategy files
 
-Plain JSON, read fresh at every pass: edits apply from the next pass without a restart.
+Plain JSON, read fresh at every pass: edits apply from the next pass without a restart. Every single setting in
+them is also in the widget's SETTINGS; the long ordered lists (build priority, skill orders, the Secrets shop
+order, the army template) are edited here.
 
 | File | What it holds |
 |---|---|
 | `strategy/settlements.json` | building priority list (main building, port, then the rest in order) |
 | `strategy/skills.json` | skill order per character type |
-| `strategy/automation.json` | how the assistant acts (`buildings.repair_damaged`: repairs on or off), the doomstack template (units and heroes), the ticked armies |
+| `strategy/automation.json` | how the assistant acts (`schedule`: which steps run when; `buildings.repair_damaged`: repairs on or off; pacing, camera), the doomstack template (units and heroes), the ticked armies |
+| `strategy/diplomacy.json` | diplomacy for gold: each kind of deal on or off, how weak a major must be to be a join-war target, the factions you turned off |
+| `strategy/masterplans.json` | Thanquol's Masterplans: Steal-Take rules and the Clan Scruten Secrets shop order |
 | `strategy/popup_ignore.json` | panels you marked harmless with Ignore |
 | `../tww/skv_beeline.json` | tech bee-line targets in click order (made by `../scripts/game/skv_beeline.py`, explained in `../GUIDE_Skryre_Tech_Beeline.md`) |
 
@@ -241,6 +279,11 @@ player.
 | Tech auto-progress (`assist/tech.py`) | Working: research state from memory; when idle, clicks the next beeline target (then cheapest remaining) in the technology panel by UI-tree id and confirms in memory that research started. Tested live 2026-10-16. |
 | Turn-start runner (`assist/runner.py`) | Working: detects the new turn from memory, waits until it is really the player's turn and the player is idle, runs every step, the overlay shows AUTOMATING / YOUR TURN. Click the overlay to pause. Survives game restarts, the main menu and save loads; stops at once if the player alt-tabs away (see "Day-to-day robustness"). |
 | Skill auto-spend (`assist/skills.py`, `strategy/skills.json`) | Working: opens each character with points from the Lords & Heroes list (then switches inside the open panel), spends points in the player's order by UI-tree node id, every point confirmed in memory. |
+| Rites and commandments (`assist/rites.py`) | Working: commandments and the Dominating Scheme from memory, before any gold is spent. |
+| Forbidden Workshop (`assist/workshop.py`, Ikit) | Working: Ratling Cannon upgrades as soon as they can be bought. |
+| Masterplans (`assist/masterplans.py`, `bot/sensor/masterplans.py`, Thanquol) | Working: Steal-Takes and Secrets from memory; Kill-Stabs stay the player's. Multiplayer not yet exercised. |
+| Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`, `strategy/diplomacy.json`) | Working (2026-10-21), at turn start: join-war offers to major factions against minors and much weaker majors, peace for gold with factions at war with you that do not border you, each for the most gold the AI accepts; treaty partners, other humans' friends, neighbours, humans and wiped-out factions never. Major, strength, treaties, wars, treasuries, borders and deaths from memory; every deal confirmed in memory. The AI's evaluation is still read from the panel (stop-gap). Verified live: three join-war deals (587, 1103, 802 gold); a peace deal the AI accepts not seen yet. |
+| Widget settings (`assist/settings.py`, `assist/railpanel.py`) | Working (2026-10-21): every option and each step's schedule changed with a click in the expanded widget. |
 | Building automation (`assist/build.py`) | Working: state from memory, provinces next to an enemy at war are skipped; damaged buildings repaired first, then upgrades and constructions through the province panel, each verified in memory. Repairs verified live 2026-10-16. |
 | Army builder (`assist/army_builder.py`, `assist/army.py`, `assist/recruit.py`, `assist/heroes.py`) | Built: per-army tick in the window. For a ticked army: disband off-template units, recruit missing units from the local pool, recruit a Warlock Engineer, move toward the closest province that can recruit what is missing, walk free heroes in (see "Army builder"). Walking heroes in was verified live. |
 | Assistant window and overlay (`assist/app.py`) | Working: status, Run now, Pause, last turn's log, armies with template gap, free heroes, blocked provinces, Ignore buttons. |
@@ -269,6 +312,7 @@ assist/app.py          the assistant window and the overlay (colours in assist/w
 assist/popups.py       turn-start popups: closes event notices, holds the pass for decisions
 assist/tech.py         tech step
 assist/skills.py       skill step
+assist/diplomacy.py    diplomacy step: join-war and peace offers for gold
 assist/build.py        building step: repairs, upgrades, constructions (plan: assist/buildplan.py)
 assist/army_builder.py army step (template compare: army.py, recruitable units: recruit.py, heroes: heroes.py)
 assist/gamedata.py     static game data from ../tww/db and ../tww/loc_en.json
@@ -412,13 +456,66 @@ python -X utf8 -m assist.buildplan        # demo on example provinces
 python -X utf8 tests/test_buildplan.py    # rule checks
 ```
 
+## Diplomacy for gold (`assist/diplomacy.py`, `bot/sensor/diplomacy.py`)
+
+Player decisions 2026-10-21. At every turn start the plan is made fresh from memory, so it works the same from any
+point of a campaign: factions met later join in, borders that move change the neighbours that turn, and a
+wiped-out faction drops out.
+
+| Deal | Who is asked | Rules |
+|---|---|---|
+| Peace | an AI faction at war with you (minor or major) | not bordering your territory; you ask for a payment with the peace |
+| Join war | a major AI faction you have met and are not at war with, at war with the target | the target is a minor faction (with land), or a major at most half your strength (`major_target_max_strength`, 0.5); never a target with a treaty with you (trade, non-aggression, alliance, vassal), a treaty or alliance with another human, or bordering you (those wars are yours to start); the richest payer is asked first, the next one if it refuses |
+
+Never with or against a human faction, a rebel faction or a dead one. At most one deal per faction a turn (peace
+for gold and then a paid war on the same faction would flip it every pass). Peace, then join war, in that order.
+Tribute (a payment demand alone) was tried and dropped: the AI starts a bare demand at -20, so no faction ever
+pays. **Threaten** is never used: a refused threat means war and counts as treachery.
+
+How an offer is made: Diplomacy, the faction's row, Negotiate; the deal item (join war: the target ticked in the
+"Declare war against" list; peace) on your side; Payment as **Demand payment** on theirs. The amount is searched
+lowest first: the window opens at 1 gold, so a refusal there costs nothing (a turn's seven refusals took 8 s);
+then +200 per arrow click until they refuse; then the last 200 narrowed with typed amounts, starting where a line
+through every value seen crosses zero (the payment's value to the AI is linear in the amount). The most they
+accept is sent with **Send**, never Threaten, and only when the panel shows the deal positive. The effect is
+checked in memory: your treasury up and the war started (join war) or ended (peace). What was tried this turn is
+kept in `runs/diplomacy_turn.json` (a restart does not ask again); the memory check after the step reports a deal
+not offered as MISSED and one the AI refused with its reason.
+
+UI stop-gap: the AI's evaluation of a proposal is read from the panel (`label_deal_success_chance`,
+`label_payment_success_chance`: positive = they accept). It is computed on demand and found only on the stack
+(payment value -0.00653 per gold for Wissenland, linear), never on the heap; decoding the evaluation is open.
+
+Memory (9.0.4, from the Lua bindings' natives, checked live 2026-10-21):
+
+| Fact | Where |
+|---|---|
+| major faction (can a player pick it) | `faction:can_be_human`, byte F+0xEB5 != 0: 1 for all 109 lord-select factions (landless hordes too), 0 for the 451 others |
+| dead | `is_dead`, byte F+0x10C0 != 0 |
+| treasury | i32 F+0xD58 |
+| relationship with another faction | entry e in [F+0xDB8] (count u32 +4, base +8, stride 0x78, other faction e+0x28): state i32 [[e+0x30]+0x20] = 0 war, 1 peace, 2 defensive alliance, 3 military alliance, 2..7 ally / vassal / client, 7 vassal of; byte e+0x74: bit 0 trade agreement, bit 2 met, bit 3 non-aggression pact |
+| strength | `faction_strength`: B = [[[[[F+0x3A8]+0x90]+0x6CD0]+0x990]+0x10]; table [[B+0xE0]+0x280] (capacity u32 +0x80, empty key u32 +0x84, 16-byte entries [+0x78] probed from u32 F+8 % capacity) -> E; map [B+0x1D8]+0x1E8, node list from [M+8], key u32 E+0x40 -> strength u32 node+0x14. Matches the diplomacy panel's strength bars for all 16 factions checked |
+
+Panel: `diplomacy_dropdown` / `sortable_list_factions` / `faction_row_entry_<key>`; Negotiate = `button_ok` under
+`faction_panel_bottom`; options `diplomatic_option_<kind>` under `list_possible_actions` (peace shows the AI's value
+of peace alone as `label_success_chance_for_action`); join war opens `diplomacy_hud_request_join_war` (rows
+`list_box_<n>` by screen name, a `checkbox`, `ok_request`); payments `diplomacy_hud_payments` (`pay_demand`,
+`amount`: typed text is taken by the next arrow click, `r_`/`l_arrow_amount` step 200, `ok_payments`);
+`button_send` under `button_set_holder`; the answer `dy_text` (state `they_accepted`) closed with `button_accept`;
+`button_cancel` back to the list; Escape closes the panel from the list.
+
+```
+python -X utf8 -m assist.diplomacy plan   # memory only: the deals that would be offered, and why others are not
+python -X utf8 -m assist.diplomacy run    # offer them now
+```
+
 ## Running the assistant
 
 ```
 run_assistant.bat                        # the same as the next line, from a double-click
 python -X utf8 -m assist.runner          # window + overlay + loop; acts at every new turn
 python -X utf8 -m assist.runner --once   # run the automations once now (no turn or idle check)
-python -X utf8 -m assist.tech status     # research idle or running (screen only)
+python -X utf8 -m assist.tech status     # memory: research idle or running, the next click
 ```
 
 The current status is also in `%LOCALAPPDATA%\automated-jay\state.json` (outside OneDrive, which locks synced files) (`state`, `headline`, `detail`, `turn`, `time`), replaced
@@ -709,8 +806,11 @@ resident (QueryWorkingSetEx) and reads only those. A full scan then leaves the g
 | every tech | sets: count u32 T+0xC, array [T+0x10] -> A; rows: count u32 A+4, array [A+8], stride 0x10; row R: count u32 R+4, entries [R+8], stride 0x80 |
 | entry E | key = string object at [[E]+0x50]+8; state u32 E+8: 0 researched, 2 researching, 3 available, 4 locked; byte E+0x78 is 0; E+0x10 / E+0x20 look like link lists (count = number of parent / child links), not decoded |
 
-The queued chain itself was not found: re-targeting it changes only T+0x28/T+0x30, nothing else in T (first
-0x1000 bytes), the faction (0x3000 bytes) or the entries. The open panel shows it instead (below).
+The queued chain itself is not stored: re-targeting it changes only T+0x28/T+0x30, nothing else in T (first
+0x1000 bytes), the faction (0x3000 bytes) or the entries. It is worked out instead (2026-10-21, `queued_chain`): a
+click queues the target with all its missing prerequisites, and every Skaven node needs all its parents
+(`required_parents` 0), so the chain is the target and its ancestors (`technology_node_links`, plus
+`technology_required_technology_junctions`) whose entries are locked. Checked against the panel: 7 of 7.
 
 Panel components:
 

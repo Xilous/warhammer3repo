@@ -385,9 +385,10 @@ def _walk(ui, w, ptr: int, plan, node_set, tree, out: list) -> bool:
         if card is None:
             continue
         mem = memory_state(w, ptr, sk, ranks, node_set)
-        ui_locked = (ui.state(card) or "") in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card))
-        if (mem != "open") != ui_locked:               # the data for the switch to memory only: see memory_state
-            _log_check(skill=sk, memory=mem, card=ui.state(card), points=_points(w, ptr))
+        cs = (ui.state(card) or "").removesuffix("_hover")      # a card under the mouse: maxed_hover is maxed
+        ui_locked = cs in SKIP_STATES or (ranks == 1 and tree.maxed_tick(card))
+        if (mem != "open") != ui_locked and ui.state(card) is not None:   # the data for the switch to memory only:
+            _log_check(skill=sk, memory=mem, card=ui.state(card), points=_points(w, ptr))   # see memory_state
         if mem != "open" or ui_locked:
             if ui_locked:
                 LOCKED_UI.setdefault((ptr, _turn(w)), set()).add(sk)
@@ -427,7 +428,7 @@ def _walk(ui, w, ptr: int, plan, node_set, tree, out: list) -> bool:
             n += 1
             if n < ranks:                        # the card shows "maxed" a frame later: no click on a full skill
                 wait.next_frame(1, ui)
-                if (ui.state(card) or "") in SKIP_STATES:
+                if (ui.state(card) or "").removesuffix("_hover") in SKIP_STATES:   # (the mouse is on it now)
                     break
         if n:
             out.append(f"{sname} x{n}")

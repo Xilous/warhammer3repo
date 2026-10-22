@@ -59,6 +59,13 @@ single-player campaign as a multiplayer one as far as it can:
 - When you add a plan, a shop order or a priority, check that it works the same in multiplayer; if it does not,
   leave it out or make it optional, and say so.
 
+## Settings live in the widget (player rule, 2026-10-21)
+
+Every setting the player can change is adjustable in the expanded widget, so it can be changed between turns without
+editing files: a new option read by code goes into `assist/settings.py` SETTINGS (shown in the widget's SETTINGS
+section; `tests/test_settings.py` checks it is in its strategy file), and the code reads it fresh at every pass (never
+cached for the session) so a change applies from the next pass.
+
 ## Other standing rules
 - Player decisions are recorded where they apply (strategy/*.json `_doc` notes, code comments) with the date.
 - Kill-Stab Masterplans are the player's: never started, completed or abandoned by the assistant.

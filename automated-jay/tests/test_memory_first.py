@@ -23,6 +23,16 @@ ALLOWED = {
     "assist/build.py::ui_construct": "fallback",
     "assist/build.py::ui_open_province": "click",
     "assist/build.py::ui_upgrade": "fallback",
+    "assist/diplomacy.py::_amount": "click",                       # confirms the typed payment amount took
+    "assist/diplomacy.py::add_join_war": "click",                  # the minor's row by screen name, its tick
+    "assist/diplomacy.py::most_they_pay": "click",                 # the option greyed out, Demand selected
+    "assist/diplomacy.py::offer": "click",                         # Send greyed out; the deal is checked in memory
+    # UI stop-gap (2026-10-21): the AI's evaluation of a proposal lives only on the stack while the panel computes
+    # it (assist/diplomacy.py docstring); memory reader pending
+    "assist/diplomacy.py::add_peace": "ui-only",
+    "assist/diplomacy.py::deal_positive": "ui-only",
+    "assist/diplomacy.py::payment_positive": "ui-only",
+    "assist/diplomacy.py::payment_value": "ui-only",
     "assist/heroes.py::_take_card": "click",
     "assist/heroes.py::province_row": "click",
     "assist/heroes.py::row_selected": "click",

@@ -139,6 +139,10 @@ def _actions(models, blocked: dict, override_blocked: bool = False):
                     todo.append((o, a, busy))
                 elif a.kind == "replace" and buildings_setting("off_list_buildings", "ask") == "replace"                         and replaceable(o, slot_index_for(o, a)):
                     todo.append((o, a, busy))
+    # No payback rule (player decision 2026-10-21): a 20-turn break-even filter was built and simulated (empty
+    # settlements built out at top tier): no slot stayed empty, but the upgrades it stopped (Breeding Pit and Scrap Heap
+    # 3, Reactor 2-3) pay back in 21-24 turns, and a capital with two minors ended at 1,806 gold a turn instead of
+    # 2,400. Removed the same day; the settlement list alone decides.
     todo.sort(key=lambda t: spend_rank(t[0], t[1]))
     return todo, skipped
 

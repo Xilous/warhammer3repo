@@ -385,6 +385,8 @@ class App:
                     self.finance_lbl.configure(text="\n".join(f["lines"] + ([f["why_not"]] if f["why_not"] else [])))
                     self.raise_btn.configure(state="normal" if f["can"] else "disabled")
                     self.panel.show_finance(f)
+                elif kind == "diplomacy":
+                    self.panel.show_diplomacy(msg[1])
                 elif kind == "ignorable":
                     self._show_ignorable(msg[1])
                     self.panel.show_ignorable(msg[1])
@@ -477,6 +479,11 @@ class App:
                 self.q.put(("finance", {"fin": None, "verdict": f"army finances unreadable: {ex}", "ok": False,
                                         "can": False, "checks": [], "warpstone": None, "lines": [],
                                         "why_not": str(ex)}))
+            try:
+                from .diplomacy import listed
+                self.q.put(("diplomacy", listed(w)))
+            except Exception:                             # noqa: BLE001  (the list stays as last read)
+                pass
         except Exception as ex:
             self.q.put(("world", None, [], {"error": str(ex)}, []))
 

@@ -239,19 +239,22 @@ def pace_s() -> float:
     """The pause after every click, key press and drag (player request 2026-10-18: "slow down the iterations of all
     automations by a tad, but keep the pace visibly faster than a human"; a game crash came right after a fast click
     sequence). strategy/automation.json "pace_ms", default 120 ms; 0 turns it off."""
-    global _PACE
-    if _PACE is None:
-        try:
+    global _PACE, _PACE_AT
+    try:
+        from bot import config
+        f = config.STRATEGY_DIR / "automation.json"
+        at = f.stat().st_mtime                           # read again after a change (the widget sets it between turns)
+        if _PACE is None or at != _PACE_AT:
             import json
-            from bot import config
-            _PACE = max(0.0, float(json.load(open(config.STRATEGY_DIR / "automation.json", encoding="utf-8"))
-                                   .get("pace_ms", 120)) / 1000.0)
-        except Exception:
+            _PACE, _PACE_AT = max(0.0, float(json.load(open(f, encoding="utf-8")).get("pace_ms", 120)) / 1000.0), at
+    except Exception:
+        if _PACE is None:
             _PACE = 0.12
     return _PACE
 
 
 _PACE: float | None = None
+_PACE_AT: float | None = None
 
 
 def _pace() -> None:

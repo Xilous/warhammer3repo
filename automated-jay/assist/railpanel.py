@@ -8,9 +8,10 @@ while a pass runs, so it can never be under a click the assistant makes.
 Look: Clan Brass (player's pick 2026-10-18, assist/theme.py). Contents, top to bottom: Run now / Pause / Restart /
 Exit, treasury - income - Warpstone, "Ignore <id>" for popups that block a pass, this turn's step results, the
 armies with their army-builder tick boxes (saved exactly as the main window does: assist/army.py set_enabled) and
-what each costs now and once refilled, the next army (can you afford it: a bar of income against its cost, Create
-new playbook army, greyed out with a ✓/✗ list of what it needs), the frontline settlements, and a link to the full
-window.
+what each costs now and once refilled, the factions a diplomacy deal could be offered for (a click turns one off or
+on), the next army (can you afford it: a bar of income against its cost, Create
+new playbook army, greyed out with a ✓/✗ list of what it needs), the settings (every option of the strategy files and which steps run when, changed with a click:
+assist/settings.py), the frontline settlements, and a link to the full window.
 """
 from __future__ import annotations
 import tkinter as tk
@@ -132,6 +133,21 @@ class RailPanel:
             self.raise_btn.pack(fill="x", pady=(10, 6))
             self.checks.pack(fill="x")
         self._style_raise(False)
+
+        self._rule()
+        self._heading("DIPLOMACY FOR GOLD  ·  click one to turn it off or on")
+        self.diplo = tk.Frame(self.body, bg=T.PANEL)
+        self.diplo.pack(fill="x")
+        self.diplo_rows: list = []                  # (kind, minor key, on) from the last read (assist/diplomacy.listed)
+
+        self._rule()
+        self.settings_head = tk.Label(self.body, text="", bg=T.PANEL, fg=T.BRASS, font=self.f_head, anchor="w",
+                                      cursor="hand2")
+        self.settings_head.pack(fill="x", pady=(0, 4))
+        self.settings_head.bind("<Button-1>", lambda e: self._toggle_settings())
+        self.settings_box = tk.Frame(self.body, bg=T.PANEL)
+        self.settings_open = False
+        self._render_settings()
 
         self._rule()
         self._heading("FRONTLINE  ·  you build there")
@@ -300,6 +316,107 @@ class RailPanel:
         else:
             self.front.configure(text="\n".join(f"{_nice(p)}" for p in blocked) or "none", fg=T.WARN)
         self.place()
+
+    # ---------------------------------------------------------------- settings (player rule 2026-10-21)
+    def _toggle_settings(self) -> None:
+        self.settings_open = not self.settings_open
+        self._render_settings()
+        self.place()
+
+    def _render_settings(self) -> None:
+        """Every setting (assist/settings.py) and which steps run when, changed with a click between turns: a switch
+        or a choice is clicked, a number has - and +. Folded away until its heading is clicked."""
+        from . import settings as S
+        self.settings_head.configure(text=("▾" if self.settings_open else "▸") + "  SETTINGS  ·  click to change")
+        for c in self.settings_box.winfo_children():
+            c.destroy()
+        if not self.settings_open:
+            self.settings_box.pack_forget()
+            return
+        self.settings_box.pack(fill="x", after=self.settings_head)
+
+        def group(text):
+            tk.Label(self.settings_box, text=text.upper(), bg=T.PANEL, fg=T.MUTED, font=self.f_label,
+                     anchor="w").pack(fill="x", pady=(8, 0))
+
+        def row(label, value, on_click, on_minus=None):
+            r = tk.Frame(self.settings_box, bg=T.PANEL)
+            r.pack(fill="x", pady=(2, 0))
+            tk.Label(r, text=label, bg=T.PANEL, fg=T.INK, font=self.f_body, anchor="w").pack(side="left")
+            if on_minus is not None:
+                plus = tk.Label(r, text=" + ", bg=T.PANEL2, fg=T.INK, font=self.f_bold, cursor="hand2")
+                plus.pack(side="right")
+                plus.bind("<Button-1>", lambda e: on_click())
+            v = tk.Label(r, text=value, bg=T.PANEL, fg=T.BRASS, font=self.f_mono, cursor="hand2", padx=6)
+            v.pack(side="right")
+            if on_minus is None:
+                v.bind("<Button-1>", lambda e: on_click())
+            else:
+                minus = tk.Label(r, text=" − ", bg=T.PANEL2, fg=T.INK, font=self.f_bold, cursor="hand2")
+                minus.pack(side="right")
+                minus.bind("<Button-1>", lambda e: on_minus())
+
+        def change(s, d):
+            try:
+                S.nudge(s, d)
+            except Exception as ex:                    # noqa: BLE001  (shown, never a crash of the widget)
+                self.settings_head.configure(text=f"▾  SETTINGS  ·  could not save: {ex}")
+                return
+            self._render_settings()
+
+        groups: dict[str, list] = {}
+        for s in S.SETTINGS:
+            groups.setdefault(s.group, []).append(s)
+        for g, items in groups.items():
+            group(g)
+            for s in items:
+                number = s.kind in ("int", "float")
+                row(s.label, S.shown(s), lambda s=s: change(s, +1), (lambda s=s: change(s, -1)) if number else None)
+        group("Steps  ·  turn start / Build & End Turn")
+
+        def flip(phase, name):
+            S.set_step(phase, name, not S.step_on(phase, name))
+            self._render_settings()
+        for name in S.step_order():
+            r = tk.Frame(self.settings_box, bg=T.PANEL)
+            r.pack(fill="x", pady=(2, 0))
+            tk.Label(r, text=name, bg=T.PANEL, fg=T.INK, font=self.f_body, anchor="w").pack(side="left")
+            for phase, what in reversed(S.PHASES):
+                on = S.step_on(phase, name)
+                b = tk.Label(r, text=f"{what}: {'on' if on else 'off'}", bg=T.PANEL,
+                             fg=T.BRASS if on else T.MUTED, font=self.f_mono, cursor="hand2", padx=6)
+                b.pack(side="right")
+                b.bind("<Button-1>", lambda e, ph=phase, n=name: flip(ph, n))
+
+    def show_diplomacy(self, rows) -> None:
+        self.diplo_rows = list(rows)
+        self._render_diplomacy()
+        self.place()
+
+    def _toggle_deal(self, kind: str, minor: str, on: bool) -> None:
+        from .diplomacy import set_on
+        set_on(kind, minor, on)
+        self.diplo_rows = [(k, m, on if (k, m) == (kind, minor) else o) for k, m, o in self.diplo_rows]
+        self._render_diplomacy()
+
+    def _render_diplomacy(self) -> None:
+        """The factions a peace or join-war deal could be offered for (player request 2026-10-21): each a
+        click to turn it off or on (strategy/diplomacy.json), all on by default. Rebuilt only when the list changed."""
+        from .diplomacy import name
+        sig = tuple(self.diplo_rows)
+        if sig == getattr(self, "_diplo_sig", None):
+            return
+        self._diplo_sig = sig
+        for c in self.diplo.winfo_children():
+            c.destroy()
+        if not self.diplo_rows:
+            tk.Label(self.diplo, text="no deal to offer", bg=T.PANEL, fg=T.MUTED, font=self.f_body).pack(anchor="w")
+        for kind, minor, on in self.diplo_rows:
+            what = {"join_war": "join war against", "peace": "peace with"}[kind]
+            row = tk.Label(self.diplo, text=f"{'✓' if on else '✗'}  {what} {name(minor)}" + ("" if on else "  · off"),
+                           bg=T.PANEL, fg=T.INK if on else T.MUTED, font=self.f_body, anchor="w", cursor="hand2")
+            row.pack(fill="x", pady=(2, 0))
+            row.bind("<Button-1>", lambda e, k=kind, m=minor, o=on: self._toggle_deal(k, m, not o))
 
     def _render_armies(self) -> None:
         """Rebuilt only when what it shows changed (2026-10-18: rebuilt on every refresh, a new tick box flashed

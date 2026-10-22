@@ -14,6 +14,28 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
 
 ## Any session (single player is fine)
+- [ ] **Diplomacy for gold: live checks (step written 2026-10-21, assist/diplomacy.py; player decisions in its
+      docstring and strategy/diplomacy.json)**. Checked live on turn 1 (Scruten, single player): three join-war deals
+      made (Wissenland 587, Karaz-a-Karak 1103, Sylvania 802), each the most the AI accepted, each confirmed in memory
+      (treasury, war); peace skipped when the AI values peace alone below 0. Still to see: (a) a peace deal the AI
+      accepts (the click on diplomatic_option_peace was never made: does it open a sub-window?); (b) what the answer
+      looks like when the AI turns a sent offer down; (c) a turn-start pass from the runner, the widget list and its
+      toggles in the app; (d) a multiplayer session (diplomacy with the AI while others play: needs multiplayer).
+      Added the same day (player decisions): join war also against majors at most half the player's strength
+      (faction_strength, memory); peace for gold with majors too; wiped-out factions (is_dead) dropped. Payment
+      search lowest first (a refusal at 1 gold costs nothing: 7 refusals took 8 s, were 59 s). Tribute (a demand
+      alone) was tried and dropped: it starts at -20 to the AI. faction_strength checked against the panel
+      2026-10-21: all 16 strength bars match memory (Zhufbar's 0 too); the panel's rank number follows another order.
+- [ ] **Diplomacy evaluation from memory**: the AI's value of a proposal is read from the panel (UI stop-gap). It is
+      computed on demand and only found on the stack (assist/diplomacy.py docstring): decode the evaluation function
+      and its inputs (attitude, treasury, war state) to replace the panel read.
+- [ ] **A "recruiter" lord: answered 2026-10-21, the player decides**. Supply Lines (game script
+      wh_campaign_setup.lua): every army from the 2nd on adds +1% (normal) / 2% (hard) / 4% (very hard, legendary)
+      upkeep to every unit; a lord-only army counts. A permanent recruiter costs about 320 (1 army, normal) to 1,150
+      gold (3 armies, legendary) a turn and pays only with heavy losses far from a recruiting province. The cheap form:
+      a 250-upkeep lord hired with the units queued, walked over, merged, disbanded at once (Supply Lines drops on the
+      disband). With Thanquol's "Replaceable Fodder" (global recruitment -2 turns, -50% cost) global recruitment does
+      the job. Not built into the army builder unless the player wants the temporary form.
 - [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ... in N turn(s)" appears for a top item,
       cheap items are still bought with the spare gold, the saved item is bought on the turn it said, and the army
       still recruits with what is beyond the reserve.
@@ -27,13 +49,17 @@ At the start of a session, remind the player of these, and say which need a mult
 - [ ] **Workshop level 2 from the planned Cavern line** (Ikit, workshop level 1, no Cavern yet): no temporary Cavern
       is built while a capital plans the Warp-Turbine Plant; the planned one counts once it stands.
 - [ ] **Skill prerequisites from memory** (skills.memory_state): runs next to the card states; every disagreement is
-      logged to runs/skills_check.jsonl. Needs a character with unspent points. If the log shows no disagreement,
-      drop the card-state check (SKIP_STATES) so memory alone decides.
+      logged to runs/skills_check.jsonl. 2026-10-21: the log's "rank / no card" and "taken / maxed_hover" rows were
+      artefacts (fixed: no row without a card, the _hover suffix stripped, also where a full skill was clicked again).
+      One real disagreement is left: Thanquol's and the Warpseer's unique_0 (unlock rank 11 / 10, no parents) read
+      open in memory, locked on the card, at a rank at or above the unlock (the rank read was checked: memory 2 = panel
+      2). Some lock is not in the DB tables; needs a Thanquol at rank 11+. Until then the card check stays.
 - [ ] **The Lord's recruitment cost** for a new playbook army (new_army.create): not read from memory yet; the money
-      check uses the budget. Decode the Recruit Lord pool candidate's cost.
+      check uses the budget. 2026-10-21: the UI context function RecruitmentCost has two natives, 0x141EEF528 and
+      0x1408D3F90 (returns u32 [context+0x10]); the context is not the pool entry (its +0x10 is a pointer). Find
+      which context class registers 0x1403f6dd0 (Ghidra) and how it is made from a pool entry.
 - [ ] **Hero caps with bonuses** (world.agent_cap): only the base value was checked (1 each, turn 12). Check against
       the Recruit Hero panel on a save with hero buildings.
 - [ ] **Workshop (Ikit)** with the command pacing: not run since the change.
-- [ ] **Tech queued count** is still read from the panel (tech.queued_in_ui), for reporting only.
 - [ ] **Standing answers for routine decisions** (idea): strategy/decisions.json, the player's rules for AI diplomacy
       offers, captives, recurring dilemmas. Needs the player's rules.

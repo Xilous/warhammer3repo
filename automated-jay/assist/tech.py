@@ -333,19 +333,34 @@ def _open_panel(ui) -> int | None:
     return sp.ptr if built else None
 
 
-def queued_in_ui(ui, entries: dict[str, TechEntry], slot: int | None = None) -> list[str]:
-    """Locked techs the open panel shows as queued (dy_time visible on a locked node)."""
-    slot = slot or ui.first("slot_parent", under=PANEL_ID)
-    if slot is None:
-        return []
-    out = []
-    for n in ui.children(slot):
-        key = ui.id(n)
-        if key not in entries or entries[key].state != STATE_LOCKED:
-            continue
-        if ui.first("dy_time", start=n) is not None:
-            out.append(key)
+def _prereqs() -> dict[str, set[str]]:
+    """tech key -> the tech keys it needs directly: its node's parents (technology_node_links; every Skaven node has
+    required_parents 0, i.e. all parents needed) and technology_required_technology_junctions."""
+    by_node = {r["key"]: r["technology_key"] for r in gd._load("technology_nodes_tables")
+               if r["technology_node_set"] == NODE_SET}
+    out: dict[str, set[str]] = {t: set() for t in by_node.values()}
+    for r in gd._load("technology_node_links_tables"):
+        c, p = by_node.get(r["child_key"]), by_node.get(r["parent_key"])
+        if c and p:
+            out[c].add(p)
+    for r in gd._load("technology_required_technology_junctions_tables"):
+        if r["technology"] in out:
+            out[r["technology"]].add(r["required_technology"])
     return out
+
+
+def queued_chain(entries: dict[str, TechEntry], target: str) -> list[str]:
+    """The locked techs the game queues on the way to `target` (memory + DB, replacing the panel read 2026-10-21):
+    a click queues the target with all its missing prerequisites, so the chain is the target and its ancestors not
+    researched and not being researched, as their entries in memory show."""
+    pre, seen, stack = _prereqs(), set(), [target]
+    while stack:
+        t = stack.pop()
+        if t in seen:
+            continue
+        seen.add(t)
+        stack.extend(pre.get(t, ()))
+    return sorted(t for t in seen if t in entries and entries[t].state == STATE_LOCKED)
 
 
 def _close_panel(ui) -> bool:
@@ -466,13 +481,7 @@ def run(log=print) -> str:
             cur = researching(w, T)
             if cur:
                 target = research_target(w, T) or cur
-                chain = []
-                if target != cur:                # the panel marks the queued chain (dy_time on locked nodes)
-                    tnode = ui.child(slot, target, visible_only=True)
-                    if tnode is not None:
-                        wait.wait_until(lambda: ui.first("dy_time", start=tnode), 0.5, "queued chain shown",
-                                        must=False)
-                    chain = queued_in_ui(ui, tech_entries(w, T), slot)
+                chain = queued_chain(tech_entries(w, T), target) if target != cur else []   # memory + DB
                 via = "" if target == cur else f" (path to {_name(target, ns)}, {len(chain)} locked techs queued)"
                 result = f"queued {_name(cur, ns)}{via}"
                 if tried:
