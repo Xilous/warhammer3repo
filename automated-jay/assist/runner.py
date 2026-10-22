@@ -1257,6 +1257,22 @@ class Runner:
                 or (not this_turn and prev.get("turn") == s.turn and prev.get("state") != "your turn")
                 or (not this_turn and prev.get("turn") == s.turn - 1
                     and str(prev.get("headline", "")).startswith(f"TURN {s.turn - 1} ENDED")))
+            # a save of the same campaign loaded at this turn or an earlier one (a reload, a multiplayer desync; the
+            # load shows no campaign for a moment, so it comes here): the turn start runs again (2026-10-22, live:
+            # the turn-58 autosave loaded on turn 59 said "campaign changed; acts from next turn"). The save may be
+            # from before the pass (a manual save, an earlier turn); every step decides from memory, so what still
+            # stands is not done twice. A Build & End Turn already done is not, any more.
+            if (self.campaign_lost and mine is True and rec.campaign == self._cid() and rec.turn is not None
+                    and s.turn <= rec.turn):
+                self.campaign_lost = False
+                self._mark(s.turn, start_done=False, end_done=False)
+                self.end_done = None
+                self.pending = s.turn
+                self.turn_seen_at = time.monotonic()
+                self.rail(reset=True)
+                self.post("waiting", f"WAITING (turn {s.turn})", "the campaign was reloaded: running this turn's start "
+                          "again", turn=s.turn)
+                return
             if (coming or unfinished) and not self.campaign_lost:
                 self.pending = s.turn
                 self.turn_seen_at = time.monotonic()
@@ -1277,8 +1293,8 @@ class Runner:
             if old.campaign and old.campaign == self._cid() and old.turn == s.turn:
                 # the same campaign reloaded on the same turn (a multiplayer desync, a reload): what the turn owed
                 # still stands (2026-10-19), and the turn-start pass runs again even when it had finished: the save
-                # loaded is the turn start's autosave, from before the pass, so the reload undid what it did
-                # (2026-10-22). Every step decides from memory: what still stands is not done twice.
+                # may be from before it (2026-10-22). Every step decides from memory: what still stands is not done
+                # twice. (A load usually shows no campaign for a moment and is handled with the copy's start above.)
                 self.pending = s.turn
                 self.post("waiting", f"WAITING (turn {s.turn})", "the campaign was reloaded: carrying on with "
                           "this turn" + (f" (queued: {', '.join(old.owes())})" if old.owes() else ""), turn=s.turn)
