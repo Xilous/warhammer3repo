@@ -1276,11 +1276,19 @@ class Runner:
             self.offer_ignore([])
             if old.campaign and old.campaign == self._cid() and old.turn == s.turn:
                 # the same campaign reloaded on the same turn (a multiplayer desync, a reload): what the turn owed
-                # still stands, and an unfinished turn-start pass goes on (2026-10-19)
-                if not old.start_done:
-                    self.pending = s.turn
+                # still stands (2026-10-19), and the turn-start pass runs again even when it had finished: the save
+                # loaded is the turn start's autosave, from before the pass, so the reload undid what it did
+                # (2026-10-22). Every step decides from memory: what still stands is not done twice.
+                self.pending = s.turn
                 self.post("waiting", f"WAITING (turn {s.turn})", "the campaign was reloaded: carrying on with "
                           "this turn" + (f" (queued: {', '.join(old.owes())})" if old.owes() else ""), turn=s.turn)
+                return
+            if old.campaign and old.campaign == self._cid() and old.turn is not None and s.turn < old.turn:
+                # an earlier turn of the same campaign loaded (2026-10-22): its turn start runs as for a new turn; what
+                # the later turn owed is dropped with it
+                self.pending = s.turn
+                self.post("waiting", f"WAITING (turn {s.turn})", f"turn {s.turn} was loaded again: running its "
+                          "turn start", turn=s.turn)
                 return
             self.post("your turn", f"YOUR TURN {s.turn}", "campaign changed; acts from next turn")
             return
