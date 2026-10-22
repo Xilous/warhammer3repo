@@ -132,6 +132,16 @@ def test_shop_tab_counts_lines_not_levels():
     assert [b[0] for b in M.shop_plan(cfg, 5000, {tunnel, rats}, seer)[0]] == [pusbags, rictus]
 
 
+def test_shop_skips_lines_not_offered():
+    """2026-10-22, turn 53: Warp-Grinders was not listed in the Warlock tab; it is skipped and the next line bought."""
+    grinders, drillers = "wh3_dlc29_shop_military_green_warp_grinders_dlc", "wh3_dlc29_shop_economic_green_skryre_warpstone"
+    warlock = {"wh3_dlc29_skv_schemer_warlock_master"}
+    owned = {"wh3_dlc29_military_mod_pool_skryre_warpfire_throwers_1"}
+    cfg = {"keep_warpstone": 0, "order": [{"chain": grinders, "levels": 1}, {"chain": drillers, "levels": 1}]}
+    assert [b[0] for b in M.shop_plan(cfg, 5000, owned, warlock)[0]] == [grinders, drillers]
+    assert [b[0] for b in M.shop_plan(cfg, 5000, owned, warlock, {grinders})[0]] == [drillers]
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_"):

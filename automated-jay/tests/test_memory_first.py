@@ -30,6 +30,8 @@ ALLOWED = {
     "assist/masterplans.py::_select_underling": "click",
     "assist/masterplans.py::_txt": "click",                       # confirms the targeted settlement
     "assist/masterplans.py::buy_secrets": "click",
+    "assist/masterplans.py::_tab_listed": "ui-only",              # UI stop-gap: lines the game does not offer (DLC not
+                                                                  # owned, story lock), memory reader pending
     "assist/masterplans.py::close_panel": "click",
     "assist/masterplans.py::open_main": "click",
     "assist/new_army.py::create": "fallback",                     # pool, engineer, province, money from memory
