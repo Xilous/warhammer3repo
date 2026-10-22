@@ -97,11 +97,26 @@ def test_shop_plan_strict_order_and_locks():
     assert M.shop_plan(cfg, 1000, {objs[racks][0]["token"]}, warlock)[0] == []         # owned already
 
 
-def test_near_provinces():
-    prov = {"a1": "A", "a2": "A", "b1": "B", "c1": "C", "d1": "D"}
-    nbrs = {"a1": ["a2", "b1"], "a2": ["a1", "c1"], "b1": ["a1", "d1"], "c1": ["a2"]}
-    # we hold a1 only: province A is ours (a2 too), B and C border it, D borders only B
-    assert M.near_provinces(prov, nbrs, {"a1"}) == {"A", "B", "C"}
+def test_targets_ranked_by_income():
+    """2026-10-22: Varenka Hills (200/turn) was taken over Karaz-a-Karak (900/turn); the score is the region's income,
+    owners not at war first, and only our own provinces are skipped (a bordering one is a target)."""
+    import struct
+    from types import SimpleNamespace as NS
+    import bot.sensor.world as world
+    regs = {"kak": 1, "varenka": 2, "foe": 3, "mine": 4, "home": 5}
+    gdp = {1: 900, 2: 200, 3: 2000, 4: 500, 5: 700}
+    owner = {1: 10, 2: 11, 3: 12, 4: 99, 5: 13}
+    w = NS(wars=lambda F: [12], region_owner=lambda r: owner[r], explored=lambda F, r: True,
+           slots=lambda r: [NS(building="b", level=1)], pm=NS(read_bytes=lambda a, n: struct.pack("<i", gdp[a - 0x10C])))
+    saved = (M._region_objects, M._own_provinces, world.region_provinces)
+    M._region_objects, M._own_provinces = (lambda w, F: regs), (lambda w, F: {"P_HOME"})
+    world.region_provinces = lambda: ({"home": "P_HOME", "mine": "P_HOME"},)
+    try:
+        sc = M.target_scores(w, 99, NS(plans=[], region_cooldowns={}), {})
+    finally:
+        M._region_objects, M._own_provinces, world.region_provinces = saved
+    assert sorted(sc, key=lambda k: -sc[k]) == ["kak", "varenka", "foe"]      # foe: richest, but at war
+    assert sc["kak"] - sc["varenka"] == 700
 
 
 if __name__ == "__main__":

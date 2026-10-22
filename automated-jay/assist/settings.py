@@ -51,7 +51,7 @@ SETTINGS: list[Setting] = [
     Setting("masterplans.json", ("steal_take", "enabled"), "Steal-Takes", "Masterplans", default=True),
     Setting("masterplans.json", ("steal_take", "prefer_not_at_war"), "Steal from factions not at war with you first",
             "Masterplans", default=True),
-    Setting("masterplans.json", ("steal_take", "skip_near_provinces"), "Skip settlements near your provinces",
+    Setting("masterplans.json", ("steal_take", "skip_own_provinces"), "Skip settlements in your provinces",
             "Masterplans", default=True),
     Setting("masterplans.json", ("steal_take", "at_max_alarm"), "At maximum Alarm", "Masterplans", "choice",
             "complete", choices=("complete", "abandon")),

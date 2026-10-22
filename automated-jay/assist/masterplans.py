@@ -324,13 +324,11 @@ def _confirm(ui, done=None) -> None:
 # ------------------------------------------------------------------ memory: the boards, the shop
 def board_from(plan, w) -> dict:
     """The decision inputs of a running plan, from memory (bot/sensor/masterplans.Plan); the region's income is
-    region:gdp(), i32 at the region object +0x10C (decompiled binding 0x1427C3750, 9.0.4)."""
+    region_gdp()."""
     from bot.sensor.masterplans import WARPSTONE_KEY
     tot = sum(wt for _t, wt in plan.pool) or 1
-    try:
-        income = float(struct.unpack("<i", w.pm.read_bytes(plan.region_obj + 0x10C, 4))[0])
-    except Exception:
-        income = None
+    inc = region_gdp(w, plan.region_obj)
+    income = float(inc) if inc is not None else None
     return {"risk": plan.risk, "alarm": plan.alarm, "alarm_max": plan.alarm_max, "gold": float(plan.treasury),
             "warpstone": float(plan.resources.get(WARPSTONE_KEY, 0)), "draws": plan.draws_next,
             "bag": [(t, wt * 100.0 / tot) for t, wt in plan.pool], "drawn": len(plan.drawn), "income": income,
@@ -520,40 +518,30 @@ def _region_objects(w, F: int, limit: int = 1500) -> dict[str, int]:
     return seen
 
 
-def near_provinces(province_of: dict[str, str], neighbours_of: dict[str, list[str]], own: set[str]) -> set[str]:
-    """Our provinces (any region of them held) and every province bordering one of them (a region of it is a
-    neighbour of a region in ours)."""
-    ours = {province_of.get(k, k) for k in own}
-    near = set(ours)
-    for k, ns in neighbours_of.items():
-        if province_of.get(k, k) in ours:
-            near.update(province_of.get(n, n) for n in ns if n and n != "?")
-    return near
-
-
-def _near_provinces(w, F: int) -> set[str]:
+def _own_provinces(w, F: int) -> set[str]:
+    """Our provinces: every province in which we hold a region."""
     from bot.sensor.world import snapshot
     snap = snapshot(w)
     if snap is None:
         return set()
-    return near_provinces(snap.province_of, snap.neighbours_of, set(snap.own))
+    return {snap.province_of.get(k, k) for k in snap.own}
 
 
 def target_scores(w, F: int, state, cfg: dict) -> dict[str, float]:
-    """region key -> score for every foreign settlement a Steal-Take may target, from memory: higher settlement
-    level first (loot is a share of the region's income), major settlements before minor ones, and (by default)
-    factions we are not at war with first. Left out: settlements on a Masterplans cooldown, already targeted, without
-    a main building, under the shroud, and (skip_near_provinces) every settlement in one
-    of our provinces or a province bordering one."""
+    """region key -> score for every foreign settlement a Steal-Take may target, from memory: the region's income
+    (region:gdp(), the loot is a share of it; player request 2026-10-22: a 200/turn Varenka Hills was taken over a
+    900/turn Karaz-a-Karak), and (by default) factions we are not at war with first. Left out: settlements on a
+    Masterplans cooldown, already targeted, without a main building, under the shroud, and (skip_own_provinces) every
+    settlement in one of our provinces."""
     from bot.sensor.world import region_provinces
     regs = _region_objects(w, F)
-    near = _near_provinces(w, F) if cfg.get("skip_near_provinces", True) else set()
+    own = _own_provinces(w, F) if cfg.get("skip_own_provinces", True) else set()
     prov = region_provinces()[0]
     busy = {p.region for p in state.plans}
     wars = set(w.wars(F))
     out = {}
     for region, r in regs.items():
-        if region in busy or region in state.region_cooldowns or prov.get(region, region) in near:
+        if region in busy or region in state.region_cooldowns or prov.get(region, region) in own:
             continue
         owner = w.region_owner(r)
         if not owner or owner == F:
@@ -566,11 +554,23 @@ def target_scores(w, F: int, state, cfg: dict) -> dict[str, float]:
         main = slots[0] if slots else None
         if not main or not main.building:
             continue
-        score = (main.level or 0) * 10 + (5 if "major" in main.building else 0)
+        score = float(max(region_gdp(w, r) or 0, 0))
         if cfg.get("prefer_not_at_war", True) and owner not in wars:
-            score += 100
+            score += NOT_AT_WAR_BONUS
         out[region] = score
     return out
+
+
+NOT_AT_WAR_BONUS = 100000      # above any region's income: a faction we are not at war with always comes first
+
+
+def region_gdp(w, region_obj: int) -> int | None:
+    """region:gdp(), i32 at the region object +0x10C (decompiled binding 0x1427C3750, 9.0.4; 2026-10-22 live:
+    Karaz-a-Karak 900, Varenka Hills 200, as the game shows)."""
+    try:
+        return struct.unpack("<i", w.pm.read_bytes(region_obj + 0x10C, 4))[0]
+    except Exception:
+        return None
 
 
 def _labels_on_screen(ui, avoid_rects) -> dict[str, int]:

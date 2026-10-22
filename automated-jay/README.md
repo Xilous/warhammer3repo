@@ -278,9 +278,10 @@ is used only to find what to click, to confirm a click took, and for what exists
     0, 0, 0.15, 0.99; V <= 0 -> wait; risk x q < G / (G + (1 - 0.25) V) -> wait; else complete.
   - confirmed by the plan leaving memory.
 - Free Underlings (unlocked, idle, cooldown 0, unwounded) and 50+ Warpstone -> Steal-Take on the best target:
-  - targets: not in a plan, not on cooldown, not in or next to your provinces (`skip_near_provinces`), owned by
+  - targets: not in a plan, not on cooldown, not in your provinces (`skip_own_provinces`), owned by
     someone else, explored, has a main building;
-  - score: main level x 10, +5 major settlement, +100 not at war with you (`prefer_not_at_war`);
+  - score: the region's income (region:gdp(), the loot is a share of it), not-at-war owners first
+    (`prefer_not_at_war`);
   - on screen, or within `max_pan` (120) map units (2 pans); confirmed by the plan appearing in memory.
 - Secrets: walk `shop.order`; skip unknown chains, locked tabs (Underling not unlocked) and levels below their
   unlock count; stop when buying would leave less than `keep_warpstone` (50). Each buy confirmed by Warpstone in memory.
