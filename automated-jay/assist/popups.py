@@ -158,9 +158,30 @@ def _close_button(ui: UI, c: int) -> int | None:
     return None
 
 
+def diplomacy_notice(ui: UI, c: int) -> int | None:
+    """The OK button of a diplomacy panel that only tells something (2026-10-22, turn 57: "They have ended their non-
+    aggression pact with you", Ikit Claw, held the other factions' turns as "an AI diplomacy offer"): its shown button
+    set (offers_list_panel/button_set_holder/button_setN) holds button_accept alone. An offer's set has Send, Counter-
+    offer, Cancel or Decline as well and is always left to the player. None when it is not such a notice."""
+    holder = ui.first("button_set_holder", under=c)
+    if holder is None:
+        return None
+    for bs in ui.children(holder):
+        if not ui.effective_visible(bs):
+            continue
+        btns = [(b, ui.id(b)) for b in ui.children(bs) if (ui.id(b) or "").startswith("button")
+                and ui.effective_visible(b)]
+        if len(btns) == 1 and btns[0][1] == "button_accept":
+            return btns[0][0]
+    return None
+
+
 def _closable(ui: UI) -> list[tuple[int, str, int]]:
     out = []
     for c, cid in scan(ui):
+        if cid == "diplomacy_dropdown" and (ok := diplomacy_notice(ui, c)) is not None:
+            out.append((c, cid, ok))
+            continue
         if not is_event(cid) or needs_choice(ui, c) or significant(ui, c):
             continue
         btn = _close_button(ui, c)
@@ -247,6 +268,8 @@ def open_decisions(ui: UI | None = None) -> list[tuple[str, str, bool]]:
     ui = ui or UI()
     out = []
     for c, cid in scan(ui):
+        if cid == "diplomacy_dropdown" and diplomacy_notice(ui, c) is not None:
+            continue                                   # a diplomacy notice: closed like an event notice
         if not is_event(cid):
             d = describe(cid)
             if d.startswith("a global event") and (t := title(ui, c)):
