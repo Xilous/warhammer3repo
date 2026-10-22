@@ -33,11 +33,14 @@ At the start of a session, remind the player of these, and say which need a mult
       masterplans.jsonl should have no "shop_check" rows (panel and memory listing the same lines per tab).
       Turn 56: one row, a false one (a tab checked again after its last line was bought, against the reading from
       before the purchase); fixed: each tab is checked once, before anything is bought in it. Watch a few more.
-- [ ] **Building spending order and saving (2026-10-20)**: watch a few turns: "saving for ... in N turn(s)" appears for a top item,
-      cheap items are still bought with the spare gold, the saved item is bought on the turn it said, and the army
-      still recruits with what is beyond the reserve.
-- [ ] **Skill step after the memory_state fix (2026-10-20)**: Triangulation, Warp-Smart, Draftmaster, Quartermaster etc.
-      are taken again in order; runs/skills_check.jsonl shows no memory/card disagreement.
+- [x] **Building spending order and saving (2026-10-20)**: checked from the logs of 2026-10-21/22 (turns 13-46):
+      "saving for ... (in 1 turn(s))" was followed by that building the next turn 26 times out of 30; the 4 others
+      had a reason the next turn (blocked by war, greyed out, or a cheaper main-building upgrade in the same province
+      took its development points first: cheapest main upgrade first is the order). Cheap items went with the spare
+      gold on the same turns.
+- [x] **Skill step after the memory_state fix (2026-10-20)**: taken in order since (Ulcess Triangulation turn 53,
+      Thanquol Lightning Strike / Ancient Cunning, Gottri Warp-Smart, Bonded Service, Draftmaster live 2026-10-22);
+      the only skills_check rows left were the unlock-rank off-by-one, fixed 2026-10-22.
 - [ ] **Spilled-over recruits**: what the game does when a unit queued past the recruitment capacity cannot be paid
       when it starts (dropped, or waits); decode which queue items are paid (queue item X) to replace runs/army_owed.json.
 - [ ] **Magma Cannon build swap (2026-10-20) live checks**: a capital with Equipment Warpforge + Warp-Turbine Plant
