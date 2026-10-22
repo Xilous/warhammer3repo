@@ -109,3 +109,12 @@ def test_second_saved_item_counts_the_first():
 def test_slow_payback_is_never_saved_for():
     _b, _h, saved, _r = plan(100, 5000, [("fast", (1, 8.0), 4000), ("slow", SLOW, 4000)])
     assert saved == ["fast"]
+
+
+def test_replacing_an_off_list_building_comes_right_after_main_upgrades():
+    o = owned(5)
+    rep = (o, act("replace", "Breeding Pit", first("wh2_main_skv_farm"), 250))
+    pit = (o, act("construct", "Scrap Heap", first("wh2_main_skv_industry"), 250))
+    main = (o, act("upgrade_main", "Main building", first(MAJOR), 12000))
+    got = [a.kind for _o, a in sorted([pit, rep, main], key=lambda t: build.spend_rank(*t))]
+    assert got == ["upgrade_main", "replace", "construct"]

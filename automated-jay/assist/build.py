@@ -200,11 +200,13 @@ class Budget:
 
 
 def spend_rank(o: OwnedSettlement, a) -> tuple:
-    """Where an action stands in the spending order (lower first): (0, ...) main / port upgrades, (1, payback turns,
-    list position, cost) every other building."""
+    """Where an action stands in the spending order (lower first): (0, 0, ...) main / port upgrades, (0, 1, ...)
+    replacing an off-list building, (1, payback turns, list position, cost) every other building."""
     from .payback import payback
     if a.kind in ("upgrade_main", "upgrade_port"):
         return (0, 0, a.cost)
+    if a.kind == "replace":                      # off-list buildings go at once (player decision 2026-10-21): every
+        return (0, 1, a.cost)                    # turn it stands delays the planned building's upgrades
     names = [e["name"] for e in strategy()["priority"]]
     prov = PROVINCE_MODELS.get(o.province) or []
     turns = payback(o.model, prov if any(m is o.model for m in prov) else [o.model], a)   # (only this pass's models)
@@ -964,6 +966,28 @@ def run(log=print, override_blocked: bool = False) -> str:
             need = dev_cost(a.level_key, w)
             if need and (have := development_points(w, o.region_obj, snap.faction)) is not None and have < need:
                 problems.append(f"{o.region}: {a.item} needs {need} development points (the province has {have})")
+                continue
+            if a.kind == "replace" and cost > budget.spare() and idx is not None and a.level_key:
+                # the off-list building is demolished now even when the planned one cannot be paid yet (player
+                # decision 2026-10-21: demolishing costs nothing, and every turn it stands delays the planned
+                # building); it goes up as soon as the gold is there. (Kept while the planned building is locked,
+                # short of main level or development points: the slot would only stand empty.)
+                if not ui_open_province(ui, o):
+                    _failed(problems, o, a, f"{o.region}: could not open its province")
+                    continue
+                slot = ui_slot(ui, w, o, idx)
+                if slot is None:
+                    _failed(problems, o, a, f"{o.region}: slot not on screen")
+                    continue
+                old = next((s_.building for s_ in [o.slot_states[idx]] if s_.building), None)
+                old_name = gd.level_name(old) if old else "the building"
+                how = ui_demolish(ui, w, o, idx, slot)
+                if how is None:
+                    _failed(problems, o, a, f"{o.region}: could not demolish {old_name}")
+                    continue
+                done.append(f"{gd.place_name(o.region)}: demolish{'ing' if how == 'pending' else 'ed'} {old_name} "
+                            f"(not on your list; {a.item} goes up there once {cost} gold is there)")
+                log(f"build: {done[-1]}")
                 continue
             if cost > budget.spare():
                 if cost <= budget.gold:               # affordable, but it would push a saved item a turn later

@@ -300,6 +300,9 @@ is used only to find what to click, to confirm a click took, and for what exists
 - Repairs first (`repair_damaged`): damaged buildings on the plan; estimate = cost x missing hp share > gold -> needs gold.
 - Construction Cavern (Ikit, workshop level 1, no Cavern standing, none planned): one temporary Cavern in a free
   slot, else an off-list slot, else the lowest-priority building; kept until it has counted, then released.
+- Off-list buildings: demolished right after the main/port upgrades, even when the planned building cannot be paid
+  yet (it goes up once the gold is there); kept while the planned building is locked or short of main level or
+  development points.
 - Spending, all provinces at once (income first): main/port upgrades (they unlock the slots) -> every other building
   and upgrade by payback = build turns + cost / gold per turn it adds (game data: its income, the province's %
   bonuses such as the Reactor's, an upgrade's difference, a replaced building's loss; `assist/payback.py`); ties by
