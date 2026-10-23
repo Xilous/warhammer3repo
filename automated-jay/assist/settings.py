@@ -39,6 +39,8 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("pace_ms",), "Pause after every click", "Turn", "int", 120, 20, 0, 1000, unit=" ms"),
     Setting("automation.json", ("camera_pan",), "Camera panning", "Turn", "choice", "auto",
             choices=("auto", "edge", "keys")),
+    Setting("automation.json", ("ai_offers",), "AI diplomacy offers", "Turn", "choice", "ask",
+            choices=("ask", "accept_gifts")),
     # buildings (assist/build.py)
     Setting("automation.json", ("buildings", "repair_damaged"), "Repair damaged buildings", "Buildings", default=True),
     Setting("automation.json", ("buildings", "off_list_buildings"), "Buildings not on the list", "Buildings",

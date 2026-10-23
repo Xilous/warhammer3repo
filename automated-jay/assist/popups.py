@@ -302,3 +302,74 @@ def open_decisions(ui: UI | None = None) -> list[tuple[str, str, bool]]:
 def decisions(ui: UI | None = None) -> list[str]:
     """Human-readable list of open popups that need the player."""
     return [d for _cid, d, _ig in open_decisions(ui)]
+
+
+# ------------------------------------------------------------------ AI offers (standing answer, 2026-10-22)
+# strategy/automation.json "ai_offers" (a widget setting): "ask" leaves every AI diplomacy offer to the player (as
+# before); "accept_gifts" accepts an offer that asks nothing of the player beyond a Non-Aggression Pact or a Trade
+# Agreement and gives only gold, a Non-Aggression Pact or a Trade Agreement (turn 64: Gorbad Ironclaw's 600 gold for a
+# Non-Aggression Pact held the AI turns until answered). Anything else is still left to the player.
+# UI stop-gap: the offer's terms are read from the diplomacy panel (diplomatic_option_<type> under their_offers /
+# your_offers); a memory reader for pending diplomatic proposals is pending.
+GIFT_TERMS = {"payment", "nonaggression_pact", "trade_agreement"}
+GIVE_TERMS = {"nonaggression_pact", "trade_agreement"}
+
+
+def offer_terms(ui: UI, c: int) -> tuple[set, set] | None:
+    """(what they ask of the player, what they give) of an open AI offer, as option types; None when the panel is
+    not an incoming offer (its button set has no Accept and Cancel) or a side cannot be read."""
+    holder = ui.first("button_set_holder", under=c)
+    shown = set()
+    for bs in (ui.children(holder) if holder is not None else []):
+        if ui.effective_visible(bs):
+            shown |= {ui.id(b) for b in ui.children(bs) if ui.effective_visible(b)}
+    if not {"button_accept", "button_cancel"} <= shown:
+        return None
+    ask, give = set(), set()
+    for comp, path in ui.walk(c):
+        cid = path[-1] if path else ""
+        if not cid.startswith("diplomatic_option_") or not ui.effective_visible(comp):
+            continue
+        kind = cid[len("diplomatic_option_"):]
+        if "your_offers" in path:
+            ask.add(kind)                       # "Their Demands": what the player would give
+        elif "their_offers" in path:
+            give.add(kind)
+    return (ask, give) if ask or give else None
+
+
+def offer_rule() -> str:
+    try:
+        return json.load(open(config.STRATEGY_DIR / "automation.json", encoding="utf-8")).get("ai_offers", "ask")
+    except Exception:
+        return "ask"
+
+
+def answer_offer(ui: UI) -> str | None:
+    """Accept an open AI offer the standing answer covers (offer_rule). -> what was done, or None (left to the
+    player). Paced by the game: the Accept click must write a command and close the panel (memory: the UI tree)."""
+    if offer_rule() != "accept_gifts":
+        return None
+    c = ui.root_child("diplomacy_dropdown")
+    if not c or not ui.effective_visible(c):
+        return None
+    terms = offer_terms(ui, c)
+    if terms is None:
+        return None
+    ask, give = terms
+    if not give or not ask <= GIVE_TERMS or not give <= GIFT_TERMS:
+        return None
+    btn = ui.first("button_accept", under=c)
+    if btn is None:
+        return None
+    _time.sleep(0.4)                            # the same terms a moment later (the panel fills in over frames)
+    if offer_terms(ui, c) != terms:
+        return None
+    log_open(ui, None, f"accepting an AI offer (they ask {sorted(ask)}, give {sorted(give)})")
+    from bot.sensor import commands
+    with game_focus():
+        st, _v = commands.act(ui.pm, lambda: click(ui, btn) and None, lambda: not ui.effective_visible(btn),
+                              cap=max(CLOSE_TIMEOUT, commands.EFFECT_CAP_S))
+    if st != "done":
+        return None
+    return f"accepted an AI offer: they asked {', '.join(sorted(ask)) or 'nothing'}, gave {', '.join(sorted(give))}"
