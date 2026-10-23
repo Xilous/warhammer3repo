@@ -232,7 +232,9 @@ class RailPanel:
         self.win.update_idletasks()
         sw, sh = self.win.winfo_screenwidth(), self.win.winfo_screenheight()
         w = min(sw, self.win.winfo_reqwidth())
-        h = min(sh, self.body.winfo_reqheight() + 4)
+        # the whole window's height: the stripe and the grip strip sit above the body (2026-10-23: sized from the body
+        # alone, the window came out 12 px short and the last Steps row was cut off)
+        h = min(sh, self.win.winfo_reqheight())
         rx, ry = self.rail.win.winfo_x(), self.rail.win.winfo_y()
         x = max(0, min(rx, sw - w))                  # under the rail where it fits, else pulled back onto the screen
         y = ry + self.rail.win.winfo_height() + 6
