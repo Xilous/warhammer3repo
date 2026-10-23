@@ -373,7 +373,13 @@ def scroll_into_view(ui: UI, card: int) -> bool:
     if clip is None:
         return False
     for _ in range(8):
-        cc, cl = ui.comp(card), ui.comp(clip)
+        # only over a list that has stopped moving (2026-10-23: the pool was still sliding up when the panel opened; a
+        # wheel aimed at its rectangle then, y 829, landed on the map at its final place, y 661, zoomed the camera out
+        # into the tactical view, and its Overlays panel then covered the Provinces list: the engineer was not hired)
+        cl = wait.stable_rect(ui, clip, n=3, timeout=1.0, must=False, what="recruitment pool in place")
+        if cl is None:
+            return False
+        cc = ui.comp(card)
         if cl.x <= cc.x and cc.x + cc.w <= cl.x + cl.w:
             return True
         if cc.x > cl.x:

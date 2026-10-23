@@ -30,7 +30,7 @@ from bot.focus import game_focus, require_game_front
 from bot.sensor.camera import GROUND_H, character_pos, read_camera as _read_camera
 from bot.sensor.world import World, characters, find_player_faction
 from tools import timing, wait
-from tools.ui import click, double_click, move_to
+from tools.ui import click, double_click, leave_tactical_view, move_to
 
 FLAG_H = 2.6                 # army banner height above the lord's position (world units)
 # screen area clear of the HUD where map clicks are safe: the minimap and the Lords & Heroes list start at x ~1636,
@@ -163,6 +163,9 @@ def province_row(ui, province: str):
     """The province's row in the Provinces list (top bar tab_regions; row_entry_<province key>), opened and scrolled
     into view as needed, or None."""
     from .build import _scroll_into_clip
+    # the runner leaves the tactical view before every step; one entered during a step (2026-10-23: a wheel that
+    # missed the recruitment pool zoomed out) puts its Overlays panel over the list, and every row click misses
+    leave_tactical_view(ui)
     tab = ui.cached("tab_regions", under="bar_small_top")
     if tab is None:
         return None
@@ -258,6 +261,7 @@ def bring_into_view(w: World, ui, x: float, y: float, comp_id: str, h: float = G
                          inside AIM; once the camera has coasted to a stop the label must be inside SAFE (else steer
                          again).
     The game must be in front."""
+    leave_tactical_view(ui)              # (it hides the settlement labels: see province_row)
     cam_px = lambda: read_camera(w.s).project(x, y, h)
     if in_safe(map_label(ui, comp_id)):
         k = _settled(ui, comp_id, cam_px, timeout=2.0)

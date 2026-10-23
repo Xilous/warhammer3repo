@@ -57,6 +57,12 @@ At the start of a session, remind the player of these, and say which need a mult
       Warp-Doom Magma-Cannons there for Tichit from the local pool; turn 59 Thanquol's refill disbanded his off-template
       troops first (Warpfire Throwers; 2026-10-22: now only as many as the gold replaces); the dashboard line is
       eligible() = Black Water, green.
+- [ ] **Buildings the game greys out with no reason read (2026-10-23)**: a non-main building card greyed out though
+      memory said it could go (gold, main level, development points, locks all fine), most often right after another
+      construction in the same settlement (Zhufbar turn 16: Breeding Pit and Scrap Heap after Warplightning
+      Capacitors; turn 19: Castle Drakenhof's Temple, Oakenhammer's Overseer's Lookout); each went up a turn later.
+      _why_greyed found no text on the card (its tooltip shows only on hover). Find the rule in memory, then plan
+      by it; until then these show as failures in the widget.
 - [ ] **Workshop level 2 from the planned Cavern line** (Ikit, workshop level 1, no Cavern yet): no temporary Cavern
       is built while a capital plans the Warp-Turbine Plant; the planned one counts once it stands.
       2026-10-22 (the Ikit save of 2026-10-18, turns 82-84): the first half holds: Magritta built the planned chain's

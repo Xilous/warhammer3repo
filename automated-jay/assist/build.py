@@ -328,7 +328,12 @@ def _scroll_into_clip(ui, item: int, what: str) -> bool:
     for _ in range(30):
         if clip is None or ui.in_clip(item):
             return True
-        cl, k = ui.comp(clip), ui.comp(item)
+        # only over a list that has stopped moving: a wheel aimed at a list still sliding in lands on the map and
+        # zooms the camera (2026-10-23, the recruitment pool: into the tactical view)
+        cl = wait.stable_rect(ui, clip, n=3, timeout=1.0, must=False, what=f"{what} in place")
+        if cl is None:
+            return False
+        k = ui.comp(item)
         wheel(*cl.center, 1 if k.y < cl.y else -1)
         wait.stable(lambda: ui.comp(item).y, n=2, timeout=1.0, what=f"{what} still", ui=ui, must=False)
     return False
