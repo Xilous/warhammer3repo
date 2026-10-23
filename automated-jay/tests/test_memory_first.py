@@ -39,6 +39,8 @@ ALLOWED = {
     "assist/notifications.py::_toggles": "ui-only",
     "assist/notifications.py::showing": "ui-only",
     "assist/popups.py::_shows": "ui-only",
+    "assist/popups.py::diplomacy_notice": "ui-only",              # which buttons a diplomacy popup offers
+    "assist/popups.py::offer_terms": "fallback",                  # UI stop-gap: an AI offer's terms (memory reader pending)
     "assist/popups.py::_sig": "ui-only",
     "assist/popups.py::log_open": "ui-only",
     "assist/popups.py::significant": "ui-only",
