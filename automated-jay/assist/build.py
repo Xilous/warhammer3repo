@@ -117,7 +117,16 @@ def build_models(w: World, snap) -> tuple[dict[str, list[OwnedSettlement]], dict
         model = Settlement(key, cap, main, port, rest,
                            gd.landmarks_for_region(key), key)
         out.setdefault(p, []).append(OwnedSettlement(key, r, p, col, len(order), slots, model))
-    return out, snap.blocked_settlements
+    return out, frontline(snap)
+
+
+def frontline(snap) -> dict[str, str]:
+    """The settlements left to the player (next to an enemy-held one), or none when the rule is off (widget setting
+    "Leave frontline settlements to you", automation.json buildings.never_build_in_provinces_adjacent_to_enemy_at_war;
+    player decision 2026-10-23: off by default, every settlement is built)."""
+    if not snap or not buildings_setting("never_build_in_provinces_adjacent_to_enemy_at_war", False):
+        return {}
+    return dict(snap.blocked_settlements)
 
 
 def _actions(models, blocked: dict, override_blocked: bool = False):

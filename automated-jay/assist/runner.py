@@ -530,6 +530,15 @@ class Runner:
             if not ok:
                 self.post("waiting", f"WAITING (turn {s.turn})", f"New army: not your turn ({why})", turn=s.turn)
                 return
+            # the hard requirements, read again from memory at the press (player rule 2026-10-23; the widget greys the
+            # button, this covers a press made just before a refresh): income going negative is a warning only
+            from .army_finance import readiness
+            from bot.sensor.world import World, find_player_faction
+            w = World()
+            ready, missing = readiness(w, find_player_faction(w))
+            if not ready:
+                self.post("your turn", f"YOUR TURN {s.turn}", f"New army: not yet: {missing}", turn=s.turn)
+                return
             done = self.automate(s.turn, [], label="new army", names=["army"])
             self.post("your turn", f"YOUR TURN {s.turn}", "\n".join(done), turn=s.turn)
         except InputAborted as ex:

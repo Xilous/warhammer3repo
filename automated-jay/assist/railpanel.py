@@ -5,7 +5,12 @@ Opened and closed with the rail's expand button; sits under the rail and follows
 rail it never takes focus (the game stays in front while armies are ticked or buttons pressed), and it hides itself
 while a pass runs, so it can never be under a click the assistant makes.
 
-Look: Clan Brass (player's pick 2026-10-18, assist/theme.py). Contents, top to bottom: Run now / Pause / Restart /
+Layout (player request 2026-10-23: "no need to constrain its size to be completely vertical ... i dont mind if it took
+the whole screen"): the buttons across the top, then three columns, as wide as the screen allows: the turn and the
+armies; the next army and the frontline; every setting, in two sub-columns, all shown at once (one tall column
+had grown past the screen's height, so the lower settings could not be reached).
+
+Look: Clan Brass (player's pick 2026-10-18, assist/theme.py). Contents: Run now / Pause / Restart /
 Exit, treasury - income - Warpstone, "Ignore <id>" for popups that block a pass, what failed this turn and why (only failures, player request 2026-10-21), the
 armies with their army-builder tick boxes (saved exactly as the main window does: assist/army.py set_enabled) and
 what each costs now and once refilled, the next army (can you afford it: a bar of income against its cost, Create
@@ -17,8 +22,9 @@ import tkinter as tk
 
 from . import theme as T
 
-WIDTH = 494                     # the compact rail's width: the panel lines up under it
+WIDTH = 494                     # one column: the compact rail's width
 BAR_W = WIDTH - 40
+SET_COL_W = 400                 # each of the two settings sub-columns (one when the screen is too narrow)
 
 
 def _nice(text: str) -> str:
@@ -105,8 +111,16 @@ class RailPanel:
         full.pack(side="right")
         full.bind("<Button-1>", lambda e: self.on_full_window())
 
+        cols = tk.Frame(self.body, bg=T.PANEL)
+        cols.pack(fill="both", expand=True)
+        c1, c2, c3 = (tk.Frame(cols, bg=T.PANEL, width=w) for w in (WIDTH - 36, WIDTH - 36, 0))
+        for i, c in enumerate((c1, c2, c3)):
+            if i:
+                tk.Frame(cols, bg=T.LINE, width=1).pack(side="left", fill="y", padx=14, pady=(12, 0))
+            c.pack(side="left", fill="y", anchor="n")
+
         # treasury - income - Warpstone
-        stats = tk.Frame(self.body, bg=T.PANEL)
+        stats = tk.Frame(c1, bg=T.PANEL)
         stats.pack(fill="x", pady=(14, 0))
         self.stat = {}
         for i, key in enumerate(("TREASURY", "INCOME", "WARPSTONE")):
@@ -117,64 +131,61 @@ class RailPanel:
             v = tk.Label(cell, text="—", bg=T.PANEL, fg=T.INK, font=self.f_big)
             v.pack(anchor="w")
             self.stat[key] = v
-        self.info = tk.Label(self.body, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body, anchor="w")
+        self.info = tk.Label(c1, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body, anchor="w")
         self.info.pack(fill="x", pady=(4, 0))
-        self.ignore_row = tk.Frame(self.body, bg=T.PANEL)
+        self.ignore_row = tk.Frame(c1, bg=T.PANEL)
         self.ignore_row.pack(fill="x")
 
-        self._rule()
-        self._heading("THIS TURN  ·  only what failed, and why")
-        self.log = tk.Label(self.body, text="", bg=T.PANEL, fg=T.TEXT2, font=self.f_body, anchor="nw",
+        self._rule(c1)
+        self._heading(c1, "THIS TURN  ·  only what failed, and why")
+        self.log = tk.Label(c1, text="", bg=T.PANEL, fg=T.TEXT2, font=self.f_body, anchor="nw",
                             justify="left", wraplength=WIDTH - 40)
         self.log.pack(fill="x")
 
-        self._rule()
-        self._heading("ARMIES  ·  tick to refill to the template")
-        self.armies = tk.Frame(self.body, bg=T.PANEL)
+        self._rule(c1)
+        self._heading(c1, "ARMIES  ·  tick to refill to the template")
+        self.armies = tk.Frame(c1, bg=T.PANEL)
         self.armies.pack(fill="x")
         self.army_vars: dict[int, tk.BooleanVar] = {}
 
-        self._rule()
-        self._heading("NEXT ARMY")
-        ends = tk.Frame(self.body, bg=T.PANEL)
+        tk.Frame(c2, bg=T.PANEL, height=14).pack(fill="x")     # level with the first column's numbers
+        self._heading(c2, "NEXT ARMY")
+        ends = tk.Frame(c2, bg=T.PANEL)
         ends.pack(fill="x")
         self.bar_left = tk.Label(ends, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body)
         self.bar_left.pack(side="left")
         self.bar_right = tk.Label(ends, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body)
         self.bar_right.pack(side="right")
-        self.bar = tk.Canvas(self.body, width=BAR_W, height=14, bg=T.PANEL, highlightthickness=0, bd=0)
+        self.bar = tk.Canvas(c2, width=BAR_W, height=14, bg=T.PANEL, highlightthickness=0, bd=0)
         self.bar.pack(fill="x", pady=(4, 4))
-        self.verdict = tk.Label(self.body, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_bold, anchor="w",
+        self.verdict = tk.Label(c2, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_bold, anchor="w",
                                 justify="left", wraplength=WIDTH - 40)
         self.verdict.pack(fill="x")
-        self.detail = tk.Label(self.body, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body, anchor="w",
+        self.detail = tk.Label(c2, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body, anchor="w",
                                justify="left", wraplength=WIDTH - 40)
         self.detail.pack(fill="x")
-        self.raise_btn = tk.Label(self.body, text="CREATE NEW PLAYBOOK ARMY", font=self.f_btn, padx=12, pady=8)
+        self.raise_btn = tk.Label(c2, text="CREATE NEW PLAYBOOK ARMY", font=self.f_btn, padx=12, pady=8)
         self.raise_btn.bind("<Button-1>", lambda e: self._raise())
-        self.checks = tk.Frame(self.body, bg=T.PANEL)
+        self.checks = tk.Frame(c2, bg=T.PANEL)
         if on_raise_army is not None:
             self.raise_btn.pack(fill="x", pady=(10, 6))
             self.checks.pack(fill="x")
         self._style_raise(False)
 
-        self._rule()
-        self.settings_head = tk.Label(self.body, text="", bg=T.PANEL, fg=T.BRASS, font=self.f_head, anchor="w",
-                                      cursor="hand2")
-        self.settings_head.pack(fill="x", pady=(0, 4))
-        self.settings_head.bind("<Button-1>", lambda e: self._toggle_settings())
-        self.settings_box = tk.Frame(self.body, bg=T.PANEL)
-        self.settings_open = False
-        self._render_settings()
-
-        self._rule()
-        self._heading("FRONTLINE  ·  you build there")
-        self.front = tk.Label(self.body, text="", bg=T.PANEL, fg=T.WARN, font=self.f_body, anchor="w",
+        self._rule(c2)
+        self._heading(c2, "FRONTLINE  ·  you build there")
+        self.front = tk.Label(c2, text="", bg=T.PANEL, fg=T.WARN, font=self.f_body, anchor="w",
                               justify="left", wraplength=WIDTH - 40)
         self.front.pack(fill="x")
-        self.template = tk.Label(self.body, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body, anchor="w",
+        self.template = tk.Label(c2, text="", bg=T.PANEL, fg=T.MUTED, font=self.f_body, anchor="w",
                                  justify="left", wraplength=WIDTH - 40)
         self.template.pack(fill="x", pady=(6, 0))
+
+        self.settings_head = tk.Label(c3, text="", bg=T.PANEL, fg=T.BRASS, font=self.f_head, anchor="w")
+        self.settings_head.pack(fill="x", pady=(14, 4))
+        self.settings_box = tk.Frame(c3, bg=T.PANEL)
+        self.settings_box.pack(fill="both", expand=True)
+        self._render_settings()
 
     # ---------------------------------------------------------------- pieces
     def _button(self, parent, text, cmd):
@@ -185,21 +196,22 @@ class RailPanel:
         b.bind("<Leave>", lambda e: b.configure(bg=T.PANEL))
         return b
 
-    def _heading(self, text: str) -> None:
-        tk.Label(self.body, text=text, bg=T.PANEL, fg=T.BRASS, font=self.f_head, anchor="w").pack(fill="x",
-                                                                                                  pady=(0, 4))
+    def _heading(self, parent, text: str) -> None:
+        tk.Label(parent, text=text, bg=T.PANEL, fg=T.BRASS, font=self.f_head, anchor="w").pack(fill="x", pady=(0, 4))
 
-    def _rule(self) -> None:
-        tk.Frame(self.body, bg=T.LINE, height=1).pack(fill="x", pady=(12, 10))
+    def _rule(self, parent) -> None:
+        tk.Frame(parent, bg=T.LINE, height=1).pack(fill="x", pady=(12, 10))
 
     def _style_raise(self, can: bool) -> None:
-        """Always pressable (player rule 2026-10-21: never locked out, whatever income would be after it); the ✓/✗
-        checks below it are information. can: every check met (brass), else outlined."""
+        """Pressable only when every hard requirement is met (player rule 2026-10-23, replacing "never locked out" of
+        2026-10-21): a Verminlord Warpseer in the Recruit Lord pool, a Warlock Engineer for it, and a province that
+        recruits the template. Income going negative after the army is a warning only: it never greys the button.
+        can: every hard requirement met (brass, clickable), else greyed out."""
         if can:
             self.raise_btn.configure(bg=T.BRASS, fg=T.ON_BRASS, cursor="hand2", highlightthickness=0)
         else:
-            self.raise_btn.configure(bg=T.PANEL, fg=T.BRASS, cursor="hand2", highlightthickness=1,
-                                     highlightbackground=T.BRASS, highlightcolor=T.BRASS)
+            self.raise_btn.configure(bg=T.PANEL, fg=T.MUTED, cursor="arrow", highlightthickness=1,
+                                     highlightbackground=T.LINE, highlightcolor=T.LINE)
 
     # ---------------------------------------------------------------- showing / hiding
     def toggle(self) -> None:
@@ -218,19 +230,18 @@ class RailPanel:
             self.win.withdraw()
             return
         self.win.update_idletasks()
-        x, y = self.rail.win.winfo_x(), self.rail.win.winfo_y() + self.rail.win.winfo_height() + 6
-        h = self.body.winfo_reqheight() + 4
-        sh = self.win.winfo_screenheight()
-        ry = self.rail.win.winfo_y()
-        if y + h > sh and ry - h - 6 >= 0:           # no room below: open above the rail
-            y = ry - h - 6
-        elif y + h > sh:                             # no room above either: beside the rail, never over it (player
-            rx, rw = self.rail.win.winfo_x(), self.rail.win.winfo_width()   # report 2026-10-19: the panel was pinned
-            x = rx + rw + 6 if rx + rw + 6 + WIDTH <= self.win.winfo_screenwidth() else max(0, rx - WIDTH - 6)
-            y = max(0, min(ry, sh - h))              # at the top, over the rail, and a drag up/down did nothing)
-        self.win.geometry(f"{WIDTH}x{h}+{x}+{y}")
+        sw, sh = self.win.winfo_screenwidth(), self.win.winfo_screenheight()
+        w = min(sw, self.win.winfo_reqwidth())
+        h = min(sh, self.body.winfo_reqheight() + 4)
+        rx, ry = self.rail.win.winfo_x(), self.rail.win.winfo_y()
+        x = max(0, min(rx, sw - w))                  # under the rail where it fits, else pulled back onto the screen
+        y = ry + self.rail.win.winfo_height() + 6
+        if y + h > sh:                               # no room below: above the rail, else as low as it fits (it may
+            y = ry - h - 6 if ry - h - 6 >= 0 else max(0, sh - h)   # then lie under the rail, which stays on top)
+        self.win.geometry(f"{w}x{h}+{x}+{y}")
         self.win.deiconify()
         self.win.lift()
+        self.rail.win.lift()
         self._no_activate()
 
     def _no_activate(self) -> None:
@@ -263,7 +274,7 @@ class RailPanel:
         self.place()
 
     def _raise(self) -> None:
-        if self.on_raise_army is not None:
+        if self.on_raise_army is not None and self.can_raise:
             self.on_raise_army()
 
     def show_finance(self, f: dict) -> None:
@@ -343,33 +354,34 @@ class RailPanel:
         if "error" in blocked:
             self.front.configure(text="could not read the campaign: " + blocked["error"], fg=T.RED)
         else:
-            self.front.configure(text="\n".join(f"{_nice(p)}" for p in blocked) or "none", fg=T.WARN)
+            from .build import buildings_setting
+            if not buildings_setting("never_build_in_provinces_adjacent_to_enemy_at_war", False):
+                self.front.configure(text="rule off: every settlement is built (Buildings settings)", fg=T.MUTED)
+            else:
+                self.front.configure(text="\n".join(f"{_nice(p)}" for p in blocked) or "none", fg=T.WARN)
         self.place()
 
     # ---------------------------------------------------------------- settings (player rule 2026-10-21)
-    def _toggle_settings(self) -> None:
-        self.settings_open = not self.settings_open
-        self._render_settings()
-        self.place()
-
     def _render_settings(self) -> None:
         """Every setting (assist/settings.py) and which steps run when, changed with a click between turns: a switch
-        or a choice is clicked, a number has - and +. Folded away until its heading is clicked."""
+        or a choice is clicked, a number has - and +. All shown at once, the groups split over two sub-columns (one on
+        a narrow screen) so the panel stays within the screen's height (player report 2026-10-23)."""
         from . import settings as S
-        self.settings_head.configure(text=("▾" if self.settings_open else "▸") + "  SETTINGS  ·  click to change")
+        self.settings_head.configure(text="SETTINGS  ·  click to change")
         for c in self.settings_box.winfo_children():
             c.destroy()
-        if not self.settings_open:
-            self.settings_box.pack_forget()
-            return
-        self.settings_box.pack(fill="x", after=self.settings_head)
+        n_cols = 2 if self.win.winfo_screenwidth() >= 2 * (WIDTH + 30) + 2 * SET_COL_W else 1
+        subs = [tk.Frame(self.settings_box, bg=T.PANEL, width=SET_COL_W) for _ in range(n_cols)]
+        for i, f in enumerate(subs):
+            self.settings_box.columnconfigure(i, minsize=SET_COL_W)
+            f.grid(row=0, column=i, sticky="new", padx=(0 if i == 0 else 18, 0))
 
-        def group(text):
-            tk.Label(self.settings_box, text=text.upper(), bg=T.PANEL, fg=T.MUTED, font=self.f_label,
+        def group(parent, text):
+            tk.Label(parent, text=text.upper(), bg=T.PANEL, fg=T.MUTED, font=self.f_label,
                      anchor="w").pack(fill="x", pady=(8, 0))
 
-        def row(label, value, on_click, on_minus=None):
-            r = tk.Frame(self.settings_box, bg=T.PANEL)
+        def row(parent, label, value, on_click, on_minus=None):
+            r = tk.Frame(parent, bg=T.PANEL)
             r.pack(fill="x", pady=(2, 0))
             tk.Label(r, text=label, bg=T.PANEL, fg=T.INK, font=self.f_body, anchor="w").pack(side="left")
             if on_minus is not None:
@@ -389,33 +401,45 @@ class RailPanel:
             try:
                 S.nudge(s, d)
             except Exception as ex:                    # noqa: BLE001  (shown, never a crash of the widget)
-                self.settings_head.configure(text=f"▾  SETTINGS  ·  could not save: {ex}")
+                self.settings_head.configure(text=f"SETTINGS  ·  could not save: {ex}")
                 return
             self._render_settings()
-
-        groups: dict[str, list] = {}
-        for s in S.SETTINGS:
-            groups.setdefault(s.group, []).append(s)
-        for g, items in groups.items():
-            group(g)
-            for s in items:
-                number = s.kind in ("int", "float")
-                row(s.label, S.shown(s), lambda s=s: change(s, +1), (lambda s=s: change(s, -1)) if number else None)
-        group("Steps  ·  turn start / Build & End Turn")
+            self.place()
 
         def flip(phase, name):
             S.set_step(phase, name, not S.step_on(phase, name))
             self._render_settings()
-        for name in S.step_order():
-            r = tk.Frame(self.settings_box, bg=T.PANEL)
-            r.pack(fill="x", pady=(2, 0))
-            tk.Label(r, text=name, bg=T.PANEL, fg=T.INK, font=self.f_body, anchor="w").pack(side="left")
-            for phase, what in reversed(S.PHASES):
-                on = S.step_on(phase, name)
-                b = tk.Label(r, text=f"{what}: {'on' if on else 'off'}", bg=T.PANEL,
-                             fg=T.BRASS if on else T.MUTED, font=self.f_mono, cursor="hand2", padx=6)
-                b.pack(side="right")
-                b.bind("<Button-1>", lambda e, ph=phase, n=name: flip(ph, n))
+            self.place()
+
+        groups: dict[str, list] = {}
+        for s in S.SETTINGS:
+            groups.setdefault(s.group, []).append(s)
+        steps = S.step_order()
+        blocks = [(g, len(items) + 1) for g, items in groups.items()] + [(None, len(steps) + 1)]
+        half, done, col = sum(n for _g, n in blocks) / n_cols, 0, 0
+        for g, n in blocks:                            # in order; the next sub-column once this one holds its half
+            if col < n_cols - 1 and done and done + n / 2 > half * (col + 1):
+                col += 1
+            done += n
+            parent = subs[col]
+            if g is not None:
+                group(parent, g)
+                for s in groups[g]:
+                    number = s.kind in ("int", "float")
+                    row(parent, s.label, S.shown(s), lambda s=s: change(s, +1),
+                        (lambda s=s: change(s, -1)) if number else None)
+                continue
+            group(parent, "Steps  ·  turn start / Build & End Turn")
+            for name in steps:
+                r = tk.Frame(parent, bg=T.PANEL)
+                r.pack(fill="x", pady=(2, 0))
+                tk.Label(r, text=name, bg=T.PANEL, fg=T.INK, font=self.f_body, anchor="w").pack(side="left")
+                for phase, what in reversed(S.PHASES):
+                    on = S.step_on(phase, name)
+                    b = tk.Label(r, text=f"{what}: {'on' if on else 'off'}", bg=T.PANEL,
+                                 fg=T.BRASS if on else T.MUTED, font=self.f_mono, cursor="hand2", padx=6)
+                    b.pack(side="right")
+                    b.bind("<Button-1>", lambda e, ph=phase, n=name: flip(ph, n))
 
     def _render_armies(self) -> None:
         """Rebuilt only when what it shows changed (2026-10-18: rebuilt on every refresh, a new tick box flashed

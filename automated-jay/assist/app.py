@@ -262,8 +262,10 @@ class App:
         threading.Thread(target=self.on_exit, daemon=True).start()
 
     def _raise_army(self) -> None:
-        """Never locked out (player rule 2026-10-21); what blocks raising is reported by the army step."""
-        threading.Thread(target=self.on_raise_army, daemon=True).start()
+        """Only once the hard requirements are met (player rule 2026-10-23: Warpseer in the pool, a Warlock Engineer,
+        a province recruiting the template; negative income after it is a warning only)."""
+        if getattr(self, "_can_raise", False):
+            threading.Thread(target=self.on_raise_army, daemon=True).start()
 
     def _restart(self) -> None:
         threading.Thread(target=self.on_restart, daemon=True).start()
@@ -380,6 +382,7 @@ class App:
                 elif kind == "finance":
                     f = msg[1]
                     self._can_raise = f["can"]
+                    self.raise_btn.state(["!disabled"] if f["can"] else ["disabled"])
                     self.verdict_lbl.configure(text=f["verdict"], fg="#b8d98a" if f["ok"] else "#f0b49f")
                     self.finance_lbl.configure(text="\n".join(f["lines"] + ([f["why_not"]] if f["why_not"] else [])))
                     self.panel.show_finance(f)
@@ -451,7 +454,8 @@ class App:
             rows = [(a, d, refill_check(w, F, a, d, elig_any, slots, claims))
                     for a in armies(w, F) for d in [delta(a, heroes)]]
             snap = snapshot(w)
-            blocked = dict(snap.blocked_settlements) if snap else {}
+            from .build import frontline
+            blocked = frontline(snap)
             from .recruit import report, sources
             src = sources(w)
             self.recruit_lines = report(src)

@@ -46,8 +46,8 @@
   },
   "buildings": {
     "list": "settlements.json",
-    "never_build_in_provinces_adjacent_to_enemy_at_war": true,
-    "_rule": "A province that borders any province of a faction the player is at war with gets no construction or upgrades at all.",
+    "never_build_in_provinces_adjacent_to_enemy_at_war": false,
+    "_rule": "true: a settlement next to one held by a faction the player is at war with (per settlement since 2026-10-20) gets no construction, upgrades, repairs or replacements: it is left to the player. false: every settlement is built (player decision 2026-10-23: off by default, to try playing without it). Widget setting \"Leave frontline settlements to you\".",
     "repair_damaged": true,
     "_repair_rule": "Damaged buildings are repaired before any construction or upgrade, but the war block applies to repairs too: no repairs in a province that borders a faction we are at war with or is partly enemy-held (player decision, 2026-10-16).",
     "gold_reserve": 0,

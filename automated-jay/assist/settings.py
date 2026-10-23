@@ -42,6 +42,8 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("ai_offers",), "AI diplomacy offers", "Turn", "choice", "ask",
             choices=("ask", "accept_gifts")),
     # buildings (assist/build.py)
+    Setting("automation.json", ("buildings", "never_build_in_provinces_adjacent_to_enemy_at_war"),
+            "Leave frontline settlements to you", "Buildings", default=False),
     Setting("automation.json", ("buildings", "repair_damaged"), "Repair damaged buildings", "Buildings", default=True),
     Setting("automation.json", ("buildings", "off_list_buildings"), "Buildings not on the list", "Buildings",
             "choice", "replace", choices=("replace", "ask")),
