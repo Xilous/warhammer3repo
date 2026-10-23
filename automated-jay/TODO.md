@@ -29,10 +29,11 @@ At the start of a session, remind the player of these, and say which need a mult
       the same bits.
 
 ## Any session (single player is fine)
-- [ ] **Secrets shop from memory (2026-10-22)**: after a few Build & End Turn passes that open the shop, runs/
+- [x] **Secrets shop from memory (2026-10-22)**: after a few Build & End Turn passes that open the shop, runs/
       masterplans.jsonl should have no "shop_check" rows (panel and memory listing the same lines per tab).
       Turn 56: one row, a false one (a tab checked again after its last line was bought, against the reading from
-      before the purchase); fixed: each tab is checked once, before anything is bought in it. Watch a few more.
+      before the purchase); fixed: each tab is checked once, before anything is bought in it. Turns 59-64 bought 8 Secrets (several per tab)
+      with no new row.
 - [x] **Building spending order and saving (2026-10-20)**: checked from the logs of 2026-10-21/22 (turns 13-46):
       "saving for ... (in 1 turn(s))" was followed by that building the next turn 26 times out of 30; the 4 others
       had a reason the next turn (blocked by war, greyed out, or a cheaper main-building upgrade in the same province
