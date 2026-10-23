@@ -47,6 +47,11 @@ At the start of a session, remind the player of these, and say which need a mult
       2026-10-22: needs a queue holding a paid and a spilled unit at once (the buildings took the gold every turn
       tried). Fields that differ between two queued Stormfiends (turn 61): +0x34, +0x44, +0xCC, +0xD0, +0xDC, +0xE0,
       +0xF4 (u32). Also: runs/unit_prices.json learns an army's real unit price only from a paid click.
+      2026-10-22, turn 78, measured: a Warp-Doom Magma-Cannon queued for Thanquol into an EMPTY queue (0 -> 1) was not
+      charged (memory treasury and the HUD stayed 10,072 for 2 s+), so "spilled over" is not only past the capacity:
+      Thanquol's army had no capacity that turn (why: unknown; Tichit's clicks on turns 49-53 were charged at once).
+      The item read +0x34 4, +0x44 4, +0xCC 4, +0xF4 4, +0xD0/+0xD4/+0xDC/+0xE0 0. The owed booking keeps the
+      gold aside, so the accounting is safe; the per-army price only learns where clicks are charged at once.
 - [x] **Magma Cannon build swap (2026-10-20) live checks**: Zhufbar (Black Water) recruits both; turn 54 queued 6
       Warp-Doom Magma-Cannons there for Tichit from the local pool; turn 59 Thanquol's refill disbanded his off-template
       troops first (Warpfire Throwers; 2026-10-22: now only as many as the gold replaces); the dashboard line is
