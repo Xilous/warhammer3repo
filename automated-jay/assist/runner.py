@@ -956,6 +956,27 @@ class Runner:
                          + (f" ({', '.join(other)})" if other else ""))
         return lines, need
 
+    def _decision_at_turn_start(self, turn) -> bool:
+        """It is the player's turn by memory and End Turn is greyed out because a decision is open (2026-10-22, turn
+        73: a loyalty dilemma for Gottri read only "End Turn button is inactive; acts when your turn starts", and
+        nothing said a choice was waiting): say so, as for any decision. True when one was posted."""
+        from bot.sensor import turn as turn_mem
+        from . import popups
+        try:
+            if turn_mem.players_turn(self.mem)[0] is not True:
+                return False
+            need = [(cid, d, ig) for cid, d, ig in popups.open_decisions(self.ui)
+                    if not ig and cid not in self.OWN_MENUS]
+        except Exception:
+            return False
+        if not need:
+            return False
+        ids = tuple(cid for cid, _d, _ig in need)
+        if ids != getattr(self, "_start_held_ids", ()):
+            self.post_decisions(turn, need, prefix="your turn starts once it is answered: ")
+        self._start_held_ids = ids
+        return True
+
     def post_decisions(self, turn, need, prefix: str = "") -> None:
         can = [cid for cid, _d, ig in need if ig]
         news = all(d.startswith(("a global event", "a story event")) for _cid, d, _ig in need)
@@ -1530,6 +1551,8 @@ class Runner:
         self.my_turn = ok
         if not ok and why.startswith("End Turn button is") and self._clear_notices_first():
             ok, why = players_turn(self.ui)                 # (the game greys End Turn out while a notice is open)
+        if not ok and why.startswith("End Turn button is") and self._decision_at_turn_start(turn):
+            return
         if not ok:
             self.gate_since = None
             self.post("waiting", self._waiting_head(turn), f"{why}; acts when your turn starts", turn=turn)
