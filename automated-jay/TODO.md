@@ -54,7 +54,9 @@ At the start of a session, remind the player of these, and say which need a mult
       counts from 0 (Mentor 29 showed "Available at rank 30" live); fixed, and the skill-locks table
       (character_skill_nodes_skill_locks) is read too. One lock is still unexplained: Thanquol's Chittering Masses
       (unique_4, REQUIRED parent unique_0 taken) reads locked on the card with no reason in its tooltip and nothing
-      in the DB. Until it is found the card check stays.
+      in the DB. Until it is found the card check stays. Checked 2026-10-22: no row in the skill locks, level details
+      or node links beyond unique_0, set item not mod_disabled, and no campaign script names it (scripts read with
+      scripts/game/packread.py, zstd now supported). Lead: a content-ownership (DLC) gate, like the Secrets lines.
 - [x] **The Lord's recruitment cost** (2026-10-22): agent_subtypes.cost; the Recruit Lord panel showed exactly it for
       every Lord type (Warpseer 1000, Grey Seer 850, Warlord 550, Warlock Master 1200), and the Warlock Engineer's 400
       likewise. new_army.create and the engineer recruitment check the gold before any click. Cost modifiers from
