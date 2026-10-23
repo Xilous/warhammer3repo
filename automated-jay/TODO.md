@@ -43,9 +43,10 @@ At the start of a session, remind the player of these, and say which need a mult
       the only skills_check rows left were the unlock-rank off-by-one, fixed 2026-10-22.
 - [ ] **Spilled-over recruits**: what the game does when a unit queued past the recruitment capacity cannot be paid
       when it starts (dropped, or waits); decode which queue items are paid (queue item X) to replace runs/army_owed.json.
-- [ ] **Magma Cannon build swap (2026-10-20) live checks**: a capital with Equipment Warpforge + Warp-Turbine Plant
-      shows the Magma Cannon card in the local pool and the army builder refills it there; the first refill disbands
-      the Stormvermin; the dashboard's "Province recruiting Ratling Cannons + Magma Cannons" line turns green there.
+- [x] **Magma Cannon build swap (2026-10-20) live checks**: Zhufbar (Black Water) recruits both; turn 54 queued 6
+      Warp-Doom Magma-Cannons there for Tichit from the local pool; turn 59 Thanquol's refill disbanded his off-template
+      troops first (Warpfire Throwers; 2026-10-22: now only as many as the gold replaces); the dashboard line is
+      eligible() = Black Water, green.
 - [ ] **Workshop level 2 from the planned Cavern line** (Ikit, workshop level 1, no Cavern yet): no temporary Cavern
       is built while a capital plans the Warp-Turbine Plant; the planned one counts once it stands.
 - [ ] **Skill prerequisites from memory** (skills.memory_state): runs next to the card states; every disagreement is
