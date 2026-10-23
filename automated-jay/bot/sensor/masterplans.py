@@ -26,6 +26,7 @@ plan P:      region [P+0], faction [P+8], start turn index u32 P+0x10; drawn car
              0x30: resource record [e], value i32 e+0x28; Alarm, Guards, Elites, Warpstone are among them),
              accumulated treasury i32 P+0x100; card pool (Rewards still drawable): count u32 P+0x15C, array [P+0x160]
              of {token record, i32 weight} (stride 0x10); settlement Risk level u32 P+0x188
+             (Marienburg read 4 on 2026-10-23; the Complication pool is the level's region set)
 token rec:   key string object at rec+0x48; Risk added when drawn i32 rec+0x120 (500 = 5 points); max copies +0x124
 Risk:        min(10000, round(base) + level Risk + bonus(sub 3) x 100 + sum of the drawn cards' +0x120) / 100 %,
              level Risk from the DB list [db+0xE00] (db = [[[m+0x5BB0]+0xA0]+0x20]: count u32 +0xC, array [+0x10];
@@ -70,6 +71,7 @@ class Plan:
     alarm_max: int
     can_complete: bool
     draws_next: int
+    level: int = 0               # settlement Risk level (P+0x188): picks the Complication pool
 
 
 @dataclass
@@ -248,7 +250,7 @@ class Reader:
             draws = max(1, self.i32(rec + 0x44) + (nxt - start - 1) * self.i32(rec + 0x48) + self.rnd(bon(1)))
         return Plan(w.region_key(R) or "?", R, ptype, start, fam, drawn, pool, res, self.i32(P + 0x100),
                     risk / 100.0, res.get(ALARM_KEY, 0), self.rnd(self.f32(m + 0x6C64)),
-                    turn >= start + self.i32(rec + 0x4C), draws)
+                    turn >= start + self.i32(rec + 0x4C), draws, lvl)
 
     def _underling_chars(self, F: int) -> dict[int, tuple[int, str]]:
         """family-member id -> (character, subtype) for the faction's Underlings."""

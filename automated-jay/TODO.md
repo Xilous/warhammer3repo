@@ -15,7 +15,8 @@ At the start of a session, remind the player of these, and say which need a mult
       autosave loaded on turn 59, then on turn 58). A load shows no campaign for a moment, so it was taken for a new
       campaign ("acts from next turn"); fixed: a save of the same campaign at the same or an earlier turn runs that
       turn's start again ("the campaign was reloaded: running this turn's start again", checked live). A desync
-      reloads the same way; an actual desync is still unseen.
+      reloads the same way; an actual desync is still unseen. 2026-10-23: the player agrees with rerunning the turn
+      start when a session starts on a campaign and turn already recorded.
 - [ ] **auto_end_turn on a second PC** (strategy/automation.json): tested in single player only.
 - [ ] **A pass interrupted by another player's hold mid-pass**: should stay pending and resume (runner._try_pass).
       2026-10-22 review: the hold raises InputAborted after 3 minutes (tools/ui.wait_for_other_players), a
@@ -85,7 +86,13 @@ At the start of a session, remind the player of these, and say which need a mult
       accept_gifts on for the test; set back to ask). Diplomacy notices with OK alone (a pact ended) are closed like
       event notices. UI stop-gap: the offer's terms come from the panel; a memory reader for pending proposals is
       still to find. Captives and dilemmas still need the player's rules.
-- [ ] **Steal-Take risk model (2026-10-22, turn 66)**: Vaul's Anvil was kept one more turn at Alarm 2 (Risk 100% x q
+- [x] **Steal-Take risk model (2026-10-22, turn 66)**: Vaul's Anvil was kept one more turn at Alarm 2 (Risk 100% x q
       0.15 = 0.15 vs 0.23); the Complication that came took Alarm past its maximum and 2,277 gold off the loot (1,337
-      -> -940). The rule counts only the 25% paid at maximum Alarm, not Complications that take loot. The player's
-      rule (strategy/masterplans.json): left as it is, for the player to weigh.
+      -> -940). The rule counted only the 25% paid at maximum Alarm, not Complications that take loot.
+      2026-10-23 (player: weigh stay against exit each turn like poker, from the information given): every card of
+      the settlement level's Complication pool is weighed, its Alarm and the loot it takes (assist/masterplans.py
+      complications(), settlement level read from memory P+0x188). Replayed on the logged boards from turn 40: 6 of
+      ~70 decisions change, each completing a turn earlier at Alarm 2 or 3; live on Marienburg turn 84: stay 2,902
+      vs exit 2,712, wait. Open: which pool a Steal-Take really draws from is taken from the game tables (region
+      sets by level, the same ones the Alarm odds came from); the plan holds no pool of its own in memory (scanned
+      P+0 to P+0x600). Risk read 100% while a turn passed with no Complication (Marienburg turn 83): to watch.

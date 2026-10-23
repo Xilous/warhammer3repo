@@ -14,8 +14,9 @@
     "_note": "Active abilities are never used in battle, so ability skills only get points once nothing else is left."
   },
   "generic_lord": {
-    "_note": "Player request 2026-10-22: every other lord (agent type general, read from memory: legendary or generic, e.g. Warlord, Grey Seer, Warlock Master, Queek, the other Verminlords) without a template under characters takes the bottom two rows (army and campaign) in the same order as Ikit and the Warpseer, plus Mentor asap. Skills are given by skill key, not node, because every lord's tree has its own nodes: each is looked up in that lord's node set and left out where the tree does not have it (the Masterplan schemer lords lack most of the campaign row). After the list the rest of the tree goes 'as fits' (after_list: passives first, top row first, active abilities last). Mounts are skipped (assistant decision 2026-10-22: a mount is the player's choice per lord; add the lord under characters with mounts.take to have one taken).",
-    "skip_mounts": true,
+    "_note": "Player request 2026-10-22: every other lord (agent type general, read from memory: legendary or generic, e.g. Warlord, Grey Seer, Warlock Master, Queek, the other Verminlords) without a template under characters takes the bottom two rows (army and campaign) in the same order as Ikit and the Warpseer, plus Mentor asap. Skills are given by skill key, not node, because every lord's tree has its own nodes: each is looked up in that lord's node set and left out where the tree does not have it (the Masterplan schemer lords lack most of the campaign row). After the list the rest of the tree goes 'as fits' (after_list: passives first, top row first, active abilities last). Mounts: each is taken as soon as the lord's rank unlocks it, in rank order (player decision 2026-10-23: 'generic lords will just get whatever mount they get as they unlock it'; replaces the assistant's 2026-10-22 skip).",
+    "mounts": "take_as_unlocked",
+    "_mounts": "take_as_unlocked: every mount skill, tried first like the templates' mounts.take, so it is taken at the rank it opens. skip: never taken.",
     "skip_skills": ["wh3_main_skill_all_army_of_renown_lord"],
     "_skip_skills": "Never taken, not even as leftovers: Soldiers of Renown, as in the Warpseer's build (assistant decision 2026-10-22).",
     "order": [

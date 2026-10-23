@@ -90,7 +90,7 @@ def _node_sets() -> dict[str, str]:
 
 def character_orders(char_key: str) -> dict:
     """The orders for a template key: a characters entry as written, or generic_lord:<subtype> made into one
-    (each skill key looked up in that subtype's node set, skills its tree lacks left out, mounts skipped)."""
+    (each skill key looked up in that subtype's node set, skills its tree lacks left out, mounts taken as they unlock)."""
     o = orders()
     if char_key in o["characters"]:
         return o["characters"][char_key]
@@ -109,9 +109,12 @@ def character_orders(char_key: str) -> dict:
         n = by_skill.get(i["skill_key"]) or by_name.get(i["skill"])
         if n:
             order.append({**i, "node": n})
-    skip = [n for sk, n in by_skill.items() if "mount" in n or "mount" in sk] if g.get("skip_mounts") else []
+    mounts = sorted((n for sk, n in by_skill.items() if "mount" in n or "mount" in sk),
+                    key=lambda n: (_unlock_ranks().get((nodes[n]["character_skill_key"], 1), 0), n))
+    # player decision 2026-10-23: a generic lord takes each mount as it unlocks (rank order); "skip" leaves them out
+    take, skip = (mounts, []) if g.get("mounts", "take_as_unlocked") == "take_as_unlocked" else ([], mounts)
     never = [by_skill[k] for k in g.get("skip_skills", []) if k in by_skill]
-    return {"agent_subtype": sub, "node_set": node_set, "order": order, "mounts": {"take": [], "skip": skip},
+    return {"agent_subtype": sub, "node_set": node_set, "order": order, "mounts": {"take": take, "skip": skip},
             "skip": never}
 
 

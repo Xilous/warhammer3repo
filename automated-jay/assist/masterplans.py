@@ -12,15 +12,23 @@ player and multiplayer are the same to it: unlocks (story in single player, turn
 assumed. The panel is opened only when there is something to click, and the UI tree only finds what to click and
 confirms the click took; each action's result is confirmed in memory (plan gone, plan started, Warpstone spent).
 
-When to complete a Steal-Take (the game's numbers, 9.0.4):
+When to complete a Steal-Take (the game's numbers, 9.0.4), weighed like a hand of poker each turn (player, 2026-10-23:
+"every turn you're gambling on whether you should stay or exit ... calculate it based on the information given"):
   - At maximum Alarm (4, campaign variable chaotic_plans_alarm_plan_fail_threshold) the plan pays 25% of its loot
     (chaotic_plans_failed_economic_plan_rewards_pct = 2500), or, if abandoned then, all of it through a mission to
     conquer the region within 10 turns.
-  - Each turn there is a Risk% chance of one Complication, which raises Alarm by 0, 1 or 2; from Alarm a, the chance
-    that it reaches 4 is q(a): 0 below 2, about 0.15 at 2, about 0.99 at 3 (the Steal-Take Complication pools).
-  - With V the loot so far and G the loot the next turn adds on average, waiting is worth
-    (1 - R q)(V + G) + R q 0.25 V against V for completing: wait while R q < G / (G + 0.75 V). Risk only rises and
-    the pot only grows, so this one-turn test is the optimal rule.
+  - Each turn there is a Risk% chance of one Complication: a red card from the settlement level's pool (token set
+    wh3_dlc29_any_red_green_economic_region_<level, at most 4>; the red cards a Steal-Take can draw, weight = set
+    weight x card weight; cards already drawn are left out, each comes once). Each card adds its Alarm (0 to 3) and
+    may take loot: 2,000 to 4,000 gold, or 20 to 50% of the region's income in Warpstone (2026-10-23: the rule had
+    counted only the Alarm; Vaul's Anvil, turn 66, lost 2,277 gold to one). A Complication also has a 2% chance of a
+    hidden extra card (wh3_dlc29_skv_hidden_chaotic_draw_1: Embezzlement, Blackmail ...), counted at its average.
+  - With V the loot so far and G the loot the next turn's draws add on average, staying is worth
+        (1 - R) (V + G) + R x the sum over the pool of p(card) x (V + G + loot(card)), or 25% of that when the
+        card's Alarm reaches the maximum,
+    against V for completing now: wait while staying is worth more. Risk only rises and the pot only grows, so this
+    one-turn test is the optimal rule. Without the pool (level not read, income unknown) the older test stands:
+    wait while R q < G / (G + 0.75 V), q(a) the chance one Complication maxes Alarm from a (strategy q_by_alarm).
   Loot is weighed in Warpstone (gold divided by steal_take.gold_per_warpstone, food not counted). G = the draws next
   turn times the sum, over the cards still drawable, of each card's draw chance times its value (game tables; a card
   worth a share of the region's income is valued with the region's income, region:gdp()).
@@ -155,6 +163,76 @@ def expected_gain(board: dict, cfg: dict) -> float:
     return board.get("draws", 2) * g
 
 
+COMPLICATION_SET = "wh3_dlc29_any_red_green_economic_region_{}"
+ALARM_FACTOR = "wh3_dlc29_chaotic_plans_alarm_plan"
+
+
+@lru_cache(maxsize=1)
+def _token_tables():
+    """token -> (type, plan type, weight, max copies); token -> payloads; payload -> Alarm added; set -> [(token,
+    weight)]; payload -> (set, chance) for the payloads that draw an extra card."""
+    from . import gamedata as gd
+    toks = {r["key"]: (r["token_type"], r["plan_type"], r["weight"], r["max_drawn_copies"])
+            for r in gd._load("chaotic_plan_tokens_tables")}
+    pays = defaultdict(list)
+    for r in gd._load("chaotic_plan_tokens_to_payloads_junctions_tables"):
+        pays[r["token"]].append(r["campaign_payload"])
+    trans = {r["payload"]: r["resource_transaction"] for r in gd._load("campaign_payload_resource_transactions_tables")}
+    alarm_cost = defaultdict(int)
+    for r in gd._load("resource_cost_pooled_resource_junctions_tables"):
+        if r["pooled_resource_factor"] == ALARM_FACTOR:
+            alarm_cost[r["resource_cost"]] += r["amount"]
+    alarm = {p: alarm_cost[c] for p, c in trans.items() if c in alarm_cost}
+    sets = defaultdict(list)
+    for r in gd._load("chaotic_plan_tokens_to_token_sets_junctions_tables"):
+        sets[r["token_set"]].append((r["token"], r["weight"]))
+    extra = {r["payload"]: (r["token_set"], r["chance_to_add_token"] / 10000.0)
+             for r in gd._load("campaign_payload_chaotic_plan_token_adding_components_tables")
+             if r["component_type"] == "draw_token_from_set"}
+    return toks, pays, alarm, sets, extra
+
+
+def _steal_take_cards(token_set: str, colour: str | None = None) -> list[tuple[str, float]]:
+    """(card, weight) a Steal-Take can draw from a set: plan type empty or economic; colour: only that card type."""
+    toks, _p, _a, sets, _e = _token_tables()
+    out = []
+    for t, wt in sets.get(token_set, ()):
+        tt = toks.get(t)
+        if tt and tt[1] in ("", ECONOMIC) and (colour is None or tt[0].endswith(colour)) and wt * tt[2] > 0:
+            out.append((t, float(wt * tt[2])))
+    return out
+
+
+def _loot(token: str, income: float | None, gpw: float) -> float | None:
+    return card_worth(token, income, gpw) if token in card_values() else 0.0
+
+
+def complications(level: int, drawn: list[str], income: float | None, gpw: float) -> list[tuple[float, int, float]]:
+    """What one Complication roll can bring: [(chance, Alarm added, loot in Warpstone)] from the level's pool, the
+    cards drawn already left out. [] when the pool is empty or a card's loot cannot be valued (no income)."""
+    toks, pays, alarm, _s, extra = _token_tables()
+    seen = set(drawn)
+    cards = [(t, w) for t, w in _steal_take_cards(COMPLICATION_SET.format(min(max(level, 0), 4)), "red")
+             if not (toks[t][3] == 1 and t in seen)]
+    tot = sum(w for _t, w in cards)
+    if not tot:
+        return []
+    out = []
+    for t, w in cards:
+        loot = _loot(t, income, gpw)
+        if loot is None:
+            return []
+        for p in pays.get(t, ()):
+            if p in extra:                       # a hidden extra card, at its average
+                ex = _steal_take_cards(extra[p][0])
+                vals = [(_loot(k, income, gpw), x) for k, x in ex]
+                et = sum(x for _k, x in ex)
+                if et and all(v is not None for v, _x in vals):
+                    loot += extra[p][1] * sum(v * x for v, x in vals) / et
+        out.append((w / tot, sum(alarm.get(p, 0) for p in pays.get(t, ())), loot))
+    return out
+
+
 def decide(board: dict, cfg: dict) -> tuple[str, str]:
     """("wait" | "complete" | "abandon", why) for a Steal-Take board."""
     if not board["can_complete"]:
@@ -166,13 +244,26 @@ def decide(board: dict, cfg: dict) -> tuple[str, str]:
         return ("abandon" if how == "abandon" else "complete"), "Alarm is at its maximum"
     V = board["warpstone"] + board["gold"] / gpw
     G = expected_gain(board, cfg)
-    qs = cfg.get("q_by_alarm", [0.0, 0.0, 0.15, 0.99])
-    q = qs[min(board["alarm"], len(qs) - 1)]
-    rq = board["risk"] / 100.0 * q
+    R = board["risk"] / 100.0
     if V <= 0:
         # nothing to lose by waiting: completing now pays nothing (or costs, when a Complication took more than was
         # gathered: 2026-10-18, Essen at Alarm 3 held 25 gold and -4 Warpstone)
         return "wait", f"the loot so far is worth {V:.1f} Warpstone: nothing to lose by waiting"
+    income = board["income"] if board.get("income") is not None else region_income(board.get("effects", []))
+    cs = complications(board["level"], board.get("drawn_cards", []), income, gpw) if "level" in board else []
+    amax = board.get("alarm_max", ALARM_MAX)
+    if cs:
+        pot = V + G
+        hit = sum(p * (pay * max(0.0, pot + loot) if board["alarm"] + a >= amax else pot + loot) for p, a, loot in cs)
+        stay = (1 - R) * pot + R * hit
+        q = sum(p for p, a, _l in cs if board["alarm"] + a >= amax)
+        took = -sum(p * loot for p, _a, loot in cs)
+        why = (f"stay {stay:.0f} vs exit {V:.0f} (loot {V:.0f}, next turn +{G:.0f}; Risk {board['risk']:.0f}%, a "
+               f"Complication maxes Alarm {q:.0%} and takes {took:.0f} on average)")
+        return ("wait" if stay > V else "complete"), why
+    qs = cfg.get("q_by_alarm", [0.0, 0.0, 0.15, 0.99])
+    q = qs[min(board["alarm"], len(qs) - 1)]
+    rq = R * q
     limit = G / (G + (1 - pay) * V) if G > 0 else 0.0
     why = f"Risk {board['risk']:.0f}% x q {q:.2f} = {rq:.2f} vs {limit:.2f} (loot {V:.0f}, next turn +{G:.0f})"
     return ("wait" if rq < limit else "complete"), why
@@ -332,7 +423,8 @@ def board_from(plan, w) -> dict:
     return {"risk": plan.risk, "alarm": plan.alarm, "alarm_max": plan.alarm_max, "gold": float(plan.treasury),
             "warpstone": float(plan.resources.get(WARPSTONE_KEY, 0)), "draws": plan.draws_next,
             "bag": [(t, wt * 100.0 / tot) for t, wt in plan.pool], "drawn": len(plan.drawn), "income": income,
-            "can_complete": plan.can_complete, "resources": plan.resources}
+            "can_complete": plan.can_complete, "resources": plan.resources, "level": plan.level,
+            "drawn_cards": list(plan.drawn)}
 
 
 @lru_cache(maxsize=1)

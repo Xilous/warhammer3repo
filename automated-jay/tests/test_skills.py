@@ -36,8 +36,9 @@ def test_generic_lord_takes_the_template_rows():
     assert names[:4] == ["Route Marcher", "Inspiring Presence", "Blastmaster", "Engineering Skill"]
     plan = S.attempt_list("generic_lord:wh2_main_skv_warlord")
     keys = [sk for _n, _r, sk in plan]
-    assert keys[0] == MENTOR                                  # asap first
-    assert not any("mount" in k for k in keys)                # mounts are the player's choice
+    # mounts first, in the rank they open (player decision 2026-10-23: taken as they unlock), then asap
+    assert keys[:2] == ["wh2_main_skill_skv_warlord_mount_bonebreaker", "wh2_dlc16_skill_skv_warlord_mount_2"]
+    assert keys[2] == MENTOR
     assert len(keys) == len(set(keys)) + 2                    # only Lightning Strike and Ancient Cunning come twice
 
 

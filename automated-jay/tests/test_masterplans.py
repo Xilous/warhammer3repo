@@ -65,6 +65,41 @@ def test_max_alarm_and_not_ready():
     assert M.decide(board(can_complete=False, alarm=3, risk=100, warpstone=999), CFG)[0] == "wait"
 
 
+def test_complication_pool_from_game_data():
+    # the settlement level's pool gives the same Alarm odds the older rule used (q_by_alarm) ...
+    for lvl, q2 in ((0, 0.086), (4, 0.152)):
+        cs = M.complications(lvl, [], 1260.0, 10)
+        assert abs(sum(p for p, _a, _l in cs) - 1) < 1e-9
+        assert abs(sum(p for p, a, _l in cs if 2 + a >= 4) - q2) < 0.001
+        assert abs(sum(p for p, a, _l in cs if 3 + a >= 4) - 0.99) < 0.001
+    # ... and the loot a Complication takes: 50% of the region's income in Warpstone at worst, 2,000-4,000 gold
+    cs = M.complications(4, [], 1260.0, 10)
+    assert min(l for _p, _a, l in cs) < -620
+    assert sum(p * l for p, _a, l in cs) < -50
+    # a card drawn already comes no more
+    gone = M.complications(4, ["wh3_dlc29_economy_red_alarm_warpstone_3"], 1260.0, 10)
+    assert len(gone) == len(cs) - 1
+    assert M.complications(4, [], None, 10) == []        # a share of income cannot be valued without the income
+
+
+FINDOL_BAG = [("wh3_dlc29_economic_green_basic_treasury_gdp_small_5", 25.8), ("wh3_dlc29_economic_green_basic_treasury_gdp_large_5", 3.2),
+              ("wh3_dlc29_economic_green_skryre_warpstone_3", 19.4), ("wh3_dlc29_economic_green_skryre_treasury_3", 19.4),
+              ("wh3_dlc29_economic_green_basic_warpstone_gdp_small_5", 25.8), ("wh3_dlc29_economic_green_basic_warpstone_gdp_large_5", 6.4)]
+
+
+def test_stay_or_exit_counts_the_loot_a_complication_takes():
+    # Steal-Take at Thanquol's Halls of Findol, turn 77 (memory, runs/masterplans.jsonl): Alarm 2, Risk 100%, loot
+    # 1,461 Warpstone; staying adds ~225, but the Complication that comes takes ~88 and maxes Alarm 15% of the time.
+    # The older rule (Alarm only) waited here.
+    b = board(alarm=2, risk=100, gold=3927.0, warpstone=1068.0, draws=1, bag=FINDOL_BAG, income=1122.0, level=4,
+              drawn_cards=[])
+    assert M.decide({k: v for k, v in b.items() if k != "level"}, CFG)[0] == "wait"          # the older rule
+    assert M.decide(b, CFG)[0] == "complete"
+    assert M.decide(dict(b, risk=60), CFG)[0] == "wait"                    # a Complication less likely: stay
+    assert M.decide(dict(b, alarm=3), CFG)[0] == "complete"
+    assert M.decide(dict(b, alarm=1), CFG)[0] == "wait"                     # one Complication cannot max Alarm
+
+
 def test_shop_order_is_known_to_the_game():
     cfg = json.load(open(M.STRATEGY, encoding="utf-8"))
     chains, tabs = M.shop_chains(), M.shop_tabs()

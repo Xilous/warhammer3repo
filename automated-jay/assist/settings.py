@@ -49,6 +49,9 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("army_builder", "auto_create"), "Raise new armies by itself", "Army", default=False),
     Setting("automation.json", ("army_builder", "income_reserve"), "Income kept after a new army", "Army", "int", 0,
             50, 0, 5000, unit=" /turn"),
+    # skills (assist/skills.py)
+    Setting("skills.json", ("generic_lord", "mounts"), "Lords without a template: mounts", "Skills", "choice",
+            "take_as_unlocked", choices=("take_as_unlocked", "skip")),
     # Masterplans (assist/masterplans.py, Thanquol)
     Setting("masterplans.json", ("steal_take", "enabled"), "Steal-Takes", "Masterplans", default=True),
     Setting("masterplans.json", ("steal_take", "prefer_not_at_war"), "Steal from factions not at war with you first",
