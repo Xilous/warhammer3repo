@@ -231,6 +231,7 @@ def run(log=print) -> str:
     from tools import wait
     from tools.ui import click
     from . import gamedata as gd
+    LAST_NOTES.clear()
     w = World()
     F = find_player_faction(w)
     if F is None:
@@ -299,4 +300,29 @@ def run(log=print) -> str:
             if ok:
                 click(ui, ok)
                 wait.gone(ui, p, timeout=2.0, must=False, what="Forbidden Workshop closed")
+    LAST_NOTES[:] = out
     return "Stormfiend Ratling Cannon upgrades: " + "; ".join(out)
+
+
+LAST_NOTES: list = []     # the last run's result lines (its reasons for what it could not do)
+
+
+def missed() -> list[str]:
+    """The memory check after the step (CLAUDE.md: every step has one; added 2026-10-22): every Stormfiend Ratling
+    Cannon upgrade the workshop level allows is owned (faction effect bundles, memory). One the run explained (not
+    enough Warp-Fuel or food, not shown, locked on its card) is reported as not possible; anything else is missed."""
+    from bot.sensor.world import World, find_player_faction
+    from . import gamedata as gd
+    w = World()
+    F = find_player_faction(w)
+    if F is None or w.faction_name(F) != SKRYRE:
+        return []
+    owned, level = set(faction_bundles(w, F)), workshop_level(w, F)
+    out = []
+    for key in UPGRADES:
+        if key in owned or level < LEVEL_NEEDED.get(key, 0):
+            continue
+        name = gd.loc().get(f"rituals_display_name_{key}", key)
+        why = next((x for x in LAST_NOTES if x.startswith(f"{name}:")), "")
+        out.append(f"{name} not bought" + (f" (not possible: {why.split(': ', 1)[-1]})" if why else ""))
+    return out

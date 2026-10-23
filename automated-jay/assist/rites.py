@@ -330,7 +330,11 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
 
 
 # ------------------------------------------------------------------ the step
+LAST_NOTES: list = []     # the last run's result lines (its reasons for what it could not do)
+
+
 def run(log=print) -> str:
+    LAST_NOTES.clear()
     w = World()
     F = find_player_faction(w)
     if F is None:
@@ -357,4 +361,36 @@ def run(log=print) -> str:
             clear(ui)
         # 2. the rite, before buildings and the army builder spend the gold
         out.append(cast_rite(ui, w, F))
+    LAST_NOTES[:] = out
     return "; ".join(out)
+
+
+def missed() -> list[str]:
+    """The memory check after the step (CLAUDE.md: every step has one; added 2026-10-22). Planned again from memory:
+    every province holds the commandment the rules want, and the Dominating Scheme is not left uncast while it is off
+    cooldown, unlocked and affordable. What the run explained (a panel's requirements, a pick the game did not take)
+    is reported as not possible; anything else is missed."""
+    w = World()
+    F = find_player_faction(w)
+    if F is None:
+        return []
+    notes = "; ".join(LAST_NOTES)
+    out = []
+    provs = provinces(w, F)
+    cd = rite_cooldowns(w, F)
+    picked = {p["province"]: p["picked"] for p in provs}
+    for province, key in wanted_commandments(provs, cd).items():
+        if picked.get(province) != key:
+            name = gd.loc().get(f"provincial_initiative_records_localised_name_{key}", key)
+            place = gd.loc().get(f"provinces_onscreen_{province}", province)
+            why = "not possible: the game did not take the pick" if f"{place}: {name} not picked" in notes else ""
+            out.append(f"{place}: {name} not picked" + (f" ({why})" if why else ""))
+    have = [k for k in RITES if k in cd]
+    if have and not any(cd[k] > 0 for k in have) and rite_waits(provs, cd) is None:
+        cost = rite_cost(w, F, have[0])
+        gold = w.s.read().treasury or 0
+        if cost is not None and gold >= cost:
+            why = next((x for x in LAST_NOTES if "cannot be cast" in x or "not shown" in x or "did not" in x), "")
+            out.append("Dominating Scheme not cast (off cooldown, unlocked, affordable)"
+                       + (f" (not possible: {why})" if why else ""))
+    return out

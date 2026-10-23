@@ -67,6 +67,8 @@ STEP_FNS = {
 }
 # Memory checks run after a step and its verification run: what the step planned that memory shows is not done.
 MISSED_FNS = {
+    "rites": rites.missed,
+    "workshop": workshop.missed,
     "buildings": build.missed,
     "tech": tech.missed,
     "skills": skills.missed,
