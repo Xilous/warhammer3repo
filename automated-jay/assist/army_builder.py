@@ -215,11 +215,12 @@ def extra_heroes(w: World, F: int, army) -> list:
     return out
 
 
-def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
+def disband(ui: UI, w: World, F: int, army, log, limit: int | None = None) -> list[str]:
     """Disband the troops that are not in the template. Never a hero, never the lord: only troop cards
-    (LandUnit 1..n) are ever selected, and the selection must be exactly the off-template units in memory."""
+    (LandUnit 1..n) are ever selected, and the selection must be exactly the off-template units in memory.
+    limit: at most this many (the first ones in card order); the others stay for a later turn."""
     d = delta(army, [])
-    if not d.disband:
+    if not d.disband or limit == 0:
         return []
     want = Counter(load_automation()["army_builder"]["template"]["units"])
     troop_keys = [u.key for u in army.units if "_cha_" not in u.key]
@@ -249,6 +250,9 @@ def disband(ui: UI, w: World, F: int, army, log) -> list[str]:
             targets.append(i)
     if Counter(key_of[names[i]] for i in targets) != expect:
         return ["disband skipped: the cards to disband are not the off-template units in memory"]
+    if limit is not None and limit < len(targets):
+        targets = targets[:limit]
+        expect = Counter(key_of[names[i]] for i in targets)
     pick = [troops[i] for i in targets]
     contiguous = targets == list(range(targets[0], targets[-1] + 1))
     selection = lambda: [i for i, c in enumerate(troops) if card_selected(ui, c)]
@@ -878,6 +882,19 @@ def walk_engineer(ui: UI, w: World, F: int, hero, army, log) -> str:
 
 # ------------------------------------------------------------------ the step
 
+def affordable(gold: int, missing: dict[str, int], prices: dict[str, int]) -> int:
+    """How many of the missing units `gold` pays for, bought in template order (the order recruit_local takes)."""
+    n = 0
+    for u, k in missing.items():
+        for _ in range(k):
+            p = prices.get(u, 0)
+            if p > gold:
+                return n
+            gold -= p
+            n += 1
+    return n
+
+
 def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = False):
     """One ticked army. mine: the free engineers that count as its engineer. Returns (log lines, the engineer
     recruited for it this turn or None). Everything is decided from memory first; the army is selected (a single
@@ -905,10 +922,20 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
                    f"{cheapest} needed)")
     elif d0.disband:
         if not d0.missing or here in eligible(w, F, set(d0.missing)):
-            if not select_army(ui, army):
-                return [f"{name}: could not select the army"], None
-            out += disband(ui, w, F, army, log)
-            army = next((a for a in armies(w, F) if a.cqi == army.cqi), army)
+            # only as many as the gold replaces now, beyond the slots already free (2026-10-22, turn 59: 15 Warpfire
+            # Throwers and a Stormfiend went for 2 Stormfiends the gold could pay, leaving Thanquol with 4 units);
+            # the rest stay until there is gold for their replacements
+            free = max(0, 20 - len(army.units) - len(army.queued) - d0.heroes_missing.get(ENGINEER, 0))
+            n = affordable(spendable(w, F), d0.missing, prices) if d0.missing else len(d0.disband)
+            limit = min(len(d0.disband), max(0, n - free))
+            if limit < len(d0.disband):
+                out.append(f"keeping {len(d0.disband) - limit} off-template units until their replacements can be "
+                           f"paid ({spendable(w, F)} to spend: {n} replacement{'s' if n != 1 else ''})")
+            if limit:
+                if not select_army(ui, army):
+                    return [f"{name}: could not select the army"], None
+                out += disband(ui, w, F, army, log, limit=limit)
+                army = next((a for a in armies(w, F) if a.cqi == army.cqi), army)
         else:
             out.append("keeping off-template units until the army reaches a recruiting province")
     d = delta(army, [])
@@ -995,7 +1022,7 @@ def missed() -> list[str]:
         if d.disband:
             # kept on purpose until their replacements can be paid (2026-10-22, turn 57: "keeping off-template units:
             # no gold for a replacement" was reported MISSED)
-            keep = next((x.strip() for x in notes.split(";") if "keeping off-template units" in x), "")
+            keep = next((x.strip() for x in notes.split(";") if "keeping" in x and "off-template units" in x), "")
             out.append(f"{name}: off-template units still in the army at a recruiting province"
                        + (f" (not possible: {keep.split(': ', 1)[-1]})" if keep else ""))
     return out
