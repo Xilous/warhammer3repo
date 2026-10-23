@@ -315,6 +315,17 @@ GIFT_TERMS = {"payment", "nonaggression_pact", "trade_agreement"}
 GIVE_TERMS = {"nonaggression_pact", "trade_agreement"}
 
 
+def _shown_button(ui: UI, c: int, bid: str) -> int | None:
+    """The button `bid` in the panel's shown button set (offers_list_panel/button_set_holder/button_setN)."""
+    holder = ui.first("button_set_holder", under=c)
+    for bs in (ui.children(holder) if holder is not None else []):
+        if ui.effective_visible(bs):
+            b = next((b for b in ui.children(bs) if ui.id(b) == bid and ui.effective_visible(b)), None)
+            if b is not None:
+                return b
+    return None
+
+
 def offer_terms(ui: UI, c: int) -> tuple[set, set] | None:
     """(what they ask of the player, what they give) of an open AI offer, as option types; None when the panel is
     not an incoming offer (its button set has no Accept and Cancel) or a side cannot be read."""
@@ -364,7 +375,7 @@ def answer_offer(ui: UI) -> str | None:
     ask, give = terms
     if not is_gift(ask, give):
         return None
-    btn = ui.first("button_accept", under=c)
+    btn = _shown_button(ui, c, "button_accept")    # (ui.first can find the hidden notice set's Accept)
     if btn is None:
         return None
     _time.sleep(0.4)                            # the same terms a moment later (the panel fills in over frames)
@@ -373,7 +384,11 @@ def answer_offer(ui: UI) -> str | None:
     log_open(ui, None, f"accepting an AI offer (they ask {sorted(ask)}, give {sorted(give)})")
     from bot.sensor import commands
     with game_focus():
-        st, _v = commands.act(ui.pm, lambda: click(ui, btn) and None, lambda: not ui.effective_visible(btn),
+        # done = the panel closed (2026-10-22: "the Accept button not visible" was true at once for the hidden set's
+        # button, so a click that missed read as accepted, and Clan Skryre offered the same pact again next turn)
+        st, _v = commands.act(ui.pm, lambda: click(ui, btn) and None,
+                              lambda: not (ui.root_child("diplomacy_dropdown") and ui.effective_visible(c)
+                                           and ui.effective_visible(btn)),
                               cap=max(CLOSE_TIMEOUT, commands.EFFECT_CAP_S))
     if st != "done":
         return None
