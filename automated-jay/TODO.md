@@ -58,6 +58,9 @@ At the start of a session, remind the player of these, and say which need a mult
       eligible() = Black Water, green.
 - [ ] **Workshop level 2 from the planned Cavern line** (Ikit, workshop level 1, no Cavern yet): no temporary Cavern
       is built while a capital plans the Warp-Turbine Plant; the planned one counts once it stands.
+      2026-10-22 (the Ikit save of 2026-10-18, turns 82-84): the first half holds: Magritta built the planned chain's
+      Construction Cavern (turn 83) as a normal building, no temporary one anywhere. Still level 1 on turn 84 with
+      the Cavern going up; the level-2 count is left to see.
 - [ ] **Skill prerequisites from memory** (skills.memory_state): runs next to the card states; every disagreement is
       logged to runs/skills_check.jsonl. 2026-10-22: the unique_0 disagreement was an off-by-one: unlocked_at_rank
       counts from 0 (Mentor 29 showed "Available at rank 30" live); fixed, and the skill-locks table
@@ -72,7 +75,9 @@ At the start of a session, remind the player of these, and say which need a mult
       effects are not decoded (none seen yet).
 - [x] **Hero caps with bonuses** (2026-10-22, turn 55): memory engineer cap 2 = the Recruit Hero panel's "1 / 2" (base
       1 plus a bonus). The turn-55 "refused at cap 1/2" was gold (399 against 400): fixed, reported as no gold.
-- [ ] **Workshop (Ikit)** with the command pacing: not run since the change.
+- [ ] **Workshop (Ikit)** with the command pacing: not run since the change. 2026-10-22: the step ran on turns 82-84 of
+      the Ikit save (level gate from memory: "the rest waits for workshop level 2"); no purchase was possible yet.
+      The new workshop.missed memory check ran with it and reported nothing.
 - [ ] **Standing answers for routine decisions** (idea): the player's rules for AI diplomacy offers, captives,
       recurring dilemmas. 2026-10-22: AI offers have a widget setting, "AI diplomacy offers" (automation.json
       ai_offers): ask (default) or accept_gifts (they ask at most a Non-Aggression Pact or Trade Agreement and give
