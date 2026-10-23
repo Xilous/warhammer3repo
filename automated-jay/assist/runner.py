@@ -1320,6 +1320,7 @@ class Runner:
             return
         if model != self.model or (s.turn != self.last_turn and s.turn != self.last_turn + 1):
             # a different campaign or save was loaded: not a turn start, wait for the next one
+            self._cid_cache = {}                       # (read again: the model's address can be reused)
             old = self.ts
             self.last_turn, self.model = s.turn, model
             self.pending = self.done_turn = None
