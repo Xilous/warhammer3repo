@@ -63,6 +63,21 @@ At the start of a session, remind the player of these, and say which need a mult
       Capacitors; turn 19: Castle Drakenhof's Temple, Oakenhammer's Overseer's Lookout); each went up a turn later.
       _why_greyed found no text on the card (its tooltip shows only on hover). Find the rule in memory, then plan
       by it; until then these show as failures in the widget.
+      Player question (2026-10-23): is the assistant going too fast for the game's UI? Plausible: on turn 16 the
+      card's state was read ~30 ms after it was laid out, right after the previous build in that settlement was
+      clicked, with no wait for the slot panel to refresh from that build. Checks, in order:
+        1. Speed: on a greyed card, wait for its state to hold for a few frames (or for the panel to refresh after
+           the last build) and read it again; if it turns active, it was the UI lagging, not the game refusing.
+        2. A game rule: compare a greyed card's level record and the settlement's state (slots under construction,
+           gold the previous build took, any per-settlement limit) in memory against one that went through.
+        3. Get the game's own reason: hover the greyed card and read its tooltip (UI stop-gap for the report only).
+- [ ] **Hiring the Warlock Engineer after a new army (2026-10-23, fixed, to confirm live)**: turn 43, Chiriflesh was
+      raised at Zhufbar but no engineer was hired. A wheel aimed at the recruitment pool while it was still sliding
+      up landed on the map and zoomed the camera out into the tactical view, whose Overlays panel then covered the
+      Provinces list and hid the settlement labels. Also a case of going faster than the UI. Fixed in 8884785: a wheel
+      waits for its list to stop moving, and the tactical view is left before a Provinces row or a map label. To
+      confirm: the next raised army gets its engineer in the same pass. Also look for other clicks or wheels aimed at
+      a panel that may still be sliding in.
 - [ ] **Workshop level 2 from the planned Cavern line** (Ikit, workshop level 1, no Cavern yet): no temporary Cavern
       is built while a capital plans the Warp-Turbine Plant; the planned one counts once it stands.
       2026-10-22 (the Ikit save of 2026-10-18, turns 82-84): the first half holds: Magritta built the planned chain's
