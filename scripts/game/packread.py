@@ -35,7 +35,11 @@ def extract(path,entry):
     with open(path,'rb') as f:
         f.seek(off); data=f.read(size)
     if comp:
-        # WH3 compressed packed files: u32 uncompressed size + lz4 magic (04 22 4D 18) frame? or raw block
+        # WH3 compressed packed files: u32 uncompressed size, then a zstd frame (28 B5 2F FD; the scripts, 9.0.4) or lz4
+        usize=struct.unpack_from('<I',data,0)[0]
+        if data[4:8]==b'\x28\xb5\x2f\xfd':
+            import zstandard
+            return zstandard.ZstdDecompressor().decompress(data[4:],max_output_size=usize)
         try:
             import lz4.frame, lz4.block
             usize=struct.unpack_from('<I',data,0)[0]
