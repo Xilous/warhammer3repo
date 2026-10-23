@@ -1,4 +1,4 @@
-# Open items (written 2026-10-19, end of the session that released v0.3.10)
+# Open items (written 2026-10-19, end of the session that released v0.3.10; worked through 2026-10-22)
 
 At the start of a session, remind the player of these, and say which need a multiplayer session.
 
