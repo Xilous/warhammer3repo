@@ -428,6 +428,42 @@ def base_prices() -> dict[str, int]:
     return {r["unit"]: int(r.get("recruitment_cost") or 0) for r in gd._load("main_units_tables")}
 
 
+PRICES_FILE = config.RUNS_DIR / "unit_prices.json"   # {"<faction>|<general cqi>|<unit>": gold paid}: what a unit
+                                                     # really cost in that army, from the treasury (memory)
+
+
+def army_prices(army) -> dict[str, int]:
+    """Unit prices for this army: the last price it really paid for a unit (2026-10-22: the base 1350 for a
+    Stormfiend kept Tichit's army from recruiting on turns 50 and 52 with 730 and 899 gold, while it paid 473 each:
+    its lord's skills and the buildings' discounts), else the base cost. A discount that ends shows on the next paid
+    click, which stores the new price."""
+    from .army import _faction
+    out = base_prices()
+    try:
+        saved = json.loads(PRICES_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    pre = f"{_faction()}|{army.cqi}|"
+    out.update({k[len(pre):]: int(v) for k, v in saved.items() if k.startswith(pre)})
+    return out
+
+
+def remember_price(army, unit: str, paid: int) -> None:
+    from .army import _faction
+    try:
+        d = json.loads(PRICES_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        d = {}
+    d[f"{_faction()}|{army.cqi}|{unit}"] = int(paid)
+    try:
+        tmp = PRICES_FILE.with_suffix(".tmp")
+        tmp.write_text(json.dumps(d, indent=1), encoding="utf-8")
+        from tools.fileio import replace as _replace
+        _replace(tmp, PRICES_FILE)
+    except OSError:
+        pass
+
+
 def saving_reserve_of(w: World, F: int) -> int:
     from .build import saving_reserve
     return saving_reserve(w, F)
@@ -438,7 +474,7 @@ def spendable(w: World, F: int) -> int:
     return treasury(w, F) - saving_reserve_of(w, F) - owed_now(w)
 
 
-def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: int = 0) -> list[str]:
+def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: int = 0, army=None) -> list[str]:
     btn = first(ui, "button_recruitment")
     if btn is None:
         return ["recruitment button not found"]
@@ -456,7 +492,7 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: in
     # yet. The price: the base cost until a paid click shows the real one (discounts such as the Scrap Heap's are in
     # it). Gold the building step saves this turn stays (player decision 2026-10-20: buildings take precedence).
     keep = saving_reserve_of(w, F)
-    price = base_prices()
+    price = army_prices(army) if army is not None else base_prices()
 
     def queued() -> int:
         try:
@@ -485,7 +521,9 @@ def recruit_local(ui: UI, w: World, F: int, missing: dict[str, int], log, mf: in
             if st != "done":
                 break                          # not taken: not affordable, or refused
             if (paid := before - treasury(w, F)) > 0:
-                price[unit] = paid                 # the real price, for the next click
+                price[unit] = paid                 # the real price, for the next click and the next turns
+                if army is not None:
+                    remember_price(army, unit, paid)
             else:
                 owe(w, price.get(unit, 0))         # spilled over: paid when it starts
             done += 1
@@ -911,7 +949,7 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
     # What the gold allows now, from memory (2026-10-20: Thanquol's 17 Warpfire Throwers were disbanded on a turn
     # the gold was kept for the buildings, leaving him alone at Zhufbar): nothing affordable = no disband and no
     # recruitment panel this turn.
-    prices = base_prices()
+    prices = army_prices(army)
     cheapest = min((prices.get(u, 0) for u in d0.missing), default=0)
     broke = bool(d0.missing) and spendable(w, F) < cheapest
     # Player rule: never strip an army away from its recruiting province (a lone lord gets attacked on the
@@ -958,7 +996,7 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
             else:
                 if not select_army(ui, army):
                     return [f"{name}: could not select the army"], None
-                out += recruit_local(ui, w, F, want, log, mf=army.force_ptr)
+                out += recruit_local(ui, w, F, want, log, mf=army.force_ptr, army=army)
         else:
             tgt = closest_target(w, F, army, elig)
             if tgt is None:
