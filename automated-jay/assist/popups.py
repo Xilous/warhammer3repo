@@ -338,6 +338,11 @@ def offer_terms(ui: UI, c: int) -> tuple[set, set] | None:
     return (ask, give) if ask or give else None
 
 
+def is_gift(ask: set, give: set) -> bool:
+    """The "accept_gifts" rule: they give something, and ask and give only the harmless terms."""
+    return bool(give) and ask <= GIVE_TERMS and give <= GIFT_TERMS
+
+
 def offer_rule() -> str:
     try:
         return json.load(open(config.STRATEGY_DIR / "automation.json", encoding="utf-8")).get("ai_offers", "ask")
@@ -357,7 +362,7 @@ def answer_offer(ui: UI) -> str | None:
     if terms is None:
         return None
     ask, give = terms
-    if not give or not ask <= GIVE_TERMS or not give <= GIFT_TERMS:
+    if not is_gift(ask, give):
         return None
     btn = ui.first("button_accept", under=c)
     if btn is None:
