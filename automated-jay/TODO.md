@@ -44,6 +44,9 @@ At the start of a session, remind the player of these, and say which need a mult
       the only skills_check rows left were the unlock-rank off-by-one, fixed 2026-10-22.
 - [ ] **Spilled-over recruits**: what the game does when a unit queued past the recruitment capacity cannot be paid
       when it starts (dropped, or waits); decode which queue items are paid (queue item X) to replace runs/army_owed.json.
+      2026-10-22: needs a queue holding a paid and a spilled unit at once (the buildings took the gold every turn
+      tried). Fields that differ between two queued Stormfiends (turn 61): +0x34, +0x44, +0xCC, +0xD0, +0xDC, +0xE0,
+      +0xF4 (u32). Also: runs/unit_prices.json learns an army's real unit price only from a paid click.
 - [x] **Magma Cannon build swap (2026-10-20) live checks**: Zhufbar (Black Water) recruits both; turn 54 queued 6
       Warp-Doom Magma-Cannons there for Tichit from the local pool; turn 59 Thanquol's refill disbanded his off-template
       troops first (Warpfire Throwers; 2026-10-22: now only as many as the gold replaces); the dashboard line is
@@ -65,5 +68,14 @@ At the start of a session, remind the player of these, and say which need a mult
 - [x] **Hero caps with bonuses** (2026-10-22, turn 55): memory engineer cap 2 = the Recruit Hero panel's "1 / 2" (base
       1 plus a bonus). The turn-55 "refused at cap 1/2" was gold (399 against 400): fixed, reported as no gold.
 - [ ] **Workshop (Ikit)** with the command pacing: not run since the change.
-- [ ] **Standing answers for routine decisions** (idea): strategy/decisions.json, the player's rules for AI diplomacy
-      offers, captives, recurring dilemmas. Needs the player's rules.
+- [ ] **Standing answers for routine decisions** (idea): the player's rules for AI diplomacy offers, captives,
+      recurring dilemmas. 2026-10-22: AI offers have a widget setting, "AI diplomacy offers" (automation.json
+      ai_offers): ask (default) or accept_gifts (they ask at most a Non-Aggression Pact or Trade Agreement and give
+      only gold, a Non-Aggression Pact or a Trade Agreement). Checked live (turn 68, Ikit Claw's pact accepted with
+      accept_gifts on for the test; set back to ask). Diplomacy notices with OK alone (a pact ended) are closed like
+      event notices. UI stop-gap: the offer's terms come from the panel; a memory reader for pending proposals is
+      still to find. Captives and dilemmas still need the player's rules.
+- [ ] **Steal-Take risk model (2026-10-22, turn 66)**: Vaul's Anvil was kept one more turn at Alarm 2 (Risk 100% x q
+      0.15 = 0.15 vs 0.23); the Complication that came took Alarm past its maximum and 2,277 gold off the loot (1,337
+      -> -940). The rule counts only the 25% paid at maximum Alarm, not Complications that take loot. The player's
+      rule (strategy/masterplans.json): left as it is, for the player to weigh.
