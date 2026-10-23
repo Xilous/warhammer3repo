@@ -670,7 +670,7 @@ class Runner:
         a record keyed on the address lost a queued End Turn): the local faction and every human faction."""
         from bot.sensor.world import World, current_faction, human_factions
         cache = getattr(self, "_cid_cache", {})
-        if self.model not in cache:
+        if not cache.get(self.model):              # (an empty read, mid-load, is not kept)
             try:
                 humans = human_factions(World(self.mem))
             except Exception:
@@ -1253,6 +1253,9 @@ class Runner:
             if self.last_turn is None or self.no_campaign >= LOST_AFTER:
                 self.last_turn = self.model = self.pending = self.done_turn = None
                 self.campaign_lost = True
+                # the next campaign's model can sit at the same address (2026-10-22: the Scruten save loaded after an
+                # Ikit one read as the Ikit campaign, a "reload", and its turn record was filed under Clan Skryre)
+                self._cid_cache = {}
                 self.offer_ignore([])
                 self.post("waiting", "WAITING", ("no campaign loaded" if self.mem.attached else "the game is not running")
                           + "\nacts from the first new turn after a campaign is loaded")
