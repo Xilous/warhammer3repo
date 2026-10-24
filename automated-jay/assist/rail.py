@@ -20,7 +20,7 @@ import tkinter.font as tkfont
 from bot import config
 
 FULL = (1000, 76)
-COMPACT = (494, 70)                 # + a strip at the bottom: can any province build the template?
+COMPACT = (560, 84)                 # one title, one or two lines of plain words, one button, the open arrow
 HOME = (10, 72)                 # default top-left corner (where the first overlay sat)
 POS_FILE = config.RUNS_DIR / "rail.json"
 DRAG_PX = 4                     # a press that moves further than this is a drag, not a click
@@ -86,6 +86,7 @@ class TurnRail:
         self._spin, self._spinning = 0, False
         self.template: tuple[bool, str] | None = None
         self.signal: str | None = None               # an army decision is open (assist/app.py army_signal)
+        self.line: str = ""                          # the one line under the title (assist/widget_data.bar_line)
         self.steps: dict[str, str] = {}
         self.hover = False
         self._press = None
@@ -119,6 +120,11 @@ class TurnRail:
         v = self.view
         self.end_wait = bool(self.pending_press or v.get("owed") or v.get("run_owed"))
 
+    def set_line(self, text: str) -> None:
+        if text != self.line:
+            self.line = text or ""
+            self.draw()
+
     def set_signal(self, text: str | None) -> None:
         if text != self.signal:
             self.signal = text
@@ -135,9 +141,9 @@ class TurnRail:
 
     @property
     def full(self) -> bool:
-        # only while automations run (player feedback 2026-10-17: expanding on hover moved the End Turn button
-        # away from the cursor); compact whenever the player has control
-        return self.state == "automating"
+        # never since 2026-10-24 (the redesign: the bar keeps its size, a progress line shows the pass instead of the
+        # wide rail of step bars, player: "visualizations arent really that helpful")
+        return False
 
     # ---------------------------------------------------------------- position
     def _load_pos(self) -> tuple[int, int]:
@@ -166,40 +172,6 @@ class TurnRail:
         pts = [x0 + r, y0, x1 - r, y0, x1, y0, x1, y0 + r, x1, y1 - r, x1, y1, x1 - r, y1, x0 + r, y1, x0, y1,
                x0, y1 - r, x0, y0 + r, x0, y0]
         return self.cv.create_polygon(pts, smooth=True, **kw)
-
-    def _segment(self, x0, x1, cy, status, h):
-        """One step as a flat bar (Clan Brass): done brass, running amber, failed red, later outlined, pending dim."""
-        cv = self.cv
-        y0, y1 = cy - h / 2, cy + h / 2
-        if status == "done":
-            cv.create_rectangle(x0, y0, x1, y1, fill=T.BRASS, outline=T.BRASS)
-        elif status == "active":
-            cv.create_rectangle(x0, y0, x1, y1, fill=T.AMBER, outline=T.AMBER)
-        elif status == "failed":
-            cv.create_rectangle(x0, y0, x1, y1, fill=T.RED, outline=T.RED)
-        elif status == "later":
-            cv.create_rectangle(x0 + 0.5, y0 + 0.5, x1 - 0.5, y1 - 0.5, fill="", outline=T.DIM, dash=(2, 2))
-        else:
-            cv.create_rectangle(x0, y0, x1, y1, fill=T.LINE, outline=T.LINE)
-
-    def _rail(self, x0, x1, cy, h, labels: bool):
-        """The steps as a row of bars, a gap between turn start and end of turn (NODES' None)."""
-        steps = [n for n in NODES if n is not None]
-        gap = 10 if labels else 6
-        space = 3 if not labels else 6
-        seg = (x1 - x0 - gap - space * (len(steps) - 1)) / len(steps)
-        x = x0
-        for node in NODES:
-            if node is None:
-                x += gap - space
-                continue
-            key, label = node
-            st = self.steps.get(key, "pending")
-            self._segment(x, x + seg, cy, st, h)
-            if labels:
-                col = {"done": T.INK, "active": T.AMBER, "failed": T.RED}.get(st, T.DIM)
-                self.cv.create_text(x + seg / 2, cy + h / 2 + 11, text=label.upper(), fill=col, font=self.f_node)
-            x += seg + space
 
     def _button(self, box, small: bool):
         cv = self.cv
@@ -247,75 +219,64 @@ class TurnRail:
                 import traceback
                 traceback.print_exc()
 
-    def _draw_icons(self, W: int) -> None:
-        """Expand (the fold-out panel), restart (a fresh copy with the latest code), exit: right on the bar."""
+    def _draw_icons(self, W: int, H: int) -> None:
+        """The open arrow on the right of the bar (the full-screen view has Restart and Exit)."""
         cv = self.cv
         self._icons = []
-        col, cy = T.MUTED, 27
-        specs = [("panel", self.on_toggle_panel), ("restart", self.on_restart), ("exit", self.on_exit)]
-        x = 426
-        for kind, fn in specs:
-            box = (x - 11, cy - 11, x + 11, cy + 11)
-            cv.create_rectangle(*box, outline=T.LINE, fill=T.PANEL2)
-            if kind == "panel":
-                d = -1 if self.panel_open else 1                       # chevron down (open) / up (close)
-                cv.create_line(x - 5, cy - 2 * d, x, cy + 3 * d, x + 5, cy - 2 * d, fill=col, width=2,
-                               capstyle="round", joinstyle="round")
-            elif kind == "restart":
-                cv.create_arc(x - 6, cy - 6, x + 6, cy + 6, start=60, extent=280, style="arc", outline=col, width=2)
-                cv.create_line(x + 3, cy - 8, x + 6, cy - 4, x + 1, cy - 3, fill=col, width=2, capstyle="round")
-            else:
-                cv.create_line(x - 5, cy - 5, x + 5, cy + 5, fill=T.WARN, width=2, capstyle="round")
-                cv.create_line(x + 5, cy - 5, x - 5, cy + 5, fill=T.WARN, width=2, capstyle="round")
-            if fn is not None:
-                self._icons.append((box, fn))
-            x += 24
+        x0, y0, x1, y1 = W - 56, H / 2 - 22, W - 12, H / 2 + 22
+        cv.create_rectangle(x0, y0, x1, y1, outline=T.LINE, fill=T.PANEL2)
+        cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+        d = -1 if self.panel_open else 1                       # chevron down (open) / up (close)
+        cv.create_line(cx - 6, cy - 3 * d, cx, cy + 3 * d, cx + 6, cy - 3 * d, fill=T.INK, width=2,
+                       capstyle="round", joinstyle="round")
+        if self.on_toggle_panel is not None:
+            self._icons.append(((x0, y0, x1, y1), self.on_toggle_panel))
 
     def _frame(self, W, H, stripe):
-        """Clan Brass: a flat dark plate with a 3 px stripe on top in the state's colour."""
+        """Clan Brass: a flat dark plate with a 4 px stripe on top in the state's colour."""
         self._round_rect(1, 1, W - 1, H - 1, RADIUS, fill=T.PANEL, outline=T.BASE, width=1)
-        self.cv.create_rectangle(2, 1, W - 2, 4, fill=stripe, outline=stripe)
+        self.cv.create_rectangle(2, 1, W - 2, 5, fill=stripe, outline=stripe)
+
+    def _progress(self) -> tuple[int, int, str]:
+        """(steps done, steps in the pass, the step running now) from the step states."""
+        keys = [n[0] for n in NODES if n is not None and self.steps.get(n[0]) not in (None, "later")]
+        done = sum(1 for k in keys if self.steps.get(k) in ("done", "failed"))
+        active = next((lbl for k, lbl in (n for n in NODES if n) if self.steps.get(k) == "active"), "")
+        return done, len(keys), active
 
     def draw(self) -> None:
+        """The collapsed bar (redesigned 2026-10-24, player-approved prototype): the state as a title, one line of
+        plain words (what needs you, what failed, or what is in progress), at most one button, the open arrow; while a
+        pass runs, the step and a progress line instead of a button."""
         cv = self.cv
         cv.delete("all")
         self._icons = []
         stripe, title_fg = STATE.get(self.state, STATE["waiting"])
-        if self.full:
-            W, H = FULL
-            self._place(W, H)
-            self._frame(W, H, stripe)
-            self._grip(H)
-            cv.create_text(18, 27, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title)
-            cv.create_text(18, 39, text=self._fit(self.sub, self.f_sub, 190, 2), anchor="nw", fill=T.MUTED,
-                           font=self.f_sub)
-            self._rail(232, 812, 28, 6, labels=True)
-            self._button((836, 16, W - 12, H - 14), small=False)
+        W, H = COMPACT
+        self._place(W, H)
+        self._frame(W, H, stripe)
+        self._grip(H)
+        title = self.headline.upper()
+        line = self.line or self.sub
+        if self.state == "automating":
+            done, total, active = self._progress()
+            title = f"WORKING - {active.upper()}" + (f"  ({done} of {total} steps)" if total else "") if active                 else "WORKING"
+            line = "Hands off the mouse until it is done. Shift+Esc stops it."
+        text_w = W - 16 - 56 - (192 if self.state != "automating" else 0) - 24
+        cv.create_text(18, 24, text=self._fit(title, self.f_title_s, text_w, 1), anchor="w", fill=title_fg,
+                       font=self.f_title_s)
+        cv.create_text(18, 38, text=self._fit(line, self.f_sub, text_w, 2), anchor="nw",
+                       fill=T.AMBER if self.state in ("automating", "paused") else T.RED if self.state == "error"
+                       else T.TEXT2, font=self.f_sub)
+        if self.state != "automating":
+            self._button((W - 56 - 12 - 180, H / 2 - 22, W - 56 - 12, H / 2 + 22), small=False)
         else:
-            W, H = COMPACT
-            self._place(W, H)
-            self._frame(W, H, stripe)
-            self._grip(H)
-            cv.create_text(14, 20, text=self.headline.upper(), anchor="w", fill=title_fg, font=self.f_title_s)
-            # (player report 2026-10-19: a long reason wrapped to three lines, centred on y 39, ran into the
-            # headline and the line below: now from the headline down, two lines at most)
-            cv.create_text(14, 28, text=self._fit(self.sub, self.f_sub_s, 152, 2), anchor="nw", fill=T.MUTED,
-                           font=self.f_sub_s)
-            self._rail(176, 302, 28, 6, labels=False)
-            self._button((314, 13, 408, 43), small=True)
-            self._draw_icons(W)
-            # bottom strip, always visible: can any province recruit the whole army template?
-            cv.create_line(12, 53, W - 12, 53, fill=T.LINE)
-            if self.signal:                            # an army decision first: it is something to do
-                cv.create_text(14, 61, anchor="w", font=self.f_sub_s,
-                               text=self._fit("ARMY ▲ " + self.signal, self.f_sub_s, W - 28, 1), fill=T.BRASS_HI)
-            elif self.template is not None:
-                ok, text = self.template
-                cv.create_text(14, 61, anchor="w", font=self.f_sub_s,
-                               text=self._fit(("TEMPLATE ✓ " if ok else "TEMPLATE: ") + text, self.f_sub_s, W - 28, 1),
-                               fill=T.GOOD if ok else T.WARN)
-            else:
-                cv.create_text(14, 61, anchor="w", font=self.f_sub_s, text="TEMPLATE: checking...", fill=T.MUTED)
+            self.btn, self._btn_box = None, None
+            done, total, _a = self._progress()
+            cv.create_rectangle(2, H - 5, W - 2, H - 2, fill=T.LINE, outline=T.LINE)
+            if total:
+                cv.create_rectangle(2, H - 5, 2 + (W - 4) * done / total, H - 2, fill=T.AMBER, outline=T.AMBER)
+        self._draw_icons(W, H)
 
     @staticmethod
     def _fit(text: str, font, width: int, lines: int) -> str:

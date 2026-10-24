@@ -212,7 +212,8 @@ class App:
         self.panel = RailPanel(self.root, self.rail, on_run_now=self._run_now, on_pause=self._pause,
                                on_restart=self._restart, on_ignore=self._ignore, on_full_window=self._show_full,
                                on_exit=self._exit if on_exit is not None else None,
-                               on_raise_army=self._raise_army if on_raise_army is not None else None)
+                               on_raise_army=self._raise_army if on_raise_army is not None else None,
+                               on_end_turn=self._end_turn if on_end_turn is not None else None)
         self.rail.on_toggle_panel = self.panel.toggle
         self.rail.on_moved = self.panel.place
         self.rail.draw()
@@ -354,6 +355,9 @@ class App:
                     bg, fg = COLORS.get(state, COLORS["waiting"])
                     self.state_lbl.configure(text=headline, fg=fg)
                     self.rail.set_status(state, headline, nice(detail))
+                    self.panel.show_status(state, headline, detail)
+                    self._status = (state, headline, detail)
+                    self._bar_line()
                     self.panel.suppress(state == "automating" or self._stepping_aside())
                 elif kind == "step_aside":
                     self.panel.suppress(True)
@@ -363,6 +367,12 @@ class App:
                 elif kind == "log":
                     self._show_log(msg[1])
                     self.panel.show_log(msg[1])
+                    self._log_lines = list(msg[1])
+                    self._bar_line()
+                elif kind == "builder":
+                    self.panel.show_builder(msg[1], msg[2])
+                    self._progress = msg[1]
+                    self._bar_line()
                 elif kind == "paused":
                     self.pause_btn.configure(text="Resume" if msg[1] else "Pause")
                     self.panel.set_paused(msg[1])
@@ -389,6 +399,8 @@ class App:
                 elif kind == "ignorable":
                     self._show_ignorable(msg[1])
                     self.panel.show_ignorable(msg[1])
+                    self._ignorable = list(msg[1])
+                    self._bar_line()
         except queue.Empty:
             pass
         v = getattr(self, "_view", None)
@@ -400,6 +412,20 @@ class App:
                 self._overlay_style(click_through=False)
             if self.panel.suppressed:
                 self.panel.suppress(False)
+
+    def _bar_line(self) -> None:
+        """The collapsed bar's one line (assist/widget_data.bar_line): what needs the player, what failed, what is in
+        progress, the next build."""
+        try:
+            from .widget_data import bar_line, needs, next_build, steps
+            state, headline, detail = getattr(self, "_status", ("waiting", "", ""))
+            lines = getattr(self, "_log_lines", [])
+            bad = [x for x in steps(lines) if x["state"] == "failed"]
+            n = needs(state, headline, detail, getattr(self, "_ignorable", []), bad)
+            self.rail.set_line(bar_line(state, nice(detail), n, getattr(self, "_progress", []), next_build(lines)))
+        except Exception:                             # noqa: BLE001  (the bar keeps its last line)
+            import traceback
+            traceback.print_exc()
 
     def _show_log(self, lines: list[str]) -> None:
         """The box grows with the text, wrapped lines included: at a fixed 7 lines the last steps were cut off."""
@@ -469,7 +495,14 @@ class App:
                 try:
                     status = army_status(w, F)
                 except Exception as ex:                   # noqa: BLE001  (shown, never fatal)
-                    status = {"line": f"Playbook armies: unreadable ({ex})", "can_raise": 0, "requested": 0}
+                    status = {"line": f"Playbook armies: unreadable ({ex})", "can_raise": 0, "requested": 0,
+                              "limits": {}}
+                try:
+                    from .widget_data import progress
+                    self.q.put(("builder", progress(w, F, rows, status), status))
+                except Exception as ex:                   # noqa: BLE001
+                    self.q.put(("builder", [{"name": "Could not read the army builder", "kind": "", "now": str(ex),
+                                             "next": "", "chips": []}], status))
                 ws = None
                 if (w.faction_name(F) or "") == "wh3_dlc29_skv_clan_scruten":
                     from bot.sensor import masterplans as mp
