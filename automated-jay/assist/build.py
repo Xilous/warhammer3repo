@@ -418,17 +418,19 @@ def ui_open_province(ui, o: OwnedSettlement) -> bool:
     shown = lambda: ui.root_child(PANEL) and ui.first(col, under=PANEL)   # (a lookup under a closed panel walks
     if shown():                                                          # the whole tree)
         return True
-    row = ui.first(f"row_entry_{o.province}")
+    # the Provinces tab first, always: its rows stay in the UI tree (off screen) while another list is shown, e.g. the
+    # Lords & Heroes list the turn-start pass leaves open (2026-10-24, turn 63: row_entry_..._peak_pass at x 2095, 20
+    # wheel scrolls for nothing, then the step failed)
+    tab = ui.cached("tab_regions", under="bar_small_top")
+    if tab is None:
+        return False
+    if not (ui.state(tab) or "").startswith("selected"):
+        click(ui, tab)
+        wait.wait_until(lambda: (ui.state(tab) or "").startswith("selected"), 2.0, "Provinces list shown", must=False)
+    row = wait.wait_until(lambda: ui.first(f"row_entry_{o.province}"), 2.0, f"row_entry_{o.province} listed",
+                          must=False)
     if row is None:
-        tab = ui.cached("tab_regions", under="bar_small_top")
-        if tab is None:
-            return False
-        if not (ui.state(tab) or "").startswith("selected"):
-            click(ui, tab)
-        row = wait.wait_until(lambda: ui.first(f"row_entry_{o.province}"), 2.0, f"row_entry_{o.province} listed",
-                              must=False)
-        if row is None:
-            return False
+        return False
     if not _scroll_into_clip(ui, row, "Provinces list"):
         return False
     click(ui, row)
