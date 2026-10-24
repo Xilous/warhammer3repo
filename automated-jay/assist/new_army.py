@@ -4,10 +4,11 @@ dashboard shows what every army costs, what a refill would make it cost and what
 raises it when
   1. a province can recruit the whole template (assist/army_builder.eligible, the builder's own test);
   2. a Verminlord Warpseer is in the Recruit Lord pool (its Verminlords tab) and the Raise button is active (Lord cap).
-Asked for by the player, it is raised whatever income would be after it and with or without a Warlock Engineer for
-it (player rule 2026-10-21: "the create new playbook army button should never be locked out": a treasury of 100k
-pays for an army that secures a frontline while another expands); the engineer is recruited by the army builder as
-soon as the cap allows. Raised by itself (auto_create), it also needs an engineer (free, or room under the cap) and
+Asked for by the player, it is raised whatever income would be after it (player rule 2026-10-21: "the create new
+playbook army button should never be locked out": a treasury of 100k pays for an army that secures a frontline while
+another expands). Since 2026-10-24 (player): each press asks for one more army; a pass raises as many as the hard
+requirements allow (capacity: free recruiting provinces, Warlock Engineers within the cap, Warpseers in the pool), one
+per province, and the rest wait. Raised by itself (auto_create), it also needs an engineer (free, or room under the cap) and
 income after it (army_finance) at or above army_builder.income_reserve.
 The Warpseer is raised at a settlement of an eligible province that no other army of ours stands in, and the new army
 is ticked: the builder recruits the template there in the same pass, and unticks it once it matches (army_builder).
@@ -84,33 +85,94 @@ def _request_file():
     return config.RUNS_DIR / "raise_army.request"
 
 
-def request_raise() -> None:
-    """The dashboard's "Raise next army": the next army pass raises one (if it can)."""
+def requested() -> int:
+    """Armies asked for and not raised yet (player choice 2026-10-24: one more per press; presses add up)."""
     try:
-        _request_file().parent.mkdir(parents=True, exist_ok=True)
-        _request_file().write_text("1", encoding="utf-8")
+        return max(0, int(_request_file().read_text(encoding="utf-8").strip() or 0))
+    except (OSError, ValueError):
+        return 0
+
+
+def _set_requested(n: int) -> None:
+    try:
+        f = _request_file()
+        f.parent.mkdir(parents=True, exist_ok=True)
+        if n > 0:
+            f.write_text(str(n), encoding="utf-8")
+        elif f.exists():
+            f.unlink()
     except OSError:
         pass
 
 
-def take_request() -> bool:
-    f = _request_file()
-    if f.exists():
-        try:
-            f.unlink()
-        except OSError:
-            pass
-        return True
-    return False
+def request_raise() -> None:
+    """The dashboard's "Create new playbook army": one more army asked for; army passes raise them as the hard
+    requirements allow (capacity), the rest wait for the next pass."""
+    _set_requested(requested() + 1)
 
 
-def raise_site(w: World, F: int, elig: dict) -> str | None:
-    """An owned settlement of an eligible province that none of our armies stands in; province capitals first."""
+def capacity(w: World, F: int, taken: frozenset = frozenset()) -> tuple[int, dict]:
+    """How many playbook armies can be raised right now, from memory, and each limit (player rule 2026-10-24: the hard
+    requirements decide, not a fixed number): provinces that recruit the whole template and recruit for no other army
+    this pass (taken: those army_builder.plan_provinces gave the ticked armies), Warlock Engineers (free and unclaimed,
+    plus room under the engineer cap), Verminlord Warpseers in the Recruit Lord pool. The Lord cap is the Recruit Lord
+    panel's (its Raise button), checked at each raise."""
+    from .army_builder import ENGINEER, _load_claims, eligible, free_engineer_slots
+    from .army_finance import pool_subtypes
+    elig = eligible(w, F, set(load_automation()["army_builder"]["template"]["units"]))
+    provinces = len([p for p in elig if p not in taken])
+    claims = _load_claims()
+    free = [c for c in characters(w, F) if c.embedded_force == 0 and c.subtype == ENGINEER
+            and w.u32(c.ptr + 0x110) not in claims]
+    slots = free_engineer_slots(w, F)
+    engineers = len(free) + (max(slots, 0) if slots is not None else provinces)
+    warpseers = pool_subtypes(w, F).count(WARPSEER)
+    limits = {"provinces": provinces, "engineers": engineers, "warpseers": warpseers}
+    return min(limits.values()), limits
+
+
+def _limits_text(limits: dict) -> str:
+    return ", ".join(f"{k} {v}" for k, v in limits.items())
+
+
+def create_many(ui: UI, w: World, F: int, log, taken: frozenset = frozenset()) -> tuple[list[str], list]:
+    """Raise the armies asked for, as many as capacity() allows now, each in its own free recruiting province. ->
+    (log lines, the new armies). What cannot be raised now stays asked for."""
+    ab = load_automation()["army_builder"]
+    auto = ab.get("auto_create", False)
+    want = 1 if auto else requested()
+    if not want:
+        return [], []
+    n, limits = capacity(w, F, taken)
+    if n <= 0:
+        short = ", ".join(f"{k} {v}" for k, v in limits.items() if v <= 0)
+        return [f"new army: {want} asked for, none can be raised now (no {short})"], []
+    lines, news, used = [], [], set(taken)
+    prov = region_provinces()[0]
+    for _ in range(min(want, n)):
+        got, new = create(ui, w, F, log, skip=frozenset(used))
+        lines += got
+        if new is None:
+            break
+        news.append(new)
+        used.add(prov.get(new.region or "", new.region))
+        if not auto:
+            _set_requested(requested() - 1)
+    left = 0 if auto else requested()
+    if left:
+        lines.append(f"new army: {left} more asked for, raised once a free recruiting province, an engineer and a "
+                     f"Warpseer are there (now: {_limits_text(capacity(w, F, frozenset(used))[1])})")
+    return lines, news
+
+
+def raise_site(w: World, F: int, elig: dict, skip: frozenset = frozenset()) -> str | None:
+    """An owned settlement of an eligible province that none of our armies stands in and that recruits for no other
+    army this pass (skip); province capitals first."""
     from .army_builder import held_settlements, settlement_pos
     prov, cap = region_provinces()
     pos = settlement_pos(w, F)
     taken = held_settlements(w, F, pos, except_cqi=-1)
-    sites = [r for r in pos if prov.get(r) in elig and r not in taken]
+    sites = [r for r in pos if prov.get(r) in elig and prov.get(r) not in skip and r not in taken]
     return min(sites, key=lambda r: (not cap.get(r), r)) if sites else None
 
 
@@ -124,14 +186,13 @@ def warpseer_card(ui: UI):
     return None
 
 
-def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
-    """Raise one new Warpseer army if every condition holds. -> (log lines, the new army or None)."""
+def create(ui: UI, w: World, F: int, log, skip: frozenset = frozenset()) -> tuple[list[str], object | None]:
+    """Raise one new Warpseer army if every condition holds, in a recruiting province not in skip. -> (log lines, the
+    new army or None). create_many decides how many."""
     from .army_builder import (ENGINEER, clear, eligible, free_engineer_slots, region_name,
                                select_settlement, settlement_pos, _load_claims)
     from .heroes import park
     ab = load_automation()["army_builder"]
-    if not ab.get("auto_create", False) and not take_request():
-        return [], None
     t = ab["template"]
     elig = eligible(w, F, set(t["units"]))
     if not elig:
@@ -141,7 +202,7 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
             and w.u32(c.ptr + 0x110) not in claims]
     slots = free_engineer_slots(w, F)
     no_engineer = not free and slots is not None and slots <= 0
-    if no_engineer and ab.get("auto_create", False):      # asked for: raised anyway, the engineer follows later
+    if no_engineer:                  # a hard requirement since 2026-10-24 (player): an engineer within the cap for it
         return ["new army: no Warlock Engineer for it (none free, engineer cap full)"], None
     from .army_finance import pool_subtypes
     if WARPSEER not in pool_subtypes(w, F):
@@ -158,9 +219,9 @@ def create(ui: UI, w: World, F: int, log) -> tuple[list[str], object | None]:
     gold = spendable(w, F) if ab.get("auto_create", False) else treasury(w, F)
     if cost and gold < cost:
         return [f"new army: no gold for the Verminlord Warpseer ({gold} to spend, {cost} needed)"], None
-    site = raise_site(w, F, elig)
+    site = raise_site(w, F, elig, skip)
     if site is None:
-        return ["new army: every settlement of the recruiting provinces has an army in it"], None
+        return ["new army: every recruiting province has an army in it or recruits for another army"], None
     clear(ui)
     if not select_settlement(ui, w, site, settlement_pos(w, F)[site]):
         return [f"new army: could not select {region_name(site)}"], None

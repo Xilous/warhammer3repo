@@ -1109,22 +1109,23 @@ def run(log=print, verify: bool = False) -> str:
         out.append("ticked army not in this campaign: " + ", ".join(gone))
     with game_focus():
         # a new army first (player rule 2026-10-18), so it is recruited in this same pass; never on a verification run
-        new = None
+        news = []
         if not verify:
-            from .new_army import create
+            # the armies asked for, as many as the hard requirements allow, each in a recruiting province no ticked
+            # army recruits in this pass (player rules 2026-10-24)
+            from .new_army import create_many
             try:
-                lines, new = create(ui, w, F, log)
+                lines, news = create_many(ui, w, F, log, taken=frozenset(plan_provinces(w, F, acting)))
             except Exception as ex:
                 import traceback
                 traceback.print_exc()
-                lines, new = [f"new army: ERROR {ex}"], None
+                lines, news = [f"new army: ERROR {ex}"], []
             out += lines
-            if new is not None:
-                acting.append(new)
+            acting += news
         if not acting:
             return "; ".join(out) or "no ticked army here"
         mine = assign_engineers(w, F, acting)
-        others = plan_provinces(w, F, acting, new)
+        others = plan_provinces(w, F, acting, news)
         for a in acting:
             try:
                 lines, _new = build_one(ui, w, F, a, mine.get(a.cqi, []), log, verify=verify, others=others)
@@ -1138,17 +1139,18 @@ def run(log=print, verify: bool = False) -> str:
     return "; ".join(out)
 
 
-def plan_provinces(w: World, F: int, acting: list, new=None) -> dict[str, str]:
+def plan_provinces(w: World, F: int, acting: list, news: list = ()) -> dict[str, str]:
     """province -> the army (general's name) that recruits there this pass: one army per province, because local
     recruitment (slots and queue) is per province (player, 2026-10-24: a second army there only queues behind the
-    first). Reserved in order: the army raised this pass (it cannot move this turn), then each army already standing
-    in a province that recruits the whole template, then each army marching takes the closest province still free
-    (build_one, closest_target skip). Armies that need no units reserve nothing."""
+    first). Reserved in order: each army already standing in a province that recruits the whole template, then the
+    armies raised this pass (raised in free ones, they cannot move this turn), then each army marching takes the
+    closest province still free (build_one, closest_target skip). Armies that need no units reserve nothing."""
     prov, _ = region_provinces()
     own = {w.region_key(r) for r in w.faction_regions(F)}
     elig = eligible(w, F, set(load_automation()["army_builder"]["template"]["units"]))
     out: dict[str, str] = {}
-    order = ([new] if new is not None else []) + [a for a in acting if new is None or a.cqi != new.cqi]
+    new_ids = {a.cqi for a in news}
+    order = [a for a in acting if a.cqi not in new_ids] + list(news)
     for a in order:
         if not delta(a, []).missing:
             continue

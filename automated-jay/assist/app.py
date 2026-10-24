@@ -463,17 +463,24 @@ class App:
             self.template_needs = template_needs(src)
             self.q.put(("world", st, rows, blocked, heroes))
             try:
-                from .army_finance import checks, compute
+                from .army_finance import army_status, checks, compute
                 f = compute(w, F)
                 cs = checks(w, F)
+                try:
+                    status = army_status(w, F)
+                except Exception as ex:                   # noqa: BLE001  (shown, never fatal)
+                    status = {"line": f"Playbook armies: unreadable ({ex})", "can_raise": 0, "requested": 0}
                 ws = None
                 if (w.faction_name(F) or "") == "wh3_dlc29_skv_clan_scruten":
                     from bot.sensor import masterplans as mp
                     ws = mp.Reader(w).pooled(F).get(mp.WARPSTONE_KEY)
                 self.q.put(("signal", army_signal(rows, f, cs)))
+                # the button asks for one more army; it is greyed while every army that can be raised now is
+                # already asked for (2026-10-24: the hard requirements decide how many, the player whether)
                 self.q.put(("finance", {"fin": f, "verdict": f.verdict(), "ok": f.after_next >= 0,
-                                        "can": all(ok for _l, ok, _w in cs), "checks": cs, "warpstone": ws,
-                                        "lines": f.lines(),
+                                        "can": status["can_raise"] > status["requested"], "checks": cs,
+                                        "warpstone": ws, "status": status["line"],
+                                        "lines": [status["line"]] + f.lines(),
                                         "why_not": "; ".join(f"{lb}: {why}" for lb, ok, why in cs if not ok)}))
             except Exception as ex:                       # noqa: BLE001  (the dashboard says why)
                 self.q.put(("finance", {"fin": None, "verdict": f"army finances unreadable: {ex}", "ok": False,

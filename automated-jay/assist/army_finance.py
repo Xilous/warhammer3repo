@@ -171,6 +171,29 @@ def checks(w, F) -> list[tuple[str, bool, str]]:
     ]
 
 
+def army_status(w, F) -> dict:
+    """What the widget shows about playbook armies (player 2026-10-24: "the widget simply provides the info that helps
+    me make better decisions"; the player decides what is affordable): the ticked armies refilling now, the armies
+    asked for, and how many can be raised now with each hard requirement's count (new_army.capacity, after the
+    provinces the refilling armies recruit in)."""
+    from bot.sensor.world import armies
+    from .army import delta, enabled_armies, tick_for
+    from .army_builder import plan_provinces
+    from .new_army import capacity, requested
+    ticked = enabled_armies(w.faction_name(F))
+    acting = [a for a in armies(w, F) if tick_for(a, ticked)[0]]
+    refilling = [a.general_name for a in acting if delta(a, []).missing]
+    plan = plan_provinces(w, F, acting)
+    n, limits = capacity(w, F, frozenset(plan))
+    req = requested()
+    return {"refilling": refilling, "requested": req, "can_raise": n, "limits": limits, "plan": plan,
+            "line": (f"Playbook armies: {len(refilling)} refilling"
+                     + (f" ({', '.join(refilling)})" if refilling else "")
+                     + f" | {req} asked for | {n} can be raised now (free recruiting provinces "
+                       f"{limits['provinces']}, Warlock Engineers {limits['engineers']}, Warpseers "
+                       f"{limits['warpseers']})")}
+
+
 def readiness(w, F, fin: Finance | None = None) -> tuple[bool, str]:
     """(a new playbook army can be created now, what is missing)."""
     cs = checks(w, F)

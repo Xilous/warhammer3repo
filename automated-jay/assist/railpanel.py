@@ -293,6 +293,9 @@ class RailPanel:
         self._style_raise(self.can_raise)
         for c in self.checks.winfo_children():
             c.destroy()
+        if f.get("status"):
+            tk.Label(self.checks, text=f["status"], bg=T.PANEL, fg=T.BRASS, font=self.f_body, anchor="w",
+                     justify="left", wraplength=BAR_W).pack(fill="x")
         for label, met, why in f.get("checks", []):
             tk.Label(self.checks, text=("✓ " if met else "✗ ") + label + ("" if met else f"  ({why})"),
                      bg=T.PANEL, fg=T.GOOD if met else T.MUTED, font=self.f_body, anchor="w").pack(fill="x")

@@ -542,12 +542,13 @@ class Runner:
                 return
             # the hard requirements, read again from memory at the press (player rule 2026-10-23; the widget greys the
             # button, this covers a press made just before a refresh): income going negative is a warning only
-            from .army_finance import readiness
             from bot.sensor.world import World, find_player_faction
             w = World()
-            ready, missing = readiness(w, find_player_faction(w))
-            if not ready:
-                self.post("your turn", f"YOUR TURN {s.turn}", f"New army: not yet: {missing}", turn=s.turn)
+            n, limits = new_army.capacity(w, find_player_faction(w))
+            if n <= 0:
+                self.post("your turn", f"YOUR TURN {s.turn}",
+                          f"New army: asked for ({new_army.requested()} waiting); none can be raised now "
+                          f"({', '.join(f'{k} {v}' for k, v in limits.items())})", turn=s.turn)
                 return
             done = self.automate(s.turn, [], label="new army", names=["army"])
             self.post("your turn", f"YOUR TURN {s.turn}", "\n".join(done), turn=s.turn)
@@ -557,7 +558,6 @@ class Runner:
             traceback.print_exc()
             self.post("error", "ERROR", f"New army failed: {ex}")
         finally:
-            new_army.take_request()                     # one press, one try
             self.busy.release()
 
     def end_turn_now(self) -> None:

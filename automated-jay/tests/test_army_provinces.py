@@ -26,6 +26,6 @@ def test_plan_provinces(monkeypatch):
     full = NS(cqi=3, general_name="Full", region="karak_hirn", needs=False, near=[])
     plan = A.plan_provinces(w, 0, [tichit, thanquol, full])
     assert plan == {"black_water": "Tichit", "peak_pass": "Thanquol"}     # the second one goes elsewhere
-    new = NS(cqi=4, general_name="New", region="zhufbar", needs=True, near=[])
-    plan = A.plan_provinces(w, 0, [tichit, new], new)
-    assert plan["black_water"] == "New"                                  # the army raised this pass keeps its province
+    new = NS(cqi=4, general_name="New", region="karak_hirn", needs=True, near=[])     # raised in a free province
+    plan = A.plan_provinces(w, 0, [tichit, thanquol, new], [new])
+    assert plan == {"black_water": "Tichit", "peak_pass": "New"}         # it keeps its own; Thanquol finds none free
