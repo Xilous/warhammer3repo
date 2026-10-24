@@ -65,7 +65,7 @@ SETTINGS: list[Setting] = [
     Setting("masterplans.json", ("steal_take", "max_pan"), "Look for targets this far off screen", "Masterplans",
             "int", 120, 20, 0, 600, unit=" map units"),
     Setting("masterplans.json", ("steal_take", "gold_per_warpstone"), "Gold worth one Warpstone", "Masterplans",
-            "int", 10, 1, 1, 100),
+            "int", 1, 1, 1, 100),
     Setting("masterplans.json", ("shop", "enabled"), "Buy Clan Scruten Secrets", "Masterplans", default=True),
     Setting("masterplans.json", ("shop", "keep_warpstone"), "Warpstone kept for a Kill-Stab", "Masterplans", "int",
             50, 10, 0, 1000),

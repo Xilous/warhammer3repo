@@ -152,7 +152,7 @@ def card_worth(token: str, income: float | None, gold_per_warpstone: float) -> f
 
 def expected_gain(board: dict, cfg: dict) -> float:
     """G: the loot the next turn adds on average, in Warpstone."""
-    gpw = cfg.get("gold_per_warpstone", 10)
+    gpw = cfg.get("gold_per_warpstone", 1)
     income = board["income"] if board.get("income") is not None else region_income(board.get("effects", []))
     pot = board["warpstone"] + board["gold"] / gpw
     per_card_avg = pot / board["drawn"] if board.get("drawn") else 0.0
@@ -237,7 +237,7 @@ def decide(board: dict, cfg: dict) -> tuple[str, str]:
     """("wait" | "complete" | "abandon", why) for a Steal-Take board."""
     if not board["can_complete"]:
         return "wait", "not ready to complete yet"
-    gpw = cfg.get("gold_per_warpstone", 10)
+    gpw = cfg.get("gold_per_warpstone", 1)
     pay = cfg.get("max_alarm_pay", 0.25)
     # a Complication can leave the plan's gold below 0, and completing then charges it to the treasury: the game
     # refuses the completion when the treasury cannot pay (2026-10-23, turn 36: Karaz-a-Karak at -3,280 gold, the

@@ -6,8 +6,8 @@
   ],
   "steal_take": {
     "enabled": true,
-    "gold_per_warpstone": 10,
-    "_gold_per_warpstone": "Loot is weighed in Warpstone: this many gold count as 1 Warpstone (food is not counted).",
+    "gold_per_warpstone": 1,
+    "_gold_per_warpstone": "Loot is weighed in Warpstone: this many gold count as 1 Warpstone (food is not counted). 1 (player decision 2026-10-23, was 10): gold and Warpstone are worth the same. Warpstone only upgrades Kill-Stab plans, whose armies last one turn (they are gone once the fight for the settlement is over), while gold is economic growth and the real army, so Warpstone is never weighed above gold.",
     "q_by_alarm": [
       0.0,
       0.0,
