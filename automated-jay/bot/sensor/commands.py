@@ -123,9 +123,37 @@ class Watch:
             self._t.join(0.2)
 
 
+_SETTLE: list = [None, None]      # [seconds, automation.json mtime]
+
+
+def settle_s() -> float:
+    """strategy/automation.json "settle_ms" (default 500): after a game action took effect, the game must render
+    steadily this long before the next click. Read again whenever the file changes (a widget setting)."""
+    try:
+        import json
+        from bot import config
+        f = config.STRATEGY_DIR / "automation.json"
+        at = f.stat().st_mtime
+        if _SETTLE[0] is None or _SETTLE[1] != at:
+            _SETTLE[:] = [max(0.0, float(json.load(open(f, encoding="utf-8")).get("settle_ms", 500)) / 1000.0), at]
+    except Exception:
+        if _SETTLE[0] is None:
+            _SETTLE[0] = 0.5
+    return _SETTLE[0]
+
+
+def settle() -> None:
+    """After an action's effect: hands off until the game renders steadily for settle_s() (tools/wait.settle_frames)."""
+    try:
+        from tools import wait
+        wait.settle_frames(settle_s())
+    except Exception:
+        pass
+
+
 def act(pm, do, done, cap: float = EFFECT_CAP_S, miss_s: float = MISS_S, poll: float = 0.005):
     """Run do() (one click) and wait for done() (the effect, read from memory). -> (status, value):
-      ("done", value)    done() came true (its value)
+      ("done", value)    done() came true (its value); then the game is left to settle (settle(), "settle_ms")
       ("not clicked", None) do() returned False: it chose not to click (no hover, a card not shown)
       ("missed", None)   the game wrote no command within miss_s and nothing changed: the click did not reach the game,
                          clicking again is safe
@@ -142,6 +170,7 @@ def act(pm, do, done, cap: float = EFFECT_CAP_S, miss_s: float = MISS_S, poll: f
             except Exception:
                 v = None
             if v:
+                settle()
                 return "done", v
             el = time.perf_counter() - t0
             if cw.ok and cw.count == 0 and el > miss_s:

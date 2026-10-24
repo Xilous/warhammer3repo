@@ -152,6 +152,28 @@ def next_frame(n: int = 1, ui=None, timeout: float = 1.0) -> int:
         _sleep(0.0003)
 
 
+def settle_frames(seconds: float, ui=None, cap: float = 8.0, stall: float = 0.25) -> bool:
+    """Hands off until the game has rendered steadily for `seconds` (a frame more than `stall` late starts the count
+    again), at most `cap` in all. True once steady. After a game action, before the next click (player decision
+    2026-10-23: slower is fine if it keeps the game from crashing; both crashes came right after a completion with
+    more clicks following)."""
+    if seconds <= 0:
+        return True
+    t_end = _perf() + cap
+    calm = _perf()
+    while _perf() < t_end:
+        if _perf() - calm >= seconds:
+            return True
+        t = _perf()
+        try:
+            next_frame(1, ui, timeout=1.0)
+        except Exception:                # noqa: BLE001  (frozen or loading: keep counting from now)
+            pass
+        if _perf() - t > stall:
+            calm = _perf()
+    return False
+
+
 def frames_until(pred, max_frames: int, ui=None) -> bool:
     """pred() becomes true within max_frames rendered frames (checked between stamp changes). False when the frames
     ran out first. For short input-registration checks (hover); not recorded as a wait."""
