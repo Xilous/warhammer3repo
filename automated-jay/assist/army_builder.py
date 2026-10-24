@@ -17,7 +17,9 @@ between campaigns). Per ticked army, in order:
      exactly those units gone;
   3. if the army stands in an owned region of a province whose finished buildings recruit a missing unit LOCALLY,
      queue the missing units from the local pool only, never the global pool (global recruitment costs far more);
-  4. otherwise order the army to the CLOSEST eligible province, re-evaluated every turn (a province that becomes
+  4. otherwise order the army to the CLOSEST eligible province, re-evaluated every turn. One army per province
+     (plan_provinces, player 2026-10-24: local recruitment is per province): a province another ticked army
+     recruits in this pass is skipped (a province that becomes
      eligible mid-march wins if it is closer). Closest = fewest region hops over the game's land adjacency graph,
      then straight-line distance. A settlement held by another of our armies is never a target. The army marches
      only to recruit units, never for a hero;
@@ -338,7 +340,7 @@ def hops_from(w: World, start: int, limit: int = 25) -> list[tuple[int, int]]:
     return out
 
 
-def closest_target(w: World, F: int, army, elig: dict[str, set[str]]):
+def closest_target(w: World, F: int, army, elig: dict[str, set[str]], skip: frozenset = frozenset()):
     """(region, province, hops) of the owned settlement nearest the army in a province that can recruit missing
     units: fewest region hops, then straight-line distance (player rule); a province covering more of the missing
     units only breaks an exact tie. Settlements held by another of our armies are skipped."""
@@ -353,7 +355,7 @@ def closest_target(w: World, F: int, army, elig: dict[str, set[str]]):
     for r, hops in hops_from(w, army.region_obj):
         k = w.region_key(r)
         p = prov.get(k)
-        if k in own and p in elig and k in pos and k not in taken:
+        if k in own and p in elig and p not in skip and k in pos and k not in taken:
             sx, sy = pos[k]
             found.append((hops, math.hypot(sx - ax, sy - ay), -len(elig[p]), k, p))
     if not found:
@@ -939,7 +941,8 @@ def affordable(gold: int, missing: dict[str, int], prices: dict[str, int]) -> in
     return n
 
 
-def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = False):
+def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = False,
+              others: dict | None = None):
     """One ticked army. mine: the free engineers that count as its engineer. Returns (log lines, the engineer
     recruited for it this turn or None). Everything is decided from memory first; the army is selected (a single
     click on its Lords & Heroes row, no camera move) only when a disband, a recruitment or a move order follows, so an
@@ -949,6 +952,10 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
     prov, _ = region_provinces()
     own = {w.region_key(r) for r in w.faction_regions(F)}
     here = prov.get(army.region or "") if army.region in own else None
+    # provinces another army recruits in this pass (plan_provinces): local recruitment is per province, so a second
+    # army there would only queue behind the first (player, 2026-10-24)
+    others = {p: n for p, n in (others or {}).items() if n != army.general_name}
+    blocked = frozenset(others)
     for c in extra_heroes(w, F, army):
         out.append(f"extra hero {c.name} in {name}: remove it yourself")
     d0 = delta(army, [])
@@ -965,7 +972,7 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
         out.append(f"keeping off-template units: no gold for a replacement this turn ({spendable(w, F)} to spend, "
                    f"{cheapest} needed)")
     elif d0.disband:
-        if not d0.missing or here in eligible(w, F, set(d0.missing)):
+        if not d0.missing or (here in eligible(w, F, set(d0.missing)) and here not in blocked):
             # only as many as the gold replaces now, beyond the slots already free (2026-10-22, turn 59: 15 Warpfire
             # Throwers and a Stormfiend went for 2 Stormfiends the gold could pay, leaving Thanquol with 4 units);
             # the rest stay until there is gold for their replacements
@@ -986,7 +993,9 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
     missing = dict(d.missing)
     if missing:
         elig = eligible(w, F, set(missing))
-        if here in elig:
+        if here in elig and here in blocked:
+            out.append(f"{gd.loc().get('provinces_onscreen_' + here, here)} recruits for {others[here]} this turn")
+        if here in elig and here not in blocked:
             # room: 20 units, an empty slot kept for a missing Warlock Engineer; queued units count (2026-10-20)
             room = 20 - len(army.units) - len(army.queued) - d.heroes_missing.get(ENGINEER, 0)   # (a walking-in one too)
             want, left = {}, max(0, room)
@@ -1004,8 +1013,11 @@ def build_one(ui: UI, w: World, F: int, army, mine: list, log, verify: bool = Fa
                     return [f"{name}: could not select the army"], None
                 out += recruit_local(ui, w, F, want, log, mf=army.force_ptr, army=army)
         else:
-            tgt = closest_target(w, F, army, elig)
-            if tgt is None:
+            tgt = closest_target(w, F, army, elig, skip=blocked)
+            if tgt is None and elig and all(p in blocked for p in elig):
+                out.append("every province that recruits the template is recruiting for another army this turn; "
+                           "the army stays where it is")
+            elif tgt is None:
                 out.append("no province can recruit the whole template yet (it needs every unit's building); "
                            "the army stays where it is")
             else:
@@ -1097,6 +1109,7 @@ def run(log=print, verify: bool = False) -> str:
         out.append("ticked army not in this campaign: " + ", ".join(gone))
     with game_focus():
         # a new army first (player rule 2026-10-18), so it is recruited in this same pass; never on a verification run
+        new = None
         if not verify:
             from .new_army import create
             try:
@@ -1111,9 +1124,10 @@ def run(log=print, verify: bool = False) -> str:
         if not acting:
             return "; ".join(out) or "no ticked army here"
         mine = assign_engineers(w, F, acting)
+        others = plan_provinces(w, F, acting, new)
         for a in acting:
             try:
-                lines, _new = build_one(ui, w, F, a, mine.get(a.cqi, []), log, verify=verify)
+                lines, _new = build_one(ui, w, F, a, mine.get(a.cqi, []), log, verify=verify, others=others)
             except Exception as ex:                   # one army's failure must not skip the others
                 import traceback
                 traceback.print_exc()
@@ -1122,6 +1136,32 @@ def run(log=print, verify: bool = False) -> str:
     out += untick_refilled(w, F, acting)
     LAST_NOTES[:] = out
     return "; ".join(out)
+
+
+def plan_provinces(w: World, F: int, acting: list, new=None) -> dict[str, str]:
+    """province -> the army (general's name) that recruits there this pass: one army per province, because local
+    recruitment (slots and queue) is per province (player, 2026-10-24: a second army there only queues behind the
+    first). Reserved in order: the army raised this pass (it cannot move this turn), then each army already standing
+    in a province that recruits the whole template, then each army marching takes the closest province still free
+    (build_one, closest_target skip). Armies that need no units reserve nothing."""
+    prov, _ = region_provinces()
+    own = {w.region_key(r) for r in w.faction_regions(F)}
+    elig = eligible(w, F, set(load_automation()["army_builder"]["template"]["units"]))
+    out: dict[str, str] = {}
+    order = ([new] if new is not None else []) + [a for a in acting if new is None or a.cqi != new.cqi]
+    for a in order:
+        if not delta(a, []).missing:
+            continue
+        here = prov.get(a.region or "") if a.region in own else None
+        if here in elig and here not in out:
+            out[here] = a.general_name
+    for a in order:                                        # the marching ones, in order: each its closest free one
+        if not delta(a, []).missing or a.general_name in out.values():
+            continue
+        tgt = closest_target(w, F, a, elig, skip=frozenset(out))
+        if tgt:
+            out[tgt[1]] = a.general_name
+    return out
 
 
 def untick_refilled(w: World, F: int, acting: list) -> list[str]:
