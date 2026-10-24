@@ -255,7 +255,7 @@ def decide(board: dict, cfg: dict) -> tuple[str, str]:
         # not decoded: the cautious reading)
         g, ws = board["gold"], board["warpstone"]
         worth = pay * (max(ws, 0.0) + max(g, 0.0) / gpw) + min(ws, 0.0) + min(g, 0.0) / gpw
-        if worth <= 0:
+        if worth < 0:
             return "abandon", (f"Alarm is at its maximum and completing at {pay:.0%} is worth {worth:.0f} Warpstone "
                                f"({board['gold']:.0f} gold, {board['warpstone']:.0f} Warpstone)")
         return "complete", "Alarm is at its maximum"
@@ -413,14 +413,42 @@ def _log(entry: dict) -> None:
         pass
 
 
+MESSAGE_BOX = "popup_message_box"
+
+
+def _accept_message_box(ui, done=None) -> bool:
+    """Abandon asks in the game's message box (9.0.4, seen 2026-10-23 on Fort Soll): root popup_message_box, its text
+    DY_text ("Abandon Masterplan ... no rewards received and no consequences from any Complications ... hide the
+    collected bounty and issue a mission"), the tick both_group/button_tick (button_cancel next to it; a hidden
+    purchase_options group holds a Steam-store button_purchase, never clicked). Until then only dialogue_box was
+    looked for: the box stayed open and the pass clicked the panel's X behind it until the player stopped it. The tick
+    is the click that issues the command, so it is paced by the game (commands.act): done (the plan gone from memory)
+    or the box closed is its effect."""
+    from bot.sensor import commands
+    from tools import wait
+    from tools.ui import click
+    box = ui.root_child(MESSAGE_BOX)
+    grp = ui.child(box, "both_group") if box else None
+    tick = ui.child(grp, "button_tick") if grp else None
+    if tick is None:
+        return False
+    wait.stable_rect(ui, tick, n=4, timeout=2.0, must=False, what="message box tick still")
+    st, _v = commands.act(ui.pm, lambda: click(ui, tick) and None,
+                          lambda: (done is not None and done()) or not ui.root_child(MESSAGE_BOX))
+    return st == "done"
+
+
 def _confirm(ui, done=None) -> None:
     """Accept a confirmation the game may show (a prompt with a tick). done: the action's own result (read from
     memory); once it shows, no prompt is coming, so there is no wait (2026-10-18 timing logs: the game never asked
     after a start, a purchase or a completion, and each fixed 1.5 s wait showed as a pause)."""
     from tools import wait
     from tools.ui import click
-    box = wait.wait_until(lambda: ui.root_child("dialogue_box") or (done is not None and done()), 1.5,
-                          "confirmation or result", must=False)
+    box = wait.wait_until(lambda: ui.root_child("dialogue_box") or ui.root_child(MESSAGE_BOX)
+                          or (done is not None and done()), 1.5, "confirmation or result", must=False)
+    if box and ui.root_child(MESSAGE_BOX):
+        _accept_message_box(ui, done)
+        return
     if not box or not ui.root_child("dialogue_box"):
         return
     for b in ("button_tick", "button_accept", "button_ok"):
@@ -1051,7 +1079,7 @@ def missed() -> list[str]:
                 act, why = decide(board_from(p, w), st)
                 if act != "wait":
                     place = gd.place_name(p.region)
-                    out.append(f"Steal-Take {place}: should be {act}d ({why})"
+                    out.append(f"Steal-Take {place}: should be {'abandoned' if act == 'abandon' else 'completed'} ({why})"
                                + (" (not possible: the run reported it)" if place in notes else ""))
         free = [u for u in state.underlings if u.free and u.unlocked]
         if "economic" in state.unlocked_types and free and state.warpstone >= 50:
