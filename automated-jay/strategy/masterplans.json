@@ -31,16 +31,65 @@
     "enabled": true,
     "keep_warpstone": 50,
     "_keep_warpstone": "Never spends below this, so one Kill-Stab (50 Warpstone) can always be started by you.",
-    "_order": "Bought top to bottom: the first entry that can be bought but not yet afforded is saved for (nothing below it is bought). Locked entries (their shop has too few purchases yet) are skipped. levels = how many of the chain's levels to own. Great-Smart (Verminlord Study, Hasten Ritual) and Final Battle Support are left out (player scope, 2026-10-18).",
+    "_order": "Bought top to bottom: the first entry that can be bought but not yet afforded is saved for (nothing below it is bought). Locked entries (their shop has too few purchases yet) are skipped. levels = how many of the chain's levels to own. Great-Smart (Verminlord Study, Hasten Ritual) and Final Battle Support are left out (player scope, 2026-10-18). Gold first (player decision 2026-10-23): the Secrets that add gold to a Steal-Take's loot (Training: Thievery, Clan Skryre Engineers, Clan Eshin Thieves, Trinket Trade Network, The Surest Revenue) come before everything else: gold is economic growth and the real army, Warpstone only upgrades Kill-Stabs, whose armies last one turn. The rest keeps its order (Warpstone-loot lines, then the Kill-Stab lines). Tiers (player decision 2026-10-23): gold output > Warpstone output > Kill-Stab upgrades. First the Secrets that add gold to a Steal-Take (Training: Thievery, Clan Skryre Engineers, Clan Eshin Thieves, Trinket Trade Network, The Surest Revenue), then those that add Warpstone (Clan Skryre Drillers, Training: Warp-Finding, Rictus Miners, Grey Seer Deals), then the rest in its old order: gold is economic growth and the real army, Warpstone only upgrades Kill-Stabs, whose armies last one turn.",
     "order": [
       {
-        "chain": "wh3_dlc29_shop_military_green_skryre_warpfire_throwers",
-        "levels": 1,
-        "tab": "warlock",
-        "tier": "warpstone",
-        "_what": "Warpfire Equipment Racks",
+        "chain": "wh3_dlc29_shop_economic_upgrade_basic_treasury_gdp",
+        "levels": 4,
+        "tab": "thanquol",
+        "tier": "gold",
+        "_what": "Training: Thievery I / Training: Thievery II / Training: Thievery III / Training: Thievery IV",
         "_warpstone": [
+          600,
+          600,
+          800,
+          1000
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_green_skryre_treasury",
+        "levels": 3,
+        "tab": "warlock",
+        "tier": "gold",
+        "_what": "Clan Skryre Engineers / Clan Skryre Veteran Engineers / Clan Skryre Elite Engineers",
+        "_warpstone": [
+          600,
+          600,
+          600
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_green_eshin_all",
+        "levels": 3,
+        "tab": "assassin",
+        "tier": "gold",
+        "_what": "Clan Eshin Thieves / Clan Eshin Veteran Thieves / Clan Eshin Elite Thieves",
+        "_warpstone": [
+          1000,
+          300,
           300
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_mod_pool_grey_seer_treasury_large",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "gold",
+        "_what": "Trinket Trade Network I / Trinket Trade Network II / Trinket Trade Network III",
+        "_warpstone": [
+          600,
+          500,
+          500
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_any_action_assassin_sell_instant",
+        "levels": 1,
+        "tab": "assassin",
+        "tier": "tricks",
+        "_what": "The Surest Revenue",
+        "_warpstone": [
+          600
         ]
       },
       {
@@ -69,6 +118,40 @@
         ]
       },
       {
+        "chain": "wh3_dlc29_shop_economic_green_rictus_warpstone",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "warpstone",
+        "_what": "Rictus Miners' Holes / Rictus Diggers' Quarters / Rictus Foreman's Tower",
+        "_warpstone": [
+          600,
+          300,
+          300
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_economic_action_instant_warpstone",
+        "levels": 3,
+        "tab": "grey_seer",
+        "tier": "tricks",
+        "_what": "Grey Seer Deals I / Grey Seer Deals II / Grey Seer Deals III",
+        "_warpstone": [
+          300,
+          200,
+          200
+        ]
+      },
+      {
+        "chain": "wh3_dlc29_shop_military_green_skryre_warpfire_throwers",
+        "levels": 1,
+        "tab": "warlock",
+        "tier": "warpstone",
+        "_what": "Warpfire Equipment Racks",
+        "_warpstone": [
+          300
+        ]
+      },
+      {
         "chain": "wh3_dlc29_military_mod_pool_clanrats_grey_seer",
         "levels": 2,
         "tab": "grey_seer",
@@ -87,18 +170,6 @@
         "_what": "Superior Rats!",
         "_warpstone": [
           200
-        ]
-      },
-      {
-        "chain": "wh3_dlc29_shop_economic_green_rictus_warpstone",
-        "levels": 3,
-        "tab": "grey_seer",
-        "tier": "warpstone",
-        "_what": "Rictus Miners' Holes / Rictus Diggers' Quarters / Rictus Foreman's Tower",
-        "_warpstone": [
-          600,
-          300,
-          300
         ]
       },
       {
@@ -192,55 +263,6 @@
         "_what": "Clan Rictus Elite Warren",
         "_warpstone": [
           1000
-        ]
-      },
-      {
-        "chain": "wh3_dlc29_shop_economic_upgrade_basic_treasury_gdp",
-        "levels": 4,
-        "tab": "thanquol",
-        "tier": "gold",
-        "_what": "Training: Thievery I / Training: Thievery II / Training: Thievery III / Training: Thievery IV",
-        "_warpstone": [
-          600,
-          600,
-          800,
-          1000
-        ]
-      },
-      {
-        "chain": "wh3_dlc29_shop_economic_green_skryre_treasury",
-        "levels": 3,
-        "tab": "warlock",
-        "tier": "gold",
-        "_what": "Clan Skryre Engineers / Clan Skryre Veteran Engineers / Clan Skryre Elite Engineers",
-        "_warpstone": [
-          600,
-          600,
-          600
-        ]
-      },
-      {
-        "chain": "wh3_dlc29_shop_economic_green_eshin_all",
-        "levels": 3,
-        "tab": "assassin",
-        "tier": "gold",
-        "_what": "Clan Eshin Thieves / Clan Eshin Veteran Thieves / Clan Eshin Elite Thieves",
-        "_warpstone": [
-          1000,
-          300,
-          300
-        ]
-      },
-      {
-        "chain": "wh3_dlc29_shop_economic_mod_pool_grey_seer_treasury_large",
-        "levels": 3,
-        "tab": "grey_seer",
-        "tier": "gold",
-        "_what": "Trinket Trade Network I / Trinket Trade Network II / Trinket Trade Network III",
-        "_warpstone": [
-          600,
-          500,
-          500
         ]
       },
       {
@@ -488,18 +510,6 @@
         ]
       },
       {
-        "chain": "wh3_dlc29_shop_economic_action_instant_warpstone",
-        "levels": 3,
-        "tab": "grey_seer",
-        "tier": "tricks",
-        "_what": "Grey Seer Deals I / Grey Seer Deals II / Grey Seer Deals III",
-        "_warpstone": [
-          300,
-          200,
-          200
-        ]
-      },
-      {
         "chain": "wh3_dlc29_shop_action_any_remove_red",
         "levels": 2,
         "tab": "assassin",
@@ -526,16 +536,6 @@
         "tab": "assassin",
         "tier": "tricks",
         "_what": "Seek-Find Valuables",
-        "_warpstone": [
-          600
-        ]
-      },
-      {
-        "chain": "wh3_dlc29_shop_any_action_assassin_sell_instant",
-        "levels": 1,
-        "tab": "assassin",
-        "tier": "tricks",
-        "_what": "The Surest Revenue",
         "_warpstone": [
           600
         ]
