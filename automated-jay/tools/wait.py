@@ -191,13 +191,14 @@ def _raw_sig(ui, root: int, depth: int = 8, max_nodes: int = 600) -> tuple:
     return tuple(out)
 
 
-def animation_done(ui, root, frames: int = 6, cap: float = 15.0, what: str = "animation over") -> bool:
+def animation_done(ui, root, frames: int = 6, cap: float = 15.0, what: str = "animation over",
+                   start_within: float = 0.0) -> bool:
     """Hands off until the component tree under root holds completely still (_raw_sig unchanged) for `frames`
     rendered frames in a row, at most `cap`; True once still, False when root is gone or cap ran out. Player finding
     2026-10-24: the game crashed when a click skipped the Masterplans completion animation."""
     ui = _ui(ui)
     t0 = _perf()
-    last, calm = None, 0
+    last, calm, moved = None, 0, False
     while _perf() - t0 < cap:
         try:
             next_frame(1, ui, timeout=1.0)
@@ -209,9 +210,14 @@ def animation_done(ui, root, frames: int = 6, cap: float = 15.0, what: str = "an
         except Exception:                # noqa: BLE001  (torn down mid-read)
             last, calm = None, 0
             continue
+        if last is not None and cur != last:
+            moved = True
         calm = calm + 1 if cur == last else 0
         last = cur
-        if calm >= frames:
+        # start_within: an animation that starts a moment after the screen shows (2026-10-24: the plan-complete screen
+        # sat still for its first frames, so a plain "still" ended at 92 ms and the click came mid-animation) must be
+        # seen to start, then to end; a screen that has not moved by then has no animation
+        if calm >= frames and (moved or _perf() - t0 >= start_within):
             timing.wait_event(what, (_perf() - t0) * 1000, True, calm)
             return True
     timing.wait_event(what, cap * 1000, False, calm, timeout=cap)
