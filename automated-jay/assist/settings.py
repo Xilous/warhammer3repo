@@ -52,6 +52,8 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("buildings", "repair_damaged"), "Repair damaged buildings", "Buildings", default=True),
     Setting("automation.json", ("buildings", "army_buildings_first"), "Army buildings first (when affordable)",
             "Buildings", "choice", "first", choices=("first", "all", "off")),
+    Setting("automation.json", ("buildings", "army_provinces"), "Provinces that recruit the army", "Buildings", "int",
+            2, 1, 1, 10),
     Setting("automation.json", ("buildings", "off_list_buildings"), "Buildings not on the list", "Buildings",
             "choice", "replace", choices=("replace", "ask")),
     # army (assist/new_army.py)

@@ -251,10 +251,16 @@ def army_site(models) -> str | None:
     """The settlement whose army buildings are built first (player decision 2026-10-24: "re-prioritize getting the
     military buildings required for the playbook army, an exception to the gold income ROI rule"; the Warp-Turbine
     Plant and the Equipment Warpforge had waited behind every income building): the one closest to recruiting the
-    whole template, from memory (standing tiers and those under construction), None once one already recruits it."""
+    whole template, from memory (standing tiers and those under construction), None once "army_provinces" of them
+    recruit it (default 2, player 2026-10-24: the income supports two playbook armies at once, one per province)."""
     need = army_needs()
     if not need:
         return None
+    try:
+        wanted = max(1, int(buildings_setting("army_provinces", 2)))
+    except (TypeError, ValueError):
+        wanted = 2
+    done = 0
     best, best_key = None, None
     for owned in models.values():
         for o in owned:
@@ -265,11 +271,15 @@ def army_site(models) -> str | None:
                     if c in need:
                         have[c] = max(have.get(c, 0), t if lk == st.building else t - 1)
             if all(have.get(c, 0) >= t for c, t in need.items()):
-                return None                              # the template is recruited somewhere already
-            key = (sum(min(have.get(c, 0), t) for c, t in need.items()), len(o.slot_states))
+                done += 1                                # this one recruits the template already
+                continue
+            # a building under way counts toward the level it builds; ties go to the main building's tier, then
+            # to the region key (stable from turn to turn)
+            main = _tier(o.slot_states[0].building if o.slot_states else None)[1]
+            key = (sum(min(have.get(c, 0), t) for c, t in need.items()), main, o.region)
             if best_key is None or key > best_key:
                 best, best_key = o.region, key
-    return best
+    return None if done >= wanted else best
 
 
 def spend_rank(o: OwnedSettlement, a) -> tuple:
