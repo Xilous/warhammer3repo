@@ -134,3 +134,22 @@ def test_greyed_out_is_remembered_for_the_turn_only():
     assert build._greyed_now(w)[("r", "Main building", "lvl")]
     w.s.t = 6
     assert build._greyed_now(w) == {}
+
+
+def test_army_buildings_first_when_affordable(monkeypatch):
+    """Player decision 2026-10-24: the template's recruit buildings (up to the tier it needs) in the army site go before
+    income buildings, but are never saved for: unpaid, the gold goes on growing income."""
+    o = owned(5)
+    o.region = "site"
+    monkeypatch.setitem(build.ARMY_SITE, "region", "site")
+    monkeypatch.setattr(build, "buildings_setting", lambda name, default=True: "first" if name == "army_buildings_first" else default)
+    cheap = (o, act("construct", "Breeding Pit", first("wh2_main_skv_farm"), 250))
+    forge = (o, act("construct", "Equipment Warpforge", first("wh3_dlc29_skv_stormfiends"), 4000))
+    assert build.spend_rank(*forge)[:2] == build.ARMY_RANK
+    assert [a.item for _o, a in sorted([cheap, forge], key=lambda t: build.spend_rank(*t))] == \
+        ["Equipment Warpforge", "Breeding Pit"]
+    b = build.Budget(1000, 500)
+    assert not b.save(4000, build.spend_rank(*forge), "forge")      # not affordable: not saved for
+    other = owned(5)
+    other.region = "elsewhere"
+    assert build.spend_rank(other, forge[1])[0] == 1                # other settlements: income order

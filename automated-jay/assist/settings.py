@@ -50,6 +50,8 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("buildings", "never_build_in_provinces_adjacent_to_enemy_at_war"),
             "Leave frontline settlements to you", "Buildings", default=False),
     Setting("automation.json", ("buildings", "repair_damaged"), "Repair damaged buildings", "Buildings", default=True),
+    Setting("automation.json", ("buildings", "army_buildings_first"), "Army buildings first (when affordable)",
+            "Buildings", "choice", "first", choices=("first", "all", "off")),
     Setting("automation.json", ("buildings", "off_list_buildings"), "Buildings not on the list", "Buildings",
             "choice", "replace", choices=("replace", "ask")),
     # army (assist/new_army.py)

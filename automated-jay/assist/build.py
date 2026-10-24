@@ -154,6 +154,9 @@ def _actions(models, blocked: dict, override_blocked: bool = False):
     # 2,400. Every building still reaches its highest tier; payback only orders the spending (spend_rank).
     PROVINCE_MODELS.clear()
     PROVINCE_MODELS.update({p: [o.model for o in owned] for p, owned in models.items()})
+    # the army site among the settlements that plan the army buildings (a capital: both chains are capital-only)
+    sites = {o.region for o, a, _b in todo if _tier(getattr(a, "level_key", None))[0] in army_needs()}
+    ARMY_SITE["region"] = army_site({p: [o for o in owned if o.region in sites] for p, owned in models.items()})
     todo.sort(key=lambda t: spend_rank(t[0], t[1]))
     return todo, skipped
 
@@ -198,7 +201,10 @@ class Budget:
     def save(self, cost: int, rank: tuple, label: str) -> bool:
         """Queue an item the gold does not cover yet, when it is a top item reachable within SAVE_TURNS turns."""
         cum = (self.saved[-1][0] if self.saved else 0) + cost
-        worth = rank[0] <= SAVE_UP_TO or (rank[0] == 1 and len(rank) > 1 and rank[1] <= SAVE_PAYBACK)
+        # the army buildings (0, 2) go first only when the gold covers them now, never saved for (player decision
+        # 2026-10-24: "if treasury currently allows it ... if not, then keep prioritizing growing income")
+        worth = (rank[0] <= SAVE_UP_TO and tuple(rank[:2]) != ARMY_RANK) or (
+            rank[0] == 1 and len(rank) > 1 and rank[1] <= SAVE_PAYBACK)
         if not worth or self.net <= 0 or cum - self.gold > SAVE_TURNS * self.net:
             return False
         self.saved.append((cum, max(1, -(-(cum - self.gold) // self.net)), label))
@@ -208,14 +214,80 @@ class Budget:
         self.gold -= cost
 
 
+ARMY_RANK = (0, 2)                   # spend_rank of the army template's recruit buildings
+ARMY_SITE: dict = {"region": None}   # the settlement whose army buildings go first this pass (_actions, army_site)
+
+
+def _tier(level_key: str | None) -> tuple[str | None, int]:
+    """("wh2_main_skv_engineers", 3) from "wh2_main_skv_engineers_3"."""
+    if not level_key or "_" not in level_key:
+        return None, 0
+    chain, _, n = level_key.rpartition("_")
+    return (chain, int(n)) if n.isdigit() else (None, 0)
+
+
+def army_needs() -> dict[str, int]:
+    """chain -> the tier the army template needs from it: for each template unit the lowest level that recruits it
+    (building_units_allowed_tables), the highest of those per chain. Thanquol's template (9.0.4): the Equipment
+    Warpforge at tier 2 (Stormfiend Ratling Cannons), the Warp-Turbine Plant at tier 3 (Warp-Doom Magma-Cannons)."""
+    from .army import load_automation
+    try:
+        units = set(load_automation()["army_builder"]["template"]["units"])
+    except Exception:
+        return {}
+    first: dict[str, tuple[str, int]] = {}
+    for r in gd._load("building_units_allowed_tables"):
+        if r["unit"] in units:
+            chain, t = _tier(r["building"])
+            if chain and (r["unit"] not in first or t < first[r["unit"]][1]):
+                first[r["unit"]] = (chain, t)
+    need: dict[str, int] = {}
+    for chain, t in first.values():
+        need[chain] = max(need.get(chain, 0), t)
+    return need
+
+
+def army_site(models) -> str | None:
+    """The settlement whose army buildings are built first (player decision 2026-10-24: "re-prioritize getting the
+    military buildings required for the playbook army, an exception to the gold income ROI rule"; the Warp-Turbine
+    Plant and the Equipment Warpforge had waited behind every income building): the one closest to recruiting the
+    whole template, from memory (standing tiers and those under construction), None once one already recruits it."""
+    need = army_needs()
+    if not need:
+        return None
+    best, best_key = None, None
+    for owned in models.values():
+        for o in owned:
+            have = {}
+            for st in o.slot_states:
+                for lk in (st.building, st.target):
+                    c, t = _tier(lk)
+                    if c in need:
+                        have[c] = max(have.get(c, 0), t if lk == st.building else t - 1)
+            if all(have.get(c, 0) >= t for c, t in need.items()):
+                return None                              # the template is recruited somewhere already
+            key = (sum(min(have.get(c, 0), t) for c, t in need.items()), len(o.slot_states))
+            if best_key is None or key > best_key:
+                best, best_key = o.region, key
+    return best
+
+
 def spend_rank(o: OwnedSettlement, a) -> tuple:
     """Where an action stands in the spending order (lower first): (0, 0, ...) main / port upgrades, (0, 1, ...)
-    replacing an off-list building, (1, payback turns, list position, cost) every other building."""
+    replacing an off-list building, (0, 2, ...) the army template's recruit buildings up to the tier it needs (setting
+    "army_buildings_first", 2026-10-24), (1, payback turns, list position, cost) every other building."""
     from .payback import payback
     if a.kind in ("upgrade_main", "upgrade_port"):
         return (0, 0, a.cost)
     if a.kind == "replace":                      # off-list buildings go at once (player decision 2026-10-21): every
         return (0, 1, a.cost)                    # turn it stands delays the planned building's upgrades
+    mode = buildings_setting("army_buildings_first", "first")
+    if mode in ("first", "all") and a.kind in ("construct", "upgrade"):
+        chain, t = _tier(a.level_key)
+        need = army_needs()
+        site = ARMY_SITE["region"]
+        if chain in need and t <= need[chain] and (mode == "all" or (site and getattr(o, "region", None) == site)):
+            return (0, 2, a.cost)
     names = [e["name"] for e in strategy()["priority"]]
     prov = PROVINCE_MODELS.get(o.province) or []
     turns = payback(o.model, prov if any(m is o.model for m in prov) else [o.model], a)   # (only this pass's models)

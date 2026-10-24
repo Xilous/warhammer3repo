@@ -55,6 +55,8 @@
     "never_build_in_provinces_adjacent_to_enemy_at_war": false,
     "_rule": "true: a settlement next to one held by a faction the player is at war with (per settlement since 2026-10-20) gets no construction, upgrades, repairs or replacements: it is left to the player. false: every settlement is built (player decision 2026-10-23: off by default, to try playing without it). Widget setting \"Leave frontline settlements to you\".",
     "repair_damaged": true,
+    "army_buildings_first": "first",
+    "_army_buildings_first": "The buildings that recruit the army template (Equipment Warpforge to tier 2 for the Ratling Cannon Stormfiends, Warp-Turbine Plant to tier 3 for the Warp-Doom Magma-Cannons; tiers read from the game tables) go before the income buildings when the gold covers them this turn; they are never saved for, so when they cannot be paid the gold keeps growing income (player decision 2026-10-24, an exception to the income-first order). first: in the one settlement closest to recruiting the whole template, until one does. all: in every capital. off: income first, as before.",
     "_repair_rule": "Damaged buildings are repaired before any construction or upgrade, but the war block applies to repairs too: no repairs in a province that borders a faction we are at war with or is partly enemy-held (player decision, 2026-10-16).",
     "gold_reserve": 0,
     "off_list_buildings": "replace",
