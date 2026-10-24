@@ -36,6 +36,8 @@ SETTINGS: list[Setting] = [
     Setting("automation.json", ("auto_end_turn",), "End every turn by itself", "Turn", default=False),
     Setting("automation.json", ("close_notices_during_turn",), "Close event notices during your turn", "Turn",
             default=True),
+    Setting("automation.json", ("leave_lords_list",), "Open Lords & Heroes after the turn start", "Turn",
+            default=True),
     Setting("automation.json", ("pace_ms",), "Pause after every click", "Turn", "int", 120, 20, 0, 1000, unit=" ms"),
     Setting("automation.json", ("camera_pan",), "Camera panning", "Turn", "choice", "auto",
             choices=("auto", "edge", "keys")),

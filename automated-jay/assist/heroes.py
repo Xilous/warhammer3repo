@@ -72,6 +72,23 @@ def lords_row(ui, char_id: int):
     return _lords_row(ui, char_id)
 
 
+def open_lords_list(ui) -> bool:
+    """The Lords & Heroes list shown (its top-bar tab, state "selected" once the list is open): the turn-start pass
+    leaves it open so the player first sees who still has movement and where they are (player request 2026-10-23).
+    A click the game did not take is clicked once more, as in skills._lords_row."""
+    tab = ui.cached("tab_units", under="bar_small_top") or ui.first("tab_units", under="bar_small_top")
+    if tab is None:
+        return False
+    shown = lambda: (ui.state(tab) or "").startswith("selected")
+    for _ in range(2):
+        if shown():
+            return True
+        click(ui, tab)
+        if wait.wait_until(shown, 2.0, "Lords & Heroes list shown", must=False):
+            return True
+    return False
+
+
 def row_selected(ui, row: int) -> bool:
     return (ui.state(row) or "").startswith("selected")
 

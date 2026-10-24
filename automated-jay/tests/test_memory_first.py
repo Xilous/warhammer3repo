@@ -25,6 +25,7 @@ ALLOWED = {
     "assist/build.py::ui_upgrade": "fallback",
     "assist/heroes.py::_take_card": "click",
     "assist/heroes.py::province_row": "click",
+    "assist/heroes.py::open_lords_list": "click",                 # confirms the tab click opened the list
     "assist/heroes.py::row_selected": "click",
     "assist/masterplans.py::_confirm_trigger": "click",
     "assist/masterplans.py::_select_underling": "click",

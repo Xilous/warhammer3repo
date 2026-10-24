@@ -29,6 +29,8 @@
   "auto_end_turn": false,
   "_auto_end_turn": "true: every turn is ended on its own once the turn-start pass is done. For the second PC of a 2-player test campaign (player plan 2026-10-19): set this to true and both schedule lists to [] and that PC only ends its turns, whatever faction it plays.",
   "never_during_battle": true,
+  "leave_lords_list": true,
+  "_leave_lords_list": "true: the turn-start pass ends by opening the Lords & Heroes list (top right), so your first look at the turn shows which lords and heroes still have movement and where they are (player request 2026-10-23).",
   "pace_ms": 120,
   "camera_pan": "auto",
   "_camera_pan": "How the camera is moved to bring a map label on screen: auto = edge scrolling in multiplayer (no WASD camera there, player note 2026-10-18), WASD otherwise; edge or keys to force one.",

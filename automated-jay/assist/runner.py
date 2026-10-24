@@ -87,6 +87,15 @@ DEFAULT_SCHEDULE = {"turn_start": ["rites", "workshop", "tech", "skills"],
 AUTOMATION = config.STRATEGY_DIR / "automation.json"
 
 
+def leave_lords_list() -> bool:
+    """automation.json "leave_lords_list" (default on, player request 2026-10-23): the turn-start pass ends by opening
+    the Lords & Heroes list, so the player's first look shows which lords and heroes have movement and where."""
+    try:
+        return bool(json.load(open(AUTOMATION, encoding="utf-8")).get("leave_lords_list", True))
+    except Exception:
+        return True
+
+
 def auto_end_turn() -> bool:
     """automation.json "auto_end_turn": true ends every turn on its own once the turn-start pass is done (Build &
     End Turn pressed for the player). For a 2-player test campaign's second PC (player plan 2026-10-19): with an empty
@@ -1028,6 +1037,17 @@ class Runner:
         for region in plans_at_max_alarm(self.mem)["military"]:       # Kill-Stabs are the player's (2026-10-17)
             done.append(f"Kill-Stab at {gd.place_name(region)} is at maximum Alarm: complete it yourself "
                         "(the game holds End Turn until you do)")
+        if leave_lords_list():                         # the pass's last step: the turn is left to the player
+            from bot.focus import game_focus
+            from .heroes import open_lords_list
+            try:
+                with game_focus():
+                    if not open_lords_list(self.ui):
+                        done.append("the Lords & Heroes list did not open")
+            except InputAborted:
+                raise
+            except Exception:
+                traceback.print_exc()
         self.done_turn = turn
         self._mark(turn, start_done=True, run_requested=False)
         if self.pending == turn:
