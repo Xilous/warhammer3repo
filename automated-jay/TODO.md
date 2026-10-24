@@ -30,6 +30,11 @@ At the start of a session, remind the player of these, and say which need a mult
       the same bits.
 
 ## Any session (single player is fine)
+- [ ] **The rites' global cooldown in memory (2026-10-24)**: every Skaven rite starts a 5-turn global cooldown.
+      R+0x158 (R = [faction+0x1B58]) counted 4-3-2-1 after the casts of turns 51/56, matching the cards, but stayed
+      at 1 on turns 66 and 67 (card blocked with no reason on 66, castable on 67), so it is not it; the step now
+      lets the card's Perform button decide (UI stop-gap). Find the real field (rites_observe.jsonl logs the card's
+      "available after N turn(s)" next to R+0x158 at every card read).
 - [ ] **Game crash after two Steal-Take completions in one pass (2026-10-23, turn 46)**: the game stopped rendering
       right after the second completion (1.5 s after the first) and crashed (crash_report D2026-10-23_T23-14-58, the same
       stack as D2026-10-18_T21-48-27, which also came between two completions). 2 crashes in 10 passes with two
