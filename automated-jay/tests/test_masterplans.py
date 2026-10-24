@@ -208,3 +208,18 @@ if __name__ == "__main__":
         if name.startswith("test_"):
             fn()
             print("ok", name)
+
+
+def test_a_plan_the_treasury_cannot_pay():
+    # 2026-10-23, turn 36: Karaz-a-Karak at Alarm 4/4 with -3,280 gold and 1,560 Warpstone, treasury 2,781
+    b = board(alarm=4, alarm_max=4, gold=-3280.0, warpstone=1560.0, treasury_have=2781.0)
+    assert M.decide(b, CFG)[0] == "abandon"
+    assert M.decide(dict(b, treasury_have=4000.0), CFG)[0] == "complete"
+    assert M.decide(dict(b, treasury_have=None), CFG)[0] == "complete"               # treasury not read: as before
+    assert M.decide(dict(b, alarm=3, risk=10), CFG) == ("wait", "completing costs 3280 gold, the treasury has 2781")
+
+
+def test_net_negative_at_max_alarm_is_abandoned():
+    # 25% of 1,000 Warpstone = 250 against the 3,000 gold (300 Warpstone) a Complication took
+    assert M.decide(board(alarm=4, gold=-3000.0, warpstone=1000.0, treasury_have=9999.0), CFG)[0] == "abandon"
+    assert M.decide(board(alarm=4, gold=-1000.0, warpstone=1000.0, treasury_have=9999.0), CFG)[0] == "complete"

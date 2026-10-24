@@ -239,9 +239,27 @@ def decide(board: dict, cfg: dict) -> tuple[str, str]:
         return "wait", "not ready to complete yet"
     gpw = cfg.get("gold_per_warpstone", 10)
     pay = cfg.get("max_alarm_pay", 0.25)
+    # a Complication can leave the plan's gold below 0, and completing then charges it to the treasury: the game
+    # refuses the completion when the treasury cannot pay (2026-10-23, turn 36: Karaz-a-Karak at -3,280 gold, the
+    # treasury 2,781, Complete did nothing and End Turn stayed held)
+    owe, have = max(0.0, -board["gold"]), board.get("treasury_have")
+    short = (f"completing costs {owe:.0f} gold, the treasury has {have:.0f}"
+             if have is not None and owe > have else "")
     if board["alarm"] >= board.get("alarm_max", ALARM_MAX):
-        how = cfg.get("at_max_alarm", "complete")
-        return ("abandon" if how == "abandon" else "complete"), "Alarm is at its maximum"
+        # End Turn is held until the plan is completed or abandoned, so waiting is no choice here
+        if cfg.get("at_max_alarm", "complete") == "abandon":
+            return "abandon", "Alarm is at its maximum"
+        if short:
+            return "abandon", f"Alarm is at its maximum and {short}"
+        # paid at max_alarm_pay; what the Complications took is counted in full (whether the game scales it too is
+        # not decoded: the cautious reading)
+        worth = pay * (board["warpstone"] + max(board["gold"], 0.0) / gpw) + min(board["gold"], 0.0) / gpw
+        if worth <= 0:
+            return "abandon", (f"Alarm is at its maximum and completing at {pay:.0%} is worth {worth:.0f} Warpstone "
+                               f"({board['gold']:.0f} gold, {board['warpstone']:.0f} Warpstone)")
+        return "complete", "Alarm is at its maximum"
+    if short:
+        return "wait", short
     V = board["warpstone"] + board["gold"] / gpw
     G = expected_gain(board, cfg)
     R = board["risk"] / 100.0
@@ -424,7 +442,18 @@ def board_from(plan, w) -> dict:
             "warpstone": float(plan.resources.get(WARPSTONE_KEY, 0)), "draws": plan.draws_next,
             "bag": [(t, wt * 100.0 / tot) for t, wt in plan.pool], "drawn": len(plan.drawn), "income": income,
             "can_complete": plan.can_complete, "resources": plan.resources, "level": plan.level,
-            "drawn_cards": list(plan.drawn)}
+            "drawn_cards": list(plan.drawn), "treasury_have": _treasury(w)}
+
+
+def _treasury(w) -> float | None:
+    """The player's treasury (faction + 0xD58, assist/build.treasury), None when the faction is not found."""
+    from bot.sensor.world import find_player_faction
+    from .build import treasury
+    try:
+        F = find_player_faction(w)
+        return float(treasury(w, F)) if F is not None else None
+    except Exception:
+        return None
 
 
 @lru_cache(maxsize=1)

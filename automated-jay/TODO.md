@@ -30,6 +30,12 @@ At the start of a session, remind the player of these, and say which need a mult
       the same bits.
 
 ## Any session (single player is fine)
+- [ ] **Steal-Takes with negative gold (2026-10-23, turn 36)**: Karaz-a-Karak drew a -4,000 gold Complication on
+      its first turn (before it could be completed) and reached Alarm 4/4 at -3,280 gold with a treasury of 2,781:
+      Complete did nothing. Fixed: a plan the treasury cannot pay waits, or is abandoned at maximum Alarm (also when
+      25% of the loot, the gold taken counted in full, is worth 0 or less). To do: (1) confirm an abandon live, (2)
+      whether the 25% at maximum Alarm scales the gold taken too, (3) player decision: keep gold aside from the build
+      step for a running plan with negative gold, (4) count "the treasury could not pay" in the stay/exit weighing.
 - [x] **Secrets shop from memory (2026-10-22)**: after a few Build & End Turn passes that open the shop, runs/
       masterplans.jsonl should have no "shop_check" rows (panel and memory listing the same lines per tab).
       Turn 56: one row, a false one (a tab checked again after its last line was bought, against the reading from
