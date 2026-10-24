@@ -238,7 +238,7 @@ def _aim_clear(x: int, y: int, target=None) -> tuple[int, int]:
 def pace_s() -> float:
     """The pause after every click, key press and drag (player request 2026-10-18: "slow down the iterations of all
     automations by a tad, but keep the pace visibly faster than a human"; a game crash came right after a fast click
-    sequence). strategy/automation.json "pace_ms", default 200 ms (120 until 2026-10-23); 0 turns it off."""
+    sequence). strategy/automation.json "pace_ms", default 120 ms; 0 turns it off."""
     global _PACE, _PACE_AT
     try:
         from bot import config
@@ -246,10 +246,10 @@ def pace_s() -> float:
         at = f.stat().st_mtime                           # read again after a change (the widget sets it between turns)
         if _PACE is None or at != _PACE_AT:
             import json
-            _PACE, _PACE_AT = max(0.0, float(json.load(open(f, encoding="utf-8")).get("pace_ms", 200)) / 1000.0), at
+            _PACE, _PACE_AT = max(0.0, float(json.load(open(f, encoding="utf-8")).get("pace_ms", 120)) / 1000.0), at
     except Exception:
         if _PACE is None:
-            _PACE = 0.2
+            _PACE = 0.12
     return _PACE
 
 

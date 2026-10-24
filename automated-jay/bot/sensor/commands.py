@@ -123,30 +123,32 @@ class Watch:
             self._t.join(0.2)
 
 
-_SETTLE: list = [None, None]      # [seconds, automation.json mtime]
+_SETTLE: list = [None, None]      # [frames, automation.json mtime]
 
 
-def settle_s() -> float:
-    """strategy/automation.json "settle_ms" (default 500): after a game action took effect, the game must render
-    steadily this long before the next click. Read again whenever the file changes (a widget setting)."""
+def settle_frames() -> int:
+    """strategy/automation.json "settle_frames" (default 3): after a game action took effect, the game's UI layout
+    must hold still this many rendered frames before the next click (tools/wait.ui_quiet). Read again whenever the
+    file changes (a widget setting)."""
     try:
         import json
         from bot import config
         f = config.STRATEGY_DIR / "automation.json"
         at = f.stat().st_mtime
         if _SETTLE[0] is None or _SETTLE[1] != at:
-            _SETTLE[:] = [max(0.0, float(json.load(open(f, encoding="utf-8")).get("settle_ms", 500)) / 1000.0), at]
+            _SETTLE[:] = [max(0, int(json.load(open(f, encoding="utf-8")).get("settle_frames", 3))), at]
     except Exception:
         if _SETTLE[0] is None:
-            _SETTLE[0] = 0.5
+            _SETTLE[0] = 3
     return _SETTLE[0]
 
 
 def settle() -> None:
-    """After an action's effect: hands off until the game renders steadily for settle_s() (tools/wait.settle_frames)."""
+    """After an action's effect: hands off until the game is quiet (tools/wait.ui_quiet: its UI layout in memory still
+    for settle_frames() frames). The game sets the pace: usually a few frames, longer while it is still rebuilding."""
     try:
         from tools import wait
-        wait.settle_frames(settle_s())
+        wait.ui_quiet(frames=settle_frames())
     except Exception:
         pass
 

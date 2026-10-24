@@ -152,25 +152,52 @@ def next_frame(n: int = 1, ui=None, timeout: float = 1.0) -> int:
         _sleep(0.0003)
 
 
-def settle_frames(seconds: float, ui=None, cap: float = 8.0, stall: float = 0.25) -> bool:
-    """Hands off until the game has rendered steadily for `seconds` (a frame more than `stall` late starts the count
-    again), at most `cap` in all. True once steady. After a game action, before the next click (player decision
-    2026-10-23: slower is fine if it keeps the game from crashing; both crashes came right after a completion with
-    more clicks following)."""
-    if seconds <= 0:
+QUIET_SKIP = ("3d_ui_parent", "ai_attack_targets_parent", "mission_indicator_parent", "tutorial_halo_group")
+
+
+def layout_sig(ui=None, depth: int = 3) -> tuple:
+    """The open panels' layout from memory: (id, rect, visible) of every component down to `depth` under the root's
+    children, leaving out the map labels (they move with the camera), the halo and the hover tooltips (they come and go
+    with the cursor). 318 components, ~4 ms (2026-10-23)."""
+    ui = _ui(ui)
+    out = []
+
+    def rec(c, d):
+        k = ui.comp(c)
+        out.append((k.id, int(k.x), int(k.y), int(k.w), int(k.h), k.visible))
+        if d < depth:
+            for ch in ui.children(c):
+                rec(ch, d + 1)
+    for c, n in ui.root_children():
+        if n not in QUIET_SKIP and not (n or "").startswith("tooltip"):
+            rec(c, 0)
+    return tuple(out)
+
+
+def ui_quiet(ui=None, frames: int = 3, cap: float = 3.0, stall: float = 0.25) -> bool:
+    """Hands off until the game says it is done reacting: its UI layout (layout_sig) unchanged over `frames` rendered
+    frames in a row, each on time (a frame later than `stall` starts the count again), at most `cap`. True once quiet.
+    Used after every game action (player request 2026-10-23: let the game dictate the pace from memory instead of a
+    fixed settle time; an action makes the game rebuild the panels it touched, then the layout holds still)."""
+    if frames <= 0:
         return True
+    ui = _ui(ui)
     t_end = _perf() + cap
-    calm = _perf()
+    last, calm = None, 0
     while _perf() < t_end:
-        if _perf() - calm >= seconds:
-            return True
         t = _perf()
         try:
             next_frame(1, ui, timeout=1.0)
-        except Exception:                # noqa: BLE001  (frozen or loading: keep counting from now)
-            pass
-        if _perf() - t > stall:
-            calm = _perf()
+            cur = layout_sig(ui)
+        except Exception:                # noqa: BLE001  (frozen, loading or a panel torn down: not quiet yet)
+            last, calm = None, 0
+            continue
+        calm = calm + 1 if (cur == last and _perf() - t <= stall) else 0
+        last = cur
+        if calm >= frames:
+            timing.wait_event("game quiet", (_perf() - t_end + cap) * 1000, True, calm)
+            return True
+    timing.wait_event("game quiet", cap * 1000, False, calm, timeout=cap)
     return False
 
 
