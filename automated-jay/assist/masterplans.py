@@ -581,7 +581,8 @@ def shop_plan(cfg: dict, warpstone: int, inventory: set[str], unlocked: set[str]
 
 
 TRIGGER = "dlc29_skv_chaotic_plans_trigger_animation"
-SETTLE_S = 1.0          # after a completion: the game must render steadily this long before the next click
+SETTLE_S = 2.0          # after a completion: the game must render steadily this long before the next click
+                        # (1.0 until 2026-10-23: the game crashed 1.5 s after a completion, at the next one)
 
 
 def _settle_after_completion(ui) -> None:
@@ -670,12 +671,22 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
                        f"{'Trigger' if act == 'complete' else 'Abandon'} button")
             open_main(ui)
             continue
+        purse = lambda: (_treasury(w), (mem.read(w) or state).warpstone)
+        before = purse()
         click(ui, board_btn)
         running = lambda: any(p.region == plan.region and p.type == "economic" for p in (mem.read(w) or state).plans)
         if act == "complete":
             _confirm_trigger(ui, done=lambda: not running())
         _confirm(ui, done=lambda: not running())
         gone = wait.wait_until(lambda: not running(), _cap(), "plan finished (memory)", must=False)
+        if gone and act == "complete" and (b["gold"] or b["warpstone"]):
+            # the plan leaves the list before its loot is paid: nothing more is clicked until the treasury or the
+            # Warpstone shows it (2026-10-23, turn 46: the game crashed right after the second of two completions
+            # 1.5 s apart, as on 2026-10-18 turn 34; both dumps the same stack; 8 other double completions went fine)
+            t0 = time.time()
+            paid = wait.wait_until(lambda: purse() != before, _cap(), "Steal-Take loot paid (memory)", must=False)
+            _log({"turn": turn, "region": plan.region, "loot_paid": bool(paid), "after_s": round(time.time() - t0, 3),
+                  "before": before, "after": purse()})
         _settle_after_completion(ui)
         loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
         out.append(f"Steal-Take {place}: {'completed' if act == 'complete' else 'abandoned'} ({loot}; {why})"
