@@ -1040,11 +1040,11 @@ class Runner:
                         "(the game holds End Turn until you do)")
         if leave_lords_list():                         # the pass's last step: the turn is left to the player
             from bot.focus import game_focus
-            from .heroes import open_lords_list
+            from .heroes import LAST_TAB_STATE, open_lords_list
             try:
                 with game_focus():
                     if not open_lords_list(self.ui):
-                        done.append("the Lords & Heroes list did not open")
+                        done.append(f"the Lords & Heroes list did not open (its tab: {LAST_TAB_STATE[0]})")
             except InputAborted:
                 raise
             except Exception:

@@ -80,13 +80,21 @@ def open_lords_list(ui) -> bool:
     if tab is None:
         return False
     shown = lambda: (ui.state(tab) or "").startswith("selected")
-    for _ in range(2):
+    # right after a load the tab can sit "inactive" while the game settles and ignores clicks (2026-10-23, turn 48:
+    # both clicks of the turn-start pass went unanswered; the same click a minute later opened it at once)
+    wait.wait_until(lambda: shown() or (ui.state(tab) or "").startswith(("active", "hover")), 5.0,
+                    "Lords & Heroes tab clickable", must=False)
+    for _ in range(3):
         if shown():
             return True
         click(ui, tab)
         if wait.wait_until(shown, 2.0, "Lords & Heroes list shown", must=False):
             return True
+    LAST_TAB_STATE[0] = ui.state(tab)
     return False
+
+
+LAST_TAB_STATE: list = [None]     # the tab's state when open_lords_list gave up (for the report)
 
 
 def row_selected(ui, row: int) -> bool:
