@@ -691,7 +691,10 @@ def manage_plans(ui, cfg: dict, turn, state, w) -> list[str]:
         loot = f"{b['gold']:.0f} gold, {b['warpstone']:.0f} Warpstone"
         out.append(f"Steal-Take {place}: {'completed' if act == 'complete' else 'abandoned'} ({loot}; {why})"
                    + ("" if gone else " - NOT confirmed, check the plan"))
-        open_main(ui)
+        # the panel is closed after every ending and opened fresh for the next one (2026-10-23: three crashes, each
+        # right after the second of two completions in one visit to the panel, 2-3 s apart; spacing them did not help)
+        close_panel(ui)
+        wait.ui_quiet(ui, frames=10, cap=5.0)
     return out
 
 

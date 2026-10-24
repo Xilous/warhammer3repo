@@ -263,6 +263,51 @@ def _pace() -> None:
         time.sleep(t)
 
 
+def wait_quiet() -> None:
+    """Before every input of every step: hands off until the game's UI is still (tools/wait.ui_quiet: the open panels'
+    layout in memory unchanged for "settle_frames" rendered frames). Player report 2026-10-23: "it was clearly still
+    doing things while certain ui animations were still going" (a panel sliding in, a list moving, a screen fading).
+    About 40 ms when nothing moves; at most 3 s."""
+    try:
+        from bot.sensor import commands
+        wait.ui_quiet(frames=commands.settle_frames(), cap=3.0)
+    except InputAborted:
+        raise
+    except Exception:
+        pass
+
+
+class _CommandWatch:
+    """Around one input: did the game turn it into a command (bot/sensor/commands.Watch on the outgoing stream)? If it
+    did, nothing more is sent until the game is quiet (tools/wait.ui_quiet: its UI layout in memory still for
+    "settle_frames" frames). Player rule 2026-10-23: the game sets the pace after every action, in every step (until
+    then only the steps that used commands.act settled; three crashes came right after a Steal-Take completion,
+    which did not)."""
+
+    def __enter__(self):
+        self.cw = None
+        try:
+            from bot.sensor import commands
+            from tools import wait
+            self.cw = commands.Watch(wait._ui(None).pm).__enter__()
+        except Exception:
+            self.cw = None
+        return self
+
+    def __exit__(self, et, ev, tb):
+        if self.cw is None:
+            return False
+        try:
+            sent = self.cw.ok and self.cw.count > 0
+        except Exception:
+            sent = False
+        self.cw.__exit__(None, None, None)
+        if sent and et is None:
+            from bot.sensor import commands
+            commands.settle()
+        return False
+
+
 def _after_click(at) -> None:
     """The player moved the cursor while the button was down: the click may have gone astray (counted; the runner's
     verification round redoes what did not happen). Then the pace pause."""
@@ -273,7 +318,7 @@ def _after_click(at) -> None:
 
 
 @_timed("click")
-def click_at(x: int, y: int, right: bool = False, target=None) -> None:
+def click_at(x: int, y: int, right: bool = False, target=None, quiet: bool = True) -> None:
     """Click at (x, y): move, wait until the game registered the cursor there (the target component's hover state
     when `target` is given, else HOVER_MAX_FRAMES frames), button down, CLICK_HOLD_FRAMES, up. No delay after:
     the caller waits for the click's effect (tools/wait.py).
@@ -281,27 +326,31 @@ def click_at(x: int, y: int, right: bool = False, target=None) -> None:
     (verified 2026-10-16). Raises InputAborted when the game is not in front."""
     down, up = ((win32con.MOUSEEVENTF_RIGHTDOWN, win32con.MOUSEEVENTF_RIGHTUP) if right
                 else (win32con.MOUSEEVENTF_LEFTDOWN, win32con.MOUSEEVENTF_LEFTUP))
+    if quiet:
+        wait_quiet()
     x, y = _aim_clear(int(x), int(y), target)
     require_game_front(at=(x, y))            # again right before the button: the player may have just left
-    win32api.mouse_event(down, 0, 0, 0, 0)
-    try:
-        _frames(CLICK_HOLD_FRAMES)
-    finally:
-        win32api.mouse_event(up, 0, 0, 0, 0)
-    _after_click((x, y))
+    with _CommandWatch():
+        win32api.mouse_event(down, 0, 0, 0, 0)
+        try:
+            _frames(CLICK_HOLD_FRAMES)
+        finally:
+            win32api.mouse_event(up, 0, 0, 0, 0)
+        _after_click((x, y))
 
 
 def click(ui, target, right: bool = False):
     """Click the centre of a component (pointer or Comp), waiting for its hover state before the button goes down.
     Returns the Comp clicked."""
     wait_for_other_players(ui)
+    wait_quiet()                             # before the target's position is read: nothing may still be moving
     ptr = getattr(target, "ptr", target)
     k = ui.comp(ptr)
     if not _on_screen(k.center):             # a panel still sliding in from off screen: wait until it is still
         k = wait.stable_rect(ui, ptr, n=2, timeout=2.0, what=f"{k.id} still (was off screen)")
         if not _on_screen(k.center):
             raise RuntimeError(f"{k.id} is off screen at {k.center}")
-    click_at(*k.center, right=right, target=ptr)
+    click_at(*k.center, right=right, target=ptr, quiet=False)
     return k
 
 
@@ -367,6 +416,7 @@ def move_path(points, frames: int = HOVER_MAX_FRAMES) -> None:
 @_timed("dclick")
 def double_click(x: int, y: int, target=None) -> None:
     """Two clicks DC_GAP_FRAMES apart, after the hover registered (as click_at)."""
+    wait_quiet()
     x, y = _aim_clear(int(x), int(y), target)
     require_game_front(at=(x, y))
     for i in range(2):
@@ -384,6 +434,7 @@ def drag(x0: int, y0: int, x1: int, y1: int, steps: int = DRAG_STEPS, target=Non
     """Left-drag from (x0, y0) to (x1, y1) in `steps` moves one frame apart; the button is released even if the drag
     is interrupted. No delay after release: the caller waits until what it scrolled is stable."""
     x1, y1 = int(x1), int(y1)
+    wait_quiet()
     x0, y0 = _aim_clear(int(x0), int(y0), target)
     require_game_front(at=(x0, y0))
     win32api.mouse_event(win32con.MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
@@ -401,6 +452,7 @@ def wheel(x: int, y: int, notches: int, pause: float | None = None) -> None:
     """Mouse wheel over (x, y): positive notches scroll up / left. Notches go WHEEL_GAP_FRAMES apart (or `pause`
     seconds, for callers not converted yet). No delay after: the caller waits for the list to move."""
     x, y = int(x), int(y)
+    wait_quiet()
     _hover_to(x, y)
     if _player_busy((x, y)):
         yield_to_player()
@@ -439,15 +491,17 @@ def leave_tactical_view(ui) -> bool:
 @_timed("key")
 def press(key: str) -> None:
     """Key down, KEY_HOLD_FRAMES rendered frames, key up (the game samples keys once per frame)."""
+    wait_quiet()
     if _player_busy():
         yield_to_player()
     require_game_front()
-    pydirectinput.keyDown(key, _pause=False)
-    try:
-        _frames(KEY_HOLD_FRAMES)
-    finally:
-        pydirectinput.keyUp(key, _pause=False)
-    _pace()
+    with _CommandWatch():
+        pydirectinput.keyDown(key, _pause=False)
+        try:
+            _frames(KEY_HOLD_FRAMES)
+        finally:
+            pydirectinput.keyUp(key, _pause=False)
+        _pace()
 
 
 @contextlib.contextmanager

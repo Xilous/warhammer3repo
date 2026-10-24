@@ -35,8 +35,11 @@ At the start of a session, remind the player of these, and say which need a mult
       stack as D2026-10-18_T21-48-27, which also came between two completions). 2 crashes in 10 passes with two
       completions, none in ~75 with one. Changed: after a completion nothing is clicked until its loot shows in the
       treasury or the Warpstone (memory), and frames must come steadily 2 s (was 1 s). runs/masterplans.jsonl
-      "loot_paid" rows show how long the payment takes. Watch the next double completions; if it crashes again,
-      complete one plan per panel visit (close, let the turn settle, reopen).
+      "loot_paid" rows show how long the payment takes (23-29 ms: not the gap). Crashed again on turn 49
+      (D2026-10-23_T23-58-17, same stack; The High Place then Mount Squighorn), so: the panel is now closed after
+      every completion and reopened for the next, and before every input of every step the game's UI must be still
+      for 3 frames (tools/ui.wait_quiet; player: "it was clearly still doing things while certain ui animations were
+      still going"). If it crashes again: one completion per pass, the rest at the next turn start.
 - [ ] **Steal-Takes with negative gold (2026-10-23, turn 36)**: Karaz-a-Karak drew a -4,000 gold Complication on
       its first turn (before it could be completed) and reached Alarm 4/4 at -3,280 gold with a treasury of 2,781:
       Complete did nothing. Fixed: a plan the treasury cannot pay waits, or is abandoned at maximum Alarm (also when

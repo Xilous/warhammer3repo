@@ -155,7 +155,8 @@ def settle() -> None:
 
 def act(pm, do, done, cap: float = EFFECT_CAP_S, miss_s: float = MISS_S, poll: float = 0.005):
     """Run do() (one click) and wait for done() (the effect, read from memory). -> (status, value):
-      ("done", value)    done() came true (its value); then the game is left to settle (settle(), "settle_ms")
+      ("done", value)    done() came true (its value). (The click itself waits for the game to be quiet once it
+                         sent a command: tools/ui._CommandWatch, every click of every step.)
       ("not clicked", None) do() returned False: it chose not to click (no hover, a card not shown)
       ("missed", None)   the game wrote no command within miss_s and nothing changed: the click did not reach the game,
                          clicking again is safe
@@ -172,7 +173,6 @@ def act(pm, do, done, cap: float = EFFECT_CAP_S, miss_s: float = MISS_S, poll: f
             except Exception:
                 v = None
             if v:
-                settle()
                 return "done", v
             el = time.perf_counter() - t0
             if cw.ok and cw.count == 0 and el > miss_s:
