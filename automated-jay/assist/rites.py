@@ -93,6 +93,20 @@ def rite_cost(w: World, F: int, key: str) -> int | None:
     return None
 
 
+GLOBAL_CD_OFF = 0x158             # u32 at R: turns left on the rites' global cooldown (2026-10-24, turn 52: 4 the turn
+                                  # after a Dominating Scheme cast, the Thirteenth Scheme card read "available after 4
+                                  # turn(s)"; the only such value at R+0..0x200; each card read logs both, to confirm)
+
+
+def global_cooldown(w: World, F: int) -> int:
+    """Turns left before any rite can be cast again (each Skaven rite starts a 5-turn global cooldown), from memory."""
+    R = _q(w, F + 0x1B58)
+    try:
+        return w.u32(R + GLOBAL_CD_OFF) if R else 0
+    except Exception:
+        return 0
+
+
 def rite_cooldowns(w: World, F: int) -> dict[str, int]:
     """Cooldown left (turns) of every rite the faction has, by ritual key."""
     out = {}
@@ -290,6 +304,9 @@ def cast_rite(ui: UI, w: World, F: int, keys: tuple = RITES, name: str = "Domina
         return f"the {name} is not in your rites"
     if any(cd[k] > 0 for k in have):
         return f"{name} on cooldown ({max(cd[k] for k in have)} turns)"
+    g = global_cooldown(w, F)
+    if 0 < g < 50:
+        return f"{name} waits: the rites' global cooldown ({g} turns, started by the last rite cast)"
     if keys == RITES:
         why = rite_waits(provinces(w, F), cd)          # memory first: no panel opened for a rite still locked
         if why:
@@ -317,8 +334,10 @@ def cast_rite(ui: UI, w: World, F: int, keys: tuple = RITES, name: str = "Domina
         btn = ui.first("button_perform", under=card)
         req = ui.first("dy_unlock_requirements", under=card)
         req_text = re.sub(r"\[\[[^\]]*\]\]", "", ui.text(req) or "").strip().replace("\n", " ") if req else ""
+        m = re.search(r"after (\d+) turn", req_text)
         _observe(w, F, key, card_cost=card_cost, memory_cost=mem_cost, button=(ui.state(btn) if btn else None),
-                 requirements=req_text, gold=gold, when="card read")
+                 requirements=req_text, gold=gold, when="card read", global_memory=global_cooldown(w, F),
+                 global_card=int(m.group(1)) if m else None)
         if btn is None or (ui.state(btn) or "") != "active":
             return f"{name} cannot be cast: {req_text or 'requirements not met'}"
         from bot.sensor import commands         # paced by the game: the command, then the cooldown in memory
@@ -384,6 +403,9 @@ def thirteenth_waits(w: World, F: int, cd: dict[str, int]) -> str | None:
     that (the Dominating Scheme comes first, player rule)."""
     if not skaven_known(w, F):
         return "Thirteenth Scheme waits: no other Skaven clan you know of is alive"
+    g = global_cooldown(w, F) if w is not None else 0
+    if 0 < g < 50:
+        return f"Thirteenth Scheme waits: the rites' global cooldown ({g} turns)"
     dom = max([cd.get(k, 0) for k in RITES if k in cd] or [0])
     if dom < GLOBAL_COOLDOWN:
         return (f"Thirteenth Scheme waits: the Dominating Scheme is off cooldown in {dom} turn(s), sooner than the "
@@ -460,7 +482,7 @@ def missed() -> list[str]:
             why = "not possible: the game did not take the pick" if f"{place}: {name} not picked" in notes else ""
             out.append(f"{place}: {name} not picked" + (f" ({why})" if why else ""))
     have = [k for k in RITES if k in cd]
-    if have and not any(cd[k] > 0 for k in have) and rite_waits(provs, cd) is None:
+    if have and not any(cd[k] > 0 for k in have) and rite_waits(provs, cd) is None and not global_cooldown(w, F):
         cost = rite_cost(w, F, have[0])
         gold = w.s.read().treasury or 0
         if cost is not None and gold >= cost:
