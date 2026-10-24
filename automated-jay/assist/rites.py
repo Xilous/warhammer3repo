@@ -214,16 +214,25 @@ def pick_commandment(ui: UI, w: World, F: int, province: str, key: str) -> str |
     if slot is None:
         return "its commandment slot did not show"
     sx, sy = ui.comp(slot).center
-    move_to(sx, sy)                                     # hovering the slot opens the list
-    target = wait.wait_until(lambda: (lambda b: b if _on_screen(ui, b) else None)(_stack_button(ui, f"button_{key}")),
-                             1.5, "commandment list open", must=False)
-    if target is None:
-        click(ui, slot)
-        target = wait.wait_until(lambda: (lambda b: b if _on_screen(ui, b) else None)(
-            _stack_button(ui, f"button_{key}")), 2.0, "commandment list open", must=False)
+    shown = lambda: (lambda b: b if _on_screen(ui, b) and ui.visible(b) else None)(_stack_button(ui, f"button_{key}"))
+    target = None
+    # the list is a hover popup that slides in: a target seen on screen mid-slide, or after the popup closed, can read
+    # off screen once still (2026-10-23, turn 43: button_..._devious_planning at (280, 1253), the click raised and the
+    # step failed; the verification pass picked it fine). So it is read again once still, and the list re-opened.
+    for attempt in range(3):
+        move_to(sx, sy)                                 # hovering the slot opens the list
+        target = wait.wait_until(shown, 1.5, "commandment list open", must=False)
+        if target is None:
+            click(ui, slot)
+            target = wait.wait_until(shown, 2.0, "commandment list open", must=False)
+        if target is None:
+            continue
+        wait.stable_rect(ui, target, n=3, timeout=2.0, must=False, what="commandment list still")
+        if shown() == target:
+            break
+        target = None
     if target is None:
         return "the commandment list did not open"
-    wait.stable_rect(ui, target, n=3, timeout=2.0, must=False, what="commandment list still")
     tx, ty = ui.comp(target).center
     move_path([(sx + (tx - sx) * f // 4, sy + (ty - sy) * f // 4) for f in (1, 2, 3)] + [(tx, ty)])
     from bot.sensor import commands             # paced by the game: the command, then the pick in memory
