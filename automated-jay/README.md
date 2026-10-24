@@ -27,7 +27,10 @@ re-attaches when the game is restarted. Three things appear:
 - no console window: the log goes to `runs\console.log` (`run_assistant_console.bat` starts it with a console
   that shows the log live, and stays open on an error);
 - the **assistant window**, titled "automated-jay";
-- a small **overlay** in the top-left corner of the game with the current status.
+- a small **bar** over the game: what the assistant is doing in a few plain words, at most one button
+  (BUILD & END TURN on your turn, RUN NOW after a failure) and an arrow that opens the **full-screen view**:
+  what needs you, this turn step by step, the army builder (what each refill or new army is doing, how many armies
+  can be raised now and why), each army's units against the playbook, and SETTINGS in a drawer.
 
 To stop, close the assistant window.
 
@@ -56,11 +59,12 @@ release `automated-jay-vX.Y.Z`: the next build ships each tagged release's defau
 
 ### Emergency stop: Shift+Esc
 
-Press **Shift+Esc** at any time, in any window, to end the assistant immediately (and any test driver or test
-script of this project that is running). Every process that can send input to the game watches the keyboard for
-it (bot/killswitch.py, armed by bot/focus.py): it lets go of the mouse buttons and any held keys and exits on the
-spot, mid-click. Only a key press you make counts (the automation cannot trigger it), and the game does not see
-that Escape. Start the assistant again with run_assistant.bat.
+Press **Shift+Esc** at any time, in any window, as an emergency brake: the assistant lets go of your mouse and
+keyboard and of any held keys or buttons, stops the pass it is running at its next click or wait, and drops what was
+queued (a pending turn start, Run now, Build & End Turn). It keeps running: the bar says BRAKED, and Run now or
+Build & End Turn starts things again (since 0.5.0; before, Shift+Esc ended the assistant). Test drivers and test
+scripts of this project still end on it. Only a key press you make counts (the automation cannot trigger it), and
+the game does not see that Escape.
 
 ### Your mouse and keyboard during a pass
 
@@ -387,16 +391,20 @@ is used only to find what to click, to confirm a click took, and for what exists
   pending action -> waits (3 min cap).
 - Pause after every click / key: `pace_ms` (120).
 - Waits poll game state every 2 ms (never fixed sleeps); frame waits follow the UI's frame counter.
-- Shift+Esc (physical) -> buttons and keys released, the assistant exits at once.
+- Before every click, key, wheel and drag: the game's UI must be still for `settle_frames` (3) rendered frames
+  (tools/ui.wait_quiet), and the target and its panels must be done animating ([C+0x310], tools/wait.animating_above).
+- Shift+Esc (physical) -> emergency brake: buttons and keys released, the pass stops, queued runs dropped; the
+  assistant keeps running (test scripts still exit).
 
 ### 12. Widget, window, settings, files
-- **Rail**: compact over the game, full while automating; bars per step (done / active / failed / later / pending);
-  button RUN NOW (after an error), QUEUED (End Turn owed), else BUILD & END TURN; click elsewhere = pause; clicks
-  pass through while the assistant is acting; position saved.
-- **Panel** (expand): Run now, Pause, Restart (fresh copy, refused while busy), Exit, treasury / income /
-  Warpstone, this turn, armies with ticks (a tick that cannot refill is disabled; a tick can always be removed),
-  next army, SETTINGS, frontline. Refreshed every 4 s from
-  memory only.
+- **Bar** (assist/rail.py, redesigned 0.5.0): the state as a title, one line of plain words (what needs you, what
+  failed, what is in progress, the next build; assist/widget_data.py), one button (BUILD & END TURN on your turn,
+  QUEUED while it is owed, RUN NOW after an error), the open arrow; while a pass runs, the step and a progress line.
+  Click elsewhere = pause; clicks pass through while the assistant is acting; position saved.
+- **Full-screen view** (assist/railpanel.py): the state, Gold / Income per turn / Warpstone, Build & End Turn, Run
+  now, Pause, Restart, Settings, Exit; NEEDS YOU; THIS TURN (one line per step); ARMY BUILDER (in progress; new
+  armies: asked for, can be raised now and its three limits, Ask for one more army, the upkeep numbers); ARMIES (each
+  army's units against the playbook, upkeep, refill switch). Refreshed every 4 s from memory only.
 - **SETTINGS**: every option in `assist/settings.py` (switch: click; choice: click cycles; number: - / + within its
   limits) and each step on/off per phase; written at once (atomic), read fresh by the next pass.
 - **Exe defaults** (once per release): missing strategy files copied; changed defaults merged into the player's
