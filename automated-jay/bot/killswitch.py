@@ -1,5 +1,7 @@
 """Kill switch, and the player's hands: a physical Shift+Esc ends this process at once (player request, 2026-10-16: "so i can back out if
-something goes wrong during testing").
+something goes wrong during testing"). In the assistant app (BRAKE = True, set by assist.runner main) it is an
+emergency brake instead (player request 2026-10-23): the hold ends, held keys and buttons are released and the running
+pass stops, but the assistant keeps running; test scripts still end.
 
 Installed by bot/focus.py at import, so every process that can send input to the game has it: the assistant app
 (assist.runner), the test driver, benchmarks and ad-hoc test scripts. Each process watches the keyboard itself with
@@ -91,7 +93,26 @@ def _release_inputs() -> None:
             _user32.keybd_event(vk, 0, KEYEVENTF_KEYUP, 0)
 
 
+BRAKE = False                     # the assistant app sets this: Shift+Esc is an emergency brake there, not an exit
+_brakes = 0                       # how many times the brake was pulled in this process (bot/focus.check_brake)
+
+
+def brakes() -> int:
+    return _brakes
+
+
 def _fire() -> None:
+    global _brakes, _hold_until
+    if BRAKE:
+        # the emergency brake (player request 2026-10-23: "shift esc shouldnt terminate the assistant, it should just
+        # cancel the hold and cancel the automations"): mouse and keyboard back at once, and the running pass stops
+        # at its next input or wait (bot/focus.check_brake raises EmergencyBrake); the process keeps running
+        _release_inputs()
+        _hold_until = 0.0
+        _brakes += 1
+        sys.stderr.write("\nEMERGENCY BRAKE (Shift+Esc): mouse and keyboard released, automations stopped\n")
+        sys.stderr.flush()
+        return
     try:
         _release_inputs()
         sys.stderr.write(f"\nKILL SWITCH (Shift+Esc): process {os.getpid()} terminated\n")

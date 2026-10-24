@@ -27,7 +27,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from bot import config
+from bot import config, killswitch
 from bot.focus import CinematicPlaying, InputAborted, idle_seconds, return_to_terminal
 from bot.sensor.memory import MemorySensor
 from bot.sensor.ui import UI
@@ -359,6 +359,7 @@ def settle(ui: UI, cancel=lambda: False, timeout: float = SETTLE_TIMEOUT) -> tup
 class Runner:
     def __init__(self, widget=None) -> None:
         self.widget = widget
+        self.brakes_seen = killswitch.brakes()  # the emergency brake pulls handled (_braked)
         # a restarted copy finishes this turn's pass if the old copy left it unfinished: what the old copy last wrote,
         # read now, before this copy's first status overwrites it (2026-10-17: it was read after, so never acted on)
         self.prev_state = read_state() if os.environ.get("AJ_RESTARTED") else {}
@@ -1220,9 +1221,28 @@ class Runner:
         return done
 
     # ------------------------------------------------------------------ watching
+    def _braked(self) -> None:
+        """The emergency brake (Shift+Esc, bot/killswitch.py) cancels what is queued too, not only the running pass
+        (that one stops by itself, EmergencyBrake): a pending turn start, a queued Run now or Build & End Turn, an
+        automatic End Turn. Run now or Build & End Turn starts them again."""
+        b = killswitch.brakes()
+        if b == self.brakes_seen:
+            return
+        self.brakes_seen = b
+        turn = self.last_turn
+        self.pending = None
+        self.end_request = None
+        self.auto_end = None
+        if turn is not None:
+            self._mark(turn, run_requested=False, end_requested=False)
+        self.post("paused" if self.paused else "your turn", f"BRAKED (turn {turn})",
+                  "emergency brake (Shift+Esc): the hold was released and the automations stopped; nothing runs again "
+                  "by itself this turn\nRun now or Build & End Turn to go on", turn=turn)
+
     def loop(self) -> None:
         self.post("waiting", "WAITING", "for a new turn")
         while not self.stop.is_set():
+            self._braked()
             try:
                 self._tick()
             except InputAborted as ex:
@@ -1691,6 +1711,7 @@ def main() -> int:
         print("automated-jay is already running (its widget is over the game); this copy stops.", flush=True)
         return ALREADY_RUNNING
     from .app import App
+    killswitch.BRAKE = True                      # Shift+Esc brakes the automations; this app keeps running (2026-10-23)
     holder: dict = {}
     app = App(on_pause=lambda: holder["r"].toggle_pause(), on_run_now=lambda: holder["r"].run_now(),
               on_ignore=lambda cid: holder["r"].ignore(cid), on_end_turn=lambda: holder["r"].end_turn_now(),

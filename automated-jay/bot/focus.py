@@ -46,6 +46,18 @@ class InputAborted(BaseException):
     still run (and their own input raises this again instead of landing in the player's window)."""
 
 
+class EmergencyBrake(InputAborted):
+    """The player pulled the emergency brake (Shift+Esc in the assistant app, bot/killswitch.py): the pass stops like
+    any InputAborted, nothing is retried by itself, and queued requests are dropped (assist/runner.py)."""
+
+
+def check_brake() -> None:
+    """EmergencyBrake when the brake was pulled since the outermost game_focus of this thread began."""
+    b0 = getattr(_tls, "brakes0", None)
+    if b0 is not None and killswitch.brakes() != b0:
+        raise EmergencyBrake("emergency brake (Shift+Esc): automations stopped")
+
+
 class CinematicPlaying(InputAborted):
     """A cinematic started: no click or key may land on it (player rule 2026-10-17, "the assistant shouldnt try to
     force the user to have to skip the cinematic"; a pass kept clicking while the Chaos Invasion movie played, and a
@@ -75,6 +87,7 @@ def require_game_front(at: tuple[int, int] | None = None) -> None:
     under the cursor, and a topmost window (a notification, a chat overlay, another app the player is bringing up)
     can cover the game while the game still has the focus. Our own overlay lets clicks through while automating,
     so it is not in the way; outside a pass, BEFORE_INPUT makes it step aside first."""
+    check_brake()
     for fn in BEFORE_INPUT:
         try:
             fn()
@@ -235,6 +248,7 @@ def game_focus():
         outer = getattr(_tls, "depth", 0) == 0
         cursor0 = None
         if outer:
+            _tls.brakes0 = killswitch.brakes()  # a brake pulled from here on stops this pass (check_brake)
             killswitch.hold_mouse(True)
             cursor0 = win32gui.GetCursorPos()   # given back when the pass ends (player request 2026-10-17: "so that i
                                                 # dont get disoriented between turns")
@@ -273,6 +287,7 @@ def game_focus():
                         print("WARNING: could not return focus to the terminal")
         finally:
             if outer:
+                _tls.brakes0 = None
                 if cursor0 is not None:
                     try:
                         win32api.SetCursorPos(cursor0)
