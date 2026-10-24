@@ -29,6 +29,8 @@
   "auto_end_turn": false,
   "_auto_end_turn": "true: every turn is ended on its own once the turn-start pass is done. For the second PC of a 2-player test campaign (player plan 2026-10-19): set this to true and both schedule lists to [] and that PC only ends its turns, whatever faction it plays.",
   "never_during_battle": true,
+  "thirteenth_scheme": true,
+  "_thirteenth_scheme": "true: the rites step casts the Thirteenth Scheme whenever it is off cooldown and affordable while another Skaven clan you have met is alive (it improves relations with every Skaven faction you know of; player rule 2026-10-24). After the Dominating Scheme, and never when that one comes off cooldown within the 5-turn global cooldown a cast starts.",
   "leave_lords_list": true,
   "_leave_lords_list": "true: the turn-start pass ends by opening the Lords & Heroes list (top right), so your first look at the turn shows which lords and heroes still have movement and where they are (player request 2026-10-23).",
   "pace_ms": 120,

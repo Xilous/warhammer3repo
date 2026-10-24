@@ -8,7 +8,9 @@ province, so the Expansionist phase never comes back.
 Kept as is (player decision, 2026-10-20): no switch to Expansionist once food is capped, no Martial Planning in the
 refill province.
 Rite: The Dominating Scheme is cast whenever it is off cooldown and affordable, before buildings and the army builder
-spend the gold (player rule). After Horned One's Approval the rite is its Verminlord version, and every cast opens a
+spend the gold (player rule). Then the Thirteenth Scheme, whenever it is off cooldown and affordable while another
+Skaven clan we know of is alive (player rule 2026-10-24: it improves relations with every Skaven faction we know), unless
+the Dominating Scheme comes off cooldown within the 5-turn global cooldown a cast starts. After Horned One's Approval the rite is its Verminlord version, and every cast opens a
 dilemma: it is answered with "A Verminlord Warpseer" (player rule; every other dilemma stays the player's).
 
 Memory (9.0.4, found 2026-10-17 from the game's own Lua bindings):
@@ -278,16 +280,20 @@ def answer_verminlord_dilemma(ui: UI, timeout: float = 3.0) -> str:
     return "taken" if not choice() else "failed"
 
 
-def cast_rite(ui: UI, w: World, F: int) -> str:
+def cast_rite(ui: UI, w: World, F: int, keys: tuple = RITES, name: str = "Dominating Scheme") -> str:
+    """Cast the first of `keys` the Rites panel shows (the Dominating Scheme, or the Thirteenth Scheme): cooldown and
+    cost from memory, the card's Perform button for the rest of its lock (UI stop-gap: rite locks and the 5-turn global
+    cooldown, memory reader pending)."""
     cd = rite_cooldowns(w, F)
-    have = [k for k in RITES if k in cd]
+    have = [k for k in keys if k in cd]
     if not have:
-        return "the Dominating Scheme is not in your rites"
+        return f"the {name} is not in your rites"
     if any(cd[k] > 0 for k in have):
-        return f"Dominating Scheme on cooldown ({max(cd[k] for k in have)} turns)"
-    why = rite_waits(provinces(w, F), cd)              # memory first: no panel opened for a rite still locked
-    if why:
-        return why
+        return f"{name} on cooldown ({max(cd[k] for k in have)} turns)"
+    if keys == RITES:
+        why = rite_waits(provinces(w, F), cd)          # memory first: no panel opened for a rite still locked
+        if why:
+            return why
     b = ui.cached("button_rituals", under="hud_campaign") or ui.first("button_rituals")
     if b is None:
         return "Rites button not found"
@@ -296,25 +302,25 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
     if not panel:
         return "the Rites panel did not open"
     try:
-        card = wait.wait_until(lambda: next((c for k in RITES for c in [_rite_card(ui, panel, k)] if c), None), 2.0,
-                               "Dominating Scheme card", must=False)
+        card = wait.wait_until(lambda: next((c for k in keys for c in [_rite_card(ui, panel, k)] if c), None), 2.0,
+                               f"{name} card", must=False)
         if card is None:
-            return "the Dominating Scheme is not shown in the Rites panel"
-        key = next(k for k in RITES if _rite_card(ui, panel, k) == card)
+            return f"the {name} is not shown in the Rites panel"
+        key = next(k for k in keys if _rite_card(ui, panel, k) == card)
         cost_c = ui.first("dy_gold_cost", under=card)
         card_cost = int(re.sub(r"\D", "", ui.text(cost_c) or "") or 0) if cost_c else 0
         mem_cost = rite_cost(w, F, key)                 # memory first (2026-10-19); the card only as fallback
         cost = mem_cost if mem_cost is not None else card_cost
         gold = w.s.read().treasury or 0
         if cost and gold < cost:
-            return f"Dominating Scheme needs {cost} gold (have {gold})"
+            return f"{name} needs {cost} gold (have {gold})"
         btn = ui.first("button_perform", under=card)
         req = ui.first("dy_unlock_requirements", under=card)
         req_text = re.sub(r"\[\[[^\]]*\]\]", "", ui.text(req) or "").strip().replace("\n", " ") if req else ""
         _observe(w, F, key, card_cost=card_cost, memory_cost=mem_cost, button=(ui.state(btn) if btn else None),
                  requirements=req_text, gold=gold, when="card read")
         if btn is None or (ui.state(btn) or "") != "active":
-            return f"Dominating Scheme cannot be cast: {req_text or 'requirements not met'}"
+            return f"{name} cannot be cast: {req_text or 'requirements not met'}"
         from bot.sensor import commands         # paced by the game: the command, then the cooldown in memory
         st, _v = commands.act(w.pm, lambda: click(ui, btn) and None, lambda: rite_cooldowns(w, F).get(key, 0) > 0)
         if st != "done":
@@ -322,7 +328,7 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
         spent = gold - (w.s.read().treasury or 0)
         _observe(w, F, key, card_cost=card_cost, memory_cost=mem_cost, spent=spent,
                  cooldown=rite_cooldowns(w, F).get(key), when="cast")
-        out = f"cast the Dominating Scheme ({spent} gold)"
+        out = f"cast the {name} ({spent} gold)"
         if key == RITE_VERMINLORD:
             how = answer_verminlord_dilemma(ui)
             out += {"taken": "; Verminlord Warpseer chosen",
@@ -336,6 +342,53 @@ def cast_rite(ui: UI, w: World, F: int) -> str:
             if close:
                 click(ui, close)
                 wait.gone(ui, ok, timeout=2.0, must=False, what="Rites panel closed")
+
+
+THIRTEENTH = ("wh3_dlc29_ritual_skv_thirteen_scruten",)     # The Thirteenth Scheme (Clan Scruten's version)
+SKAVEN = "wh2_main_sc_skv_skaven"
+DEAD = 0x10C0                   # faction:is_dead(): byte != 0 (the Lua binding 0x1427d0864 tests it, 9.0.4, 2026-10-24)
+GLOBAL_COOLDOWN = 5             # rituals_tables global_cooldown_time of every Skaven rite (9.0.4)
+
+
+def skaven_known(w: World, F: int) -> list[str]:
+    """The other Skaven factions the player knows of and that still exist, from memory: in the faction's diplomacy
+    list, met (World.met) and not dead (DEAD); subculture from factions_tables. Checked live 2026-10-24 (Thanquol, turn
+    51): Clan Skryre met and alive; 33 Skaven entries dead or script factions; Clan Ferrik alive but not met."""
+    sub = {r["key"]: r["subculture"] for r in gd._load("factions_tables")}
+    met = w.met(F)
+    out = []
+    for o in met:
+        try:
+            k = w.faction_name(o)
+            if o != F and sub.get(k) == SKAVEN and not w.pm.read_bytes(o + DEAD, 1)[0]:
+                out.append(k)
+        except Exception:
+            continue
+    return sorted(out)
+
+
+def thirteenth_on() -> bool:
+    """strategy/automation.json "thirteenth_scheme" (default on; a widget setting), read at every pass."""
+    import json
+    from bot import config
+    try:
+        return bool(json.load(open(config.STRATEGY_DIR / "automation.json", encoding="utf-8")).get("thirteenth_scheme", True))
+    except Exception:
+        return True
+
+
+def thirteenth_waits(w: World, F: int, cd: dict[str, int]) -> str | None:
+    """Why the Thirteenth Scheme is not cast now, or None (player rule 2026-10-24: cast it whenever it is available
+    while another Skaven clan we know of is alive: it improves relations with every Skaven faction we know). Every
+    Skaven rite starts a 5-turn global cooldown, so it waits while the Dominating Scheme comes off cooldown sooner than
+    that (the Dominating Scheme comes first, player rule)."""
+    if not skaven_known(w, F):
+        return "Thirteenth Scheme waits: no other Skaven clan you know of is alive"
+    dom = max([cd.get(k, 0) for k in RITES if k in cd] or [0])
+    if dom < GLOBAL_COOLDOWN:
+        return (f"Thirteenth Scheme waits: the Dominating Scheme is off cooldown in {dom} turn(s), sooner than the "
+                f"{GLOBAL_COOLDOWN}-turn global cooldown a cast would start")
+    return None
 
 
 # ------------------------------------------------------------------ the step
@@ -370,6 +423,18 @@ def run(log=print) -> str:
             clear(ui)
         # 2. the rite, before buildings and the army builder spend the gold
         out.append(cast_rite(ui, w, F))
+        # 3. the Thirteenth Scheme (player rule 2026-10-24), after the Dominating Scheme
+        cd = rite_cooldowns(w, F)
+        if THIRTEENTH[0] in cd:
+            if cd[THIRTEENTH[0]] > 0:
+                out.append(f"Thirteenth Scheme on cooldown ({cd[THIRTEENTH[0]]} turns)")
+            else:
+                why = thirteenth_waits(w, F, cd)
+                if why is None and thirteenth_on():
+                    known = ", ".join(gd.loc().get(f"factions_screen_name_{k}", k) for k in skaven_known(w, F))
+                    out.append(f"{cast_rite(ui, w, F, THIRTEENTH, 'Thirteenth Scheme')} (Skaven known: {known})")
+                elif why:
+                    out.append(why)
     LAST_NOTES[:] = out
     return "; ".join(out)
 
@@ -401,5 +466,12 @@ def missed() -> list[str]:
         if cost is not None and gold >= cost:
             why = next((x for x in LAST_NOTES if "cannot be cast" in x or "not shown" in x or "did not" in x), "")
             out.append("Dominating Scheme not cast (off cooldown, unlocked, affordable)"
+                       + (f" (not possible: {why})" if why else ""))
+    if thirteenth_on() and cd.get(THIRTEENTH[0], 1) == 0 and thirteenth_waits(w, F, cd) is None:
+        cost = rite_cost(w, F, THIRTEENTH[0])
+        gold = w.s.read().treasury or 0
+        if cost is not None and gold >= cost:
+            why = next((x for x in LAST_NOTES if "Thirteenth Scheme" in x), "")
+            out.append("Thirteenth Scheme not cast (off cooldown, a Skaven clan known, affordable)"
                        + (f" (not possible: {why})" if why else ""))
     return out
