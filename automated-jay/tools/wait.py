@@ -174,6 +174,50 @@ def layout_sig(ui=None, depth: int = 3) -> tuple:
     return tuple(out)
 
 
+RAW_STAMP = (0x334 - 0x1C8, 4)    # the per-frame stamp inside a component's raw record (bot/sensor/ui.UI.raw)
+
+
+def _raw_sig(ui, root: int, depth: int = 8, max_nodes: int = 600) -> tuple:
+    """Every byte of every component's record under root (the frame stamp left out): position, size, visibility and
+    the drawing state an animation changes (a fade, a reveal, a count-up), which a layout signature cannot see."""
+    out, todo = [], [(root, 0)]
+    a, n = RAW_STAMP
+    while todo and len(out) < max_nodes:
+        c, d = todo.pop()
+        raw = ui.raw(c)
+        out.append(raw[:a] + raw[a + n:])
+        if d < depth:
+            todo.extend((k, d + 1) for k in ui.children(c))
+    return tuple(out)
+
+
+def animation_done(ui, root, frames: int = 6, cap: float = 15.0, what: str = "animation over") -> bool:
+    """Hands off until the component tree under root holds completely still (_raw_sig unchanged) for `frames`
+    rendered frames in a row, at most `cap`; True once still, False when root is gone or cap ran out. Player finding
+    2026-10-24: the game crashed when a click skipped the Masterplans completion animation."""
+    ui = _ui(ui)
+    t0 = _perf()
+    last, calm = None, 0
+    while _perf() - t0 < cap:
+        try:
+            next_frame(1, ui, timeout=1.0)
+            r = root() if callable(root) else root
+            if not r:
+                timing.wait_event(what, (_perf() - t0) * 1000, False, calm)
+                return False
+            cur = _raw_sig(ui, r)
+        except Exception:                # noqa: BLE001  (torn down mid-read)
+            last, calm = None, 0
+            continue
+        calm = calm + 1 if cur == last else 0
+        last = cur
+        if calm >= frames:
+            timing.wait_event(what, (_perf() - t0) * 1000, True, calm)
+            return True
+    timing.wait_event(what, cap * 1000, False, calm, timeout=cap)
+    return False
+
+
 def ui_quiet(ui=None, frames: int = 3, cap: float = 3.0, stall: float = 0.25) -> bool:
     """Hands off until the game says it is done reacting: its UI layout (layout_sig) unchanged over `frames` rendered
     frames in a row, each on time (a frame later than `stall` starts the count again), at most `cap`. True once quiet.

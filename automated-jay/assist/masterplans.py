@@ -591,8 +591,13 @@ def _settle_after_completion(ui) -> None:
     by itself (up to 4 s) and frames have come steadily for SETTLE_S (a frame more than 0.25 s late starts the count
     again; up to 8 s in all). No input in between."""
     from tools import wait
-    wait.wait_until(lambda: not ui.first("trigger_plan_button", under=TRIGGER), 4.0, "plan-complete screen gone",
-                    must=False)
+    # the completion animation plays on the plan-complete screen: no input until it has ended and the screen has
+    # closed by itself (2026-10-24: a skipped animation crashed the game)
+    t0 = time.time()
+    wait.animation_done(ui, _trigger_root(ui), frames=10, cap=20.0, what="completion animation over")
+    gone = wait.wait_until(lambda: not ui.first("trigger_plan_button", under=TRIGGER), 20.0,
+                           "plan-complete screen gone", must=False)
+    _log({"completion_animation_s": round(time.time() - t0, 2), "screen_closed_itself": bool(gone)})
     end = time.time() + 8.0
     calm = time.time()
     while time.time() < end and time.time() - calm < SETTLE_S:
@@ -603,6 +608,11 @@ def _settle_after_completion(ui) -> None:
             pass
         if time.time() - t > 0.25:                  # a stall: start the count again
             calm = time.time()
+
+
+def _trigger_root(ui):
+    """The plan-complete screen's own component (a callable for tools/wait.animation_done: None once it is gone)."""
+    return lambda: _under(ui, TRIGGER, PANEL) or ui.root_child(TRIGGER)
 
 
 def _confirm_trigger(ui, done=None) -> bool:
@@ -618,6 +628,11 @@ def _confirm_trigger(ui, done=None) -> bool:
                           must=False)
     if btn is None:
         return False
+    # nothing touches the screen, not even the cursor, until its opening animation is over: every byte of the screen's
+    # components still for 10 frames (player finding 2026-10-24: four crashes, each right after a completion whose
+    # animation the click had skipped; the Complete button took the hover while the screen was still animating)
+    still = wait.animation_done(ui, _trigger_root(ui), frames=10, cap=15.0, what="plan-complete screen still")
+    _log({"trigger_screen_still": bool(still)})
     wait.stable_rect(ui, btn, n=4, timeout=3.0, must=False, what="plan-complete Complete still")
     hovered = lambda: any(k in (ui.state(btn) or "") for k in ("hover", "down"))
     end = time.time() + 8.0

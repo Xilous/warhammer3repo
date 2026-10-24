@@ -39,7 +39,12 @@ At the start of a session, remind the player of these, and say which need a mult
       (D2026-10-23_T23-58-17, same stack; The High Place then Mount Squighorn), so: the panel is now closed after
       every completion and reopened for the next, and before every input of every step the game's UI must be still
       for 3 frames (tools/ui.wait_quiet; player: "it was clearly still doing things while certain ui animations were
-      still going"). If it crashes again: one completion per pass, the rest at the next turn start.
+      still going"). Crashed again on turn 61 (D2026-10-24_T01-15-10, same stack) after a SINGLE completion, so not the
+      second-completion theory. Cause (player, 2026-10-24): the click skipped the completion animation. Measured live:
+      the plan-complete screen animates for ~1.4 s after it shows (38 changes), the click came at 0.2-0.5 s. Fixed:
+      nothing touches the screen until every byte of its components is still for 10 frames (tools/wait.animation_done),
+      and after Complete nothing until its completion animation is over and the screen closed by itself
+      (runs/masterplans.jsonl "trigger_screen_still", "completion_animation_s" rows). Watch the next completions.
 - [ ] **Steal-Takes with negative gold (2026-10-23, turn 36)**: Karaz-a-Karak drew a -4,000 gold Complication on
       its first turn (before it could be completed) and reached Alarm 4/4 at -3,280 gold with a treasury of 2,781:
       Complete did nothing. Fixed: a plan the treasury cannot pay waits, or is abandoned at maximum Alarm (also when
