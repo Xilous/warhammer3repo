@@ -253,7 +253,8 @@ def decide(board: dict, cfg: dict) -> tuple[str, str]:
             return "abandon", f"Alarm is at its maximum and {short}"
         # paid at max_alarm_pay; what the Complications took is counted in full (whether the game scales it too is
         # not decoded: the cautious reading)
-        worth = pay * (board["warpstone"] + max(board["gold"], 0.0) / gpw) + min(board["gold"], 0.0) / gpw
+        g, ws = board["gold"], board["warpstone"]
+        worth = pay * (max(ws, 0.0) + max(g, 0.0) / gpw) + min(ws, 0.0) + min(g, 0.0) / gpw
         if worth <= 0:
             return "abandon", (f"Alarm is at its maximum and completing at {pay:.0%} is worth {worth:.0f} Warpstone "
                                f"({board['gold']:.0f} gold, {board['warpstone']:.0f} Warpstone)")

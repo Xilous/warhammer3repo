@@ -223,3 +223,8 @@ def test_net_negative_at_max_alarm_is_abandoned():
     # 25% of 1,000 Warpstone = 250 against the 3,000 gold (300 Warpstone) a Complication took
     assert M.decide(board(alarm=4, gold=-3000.0, warpstone=1000.0, treasury_have=9999.0), CFG)[0] == "abandon"
     assert M.decide(board(alarm=4, gold=-1000.0, warpstone=1000.0, treasury_have=9999.0), CFG)[0] == "complete"
+
+
+def test_negative_warpstone_counted_in_full_at_max_alarm():
+    # 2026-10-23, Akendorf turn 21: 378 gold, -51 Warpstone at Alarm 4/4 -> 25% of 37.8 = 9.5 against 51
+    assert M.decide(board(alarm=4, gold=378.0, warpstone=-51.0, treasury_have=5000.0), CFG)[0] == "abandon"
