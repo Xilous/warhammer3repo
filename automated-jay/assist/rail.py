@@ -196,8 +196,8 @@ class TurnRail:
                           outline=T.BRASS_HI, width=2)
             cv.create_text((bx0 + bx1) / 2 + r, cy, text="QUEUED", fill=T.BRASS, font=f)
             self._spin_later()
-        elif self.on_end_turn is not None:
-            self.btn = "end"
+        elif self.on_end_turn is not None and self.state in ("your turn", "paused"):
+            self.btn = "end"                         # (only when there is a turn to end: not while waiting)
             self._round_rect(bx0, by0, bx1, by1, 3, fill=T.BRASS, outline=T.BRASS)
             cv.create_text((bx0 + bx1) / 2, (by0 + by1) / 2, text="BUILD & END TURN" if not small else "END TURN",
                            fill=T.ON_BRASS, font=f)
@@ -258,6 +258,7 @@ class TurnRail:
         self._grip(H)
         title = self.headline.upper()
         line = self.line or self.sub
+        line = line[:1].upper() + line[1:]
         if self.state == "automating":
             done, total, active = self._progress()
             title = f"WORKING - {active.upper()}" + (f"  ({done} of {total} steps)" if total else "") if active                 else "WORKING"
