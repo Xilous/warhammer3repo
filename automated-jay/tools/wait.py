@@ -191,6 +191,46 @@ def _raw_sig(ui, root: int, depth: int = 8, max_nodes: int = 600) -> tuple:
     return tuple(out)
 
 
+ANIM_OFF = 0x310                  # u64 at a component: its running animation (0 when none). Found 2026-10-24 on the
+                                  # plan-complete screen: set on button_holder from its first frame, 0 at 1,439 ms when
+                                  # the Complete button came on screen (perform_title, the plan lists likewise)
+
+
+def animating(ui, c) -> bool:
+    try:
+        return struct.unpack("<Q", ui.pm.read_bytes(c + ANIM_OFF, 8))[0] != 0
+    except Exception:
+        return False
+
+
+def animating_under(ui, root, max_nodes: int = 800) -> list[int]:
+    """Components under root (itself included) with an animation running."""
+    out, todo, seen = [], [root], 0
+    while todo and seen < max_nodes:
+        c = todo.pop()
+        seen += 1
+        if animating(ui, c):
+            out.append(c)
+        todo.extend(ui.children(c))
+    return out
+
+
+def animating_above(ui, c, max_up: int = 30) -> list[int]:
+    """The component and the panels it sits in (up to the UI root) with an animation running: a button whose holder is
+    still sliding or fading in."""
+    out = []
+    for _ in range(max_up):
+        if not c:
+            break
+        if animating(ui, c):
+            out.append(c)
+        try:
+            c = ui.parent(c)
+        except Exception:
+            break
+    return out
+
+
 def animation_done(ui, root, frames: int = 6, cap: float = 15.0, what: str = "animation over",
                    start_within: float = 0.0) -> bool:
     """Hands off until the component tree under root holds completely still (_raw_sig unchanged) for `frames`

@@ -263,6 +263,9 @@ def _pace() -> None:
         time.sleep(t)
 
 
+ANIM_CAP_S = 3.0              # a click waits at most this long for its target's animation (a looping one never ends)
+
+
 def wait_quiet() -> None:
     """Before every input of every step: hands off until the game's UI is still (tools/wait.ui_quiet: the open panels'
     layout in memory unchanged for "settle_frames" rendered frames). Player report 2026-10-23: "it was clearly still
@@ -345,6 +348,10 @@ def click(ui, target, right: bool = False):
     wait_for_other_players(ui)
     wait_quiet()                             # before the target's position is read: nothing may still be moving
     ptr = getattr(target, "ptr", target)
+    # never a click on a component the game is still animating in: the target and every panel it sits in must have
+    # ended their animation (memory, tools/wait.ANIM_OFF). Player finding 2026-10-24: Complete was clicked "before the
+    # button even showed on screen" (its holder animated in until 1.44 s) and the game crashed, four times
+    wait.wait_until(lambda: not wait.animating_above(ui, ptr), ANIM_CAP_S, "target's animation over", must=False)
     k = ui.comp(ptr)
     if not _on_screen(k.center):             # a panel still sliding in from off screen: wait until it is still
         k = wait.stable_rect(ui, ptr, n=2, timeout=2.0, what=f"{k.id} still (was off screen)")

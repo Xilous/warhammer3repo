@@ -44,7 +44,11 @@ At the start of a session, remind the player of these, and say which need a mult
       the plan-complete screen animates for ~1.4 s after it shows (38 changes), the click came at 0.2-0.5 s. Fixed:
       nothing touches the screen until every byte of its components is still for 10 frames (tools/wait.animation_done),
       and after Complete nothing until its completion animation is over and the screen closed by itself
-      (runs/masterplans.jsonl "trigger_screen_still", "completion_animation_s" rows). Watch the next completions.
+      (runs/masterplans.jsonl "trigger_screen_still", "completion_animation_s" rows). That stillness wait ended at
+      92 ms on turn 61 (the screen sits still for its first 0.6 s), so replaced: a component's running animation is
+      [C+0x310] (non-zero while it plays); the Complete button counts as shown once nothing above it animates (1.44 s,
+      measured live), and every click in every step now waits for its target's animation (tools/ui.click). Rows:
+      "complete_button_shown_s". Watch the next completions.
 - [ ] **Steal-Takes with negative gold (2026-10-23, turn 36)**: Karaz-a-Karak drew a -4,000 gold Complication on
       its first turn (before it could be completed) and reached Alarm 4/4 at -3,280 gold with a treasury of 2,781:
       Complete did nothing. Fixed: a plan the treasury cannot pay waits, or is abandoned at maximum Alarm (also when

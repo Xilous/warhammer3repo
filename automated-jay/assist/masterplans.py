@@ -631,9 +631,12 @@ def _confirm_trigger(ui, done=None) -> bool:
     # nothing touches the screen, not even the cursor, until its opening animation is over: every byte of the screen's
     # components still for 10 frames (player finding 2026-10-24: four crashes, each right after a completion whose
     # animation the click had skipped; the Complete button took the hover while the screen was still animating)
-    still = wait.animation_done(ui, _trigger_root(ui), frames=10, cap=15.0, what="plan-complete screen still",
-                                start_within=2.0)
-    _log({"trigger_screen_still": bool(still)})
+    # the Complete button is on screen once nothing above it animates any more (memory, 2026-10-24: its holder
+    # animates in until ~1.44 s; one effect on the screen loops on, so the whole screen never reads still)
+    t0 = time.time()
+    shown = wait.wait_until(lambda: not wait.animating_above(ui, btn), 15.0, "Complete button shown", must=False)
+    wait.ui_quiet(ui, frames=3, cap=2.0)
+    _log({"complete_button_shown_s": round(time.time() - t0, 2), "shown": bool(shown)})
     wait.stable_rect(ui, btn, n=4, timeout=3.0, must=False, what="plan-complete Complete still")
     hovered = lambda: any(k in (ui.state(btn) or "") for k in ("hover", "down"))
     end = time.time() + 8.0
